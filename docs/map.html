@@ -316,16 +316,18 @@
 
     function storePopup(store, isMatch) {
       const matchBadge = isMatch ? ' <span class="popup-match">MATCH</span>' : '';
+      const desc = store.description ? `<br><small>${escapeHtml(store.description)}</small>` : '';
       return `<div class="store-popup">
         <strong>${escapeHtml(store.name)}</strong>${matchBadge}<br>
         ${escapeHtml(store.address)}<br>
-        <em>${escapeHtml(store.flavor)}</em>
+        <em>${escapeHtml(store.flavor)}</em>${desc}
       </div>`;
     }
 
     function storeCard(store, isMatch) {
       const matchClass = isMatch ? ' store-card-match' : '';
       const culversUrl = store.slug ? `https://www.culvers.com/restaurants/${encodeURIComponent(store.slug)}` : '#';
+      const desc = store.description ? `<div class="store-card-description">${escapeHtml(store.description)}</div>` : '';
       return `<div class="store-card${matchClass}">
         <div class="store-card-header">
           <span class="store-card-name">${escapeHtml(store.name)}</span>
@@ -333,6 +335,7 @@
         </div>
         <div class="store-card-address">${escapeHtml(store.address)}</div>
         <div class="store-card-flavor">${escapeHtml(store.flavor)}</div>
+        ${desc}
         <a class="store-card-link" href="${culversUrl}" target="_blank" rel="noopener">View on culvers.com</a>
       </div>`;
     }

@@ -493,7 +493,7 @@ describe('/api/nearby-flavors route integration', () => {
         json: async () => ({
           data: {
             geofences: [{
-              metadata: { slug: 'mt-horeb', city: 'Mt. Horeb', state: 'WI', streetAddress: '505 Springdale St', flavorOfTheDay: 'Butter Pecan' },
+              metadata: { slug: 'mt-horeb', city: 'Mt. Horeb', state: 'WI', street: '505 Springdale St', flavorOfDayName: 'Butter Pecan' },
               geometryCenter: { coordinates: [-89.718, 43.011] },
             }],
           },

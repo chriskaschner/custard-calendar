@@ -24,12 +24,20 @@ export function normalize(name) {
 
 /**
  * Check if a store's flavor matches the query after normalization.
+ * First checks for an exact name match; if that fails, checks whether
+ * the query appears as a substring in the flavor description.
  * @param {string} storeFlavor - Flavor name from store data
  * @param {string} query - User's search query
+ * @param {string} [storeDescription] - Flavor description with ingredient details
  * @returns {boolean}
  */
-export function matchesFlavor(storeFlavor, query) {
-  return normalize(storeFlavor) === normalize(query);
+export function matchesFlavor(storeFlavor, query, storeDescription) {
+  const normalizedQuery = normalize(query);
+  if (normalize(storeFlavor) === normalizedQuery) return true;
+  if (storeDescription && normalizedQuery) {
+    return normalize(storeDescription).includes(normalizedQuery);
+  }
+  return false;
 }
 
 /**

@@ -511,6 +511,13 @@ details ol {
   margin-top: 0.25rem;
 }
 
+.store-card-description {
+  font-size: 0.75rem;
+  color: #666;
+  margin-top: 0.25rem;
+  line-height: 1.4;
+}
+
 .store-card-link {
   font-size: 0.75rem;
   color: #003366;

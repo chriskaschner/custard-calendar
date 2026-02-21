@@ -418,7 +418,7 @@ async function handleApiNearbyFlavors(url, env, corsHeaders) {
 
   if (flavorQuery.trim()) {
     for (const store of stores) {
-      if (matchesFlavor(store.flavor, flavorQuery)) {
+      if (matchesFlavor(store.flavor, flavorQuery, store.description)) {
         matches.push(store);
       } else {
         nearby.push(store);
@@ -474,7 +474,7 @@ async function handleApiNearbyFlavors(url, env, corsHeaders) {
  * Transform Culver's locator API response into our store format.
  * The locator API returns geofences with restaurant details.
  * @param {Object} data - Raw locator API response
- * @returns {Array<{slug: string, name: string, address: string, lat: number, lon: number, flavor: string, rank: number}>}
+ * @returns {Array<{slug: string, name: string, address: string, lat: number, lon: number, flavor: string, description: string, rank: number}>}
  */
 function transformLocatorData(data) {
   const geofences = data?.data?.geofences || [];
@@ -483,14 +483,15 @@ function transformLocatorData(data) {
     const slug = meta.slug || '';
     const city = meta.city || '';
     const state = meta.state || '';
-    const streetAddress = meta.streetAddress || '';
+    const street = meta.street || '';
     return {
       slug,
       name: city && state ? `${city}, ${state}` : city || slug,
-      address: streetAddress,
+      address: street,
       lat: g.geometryCenter?.coordinates?.[1] || 0,
       lon: g.geometryCenter?.coordinates?.[0] || 0,
-      flavor: meta.flavorOfTheDay || '',
+      flavor: meta.flavorOfDayName || '',
+      description: meta.flavorOfTheDayDescription || '',
       rank: i + 1,
     };
   });

@@ -40,6 +40,28 @@ describe('matchesFlavor()', () => {
   it('handles extra whitespace', () => {
     expect(matchesFlavor('  Mint  Explosion ', 'Mint Explosion')).toBe(true);
   });
+
+  it('matches on description substring when name does not match', () => {
+    expect(matchesFlavor('Mint Cookie', 'oreo', 'Mint custard with OREO\u00ae cookie pieces')).toBe(true);
+  });
+
+  it('name match takes priority over description', () => {
+    // Even though description also contains the term, name match alone suffices
+    expect(matchesFlavor('OREO\u00ae Cheesecake', 'oreo cheesecake', 'Creamy OREO pieces')).toBe(true);
+  });
+
+  it('does not match when query is absent from both name and description', () => {
+    expect(matchesFlavor('Butter Pecan', 'oreo', 'Rich buttery custard with pecans')).toBe(false);
+  });
+
+  it('description matching is case-insensitive', () => {
+    expect(matchesFlavor('Mint Explosion', 'oreo', 'Cool mint with OREO\u00ae cookie pieces')).toBe(true);
+  });
+
+  it('works without description parameter (backward compat)', () => {
+    expect(matchesFlavor('Mint Explosion', 'mint explosion')).toBe(true);
+    expect(matchesFlavor('Mint Explosion', 'oreo')).toBe(false);
+  });
 });
 
 describe('findSimilarFlavors()', () => {
@@ -88,8 +110,9 @@ const MOCK_LOCATOR_RESPONSE = {
           slug: 'mt-horeb',
           city: 'Mt. Horeb',
           state: 'WI',
-          streetAddress: '505 Springdale St',
-          flavorOfTheDay: 'Mint Explosion',
+          street: '505 Springdale St',
+          flavorOfDayName: 'Mint Explosion',
+          flavorOfTheDayDescription: 'Cool mint Fresh Frozen Custard with OREO\u00ae cookie pieces swirled in.',
         },
         geometryCenter: { coordinates: [-89.718, 43.011] },
       },
@@ -98,8 +121,9 @@ const MOCK_LOCATOR_RESPONSE = {
           slug: 'dodgeville',
           city: 'Dodgeville',
           state: 'WI',
-          streetAddress: '731 N Johns St',
-          flavorOfTheDay: 'Butter Pecan',
+          street: '731 N Johns St',
+          flavorOfDayName: 'Butter Pecan',
+          flavorOfTheDayDescription: 'Rich buttery Fresh Frozen Custard with toasted pecans.',
         },
         geometryCenter: { coordinates: [-90.127, 42.972] },
       },
@@ -108,8 +132,9 @@ const MOCK_LOCATOR_RESPONSE = {
           slug: 'madison-todd-drive',
           city: 'Madison',
           state: 'WI',
-          streetAddress: '6418 Odana Rd',
-          flavorOfTheDay: 'Andes Mint Avalanche',
+          street: '6418 Odana Rd',
+          flavorOfDayName: 'Andes Mint Avalanche',
+          flavorOfTheDayDescription: 'Cool mint Fresh Frozen Custard with Andes\u00ae cr\u00e8me de menthe pieces and chocolate.',
         },
         geometryCenter: { coordinates: [-89.478, 43.056] },
       },
@@ -324,6 +349,37 @@ describe('/api/nearby-flavors endpoint', () => {
     const body = await res.json();
     expect(body.matches).toHaveLength(1);
     expect(body.matches[0].flavor).toBe('Mint Explosion');
+  });
+
+  it('matches stores by description when flavor name differs', async () => {
+    // "oreo" doesn't match "Mint Explosion" by name, but the description contains OREO®
+    const req = makeRequest('/api/nearby-flavors?location=53572&flavor=oreo');
+    const res = await handleRequest(req, env);
+
+    const body = await res.json();
+    expect(body.matches.length).toBeGreaterThan(0);
+    const mtHoreb = body.matches.find(s => s.slug === 'mt-horeb');
+    expect(mtHoreb).toBeDefined();
+    expect(mtHoreb.flavor).toBe('Mint Explosion');
+  });
+
+  it('includes description field in store objects', async () => {
+    const req = makeRequest('/api/nearby-flavors?location=53572');
+    const res = await handleRequest(req, env);
+
+    const body = await res.json();
+    const mtHoreb = body.nearby.find(s => s.slug === 'mt-horeb');
+    expect(mtHoreb.description).toContain('OREO');
+  });
+
+  it('name match takes priority (not duplicated by description match)', async () => {
+    // Searching for "Mint Explosion" should match by name, not double-count
+    const req = makeRequest('/api/nearby-flavors?location=53572&flavor=Mint+Explosion');
+    const res = await handleRequest(req, env);
+
+    const body = await res.json();
+    expect(body.matches).toHaveLength(1);
+    expect(body.matches[0].slug).toBe('mt-horeb');
   });
 
   it('returns query echo in response', async () => {
