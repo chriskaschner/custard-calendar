@@ -11,6 +11,8 @@
 import { generateIcs } from './ics-generator.js';
 import { fetchFlavors as defaultFetchFlavors } from './flavor-fetcher.js';
 import { VALID_SLUGS as DEFAULT_VALID_SLUGS } from './valid-slugs.js';
+import { STORE_INDEX as DEFAULT_STORE_INDEX } from './store-index.js';
+import { normalize, matchesFlavor, findSimilarFlavors } from './flavor-matcher.js';
 
 const KV_TTL_SECONDS = 86400; // 24 hours
 const CACHE_MAX_AGE = 43200;  // 12 hours
@@ -146,8 +148,28 @@ export async function handleRequest(request, env, fetchFlavorsFn = defaultFetchF
     return handleCalendar(url, env, corsHeaders, fetchFlavorsFn);
   }
 
+  // Flavor data JSON endpoint
+  if (url.pathname === '/api/flavors') {
+    return handleApiFlavors(url, env, corsHeaders, fetchFlavorsFn);
+  }
+
+  // Store search JSON endpoint
+  if (url.pathname === '/api/stores') {
+    return handleApiStores(url, env, corsHeaders);
+  }
+
+  // IP-based geolocation endpoint (uses Cloudflare's request.cf)
+  if (url.pathname === '/api/geolocate') {
+    return handleApiGeolocate(request, corsHeaders);
+  }
+
+  // Nearby flavors endpoint (proxies Culver's locator API)
+  if (url.pathname === '/api/nearby-flavors') {
+    return handleApiNearbyFlavors(url, env, corsHeaders);
+  }
+
   return Response.json(
-    { error: 'Not found. Use /calendar.ics?primary=<slug> or /health' },
+    { error: 'Not found. Use /calendar.ics, /api/flavors, /api/stores, /api/geolocate, /api/nearby-flavors, or /health' },
     { status: 404, headers: corsHeaders }
   );
 }
@@ -232,8 +254,245 @@ async function handleCalendar(url, env, corsHeaders, fetchFlavorsFn) {
       ...corsHeaders,
       'Content-Type': 'text/calendar; charset=utf-8',
       'Cache-Control': `public, max-age=${CACHE_MAX_AGE}`,
-      'Content-Disposition': 'inline; filename="culvers-fotd.ics"',
+      'Content-Disposition': 'inline; filename="custard-calendar.ics"',
     },
+  });
+}
+
+/**
+ * Handle /api/flavors?slug=<slug> requests.
+ * Returns JSON flavor data for a single store, reusing the same
+ * KV-cached fetch pipeline as the calendar endpoint.
+ */
+async function handleApiFlavors(url, env, corsHeaders, fetchFlavorsFn) {
+  const validSlugs = env._validSlugsOverride || DEFAULT_VALID_SLUGS;
+
+  const slug = url.searchParams.get('slug');
+  if (!slug) {
+    return Response.json(
+      { error: 'Missing required "slug" parameter. Usage: /api/flavors?slug=<store-slug>' },
+      { status: 400, headers: corsHeaders }
+    );
+  }
+
+  const check = isValidSlug(slug, validSlugs);
+  if (!check.valid) {
+    return Response.json(
+      { error: `Invalid store: ${check.reason}` },
+      { status: 400, headers: corsHeaders }
+    );
+  }
+
+  try {
+    const data = await getFlavorsCached(slug, env.FLAVOR_CACHE, fetchFlavorsFn);
+    return Response.json(data, {
+      headers: {
+        ...corsHeaders,
+        'Cache-Control': `public, max-age=${CACHE_MAX_AGE}`,
+      },
+    });
+  } catch (err) {
+    return Response.json(
+      { error: `Failed to fetch flavor data: ${err.message}` },
+      { status: 400, headers: corsHeaders }
+    );
+  }
+}
+
+/**
+ * Handle /api/stores?q=<query> requests.
+ * Searches the in-memory store index. No KV reads, no upstream fetches.
+ */
+function handleApiStores(url, env, corsHeaders) {
+  const storeIndex = env._storeIndexOverride || DEFAULT_STORE_INDEX;
+  const query = (url.searchParams.get('q') || '').toLowerCase().trim();
+  const MAX_RESULTS = 25;
+
+  // Require at least 2 characters for search
+  if (query.length < 2) {
+    return Response.json(
+      { stores: [] },
+      { headers: { ...corsHeaders, 'Cache-Control': 'public, max-age=86400' } }
+    );
+  }
+
+  const matches = [];
+  for (const store of storeIndex) {
+    const searchable = `${store.name} ${store.city} ${store.state} ${store.slug}`.toLowerCase();
+    if (searchable.includes(query)) {
+      matches.push(store);
+      if (matches.length >= MAX_RESULTS) break;
+    }
+  }
+
+  return Response.json(
+    { stores: matches },
+    { headers: { ...corsHeaders, 'Cache-Control': 'public, max-age=86400' } }
+  );
+}
+
+/**
+ * Handle /api/geolocate requests.
+ * Returns the user's approximate location from Cloudflare's request.cf object.
+ * Response is per-user (IP-based) so uses private, no-store cache control.
+ */
+function handleApiGeolocate(request, corsHeaders) {
+  const cf = request.cf || {};
+  return Response.json({
+    state: cf.regionCode || null,   // ISO 3166-2 code, e.g. "WI"
+    stateName: cf.region || null,   // Full name, e.g. "Wisconsin"
+    city: cf.city || null,          // e.g. "Madison"
+    country: cf.country || null,    // e.g. "US"
+  }, {
+    headers: { ...corsHeaders, 'Cache-Control': 'private, no-store' },
+  });
+}
+
+const LOCATOR_CACHE_TTL = 3600; // 1 hour
+const NEARBY_CACHE_MAX_AGE = 3600; // 1 hour
+
+/**
+ * Handle /api/nearby-flavors?location=<zip>&flavor=<name>&limit=<n> requests.
+ * Proxies to Culver's locator API server-side (bypasses CORS), caches in KV,
+ * and optionally filters/ranks by flavor match + similarity.
+ */
+async function handleApiNearbyFlavors(url, env, corsHeaders) {
+  const location = url.searchParams.get('location');
+  if (!location || !location.trim()) {
+    return Response.json(
+      { error: 'Missing required "location" parameter. Usage: /api/nearby-flavors?location=<zip|city|lat,lon>' },
+      { status: 400, headers: corsHeaders }
+    );
+  }
+
+  const flavorQuery = url.searchParams.get('flavor') || '';
+  const limit = Math.min(Math.max(parseInt(url.searchParams.get('limit')) || 50, 1), 100);
+
+  // Check KV cache for this location+limit combo
+  const kv = env.FLAVOR_CACHE;
+  const cacheKey = `locator:${location.trim().toLowerCase()}:${limit}`;
+  let locatorData;
+
+  const cached = kv ? await kv.get(cacheKey) : null;
+  if (cached) {
+    locatorData = JSON.parse(cached);
+  } else {
+    // Fetch from Culver's locator API
+    const locatorUrl = `https://www.culvers.com/api/locator/getLocations?location=${encodeURIComponent(location.trim())}&limit=${limit}`;
+    let resp;
+    const fetchFn = env._fetchOverride || globalThis.fetch;
+    try {
+      resp = await fetchFn(locatorUrl);
+    } catch (err) {
+      return Response.json(
+        { error: `Failed to reach Culver's locator API: ${err.message}` },
+        { status: 502, headers: corsHeaders }
+      );
+    }
+
+    if (!resp.ok) {
+      return Response.json(
+        { error: `Culver's locator API returned ${resp.status}` },
+        { status: 502, headers: corsHeaders }
+      );
+    }
+
+    locatorData = await resp.json();
+
+    // Cache in KV
+    if (kv) {
+      await kv.put(cacheKey, JSON.stringify(locatorData), {
+        expirationTtl: LOCATOR_CACHE_TTL,
+      });
+    }
+  }
+
+  // Transform locator response into our format
+  const stores = transformLocatorData(locatorData);
+
+  // Build response
+  const allFlavorsToday = [...new Set(stores.map(s => s.flavor).filter(Boolean))].sort();
+  let matches = [];
+  let nearby = [];
+  let suggestions = [];
+
+  if (flavorQuery.trim()) {
+    for (const store of stores) {
+      if (matchesFlavor(store.flavor, flavorQuery)) {
+        matches.push(store);
+      } else {
+        nearby.push(store);
+      }
+    }
+
+    // Build suggestions from similarity groups
+    const similarNormalized = findSimilarFlavors(flavorQuery, allFlavorsToday);
+    const suggestionMap = new Map();
+
+    for (const normName of similarNormalized) {
+      // Find the original-cased name from stores
+      for (const store of nearby) {
+        if (normalize(store.flavor) === normName) {
+          if (!suggestionMap.has(normName)) {
+            suggestionMap.set(normName, { flavor: store.flavor, count: 0, closest_rank: Infinity });
+          }
+          const entry = suggestionMap.get(normName);
+          entry.count++;
+          entry.closest_rank = Math.min(entry.closest_rank, store.rank);
+          break; // only need one for the name
+        }
+      }
+      // Count additional stores
+      if (suggestionMap.has(normName)) {
+        const entry = suggestionMap.get(normName);
+        entry.count = nearby.filter(s => normalize(s.flavor) === normName).length;
+        entry.closest_rank = Math.min(...nearby.filter(s => normalize(s.flavor) === normName).map(s => s.rank));
+      }
+    }
+
+    suggestions = [...suggestionMap.values()].sort((a, b) => a.closest_rank - b.closest_rank);
+  } else {
+    // No flavor filter — all stores go in nearby
+    nearby = stores;
+  }
+
+  return Response.json({
+    query: { location: location.trim(), flavor: flavorQuery.trim() || null },
+    matches,
+    nearby,
+    suggestions,
+    all_flavors_today: allFlavorsToday,
+  }, {
+    headers: {
+      ...corsHeaders,
+      'Cache-Control': `public, max-age=${NEARBY_CACHE_MAX_AGE}`,
+    },
+  });
+}
+
+/**
+ * Transform Culver's locator API response into our store format.
+ * The locator API returns geofences with restaurant details.
+ * @param {Object} data - Raw locator API response
+ * @returns {Array<{slug: string, name: string, address: string, lat: number, lon: number, flavor: string, rank: number}>}
+ */
+function transformLocatorData(data) {
+  const geofences = data?.data?.geofences || [];
+  return geofences.map((g, i) => {
+    const meta = g.metadata || {};
+    const slug = meta.slug || '';
+    const city = meta.city || '';
+    const state = meta.state || '';
+    const streetAddress = meta.streetAddress || '';
+    return {
+      slug,
+      name: city && state ? `${city}, ${state}` : city || slug,
+      address: streetAddress,
+      lat: g.geometryCenter?.coordinates?.[1] || 0,
+      lon: g.geometryCenter?.coordinates?.[0] || 0,
+      flavor: meta.flavorOfTheDay || '',
+      rank: i + 1,
+    };
   });
 }
 

@@ -10,6 +10,9 @@
   <header>
     <h1>Culver's Flavor of the Day Calendar</h1>
     <p>Subscribe to a calendar showing daily Flavor of the Day for your favorite Culver's locations.</p>
+    <nav class="nav-links">
+      <a href="map.html">Custard Map</a>
+    </nav>
   </header>
 
   <main>
@@ -95,7 +98,7 @@
   </footer>
 
   <script>
-    const WORKER_BASE = 'https://culvers-fotd-calendar.chris-kaschner.workers.dev';
+    const WORKER_BASE = 'https://custard-calendar.chris-kaschner.workers.dev';
     const ACCESS_TOKEN = ''; // Set to match Worker's ACCESS_TOKEN, or leave empty for open access
     let allStores = [];
     let primarySlug = null;
@@ -130,9 +133,25 @@
         allStores = data.stores || [];
         populateStateFilter();
         renderStoreList();
+        // Auto-select state based on user's IP geolocation
+        autoSelectState();
       } catch (err) {
         primarySelect.innerHTML = '<option disabled>Failed to load stores</option>';
         console.error('Failed to load stores:', err);
+      }
+    }
+
+    async function autoSelectState() {
+      try {
+        const resp = await fetch(WORKER_BASE + '/api/geolocate');
+        const geo = await resp.json();
+        if (geo.state && stateFilter.querySelector(`option[value="${geo.state}"]`)) {
+          stateFilter.value = geo.state;
+          renderStoreList();
+        }
+      } catch (err) {
+        // Silent fail — geolocation is a nice-to-have
+        console.debug('Geolocation unavailable:', err);
       }
     }
 

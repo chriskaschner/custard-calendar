@@ -55,7 +55,11 @@ Credentials go in:
 
 All of these are gitignored.
 
-## Tidbyt App
+## Tidbyt Community App
+
+The standalone Tidbyt community app lives in a separate repo: **[custard-tidbyt](https://github.com/chriskaschner/custard-tidbyt)**. It fetches flavor data from this project's Worker API and renders a 3-day forecast with color-coded ice cream cones.
+
+The legacy renderer in `tidbyt/` is kept for local development and direct device push:
 
 ```bash
 # Render locally
@@ -77,6 +81,8 @@ A public .ics calendar service backed by a Cloudflare Worker. Anyone can subscri
 ```
 GET /calendar.ics?primary=mt-horeb
 GET /calendar.ics?primary=mt-horeb&secondary=madison-todd-drive,middleton
+GET /api/flavors?slug=mt-horeb
+GET /api/stores?q=madison
 GET /health
 ```
 
@@ -85,7 +91,7 @@ GET /health
 ```bash
 cd worker
 npm install
-npm test              # 41 tests
+npm test              # 58 tests
 npx wrangler dev      # Local dev server
 ```
 
@@ -102,7 +108,7 @@ uv run pytest tools/                              # Run manifest + e2e tests
 ## Project Structure
 
 ```
-Culvers_TidByt/
+custard-calendar/
 ├── src/
 │   ├── flavor_service.py       # Scrapes Culver's for flavor data
 │   └── calendar_sync.py        # Google Calendar integration
@@ -114,10 +120,12 @@ Culvers_TidByt/
 │   │   ├── index.js            # Request handling, security, caching
 │   │   ├── ics-generator.js    # RFC 5545 .ics generation
 │   │   ├── flavor-fetcher.js   # JS port of flavor scraping
-│   │   └── valid-slugs.js      # Generated allowlist (1,071 slugs)
+│   │   ├── valid-slugs.js      # Generated allowlist (1,071 slugs)
+│   │   └── store-index.js      # Generated store search index
 │   ├── test/                   # Vitest integration + unit tests
 │   ├── scripts/
-│   │   └── generate-valid-slugs.js
+│   │   ├── generate-valid-slugs.js
+│   │   └── generate-store-index.js
 │   └── wrangler.toml
 ├── docs/                       # GitHub Pages store selector
 │   ├── index.html

@@ -96,7 +96,7 @@ export function generateIcs({ calendarName, stores, flavorsBySlug }) {
   // Calendar header
   addLine('BEGIN:VCALENDAR');
   addLine('VERSION:2.0');
-  addLine('PRODID:-//CulversFOTD//EN');
+  addLine('PRODID:-//CustardCalendar//EN');
   addLine('CALSCALE:GREGORIAN');
   addLine('METHOD:PUBLISH');
   addLine(`X-WR-CALNAME:${calendarName}`);
@@ -127,7 +127,7 @@ export function generateIcs({ calendarName, stores, flavorsBySlug }) {
 
   for (const flavor of primaryFlavors) {
     addLine('BEGIN:VEVENT');
-    addLine(`UID:${flavor.date}-${primary.slug}@culvers-fotd`);
+    addLine(`UID:${flavor.date}-${primary.slug}@custard-calendar`);
     addLine(`DTSTAMP:${dtstamp}`);
     addLine(`DTSTART;VALUE=DATE:${formatDateValue(flavor.date)}`);
     addLine(`DTEND;VALUE=DATE:${nextDay(flavor.date)}`);

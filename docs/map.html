@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Custard Map — Find a Flavor Near You</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+</head>
+<body>
+  <header>
+    <h1>Custard Map</h1>
+    <p>Find a Culver's Flavor of the Day near you.</p>
+    <nav class="nav-links">
+      <a href="index.html">Calendar</a>
+    </nav>
+  </header>
+
+  <main>
+    <section id="search-controls">
+      <div class="filter-row">
+        <div class="filter-group">
+          <label for="flavor-input">Flavor (optional)</label>
+          <input type="text" id="flavor-input" list="flavor-list" placeholder="e.g. Mint Explosion">
+          <datalist id="flavor-list"></datalist>
+        </div>
+        <div class="filter-group filter-group-location">
+          <label for="location-input">Location</label>
+          <div class="location-row">
+            <input type="text" id="location-input" placeholder="Zip code or city...">
+            <button id="geolocate-btn" title="Use my location" class="icon-btn">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M12 2v4M12 18v4M2 12h4M18 12h4"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div class="filter-group filter-group-btn">
+          <label>&nbsp;</label>
+          <button id="search-btn" class="btn btn-search">Search</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="suggestions-panel" hidden>
+      <div id="suggestions-content"></div>
+    </section>
+
+    <section id="map-container">
+      <div id="map"></div>
+    </section>
+
+    <section id="results-list" hidden>
+      <h2 id="results-heading">Results</h2>
+      <div id="results-body"></div>
+    </section>
+  </main>
+
+  <footer>
+    <p>Not affiliated with Culver's. Data sourced from <a href="https://www.culvers.com" target="_blank" rel="noopener">culvers.com</a>.</p>
+  </footer>
+
+  <script>
+    const WORKER_BASE = 'https://custard-calendar.chris-kaschner.workers.dev';
+
+    // Known flavors for autocomplete
+    const KNOWN_FLAVORS = [
+      'Andes Mint Avalanche', 'Blackberry Cobbler', 'Brownie Thunder',
+      'Butter Pecan', 'Caramel Cashew', 'Caramel Fudge Cookie Dough',
+      'Caramel Pecan', 'Caramel Turtle', 'Chocolate Caramel Twist',
+      'Chocolate Heath Crunch', 'Chocolate Oreo Volcano', 'Chocolate Volcano',
+      'Crazy for Cookie Dough', 'Dark Chocolate Decadence',
+      'Dark Chocolate PB Crunch', 'Georgia Peach Pecan',
+      'Lemon Berry Layer Cake', 'Lemon Dash Cookie', 'Mint Cookie',
+      'Mint Explosion', 'OREO Cheesecake', 'OREO Cookies and Cream',
+      'Peanut Butter Cup', 'Raspberry Cheesecake', 'Really Reese\'s',
+      'Salted Caramel Pecan Pie', 'Snickers Swirl',
+      'Strawberry Cheesecake', 'Turtle', 'Turtle Cheesecake',
+      'Turtle Dove', 'Vanilla',
+    ];
+
+    // DOM elements
+    const flavorInput = document.getElementById('flavor-input');
+    const flavorList = document.getElementById('flavor-list');
+    const locationInput = document.getElementById('location-input');
+    const geolocateBtn = document.getElementById('geolocate-btn');
+    const searchBtn = document.getElementById('search-btn');
+    const suggestionsPanel = document.getElementById('suggestions-panel');
+    const suggestionsContent = document.getElementById('suggestions-content');
+    const resultsSection = document.getElementById('results-list');
+    const resultsHeading = document.getElementById('results-heading');
+    const resultsBody = document.getElementById('results-body');
+
+    // Map setup
+    const map = L.map('map').setView([43.0, -89.5], 7); // Default: Wisconsin
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      maxZoom: 18,
+    }).addTo(map);
+
+    let markers = L.layerGroup().addTo(map);
+
+    // Populate flavor datalist
+    for (const f of KNOWN_FLAVORS) {
+      const opt = document.createElement('option');
+      opt.value = f;
+      flavorList.appendChild(opt);
+    }
+
+    // Read URL params on load
+    function readUrlParams() {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('flavor')) flavorInput.value = params.get('flavor');
+      if (params.get('location')) locationInput.value = params.get('location');
+      if (params.get('location')) doSearch();
+    }
+
+    // Update URL without reload
+    function updateUrl() {
+      const params = new URLSearchParams();
+      if (flavorInput.value.trim()) params.set('flavor', flavorInput.value.trim());
+      if (locationInput.value.trim()) params.set('location', locationInput.value.trim());
+      const qs = params.toString();
+      const newUrl = qs ? `${window.location.pathname}?${qs}` : window.location.pathname;
+      history.replaceState(null, '', newUrl);
+    }
+
+    // Geolocation
+    geolocateBtn.addEventListener('click', () => {
+      if (!navigator.geolocation) {
+        alert('Geolocation is not supported by your browser.');
+        return;
+      }
+      geolocateBtn.disabled = true;
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          locationInput.value = `${pos.coords.latitude.toFixed(4)},${pos.coords.longitude.toFixed(4)}`;
+          geolocateBtn.disabled = false;
+          doSearch();
+        },
+        (err) => {
+          geolocateBtn.disabled = false;
+          // Fall back to IP-based geolocation
+          autoGeolocate();
+        },
+        { timeout: 5000 }
+      );
+    });
+
+    async function autoGeolocate() {
+      try {
+        const resp = await fetch(`${WORKER_BASE}/api/geolocate`);
+        const geo = await resp.json();
+        if (geo.city && geo.state) {
+          locationInput.value = `${geo.city}, ${geo.state}`;
+          doSearch();
+        }
+      } catch (err) {
+        console.debug('Geolocation unavailable:', err);
+      }
+    }
+
+    // Search
+    searchBtn.addEventListener('click', doSearch);
+    locationInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') doSearch();
+    });
+    flavorInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') doSearch();
+    });
+
+    let searchAbort = null;
+
+    async function doSearch() {
+      const location = locationInput.value.trim();
+      if (!location) {
+        locationInput.focus();
+        return;
+      }
+
+      updateUrl();
+
+      // Cancel previous search
+      if (searchAbort) searchAbort.abort();
+      searchAbort = new AbortController();
+
+      searchBtn.disabled = true;
+      searchBtn.textContent = 'Searching...';
+      suggestionsPanel.hidden = true;
+      resultsSection.hidden = true;
+
+      const flavor = flavorInput.value.trim();
+      let url = `${WORKER_BASE}/api/nearby-flavors?location=${encodeURIComponent(location)}`;
+      if (flavor) url += `&flavor=${encodeURIComponent(flavor)}`;
+
+      try {
+        const resp = await fetch(url, { signal: searchAbort.signal });
+        if (!resp.ok) {
+          const err = await resp.json().catch(() => ({}));
+          throw new Error(err.error || `HTTP ${resp.status}`);
+        }
+        const data = await resp.json();
+        renderResults(data);
+      } catch (err) {
+        if (err.name === 'AbortError') return;
+        resultsBody.innerHTML = `<div class="error-msg">Search failed: ${escapeHtml(err.message)}</div>`;
+        resultsSection.hidden = false;
+      } finally {
+        searchBtn.disabled = false;
+        searchBtn.textContent = 'Search';
+      }
+    }
+
+    function renderResults(data) {
+      markers.clearLayers();
+
+      const hasFlavorFilter = !!data.query.flavor;
+      const allStores = [...data.matches, ...data.nearby];
+
+      if (allStores.length === 0) {
+        resultsBody.innerHTML = '<div class="no-results">No Culver\'s locations found near that location.</div>';
+        resultsSection.hidden = false;
+        return;
+      }
+
+      // Suggestions
+      if (hasFlavorFilter && data.matches.length === 0 && data.suggestions.length > 0) {
+        const links = data.suggestions.map(s =>
+          `<button class="suggestion-link" data-flavor="${escapeAttr(s.flavor)}">${escapeHtml(s.flavor)} (${s.count} store${s.count > 1 ? 's' : ''})</button>`
+        ).join(' ');
+        suggestionsContent.innerHTML = `<strong>No "${escapeHtml(data.query.flavor)}" nearby.</strong> Try: ${links}`;
+        suggestionsPanel.hidden = false;
+
+        // Bind suggestion clicks
+        suggestionsPanel.querySelectorAll('.suggestion-link').forEach(btn => {
+          btn.addEventListener('click', () => {
+            flavorInput.value = btn.dataset.flavor;
+            doSearch();
+          });
+        });
+      } else if (hasFlavorFilter && data.matches.length > 0) {
+        suggestionsPanel.hidden = true;
+      } else {
+        suggestionsPanel.hidden = true;
+      }
+
+      // Map markers
+      const bounds = L.latLngBounds();
+
+      for (const store of data.matches) {
+        if (!store.lat || !store.lon) continue;
+        const marker = L.marker([store.lat, store.lon], {
+          icon: greenIcon,
+        }).bindPopup(storePopup(store, true));
+        markers.addLayer(marker);
+        bounds.extend([store.lat, store.lon]);
+      }
+
+      for (const store of data.nearby) {
+        if (!store.lat || !store.lon) continue;
+        const marker = L.marker([store.lat, store.lon], {
+          icon: hasFlavorFilter ? blueIcon : defaultIcon,
+        }).bindPopup(storePopup(store, false));
+        markers.addLayer(marker);
+        bounds.extend([store.lat, store.lon]);
+      }
+
+      if (bounds.isValid()) {
+        map.fitBounds(bounds, { padding: [30, 30], maxZoom: 12 });
+      }
+
+      // Results list
+      let html = '';
+
+      if (hasFlavorFilter && data.matches.length > 0) {
+        html += `<div class="results-group"><h3 class="results-group-title match-title">Stores with ${escapeHtml(data.query.flavor)} (${data.matches.length})</h3>`;
+        for (const store of data.matches) {
+          html += storeCard(store, true);
+        }
+        html += '</div>';
+      }
+
+      if (data.nearby.length > 0) {
+        const nearbyLabel = hasFlavorFilter ? 'Other nearby stores' : `Nearby stores (${data.nearby.length})`;
+        html += `<div class="results-group"><h3 class="results-group-title">${nearbyLabel}</h3>`;
+        for (const store of data.nearby) {
+          html += storeCard(store, false);
+        }
+        html += '</div>';
+      }
+
+      resultsBody.innerHTML = html;
+      resultsSection.hidden = false;
+    }
+
+    // Custom map icons
+    const greenIcon = L.icon({
+      iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+      shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+      iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41],
+    });
+
+    const blueIcon = L.icon({
+      iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
+      shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+      iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41],
+    });
+
+    const defaultIcon = L.icon({
+      iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+      shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+      iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41],
+    });
+
+    function storePopup(store, isMatch) {
+      const matchBadge = isMatch ? ' <span class="popup-match">MATCH</span>' : '';
+      return `<div class="store-popup">
+        <strong>${escapeHtml(store.name)}</strong>${matchBadge}<br>
+        ${escapeHtml(store.address)}<br>
+        <em>${escapeHtml(store.flavor)}</em>
+      </div>`;
+    }
+
+    function storeCard(store, isMatch) {
+      const matchClass = isMatch ? ' store-card-match' : '';
+      const culversUrl = store.slug ? `https://www.culvers.com/restaurants/${encodeURIComponent(store.slug)}` : '#';
+      return `<div class="store-card${matchClass}">
+        <div class="store-card-header">
+          <span class="store-card-name">${escapeHtml(store.name)}</span>
+          <span class="store-card-rank">#${store.rank}</span>
+        </div>
+        <div class="store-card-address">${escapeHtml(store.address)}</div>
+        <div class="store-card-flavor">${escapeHtml(store.flavor)}</div>
+        <a class="store-card-link" href="${culversUrl}" target="_blank" rel="noopener">View on culvers.com</a>
+      </div>`;
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function escapeAttr(str) {
+      return escapeHtml(str);
+    }
+
+    // Auto-detect location on load via Cloudflare geolocation
+    async function initLocation() {
+      try {
+        const resp = await fetch(`${WORKER_BASE}/api/geolocate`);
+        const geo = await resp.json();
+        if (geo.city && geo.state && !locationInput.value) {
+          locationInput.value = `${geo.city}, ${geo.state}`;
+        }
+      } catch (err) {
+        console.debug('Auto-geolocation unavailable:', err);
+      }
+    }
+
+    // Init
+    readUrlParams();
+    if (!locationInput.value) initLocation();
+  </script>
+</body>
+</html>

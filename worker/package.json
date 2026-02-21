@@ -1,5 +1,5 @@
 {
-  "name": "culvers-fotd-calendar",
+  "name": "custard-calendar",
   "version": "1.0.0",
   "description": "Cloudflare Worker serving subscribable Culver's Flavor of the Day .ics calendars",
   "type": "module",
