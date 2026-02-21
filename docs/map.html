@@ -311,7 +311,17 @@
         if (!hasFlavorFilter) {
           nearbyLabel = `Nearby stores (${data.nearby.length})`;
         } else if (data.matches.length > 0) {
-          nearbyLabel = 'Meanwhile, nearby';
+          const altIntros = [
+            'Meanwhile, nearby',
+            'Not your flavor? These stores beg to differ',
+            'Other scoops in the neighborhood',
+            'The rest of the cone-petition',
+            'What the other stores are dishing out',
+            'In other frozen news',
+            'But wait, there\'s more custard',
+            'The supporting cast',
+          ];
+          nearbyLabel = altIntros[Math.floor(Math.random() * altIntros.length)];
         } else {
           const nearbyIntros = [
             `No ${escapeHtml(data.query.flavor)} nearby — here's what's scooping instead`,
