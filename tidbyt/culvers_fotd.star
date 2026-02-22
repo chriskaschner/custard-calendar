@@ -7,6 +7,17 @@ Data is fetched by the Python orchestrator and passed via pixlet render argument
 load("render.star", "render")
 load("schema.star", "schema")
 
+# Brand theming — drives header color and title text
+BRAND_CONFIG = {
+    "culvers":  {"color": "#003366", "label": "Culver's FOTD"},
+    "kopps":    {"color": "#000000", "label": "Kopp's FOTD"},
+    "gilles":   {"color": "#EBCC35", "label": "Gille's FOTD"},
+    "hefners":  {"color": "#93BE46", "label": "Hefner's FOTD"},
+    "kraverz":  {"color": "#CE742D", "label": "Kraverz FOTD"},
+    "oscars":   {"color": "#BC272C", "label": "Oscar's FOTD"},
+    "generic":  {"color": "#6B4226", "label": "Custard FOTD"},
+}
+
 # Base scoop colors
 BASE_COLORS = {
     "vanilla": "#F5DEB3",
@@ -662,7 +673,7 @@ def format_flavor_for_display(name, max_chars = 5):
     else:
         return [name[:max_chars]]
 
-def create_three_day_view(flavors, location_name):
+def create_three_day_view(flavors, location_name, brand_color = "#003366"):
     """Create 3-day forecast with mini cones and flavor names.
 
     Pixel budget (32px):
@@ -739,7 +750,7 @@ def create_three_day_view(flavors, location_name):
                     height = 6,
                     child = render.Stack(
                         children = [
-                            render.Box(width = 64, height = 5, color = "#003366"),
+                            render.Box(width = 64, height = 5, color = brand_color),
                             render.Box(
                                 width = 64,
                                 height = 6,
@@ -770,6 +781,8 @@ def main(config):
 
     view_mode = config.get("view_mode", "single")
     location_name = config.get("location_name", "Mt. Horeb")
+    brand = config.get("brand", "culvers")
+    brand_cfg = BRAND_CONFIG.get(brand, BRAND_CONFIG["culvers"])
 
     # Read flattened flavor data from config params
     flavors = []
@@ -792,7 +805,7 @@ def main(config):
 
     # Choose view based on config
     if view_mode == "three_day":
-        return render.Root(child = create_three_day_view(flavors, location_name))
+        return render.Root(child = create_three_day_view(flavors, location_name, brand_cfg["color"]))
     else:
         # Single day view
         flavor_name = flavors[0]["name"]
@@ -808,11 +821,11 @@ def main(config):
                     render.Box(
                         width = 64,
                         height = 10,
-                        color = "#003366",
+                        color = brand_cfg["color"],
                         child = render.Marquee(
                             width = 64,
                             child = render.Text(
-                                content = "Culver's FOTD - " + location_name,
+                                content = brand_cfg["label"] + " - " + location_name,
                                 font = "tom-thumb",
                                 color = "#FFFFFF",
                             ),
@@ -865,6 +878,22 @@ def get_schema():
                         display = "3-Day Forecast",
                         value = "three_day",
                     ),
+                ],
+            ),
+            schema.Dropdown(
+                id = "brand",
+                name = "Brand",
+                desc = "Custard brand for theming",
+                icon = "store",
+                default = "culvers",
+                options = [
+                    schema.Option(display = "Culver's", value = "culvers"),
+                    schema.Option(display = "Kopp's", value = "kopps"),
+                    schema.Option(display = "Gille's", value = "gilles"),
+                    schema.Option(display = "Hefner's", value = "hefners"),
+                    schema.Option(display = "Kraverz", value = "kraverz"),
+                    schema.Option(display = "Oscar's", value = "oscars"),
+                    schema.Option(display = "Generic Custard", value = "generic"),
                 ],
             ),
         ],

@@ -13,6 +13,7 @@ import { fetchFlavors as defaultFetchFlavors } from './flavor-fetcher.js';
 import { VALID_SLUGS as DEFAULT_VALID_SLUGS } from './valid-slugs.js';
 import { STORE_INDEX as DEFAULT_STORE_INDEX } from './store-index.js';
 import { normalize, matchesFlavor, findSimilarFlavors } from './flavor-matcher.js';
+import { recordSnapshots } from './snapshot-writer.js';
 import { handleAlertRoute } from './alert-routes.js';
 import { handleFlavorCatalog } from './flavor-catalog.js';
 import { checkAlerts } from './alert-checker.js';
@@ -168,6 +169,9 @@ export async function getFlavorsCached(slug, kv, fetchFlavorsFn, isOverride = fa
   await kv.put(cacheKey, JSON.stringify(data), {
     expirationTtl: KV_TTL_SECONDS,
   });
+
+  // Persist flavor observations for historical analysis
+  await recordSnapshots(kv, slug, data);
 
   // Increment fetch counter after successful fetch
   await incrementFetchCount(kv);

@@ -81,6 +81,7 @@ def step_tidbyt_render_push(cache_data: Dict, config: Dict) -> bool:
     device_id = tidbyt_config.get('device_id', '')
     installation_id = tidbyt_config.get('installation_id', 'culvers')
     view_mode = tidbyt_config.get('view_mode', 'three_day')
+    brand = tidbyt_config.get('brand', 'culvers')
     api_token = os.environ.get('TIDBYT_API_TOKEN', '')
 
     if not device_id:
@@ -113,6 +114,7 @@ def step_tidbyt_render_push(cache_data: Dict, config: Dict) -> bool:
         'pixlet', 'render', str(STAR_FILE),
         f'view_mode={view_mode}',
         f'location_name={location_name}',
+        f'brand={brand}',
     ]
 
     num_flavors = 3 if view_mode == 'three_day' else 1

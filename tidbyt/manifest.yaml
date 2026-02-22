@@ -1,8 +1,8 @@
 ---
 id: culvers-fotd
-name: Culver's FOTD
-summary: Culver's Flavor Display
-desc: Shows the current Flavor of the Day from your favorite Culver's location with color-coded icons.
+name: Custard FOTD
+summary: Frozen custard Flavor of the Day display
+desc: Shows the current Flavor of the Day from your favorite frozen custard location with color-coded icons. Supports Culver's, Kopp's, Gille's, Hefner's, Kraverz, and Oscar's.
 author: Chris Kaschner
 fileName: culvers_fotd.star
 packageName: culversfotd
