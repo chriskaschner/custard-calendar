@@ -282,17 +282,16 @@
         suggestionsPanel.hidden = true;
       }
 
-      // Easter egg: no Culver's, brands only, zoomed into MKE
+      // Easter egg: no Culver's, brands only, any brand stores in MKE area
       if (!hasCulvers && brandResults.length > 0) {
-        const center = map.getCenter();
-        const zoom = map.getZoom();
-        const nearMKE = center.lat > 42.8 && center.lat < 43.3 && center.lng > -88.2 && center.lng < -87.7;
-        if (nearMKE && zoom >= 7) {
+        const hasMKEStores = brandResults.some(s =>
+          s.lat > 42.8 && s.lat < 43.3 && s.lng > -88.2 && s.lng < -87.7
+        );
+        if (hasMKEStores) {
           const quips = [
             "Oh sure, skip the ButterBurgers, that'll end well.",
             "Oh, too good for Culver's now, are we?",
             "Ope, found the custard hipster.",
-            "Real Milwaukeeans eat both, bud.",
             "You can take the kid outta Culver's, but you can't take the Culver's outta the kid.",
             "Your aunt from Waukesha is very disappointed in you right now.",
             "You're just going to scootch past Culver's?!?!",
