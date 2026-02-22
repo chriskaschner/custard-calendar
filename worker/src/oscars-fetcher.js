@@ -78,8 +78,11 @@ export function parseOscarsHtml(html) {
         .replace(/<b>/gi, '').replace(/<\/b>/gi, '')
         .replace(/<a[^>]*>/gi, '').replace(/<\/a>/gi, '')
         .replace(/&amp;/g, '&')
+        .replace(/&#0*38;/g, '&')
         .replace(/&#8217;/g, "'")
+        .replace(/\u2019/g, "'")
         .replace(/&#8211;/g, '-')
+        .replace(/&#8230;/g, '...')
         .replace(/&#039;/g, "'")
         .replace(/&nbsp;/g, ' ')
         .replace(/\s+/g, ' ')
@@ -113,7 +116,9 @@ export function parseOscarsHtml(html) {
  */
 export async function fetchOscarsFlavors(slug, fetchFn = globalThis.fetch) {
   const url = 'https://www.oscarscustard.com/wp-json/wp/v2/pages?slug=flavors&_fields=content';
-  const response = await fetchFn(url);
+  const response = await fetchFn(url, {
+    headers: { 'User-Agent': 'CustardCalendar/1.0 (+https://github.com/chriskaschner/custard-calendar)' },
+  });
 
   if (!response.ok) {
     throw new Error(`Failed to fetch Oscar's flavor page: ${response.status}`);
