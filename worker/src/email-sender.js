@@ -123,12 +123,15 @@ export async function sendAlertEmail({ email, storeName, storeAddress, matches, 
     </tr>`;
   }).join('\n');
 
+  const quip = getRandomQuip();
+
   const html = `
 <!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"></head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #1a1a1a;">
   <h2 style="color: #003366;">A favorite flavor is coming up!</h2>
+  <p style="color: #888; font-style: italic;">${escapeHtml(quip)}</p>
   <p>\u{1F4CD} <strong>${escapeHtml(storeName)}</strong>${storeAddress ? ` \u2014 ${escapeHtml(storeAddress)}` : ''}</p>
   <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
     ${matchRows}
@@ -156,6 +159,128 @@ export async function sendAlertEmail({ email, storeName, storeAddress, matches, 
     apiKey,
     fromAddress,
   );
+}
+
+/**
+ * Build and send a weekly forecast digest email.
+ * @param {Object} params
+ * @param {string} params.email - Recipient
+ * @param {string} params.storeName - Human-readable store name
+ * @param {string} params.storeAddress - Store street address
+ * @param {Array<{title: string, date: string, description: string}>} params.matches - Matched flavors this week
+ * @param {Array<{title: string, date: string}>} params.allFlavors - All flavors for the week
+ * @param {string} params.statusUrl
+ * @param {string} params.unsubscribeUrl
+ * @param {string} [params.narrative] - Fun commentary about the week's flavors
+ * @param {string} apiKey
+ * @param {string} fromAddress
+ */
+export async function sendWeeklyDigestEmail({ email, storeName, storeAddress, matches, allFlavors, statusUrl, unsubscribeUrl, narrative }, apiKey, fromAddress) {
+  const quip = getRandomQuip();
+
+  const subject = matches.length > 0
+    ? `\u{1F4CB} Your weekly flavor forecast for ${storeName}`
+    : `\u{1F4CB} This week at ${storeName} — your flavor forecast`;
+
+  // Build the full week schedule
+  const weekRows = (allFlavors || []).map(f => {
+    const d = new Date(f.date + 'T12:00:00');
+    const dayName = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    const isMatch = matches.some(m => m.date === f.date && m.title === f.title);
+    const highlight = isMatch ? 'background: #e8f5e9; font-weight: bold;' : '';
+    const matchBadge = isMatch ? ' \u2b50' : '';
+    return `
+    <tr>
+      <td style="padding: 8px 12px; border-bottom: 1px solid #eee; ${highlight}">
+        <span style="color: #666;">${escapeHtml(dayName)}</span>
+      </td>
+      <td style="padding: 8px 12px; border-bottom: 1px solid #eee; ${highlight}">
+        ${escapeHtml(f.title)}${matchBadge}
+      </td>
+    </tr>`;
+  }).join('\n');
+
+  const narrativeBlock = narrative
+    ? `<p style="font-style: italic; color: #555; margin: 16px 0;">${escapeHtml(narrative)}</p>`
+    : '';
+
+  const matchSummary = matches.length > 0
+    ? `<p>\u2b50 <strong>${matches.length} favorite${matches.length > 1 ? 's' : ''}</strong> spotted this week!</p>`
+    : `<p>No favorites this week — but there's always next week.</p>`;
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #1a1a1a;">
+  <h2 style="color: #003366;">Your Weekly Flavor Forecast</h2>
+  <p style="color: #888; font-style: italic;">${escapeHtml(quip)}</p>
+  <p>\u{1F4CD} <strong>${escapeHtml(storeName)}</strong>${storeAddress ? ` \u2014 ${escapeHtml(storeAddress)}` : ''}</p>
+  ${matchSummary}
+  ${narrativeBlock}
+  <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
+    <thead>
+      <tr style="background: #f8f9fa;">
+        <th style="padding: 8px 12px; text-align: left; font-size: 13px; color: #666;">Day</th>
+        <th style="padding: 8px 12px; text-align: left; font-size: 13px; color: #666;">Flavor</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${weekRows}
+    </tbody>
+  </table>
+  <p style="color: #888; font-size: 13px;">\u2b50 = one of your favorites</p>
+  <p>
+    <a href="${escapeHtml(statusUrl)}" style="color: #003366; text-decoration: underline;">Manage preferences</a>
+    &nbsp;&middot;&nbsp;
+    <a href="${escapeHtml(unsubscribeUrl)}" style="color: #666; text-decoration: underline;">Unsubscribe</a>
+  </p>
+  <hr style="border: none; border-top: 1px solid #eee; margin: 24px 0;">
+  <p style="color: #999; font-size: 12px;">Custard Calendar — Your weekly flavor intelligence briefing</p>
+</body>
+</html>`.trim();
+
+  return sendEmail(
+    {
+      to: email,
+      subject,
+      html,
+      headers: {
+        'List-Unsubscribe': `<${unsubscribeUrl}>`,
+        'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+      },
+    },
+    apiKey,
+    fromAddress,
+  );
+}
+
+/**
+ * Rotating quips for flavor alert emails — custard-grade humor.
+ */
+const ALERT_QUIPS = [
+  "Your custard intelligence has arrived.",
+  "Breaking flavor news from the frozen frontier.",
+  "This just in from the custard beat.",
+  "Your flavor radar is picking something up...",
+  "The cones have spoken.",
+  "Alert: incoming frozen deliciousness.",
+  "Custard dispatch reporting for duty.",
+  "Your frozen asset report is ready.",
+  "The scoops don't lie.",
+  "Flavor intel, hot off the machine.",
+  "From the desk of the Chief Custard Officer.",
+  "Priority transmission from flavor HQ.",
+  "Your daily scoop of frozen intelligence.",
+  "The custard market is moving.",
+  "Fresh from the flavor surveillance network.",
+];
+
+/**
+ * Get a random quip for email personalization.
+ */
+export function getRandomQuip() {
+  return ALERT_QUIPS[Math.floor(Math.random() * ALERT_QUIPS.length)];
 }
 
 /**

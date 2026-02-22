@@ -84,7 +84,8 @@ async function handleSubscribe(request, env, corsHeaders) {
     );
   }
 
-  const { email, slug, favorites } = body;
+  const { email, slug, favorites, frequency: rawFreq } = body;
+  const frequency = rawFreq === 'weekly' ? 'weekly' : 'daily';
 
   // Validate email
   if (!email || typeof email !== 'string' || email.length > MAX_EMAIL_LENGTH || !EMAIL_REGEX.test(email)) {
@@ -173,6 +174,7 @@ async function handleSubscribe(request, env, corsHeaders) {
     email: email.toLowerCase(),
     slug,
     favorites,
+    frequency,
   }), { expirationTtl: 86400 });
 
   // Increment rate limit counters
@@ -183,7 +185,7 @@ async function handleSubscribe(request, env, corsHeaders) {
   const apiKey = env.RESEND_API_KEY;
   const fromAddress = env.ALERT_FROM_EMAIL || 'alerts@custard-calendar.com';
   const baseUrl = env.WORKER_BASE_URL || new URL(request.url).origin;
-  const confirmUrl = `${baseUrl}/api/alerts/confirm?token=${confirmToken}`;
+  const confirmUrl = `${baseUrl}/api/v1/alerts/confirm?token=${confirmToken}`;
   const storeName = getStoreName(slug, env);
 
   if (apiKey) {
@@ -241,11 +243,12 @@ async function handleConfirm(url, env, corsHeaders) {
   // Generate tokens for management
   const unsubToken = crypto.randomUUID();
 
-  // Write active subscription
+  // Write active subscription (with frequency from pending record)
   await kv.put(`alert:sub:${subId}`, JSON.stringify({
     email,
     slug,
     favorites,
+    frequency: pending.frequency || 'daily',
     unsubToken,
     createdAt: new Date().toISOString(),
   }));

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { handleRequest, isValidSlug, getFetcherForSlug, getBrandForSlug } from '../src/index.js';
+import { handleRequest, isValidSlug, getFetcherForSlug, getBrandForSlug, normalizePath } from '../src/index.js';
 
 // Mock flavor data returned by fetchFlavors
 const MOCK_FLAVORS = {
@@ -200,8 +200,8 @@ describe('Security hardening', () => {
   });
 
   it('11: returns fallback event when daily fetch budget is exhausted', async () => {
-    // Pre-fill the fetch counter to the limit
-    mockKV._store.set('meta:fetch-count', '50');
+    // Pre-fill the per-slug fetch counter to the limit
+    mockKV._store.set('meta:fetch-count:mt-horeb', '3');
 
     const req = makeRequest('/calendar.ics?primary=mt-horeb');
     const res = await handleRequest(req, env, mockFetchFlavors);
@@ -714,5 +714,211 @@ describe('MKE brand calendar generation', () => {
     const req2 = makeRequest('/calendar.ics?primary=kopps-brookfield');
     await handleRequest(req2, env, koppsFetcher);
     expect(koppsFetcher).not.toHaveBeenCalled();
+  });
+});
+
+// --- API v1 versioned routing ---
+
+describe('normalizePath', () => {
+  it('maps /api/v1/flavors to /api/flavors with isVersioned=true', () => {
+    expect(normalizePath('/api/v1/flavors')).toEqual({ canonical: '/api/flavors', isVersioned: true });
+  });
+
+  it('maps /api/v1/stores to /api/stores', () => {
+    expect(normalizePath('/api/v1/stores')).toEqual({ canonical: '/api/stores', isVersioned: true });
+  });
+
+  it('maps /api/v1/geolocate to /api/geolocate', () => {
+    expect(normalizePath('/api/v1/geolocate')).toEqual({ canonical: '/api/geolocate', isVersioned: true });
+  });
+
+  it('maps /api/v1/nearby-flavors to /api/nearby-flavors', () => {
+    expect(normalizePath('/api/v1/nearby-flavors')).toEqual({ canonical: '/api/nearby-flavors', isVersioned: true });
+  });
+
+  it('maps /api/v1/flavors/catalog to /api/flavors/catalog', () => {
+    expect(normalizePath('/api/v1/flavors/catalog')).toEqual({ canonical: '/api/flavors/catalog', isVersioned: true });
+  });
+
+  it('maps /api/v1/alerts/subscribe to /api/alerts/subscribe', () => {
+    expect(normalizePath('/api/v1/alerts/subscribe')).toEqual({ canonical: '/api/alerts/subscribe', isVersioned: true });
+  });
+
+  it('maps /v1/calendar.ics to /calendar.ics', () => {
+    expect(normalizePath('/v1/calendar.ics')).toEqual({ canonical: '/calendar.ics', isVersioned: true });
+  });
+
+  it('passes through legacy /api/flavors as isVersioned=false', () => {
+    expect(normalizePath('/api/flavors')).toEqual({ canonical: '/api/flavors', isVersioned: false });
+  });
+
+  it('passes through /calendar.ics as isVersioned=false', () => {
+    expect(normalizePath('/calendar.ics')).toEqual({ canonical: '/calendar.ics', isVersioned: false });
+  });
+
+  it('passes through /health as isVersioned=false', () => {
+    expect(normalizePath('/health')).toEqual({ canonical: '/health', isVersioned: false });
+  });
+});
+
+describe('API v1 versioned endpoints', () => {
+  let mockKV;
+  let mockFetchFlavors;
+  let env;
+
+  beforeEach(() => {
+    mockKV = createMockKV();
+    mockFetchFlavors = createMockFetchFlavors();
+    env = { FLAVOR_CACHE: mockKV, _validSlugsOverride: TEST_VALID_SLUGS };
+  });
+
+  it('51: /api/v1/flavors returns data with API-Version header', async () => {
+    const req = makeRequest('/api/v1/flavors?slug=mt-horeb');
+    const res = await handleRequest(req, env, mockFetchFlavors);
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get('API-Version')).toBe('1');
+    const body = await res.json();
+    expect(body.name).toBe('Mt. Horeb');
+  });
+
+  it('52: legacy /api/flavors still works without API-Version header', async () => {
+    const req = makeRequest('/api/flavors?slug=mt-horeb');
+    const res = await handleRequest(req, env, mockFetchFlavors);
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get('API-Version')).toBeNull();
+    const body = await res.json();
+    expect(body.name).toBe('Mt. Horeb');
+  });
+
+  it('53: /api/v1/stores returns data with API-Version header', async () => {
+    env._storeIndexOverride = TEST_STORE_INDEX;
+    const req = makeRequest('/api/v1/stores?q=madison');
+    const res = await handleRequest(req, env, mockFetchFlavors);
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get('API-Version')).toBe('1');
+    const body = await res.json();
+    expect(body.stores.length).toBeGreaterThan(0);
+  });
+
+  it('54: /v1/calendar.ics returns calendar with API-Version header', async () => {
+    const req = makeRequest('/v1/calendar.ics?primary=mt-horeb');
+    const res = await handleRequest(req, env, mockFetchFlavors);
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get('API-Version')).toBe('1');
+    expect(res.headers.get('Content-Type')).toBe('text/calendar; charset=utf-8');
+  });
+
+  it('55: /api/v1/geolocate returns data with API-Version header', async () => {
+    const req = makeRequest('/api/v1/geolocate');
+    const res = await handleRequest(req, env, mockFetchFlavors);
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get('API-Version')).toBe('1');
+  });
+
+  it('56: /health has no API-Version header (unversioned)', async () => {
+    const req = makeRequest('/health');
+    const res = await handleRequest(req, env, mockFetchFlavors);
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get('API-Version')).toBeNull();
+  });
+});
+
+describe('Per-slug fetch budget', () => {
+  let mockKV;
+  let mockFetchFlavors;
+  let env;
+
+  beforeEach(() => {
+    mockKV = createMockKV();
+    mockFetchFlavors = createMockFetchFlavors();
+    env = {
+      FLAVOR_CACHE: mockKV,
+      _validSlugsOverride: TEST_VALID_SLUGS,
+    };
+  });
+
+  it('61: blocks slug at per-slug limit while other slugs still work', async () => {
+    // Exhaust mt-horeb budget
+    mockKV._store.set('meta:fetch-count:mt-horeb', '3');
+
+    // mt-horeb should get fallback
+    const req1 = makeRequest('/api/v1/flavors?slug=mt-horeb');
+    const res1 = await handleRequest(req1, env, mockFetchFlavors);
+    expect(res1.status).toBe(400); // budget exhausted error
+    expect(mockFetchFlavors).not.toHaveBeenCalled();
+
+    // madison-todd-drive should still work
+    const req2 = makeRequest('/api/v1/flavors?slug=madison-todd-drive');
+    const res2 = await handleRequest(req2, env, mockFetchFlavors);
+    expect(res2.status).toBe(200);
+    const body = await res2.json();
+    expect(body.name).toBe('Madison Todd Dr');
+  });
+
+  it('62: blocks all slugs when global circuit breaker is tripped', async () => {
+    mockKV._store.set('meta:fetch-count', '200');
+
+    const req = makeRequest('/api/v1/flavors?slug=mt-horeb');
+    const res = await handleRequest(req, env, mockFetchFlavors);
+    expect(res.status).toBe(400);
+    expect(mockFetchFlavors).not.toHaveBeenCalled();
+  });
+
+  it('63: increments both per-slug and global counters on fetch', async () => {
+    const req = makeRequest('/api/v1/flavors?slug=mt-horeb');
+    await handleRequest(req, env, mockFetchFlavors);
+
+    expect(mockKV._store.get('meta:fetch-count:mt-horeb')).toBe('1');
+    expect(mockKV._store.get('meta:fetch-count')).toBe('1');
+  });
+});
+
+describe('Bearer token auth', () => {
+  let mockKV;
+  let mockFetchFlavors;
+  let env;
+
+  beforeEach(() => {
+    mockKV = createMockKV();
+    mockFetchFlavors = createMockFetchFlavors();
+    env = {
+      FLAVOR_CACHE: mockKV,
+      _validSlugsOverride: TEST_VALID_SLUGS,
+      ACCESS_TOKEN: 'test-secret-token',
+    };
+  });
+
+  it('57: accepts Authorization: Bearer header', async () => {
+    const req = new Request('https://example.com/api/v1/flavors?slug=mt-horeb', {
+      headers: { 'Authorization': 'Bearer test-secret-token' },
+    });
+    const res = await handleRequest(req, env, mockFetchFlavors);
+    expect(res.status).toBe(200);
+  });
+
+  it('58: still accepts ?token= query param as fallback', async () => {
+    const req = makeRequest('/api/v1/flavors?slug=mt-horeb&token=test-secret-token');
+    const res = await handleRequest(req, env, mockFetchFlavors);
+    expect(res.status).toBe(200);
+  });
+
+  it('59: rejects request with wrong Bearer token', async () => {
+    const req = new Request('https://example.com/api/v1/flavors?slug=mt-horeb', {
+      headers: { 'Authorization': 'Bearer wrong-token' },
+    });
+    const res = await handleRequest(req, env, mockFetchFlavors);
+    expect(res.status).toBe(403);
+  });
+
+  it('60: rejects request with no auth when ACCESS_TOKEN is set', async () => {
+    const req = makeRequest('/api/v1/flavors?slug=mt-horeb');
+    const res = await handleRequest(req, env, mockFetchFlavors);
+    expect(res.status).toBe(403);
   });
 });

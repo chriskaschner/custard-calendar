@@ -24,6 +24,17 @@ ALERT_FROM_EMAIL = "alerts@custard.chriskaschner.com"
 binding = "FLAVOR_CACHE"
 id = "1642a7da91e144cb9b233b940430250c"
 
-# Cron trigger: daily alert check at noon UTC (6-7 AM Central)
+# D1 database for durable historical snapshots
+[[d1_databases]]
+binding = "DB"
+database_name = "custard-snapshots"
+database_id = "TO_BE_CREATED"
+# Create with: npx wrangler d1 create custard-snapshots
+# Then update database_id above and run:
+#   npx wrangler d1 migrations apply custard-snapshots
+
+# Cron triggers:
+#   Daily alert check at noon UTC (6-7 AM Central)
+#   Weekly digest at 2 PM UTC Sunday (8-9 AM Central)
 [triggers]
-crons = ["0 12 * * *"]
+crons = ["0 12 * * *", "0 14 * * 0"]

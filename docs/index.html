@@ -4,6 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Custard Calendar — Flavor of the Day</title>
+  <meta name="description" content="Subscribe to a calendar showing daily Flavor of the Day for Culver's, Kopp's, Gille's, and more frozen custard shops.">
+  <meta property="og:title" content="Custard Calendar — Flavor of the Day">
+  <meta property="og:description" content="Subscribe to a calendar showing daily Flavor of the Day for frozen custard shops near you.">
+  <meta property="og:url" content="https://custard.chriskaschner.com/">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://custard.chriskaschner.com/og-calendar.png">
+  <meta name="twitter:card" content="summary_large_image">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8D%A6%3C/text%3E%3C/svg%3E">
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#003366">
@@ -207,7 +214,7 @@
 
     async function autoSelectState() {
       try {
-        const resp = await fetch(WORKER_BASE + '/api/geolocate');
+        const resp = await fetch(WORKER_BASE + '/api/v1/geolocate');
         const geo = await resp.json();
         if (geo.state && stateFilter.querySelector(`option[value="${geo.state}"]`)) {
           stateFilter.value = geo.state;
@@ -371,7 +378,7 @@
         return;
       }
 
-      let url = `${WORKER_BASE}/calendar.ics?primary=${primarySlug}`;
+      let url = `${WORKER_BASE}/v1/calendar.ics?primary=${primarySlug}`;
       if (secondarySlugs.size > 0) {
         url += `&secondary=${[...secondarySlugs].join(',')}`;
       }

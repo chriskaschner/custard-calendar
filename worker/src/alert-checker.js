@@ -10,7 +10,7 @@
  */
 
 import { normalize, matchesFlavor } from './flavor-matcher.js';
-import { sendAlertEmail } from './email-sender.js';
+import { sendAlertEmail, sendWeeklyDigestEmail } from './email-sender.js';
 import { accumulateFlavors } from './flavor-catalog.js';
 
 /**
@@ -29,8 +29,9 @@ export async function checkAlerts(env, getFlavorsCachedFn) {
     return { sent: 0, checked: 0, errors: [] };
   }
 
-  // List all active subscriptions
-  const subscriptions = await listAllSubscriptions(kv);
+  // List all active subscriptions, filtering to daily-only
+  const allSubscriptions = await listAllSubscriptions(kv);
+  const subscriptions = allSubscriptions.filter(sub => (sub.frequency || 'daily') !== 'weekly');
   if (subscriptions.length === 0) {
     await writeRunMetadata(kv, 0, 0);
     return { sent: 0, checked: 0, errors: [] };
@@ -136,6 +137,114 @@ export async function checkAlerts(env, getFlavorsCachedFn) {
 
   // Write run metadata
   await writeRunMetadata(kv, subscriptions.length, sent);
+
+  return { sent, checked: subscriptions.length, errors };
+}
+
+/**
+ * Weekly digest handler — called by Sunday cron trigger.
+ * Sends a full-week flavor forecast to weekly subscribers.
+ * @param {Object} env - Worker environment bindings
+ * @param {Function} getFlavorsCachedFn - Flavor fetcher (injected for testing)
+ */
+export async function checkWeeklyDigests(env, getFlavorsCachedFn) {
+  const kv = env.FLAVOR_CACHE;
+  const apiKey = env.RESEND_API_KEY;
+  const fromAddress = env.ALERT_FROM_EMAIL || 'alerts@custard-calendar.com';
+  const baseUrl = env.WORKER_BASE_URL || 'https://custard-calendar.chris-kaschner.workers.dev';
+
+  if (!apiKey) {
+    console.log('RESEND_API_KEY not configured, skipping weekly digest');
+    return { sent: 0, checked: 0, errors: [] };
+  }
+
+  // List all active subscriptions, filtering to weekly-only
+  const allSubscriptions = await listAllSubscriptions(kv);
+  const subscriptions = allSubscriptions.filter(sub => sub.frequency === 'weekly');
+  if (subscriptions.length === 0) {
+    return { sent: 0, checked: 0, errors: [] };
+  }
+
+  // Group by slug to minimize flavor fetches
+  const bySlug = new Map();
+  for (const sub of subscriptions) {
+    if (!bySlug.has(sub.slug)) {
+      bySlug.set(sub.slug, []);
+    }
+    bySlug.get(sub.slug).push(sub);
+  }
+
+  // Fetch flavors per slug
+  const flavorsBySlug = new Map();
+  for (const slug of bySlug.keys()) {
+    try {
+      const data = await getFlavorsCachedFn(slug, kv);
+      flavorsBySlug.set(slug, data);
+    } catch (err) {
+      console.error(`Weekly digest: failed to fetch flavors for ${slug}: ${err.message}`);
+    }
+  }
+
+  // Build week date range (today through next 6 days = 7 days total)
+  const today = new Date();
+  const weekDates = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(today);
+    d.setDate(d.getDate() + i);
+    weekDates.push(d.toISOString().slice(0, 10));
+  }
+
+  let sent = 0;
+  const errors = [];
+
+  for (const sub of subscriptions) {
+    const storeData = flavorsBySlug.get(sub.slug);
+    if (!storeData || !storeData.flavors) continue;
+
+    // Get all flavors for the week
+    const weekFlavors = storeData.flavors.filter(f => weekDates.includes(f.date));
+    if (weekFlavors.length === 0) continue;
+
+    // Find matches against favorites
+    const matches = [];
+    for (const flavor of weekFlavors) {
+      for (const fav of sub.favorites) {
+        if (matchesFlavor(flavor.title, fav, flavor.description)) {
+          matches.push(flavor);
+          break;
+        }
+      }
+    }
+
+    // Build URLs
+    const statusUrl = `${baseUrl}/api/alerts/status?token=${sub.unsubToken}`;
+    const unsubscribeUrl = `${baseUrl}/api/alerts/unsubscribe?token=${sub.unsubToken}`;
+
+    // Send weekly digest (even if no matches — the full week forecast is the value)
+    try {
+      const result = await sendWeeklyDigestEmail(
+        {
+          email: sub.email,
+          storeName: storeData.name || sub.slug,
+          storeAddress: storeData.address || '',
+          matches,
+          allFlavors: weekFlavors.map(f => ({ title: f.title, date: f.date })),
+          statusUrl,
+          unsubscribeUrl,
+        },
+        apiKey,
+        fromAddress,
+      );
+
+      if (result.ok) {
+        sent++;
+      } else {
+        errors.push(`${sub.email}/${sub.slug}: ${result.error}`);
+      }
+    } catch (err) {
+      errors.push(`${sub.email}/${sub.slug}: ${err.message}`);
+    }
+  }
 
   return { sent, checked: subscriptions.length, errors };
 }

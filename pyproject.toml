@@ -4,7 +4,6 @@ version = "0.1.0"
 description = "Add your description here"
 requires-python = ">=3.12"
 dependencies = [
-    "beautifulsoup4>=4.14.3",
     "google-api-python-client>=2.189.0",
     "google-auth>=2.48.0",
     "google-auth-httplib2>=0.3.0",

@@ -139,3 +139,50 @@ describe('recordSnapshots', () => {
     expect(kv.put).not.toHaveBeenCalled();
   });
 });
+
+describe('D1 dual-write', () => {
+  let kv;
+
+  beforeEach(() => {
+    kv = createMockKV();
+  });
+
+  it('writes to D1 when db binding is provided', async () => {
+    const mockRun = vi.fn(async () => ({}));
+    const mockBind = vi.fn(() => ({ run: mockRun }));
+    const mockPrepare = vi.fn(() => ({ bind: mockBind }));
+    const db = { prepare: mockPrepare };
+
+    await recordSnapshot(kv, 'mt-horeb', '2026-02-22', 'Mint Explosion', 'desc', { db, brand: "Culver's" });
+
+    expect(mockPrepare).toHaveBeenCalledOnce();
+    expect(mockBind).toHaveBeenCalledWith(
+      "Culver's", 'mt-horeb', '2026-02-22', 'Mint Explosion', 'mint explosion', 'desc',
+      expect.any(String),
+    );
+    expect(mockRun).toHaveBeenCalledOnce();
+  });
+
+  it('does not fail when D1 write errors', async () => {
+    const db = {
+      prepare: vi.fn(() => ({
+        bind: vi.fn(() => ({
+          run: vi.fn(async () => { throw new Error('D1 unavailable'); }),
+        })),
+      })),
+    };
+
+    // Should not throw — D1 failures are non-fatal
+    await recordSnapshot(kv, 'mt-horeb', '2026-02-22', 'Mint Explosion', 'desc', { db, brand: "Culver's" });
+
+    // KV writes should still succeed
+    expect(kv.put).toHaveBeenCalled();
+  });
+
+  it('skips D1 write when no db binding', async () => {
+    await recordSnapshot(kv, 'mt-horeb', '2026-02-22', 'Mint Explosion', 'desc', {});
+
+    // KV writes should succeed
+    expect(kv.put).toHaveBeenCalled();
+  });
+});

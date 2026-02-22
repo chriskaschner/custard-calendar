@@ -4,6 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Custard Map — Find a Flavor Near You</title>
+  <meta name="description" content="Find today's Flavor of the Day at frozen custard shops near you. Search by location or flavor.">
+  <meta property="og:title" content="Custard Map — Find a Flavor Near You">
+  <meta property="og:description" content="Find today's Flavor of the Day at frozen custard shops near you. Search by location or flavor.">
+  <meta property="og:url" content="https://custard.chriskaschner.com/map.html">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://custard.chriskaschner.com/og-map.png">
+  <meta name="twitter:card" content="summary_large_image">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍦</text></svg>">
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
@@ -188,51 +195,51 @@
       });
     });
 
-    let cachedBrandResults = []; // cached so map moves don't re-fetch
-    let cachedBrandKey = '';    // tracks which brands are cached
+    let cachedSecondaryResults = []; // cached so map moves don't re-fetch
+    let cachedSecondaryKey = '';    // tracks which brands are cached
 
     async function refreshResults(skipFitBounds = false) {
-      const hasCulvers = activeBrands.has('culvers');
-      const nonCulversBrands = [...activeBrands].filter(b => b !== 'culvers');
+      const hasPrimary = activeBrands.has('culvers');
+      const secondaryBrands = [...activeBrands].filter(b => b !== 'culvers');
 
       // If nothing active, just clear
-      if (!hasCulvers && nonCulversBrands.length === 0) {
+      if (!hasPrimary && secondaryBrands.length === 0) {
         markers.clearLayers();
         resultsSection.hidden = true;
-        cachedBrandResults = [];
-        cachedBrandKey = '';
+        cachedSecondaryResults = [];
+        cachedSecondaryKey = '';
         return;
       }
 
       // Only re-fetch brands when the active set changes
-      const brandKey = nonCulversBrands.sort().join(',');
-      const needBrandFetch = brandKey && brandKey !== cachedBrandKey;
+      const brandKey = secondaryBrands.sort().join(',');
+      const needSecondaryFetch = brandKey && brandKey !== cachedSecondaryKey;
 
       // Kick off Culver's search; only fetch brands if selection changed
-      const culversPromise = hasCulvers && locationInput.value.trim() ? doCulversSearch() : Promise.resolve(null);
-      const brandPromise = needBrandFetch ? doBrandSearch(nonCulversBrands) : Promise.resolve(null);
+      const primaryPromise = hasPrimary && locationInput.value.trim() ? doPrimarySearch() : Promise.resolve(null);
+      const brandPromise = needSecondaryFetch ? doBrandSearch(secondaryBrands) : Promise.resolve(null);
 
-      const [culversData, freshBrandResults] = await Promise.all([culversPromise, brandPromise]);
+      const [primaryData, freshSecondaryResults] = await Promise.all([primaryPromise, brandPromise]);
 
-      if (freshBrandResults !== null) {
-        cachedBrandResults = freshBrandResults;
-        cachedBrandKey = brandKey;
+      if (freshSecondaryResults !== null) {
+        cachedSecondaryResults = freshSecondaryResults;
+        cachedSecondaryKey = brandKey;
       }
-      const brandResults = brandKey ? cachedBrandResults : [];
+      const brandResults = brandKey ? cachedSecondaryResults : [];
 
       // Build unified store list with normalized coords + distance
       const center = map.getCenter();
       const allStores = [];
-      const matchSlugs = new Set(); // track flavor-matched Culver's slugs
+      const matchedSlugs = new Set(); // track flavor-matched Culver's slugs
 
-      if (culversData) {
-        for (const store of culversData.matches) {
+      if (primaryData) {
+        for (const store of primaryData.matches) {
           if (!store.lat || !store.lon) continue;
-          matchSlugs.add(store.slug);
+          matchedSlugs.add(store.slug);
           allStores.push({ ...store, _lat: store.lat, _lon: store.lon, _match: true, _brand: 'culvers',
             _dist: haversine(center.lat, center.lng, store.lat, store.lon) });
         }
-        for (const store of culversData.nearby) {
+        for (const store of primaryData.nearby) {
           if (!store.lat || !store.lon) continue;
           allStores.push({ ...store, _lat: store.lat, _lon: store.lon, _match: false, _brand: 'culvers',
             _dist: haversine(center.lat, center.lng, store.lat, store.lon) });
@@ -253,7 +260,7 @@
       // Markers + bounds
       markers.clearLayers();
       const allBounds = L.latLngBounds();
-      const hasFlavorFilter = culversData ? !!culversData.query.flavor : !!flavorQuery;
+      const hasFlavorFilter = primaryData ? !!primaryData.query.flavor : !!flavorQuery;
 
       for (const store of allStores) {
         allBounds.extend([store._lat, store._lon]);
@@ -271,15 +278,15 @@
       }
 
       // Suggestions
-      if (culversData && hasFlavorFilter && culversData.matches.length === 0 && culversData.suggestions.length > 0) {
-        renderSuggestions(culversData);
+      if (primaryData && hasFlavorFilter && primaryData.matches.length === 0 && primaryData.suggestions.length > 0) {
+        renderSuggestions(primaryData);
       } else {
         suggestionsPanel.hidden = true;
       }
 
       // Easter egg quip: no Culver's active, brands only, MKE area stores present
       let quipHtml = '';
-      if (!hasCulvers && brandResults.length > 0) {
+      if (!hasPrimary && brandResults.length > 0) {
         const hasMKEStores = brandResults.some(s =>
           s.lat > 42.8 && s.lat < 43.3 && (s.lng || s.lon) > -88.2 && (s.lng || s.lon) < -87.7
         );
@@ -306,7 +313,7 @@
       }
 
       // Build result cards — unified list sorted by distance
-      const flavorName = culversData ? culversData.query.flavor : flavorInput.value.trim();
+      const flavorName = primaryData ? primaryData.query.flavor : flavorInput.value.trim();
       let html = '';
       if (hasFlavorFilter) {
         const matches = allStores.filter(s => s._match).sort((a, b) => a._dist - b._dist);
@@ -367,12 +374,12 @@
       resultsSection.hidden = false;
     }
 
-    // Fetch Culver's data (returns API response or null)
-    async function doCulversSearch() {
+    // Fetch primary brand data via locator API (returns API response or null)
+    async function doPrimarySearch() {
       const location = locationInput.value.trim();
       if (!location) return null;
       const flavor = flavorInput.value.trim();
-      let url = `${WORKER_BASE}/api/nearby-flavors?location=${encodeURIComponent(location)}`;
+      let url = `${WORKER_BASE}/api/v1/nearby-flavors?location=${encodeURIComponent(location)}`;
       if (flavor) url += `&flavor=${encodeURIComponent(flavor)}`;
       try {
         const resp = await fetch(url);
@@ -389,7 +396,7 @@
 
       const results = await Promise.all(filtered.map(async (store) => {
         try {
-          const resp = await fetch(`${WORKER_BASE}/api/flavors?slug=${encodeURIComponent(store.slug)}`);
+          const resp = await fetch(`${WORKER_BASE}/api/v1/flavors?slug=${encodeURIComponent(store.slug)}`);
           if (!resp.ok) return { ...store, flavor: 'Unavailable' };
           const data = await resp.json();
           const today = new Date().toISOString().slice(0, 10);
@@ -493,7 +500,7 @@
 
     async function autoGeolocate() {
       try {
-        const resp = await fetch(`${WORKER_BASE}/api/geolocate`);
+        const resp = await fetch(`${WORKER_BASE}/api/v1/geolocate`);
         const geo = await resp.json();
         if (geo.city && geo.state) {
           locationInput.value = `${geo.city}, ${geo.state}`;
@@ -682,7 +689,7 @@
     // Auto-detect location on load via Cloudflare geolocation, then search
     async function initLocation() {
       try {
-        const resp = await fetch(`${WORKER_BASE}/api/geolocate`);
+        const resp = await fetch(`${WORKER_BASE}/api/v1/geolocate`);
         const geo = await resp.json();
         if (geo.city && geo.state && !locationInput.value) {
           locationInput.value = `${geo.city}, ${geo.state}`;

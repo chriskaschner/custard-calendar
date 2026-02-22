@@ -1,13 +1,14 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { checkAlerts } from '../src/alert-checker.js';
+import { checkAlerts, checkWeeklyDigests } from '../src/alert-checker.js';
 
 // Mock email sender
 vi.mock('../src/email-sender.js', () => ({
   sendConfirmationEmail: vi.fn(async () => ({ ok: true })),
   sendAlertEmail: vi.fn(async () => ({ ok: true })),
+  sendWeeklyDigestEmail: vi.fn(async () => ({ ok: true })),
 }));
 
-import { sendAlertEmail } from '../src/email-sender.js';
+import { sendAlertEmail, sendWeeklyDigestEmail } from '../src/email-sender.js';
 
 function createMockKV(initialData = {}) {
   const store = new Map(Object.entries(initialData));
@@ -353,5 +354,147 @@ describe('Alert checker (cron handler)', () => {
     const call = sendAlertEmail.mock.calls[0][0];
     expect(call.unsubscribeUrl).toContain('my-unsub-token');
     expect(call.statusUrl).toContain('my-unsub-token');
+  });
+
+  it('15: skips weekly subscribers on daily cron', async () => {
+    const mockKV = createMockKV({
+      'alert:sub:daily1': makeSubscription({ email: 'daily@test.com', favorites: ['Turtle'], frequency: 'daily' }),
+      'alert:sub:weekly1': makeSubscription({ email: 'weekly@test.com', favorites: ['Turtle'], frequency: 'weekly' }),
+    });
+    env = { FLAVOR_CACHE: mockKV, RESEND_API_KEY: 'test-key', WORKER_BASE_URL: 'https://example.com' };
+
+    const getFlavorsCached = makeMockGetFlavorsCached({
+      'mt-horeb': {
+        name: 'Mt. Horeb',
+        flavors: [
+          { date: TOMORROW, title: 'Turtle', description: 'Pecan.' },
+        ],
+      },
+    });
+
+    const result = await checkAlerts(env, getFlavorsCached);
+    expect(result.checked).toBe(1); // Only daily subscriber
+    expect(result.sent).toBe(1);
+    expect(sendAlertEmail).toHaveBeenCalledOnce();
+    expect(sendAlertEmail.mock.calls[0][0].email).toBe('daily@test.com');
+  });
+
+  it('16: treats subscribers without frequency field as daily', async () => {
+    // Legacy subscriptions won't have the frequency field
+    const mockKV = createMockKV({
+      'alert:sub:legacy1': makeSubscription({ email: 'legacy@test.com', favorites: ['Turtle'] }),
+    });
+    env = { FLAVOR_CACHE: mockKV, RESEND_API_KEY: 'test-key', WORKER_BASE_URL: 'https://example.com' };
+
+    const getFlavorsCached = makeMockGetFlavorsCached({
+      'mt-horeb': {
+        name: 'Mt. Horeb',
+        flavors: [
+          { date: TOMORROW, title: 'Turtle', description: 'Pecan.' },
+        ],
+      },
+    });
+
+    const result = await checkAlerts(env, getFlavorsCached);
+    expect(result.checked).toBe(1);
+    expect(result.sent).toBe(1);
+  });
+});
+
+describe('Weekly digest checker', () => {
+  let env;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(`${TODAY}T14:00:00Z`)); // Sunday 2 PM UTC
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('1: sends weekly digest to weekly subscribers', async () => {
+    const mockKV = createMockKV({
+      'alert:sub:weekly1': makeSubscription({
+        email: 'weekly@test.com',
+        favorites: ['Turtle'],
+        frequency: 'weekly',
+      }),
+    });
+    env = { FLAVOR_CACHE: mockKV, RESEND_API_KEY: 'test-key', WORKER_BASE_URL: 'https://example.com' };
+
+    const getFlavorsCached = makeMockGetFlavorsCached({
+      'mt-horeb': {
+        name: 'Mt. Horeb',
+        address: '505 Springdale St',
+        flavors: [
+          { date: TODAY, title: 'Dark Chocolate PB Crunch', description: 'Dark chocolate.' },
+          { date: TOMORROW, title: 'Turtle', description: 'Pecan, caramel, fudge.' },
+          { date: DAY_AFTER, title: 'Mint Explosion', description: 'Mint with OREO.' },
+        ],
+      },
+    });
+
+    const result = await checkWeeklyDigests(env, getFlavorsCached);
+    expect(result.sent).toBe(1);
+    expect(result.checked).toBe(1);
+    expect(sendWeeklyDigestEmail).toHaveBeenCalledOnce();
+
+    const call = sendWeeklyDigestEmail.mock.calls[0][0];
+    expect(call.email).toBe('weekly@test.com');
+    expect(call.storeName).toBe('Mt. Horeb');
+    expect(call.matches.length).toBe(1); // Turtle
+    expect(call.matches[0].title).toBe('Turtle');
+    expect(call.allFlavors.length).toBe(3); // All 3 flavors in the week
+  });
+
+  it('2: skips daily subscribers on weekly cron', async () => {
+    const mockKV = createMockKV({
+      'alert:sub:daily1': makeSubscription({ email: 'daily@test.com', favorites: ['Turtle'], frequency: 'daily' }),
+    });
+    env = { FLAVOR_CACHE: mockKV, RESEND_API_KEY: 'test-key', WORKER_BASE_URL: 'https://example.com' };
+
+    const result = await checkWeeklyDigests(env, vi.fn());
+    expect(result.sent).toBe(0);
+    expect(result.checked).toBe(0);
+  });
+
+  it('3: sends digest even with no favorite matches', async () => {
+    const mockKV = createMockKV({
+      'alert:sub:weekly1': makeSubscription({
+        email: 'weekly@test.com',
+        favorites: ['Blackberry Cobbler'],
+        frequency: 'weekly',
+      }),
+    });
+    env = { FLAVOR_CACHE: mockKV, RESEND_API_KEY: 'test-key', WORKER_BASE_URL: 'https://example.com' };
+
+    const getFlavorsCached = makeMockGetFlavorsCached({
+      'mt-horeb': {
+        name: 'Mt. Horeb',
+        flavors: [
+          { date: TODAY, title: 'Turtle', description: 'Pecan.' },
+          { date: TOMORROW, title: 'Mint Explosion', description: 'Mint.' },
+        ],
+      },
+    });
+
+    const result = await checkWeeklyDigests(env, getFlavorsCached);
+    expect(result.sent).toBe(1);
+    expect(sendWeeklyDigestEmail).toHaveBeenCalledOnce();
+
+    const call = sendWeeklyDigestEmail.mock.calls[0][0];
+    expect(call.matches.length).toBe(0); // No matches, but still sent
+    expect(call.allFlavors.length).toBe(2);
+  });
+
+  it('4: does nothing when no API key configured', async () => {
+    const mockKV = createMockKV();
+    env = { FLAVOR_CACHE: mockKV };
+
+    const result = await checkWeeklyDigests(env, vi.fn());
+    expect(result.sent).toBe(0);
+    expect(result.checked).toBe(0);
   });
 });

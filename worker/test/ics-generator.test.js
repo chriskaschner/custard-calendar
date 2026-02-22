@@ -170,4 +170,18 @@ describe('generateIcs', () => {
     expect(ics).toContain('END:VCALENDAR');
     expect(ics).not.toContain('BEGIN:VEVENT');
   });
+
+  it('14: DTSTAMP is deterministic (derived from event date)', () => {
+    const opts = makeOpts();
+    const ics1 = generateIcs(opts);
+    const ics2 = generateIcs(opts);
+
+    // Both calls should produce identical output
+    expect(ics1).toBe(ics2);
+
+    // DTSTAMP should be based on event date, not wall clock
+    expect(ics1).toContain('DTSTAMP:20260220T120000Z');
+    expect(ics1).toContain('DTSTAMP:20260221T120000Z');
+    expect(ics1).toContain('DTSTAMP:20260222T120000Z');
+  });
 });

@@ -122,10 +122,10 @@ export function generateIcs({ calendarName, stores, flavorsBySlug }) {
     ),
   }));
 
-  // DTSTAMP in UTC (fixed for deterministic output in tests when needed)
-  const dtstamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
-
   for (const flavor of primaryFlavors) {
+    // DTSTAMP derived from event date for deterministic output.
+    // Same event data → same .ics bytes → no calendar client churn.
+    const dtstamp = formatDateValue(flavor.date) + 'T120000Z';
     addLine('BEGIN:VEVENT');
     addLine(`UID:${flavor.date}-${primary.slug}@custard-calendar`);
     addLine(`DTSTAMP:${dtstamp}`);
