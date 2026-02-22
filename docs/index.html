@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Custard Calendar — Flavor of the Day</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍦</text></svg>">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8D%A6%3C/text%3E%3C/svg%3E">
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#003366">
   <link rel="stylesheet" href="style.css">
@@ -235,7 +235,7 @@
       let filtered = allStores.filter(s => {
         if (state && s.state !== state) return false;
         if (query) {
-          const searchable = `${s.name} ${s.city} ${s.address} ${s.slug}`.toLowerCase();
+          const searchable = `${s.name} ${s.city} ${s.address} ${s.slug} ${s.brand || ''} ${BRAND_DISPLAY[s.brand] || ''}`.toLowerCase();
           return searchable.includes(query);
         }
         return true;
@@ -256,8 +256,21 @@
       return filtered;
     }
 
+    const BRAND_DISPLAY = {
+      kopps: "Kopp's",
+      gilles: "Gille's",
+      hefners: "Hefner's",
+      kraverz: "Kraverz",
+      oscars: "Oscar's",
+    };
+
+    function brandPrefix(store) {
+      if (!store.brand) return '';
+      return (BRAND_DISPLAY[store.brand] || store.brand) + ' \u2014 ';
+    }
+
     function storeLabel(store) {
-      let label = `${store.city}, ${store.state} \u2014 ${store.address}`;
+      let label = `${brandPrefix(store)}${store.city}, ${store.state} \u2014 ${store.address}`;
       if (sortByDistance && store._dist != null && store._dist !== Infinity) {
         label += ` (${store._dist.toFixed(1)} mi)`;
       }
@@ -325,7 +338,7 @@
         const store = allStores.find(s => s.slug === slug);
         const badge = document.createElement('span');
         badge.className = 'badge';
-        badge.textContent = store ? `${store.city}, ${store.state} \u2014 ${store.address}` : slug;
+        badge.textContent = store ? `${brandPrefix(store)}${store.city}, ${store.state} \u2014 ${store.address}` : slug;
         const removeBtn = document.createElement('button');
         removeBtn.textContent = '\u00d7';
         removeBtn.title = 'Remove';
