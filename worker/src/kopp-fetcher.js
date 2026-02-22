@@ -71,23 +71,51 @@ export function parseKoppsHtml(html) {
     const flavorNames = [];
     let h3Match;
 
-    while ((h3Match = h3Pattern.exec(dayContent)) !== null) {
-      const name = h3Match[1]
+    // Only look at flavor-card divs, not footer/location content
+    const flavorCardPattern = /<div[^>]*class="[^"]*flavor-card"[^>]*>([\s\S]*?)(?=<\/div>\s*<\/div>\s*(?:<div|$)|<div[^>]*class="[^"]*flavor-card)/gi;
+    let cardMatch;
+    const flavorEntries = [];
+
+    // Simpler approach: find all flavor-card blocks within this day section
+    const cardBlocks = dayContent.split(/class="flavor-card"/i);
+    for (let c = 1; c < cardBlocks.length; c++) {
+      const block = cardBlocks[c];
+
+      // Extract name from h3
+      const nameMatch = block.match(/<h3[^>]*>([\s\S]*?)<\/h3>/i);
+      if (!nameMatch) continue;
+
+      const name = nameMatch[1]
         .replace(/<[^>]+>/g, '')
         .replace(/&amp;/g, '&')
         .replace(/&rsquo;/g, "'")
+        .replace(/&#8216;/g, "\u2018")
+        .replace(/&#8217;/g, "'")
+        .replace(/&#8211;/g, '-')
         .replace(/&#39;/g, "'")
+        .replace(/&reg;/gi, '')
+        .replace(/\u00ae/g, '')
         .replace(/\(R\)/gi, '')
         .replace(/\s+/g, ' ')
         .trim();
-      if (name) flavorNames.push(name);
+
+      // Extract description from first <p> after h3
+      let desc = '';
+      const descMatch = block.match(/<p[^>]*>([\s\S]*?)<\/p>/i);
+      if (descMatch) {
+        desc = descMatch[1].replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+      }
+
+      if (name) flavorEntries.push({ name, desc });
     }
 
-    if (flavorNames.length > 0) {
+    if (flavorEntries.length > 0) {
+      const names = flavorEntries.map(e => e.name);
+      const descs = flavorEntries.map(e => e.desc).filter(Boolean);
       flavors.push({
         date,
-        title: flavorNames.join(' & '),
-        description: flavorNames.length > 1 ? `Flavors: ${flavorNames.join(', ')}` : '',
+        title: names.join(' & '),
+        description: descs.length > 0 ? descs.join(' | ') : (names.length > 1 ? `Flavors: ${names.join(', ')}` : ''),
       });
     }
   }
