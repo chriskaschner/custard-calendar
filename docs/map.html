@@ -177,7 +177,7 @@
       });
     });
 
-    async function refreshResults() {
+    async function refreshResults(skipFitBounds = false) {
       const hasCulvers = activeBrands.has('culvers');
       const nonCulversBrands = [...activeBrands].filter(b => b !== 'culvers');
 
@@ -194,9 +194,9 @@
 
       const [culversData, brandResults] = await Promise.all([culversPromise, brandPromise]);
 
-      // Merge and render
+      // Merge and render — use separate bounds so brand stores don't pull the map away
       markers.clearLayers();
-      const bounds = L.latLngBounds();
+      const culversBounds = L.latLngBounds(); // only Culver's results affect fitBounds
       let html = '';
 
       if (culversData) {
@@ -206,7 +206,7 @@
           if (!store.lat || !store.lon) continue;
           const marker = L.marker([store.lat, store.lon], { icon: greenIcon }).bindPopup(storePopup(store, true));
           markers.addLayer(marker);
-          bounds.extend([store.lat, store.lon]);
+          culversBounds.extend([store.lat, store.lon]);
         }
         for (const store of culversData.nearby) {
           if (!store.lat || !store.lon) continue;
@@ -214,7 +214,7 @@
             icon: hasFlavorFilter ? blueIcon : defaultIcon,
           }).bindPopup(storePopup(store, false));
           markers.addLayer(marker);
-          bounds.extend([store.lat, store.lon]);
+          culversBounds.extend([store.lat, store.lon]);
         }
 
         // Suggestions
@@ -284,7 +284,6 @@
               radius: 10, fillColor: color, color: '#fff', weight: 2, fillOpacity: 0.9,
             }).bindPopup(storePopup(store, false));
             markers.addLayer(marker);
-            bounds.extend([store.lat, store.lng]);
           }
           html += `<div class="results-group"><h3 class="results-group-title">${escapeHtml(BRAND_DISPLAY[brand] || brand)} (${stores.length})</h3>`;
           for (const store of stores) html += storeCard(store, false);
@@ -292,9 +291,22 @@
         }
       }
 
-      if (bounds.isValid()) {
-        skipMoveHandler = true;
-        map.fitBounds(bounds, { padding: [30, 30], maxZoom: 12 });
+      // fitBounds: only on explicit searches (not map moves), and only to Culver's results
+      // When only brand chips are active (no Culver's), fit to brand stores on first load
+      if (!skipFitBounds) {
+        if (culversBounds.isValid()) {
+          skipMoveHandler = true;
+          map.fitBounds(culversBounds, { padding: [30, 30], maxZoom: 12 });
+        } else if (brandResults.length > 0 && !hasCulvers) {
+          const brandBounds = L.latLngBounds();
+          for (const store of brandResults) {
+            if (store.lat && store.lng) brandBounds.extend([store.lat, store.lng]);
+          }
+          if (brandBounds.isValid()) {
+            skipMoveHandler = true;
+            map.fitBounds(brandBounds, { padding: [30, 30], maxZoom: 12 });
+          }
+        }
       }
 
       resultsBody.innerHTML = html || '<div class="no-results">No results.</div>';
@@ -469,7 +481,7 @@
       updateUrl();
       searchBtn.disabled = true;
       searchBtn.textContent = 'Searching...';
-      await refreshResults();
+      await refreshResults(fromMapMove);
       searchBtn.disabled = false;
       searchBtn.textContent = 'Search';
     }
