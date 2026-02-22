@@ -505,15 +505,30 @@
       }
     });
 
+    // Reverse geocode coords to city/state (Culver's API doesn't accept raw lat,lon)
+    async function reverseGeocode(lat, lng) {
+      try {
+        const resp = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&zoom=10`);
+        const data = await resp.json();
+        const addr = data.address || {};
+        const city = addr.city || addr.town || addr.village || addr.county || '';
+        const state = addr.state || '';
+        return city && state ? `${city}, ${state}` : city || `${lat.toFixed(4)},${lng.toFixed(4)}`;
+      } catch {
+        return `${lat.toFixed(4)},${lng.toFixed(4)}`;
+      }
+    }
+
     // Debounced map move handler for dynamic search
     let moveTimer = null;
     map.on('moveend', () => {
       if (skipMoveHandler) { skipMoveHandler = false; return; }
-      if (!activeBrands.has('culvers')) return; // only dynamic-search for Culver's
+      if (!activeBrands.has('culvers')) return;
       clearTimeout(moveTimer);
-      moveTimer = setTimeout(() => {
+      moveTimer = setTimeout(async () => {
         const center = map.getCenter();
-        locationInput.value = `${center.lat.toFixed(4)},${center.lng.toFixed(4)}`;
+        const placeName = await reverseGeocode(center.lat, center.lng);
+        locationInput.value = placeName;
         doSearch(true);
       }, 300);
     });
