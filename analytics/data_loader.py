@@ -13,8 +13,11 @@ import pandas as pd
 
 DEFAULT_DB = Path(__file__).resolve().parent.parent / "data" / "backfill" / "flavors.sqlite"
 
-# Sentinel value in the dataset for closed stores
-CLOSED_MARKER = "z *Restaurant Closed Today"
+# Sentinel values in the dataset for closed stores
+CLOSED_MARKERS = {
+    "z *Restaurant Closed Today",
+    "z *Closed Today for Remodel!",
+}
 
 
 def load_raw(db_path: Path | str = DEFAULT_DB) -> pd.DataFrame:
@@ -34,7 +37,7 @@ def load_clean(db_path: Path | str = DEFAULT_DB) -> pd.DataFrame:
         dow (0=Mon..6=Sun), month, year
     """
     df = load_raw(db_path)
-    df = df[df["title"] != CLOSED_MARKER].copy()
+    df = df[~df["title"].isin(CLOSED_MARKERS)].copy()
     df["dow"] = df["flavor_date"].dt.dayofweek  # 0=Mon, 6=Sun
     df["month"] = df["flavor_date"].dt.month
     df["year"] = df["flavor_date"].dt.year

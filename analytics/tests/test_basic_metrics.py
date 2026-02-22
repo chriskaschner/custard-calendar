@@ -8,7 +8,7 @@ import pandas as pd
 import pytest
 
 from analytics.data_loader import (
-    CLOSED_MARKER, DEFAULT_DB, flavor_list, load_clean, load_raw, store_list,
+    CLOSED_MARKERS, DEFAULT_DB, flavor_list, load_clean, load_raw, store_list,
 )
 from analytics.basic_metrics import (
     days_since_last, flavor_frequency, flavor_probability, overdue_flavors,
@@ -37,7 +37,8 @@ class TestDataLoader:
         assert len(raw_df) > 30_000
 
     def test_clean_excludes_closed_days(self, df, raw_df):
-        assert CLOSED_MARKER not in df["title"].values
+        for marker in CLOSED_MARKERS:
+            assert marker not in df["title"].values
         assert len(df) < len(raw_df)
 
     def test_clean_has_convenience_columns(self, df):
