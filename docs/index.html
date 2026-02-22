@@ -86,13 +86,16 @@
         <a id="apple-btn" href="#" class="btn btn-apple">Add to Apple Calendar</a>
         <a id="google-btn" href="#" target="_blank" rel="noopener" class="btn btn-google">Add to Google Calendar</a>
       </div>
+      <div id="google-mobile-toast" class="mobile-toast" hidden>
+        URL copied! Open <a href="https://calendar.google.com/calendar/u/0/r/settings/addbyurl" target="_blank" rel="noopener">Google Calendar settings</a>, tap <strong>Add calendar &gt; From URL</strong>, and paste.
+      </div>
 
       <details>
         <summary>Setup instructions</summary>
         <ol>
           <li><strong>Apple Calendar:</strong> Click "Add to Apple Calendar" — it opens directly in Calendar.app.</li>
-          <li><strong>Google Calendar:</strong> Copy the URL above, then in Google Calendar go to Settings &gt; Add calendar &gt; From URL, and paste it.</li>
-          <li>The calendar will appear in your sidebar. Right-click it to change the color.</li>
+          <li><strong>Google Calendar (desktop):</strong> Click "Add to Google Calendar" to subscribe directly.</li>
+          <li><strong>Google Calendar (phone):</strong> The Google Calendar app can't subscribe to URLs directly. Copy the URL above, then open <a href="https://calendar.google.com/calendar/u/0/r/settings/addbyurl" target="_blank" rel="noopener">Google Calendar on the web</a> &gt; Add calendar &gt; From URL, and paste it.</li>
           <li>Events update automatically every 12-24 hours.</li>
           <li>Each event shows your primary store's flavor in the title, with backup options in the description.</li>
         </ol>
@@ -362,7 +365,7 @@
       const webcalUrl = url.replace('http://', 'webcal://').replace('https://', 'webcal://');
       appleBtn.href = webcalUrl;
 
-      // Google Calendar: use webcal URL for subscriptions
+      // Google Calendar: cid parameter requires webcal:// protocol
       const googleUrl = `https://calendar.google.com/calendar/r?cid=${encodeURIComponent(webcalUrl)}`;
       googleBtn.href = googleUrl;
 
@@ -611,6 +614,26 @@
         document.execCommand('copy');
       }
     });
+
+    // On mobile, Google Calendar can't subscribe via cid= link (Android intercepts
+    // and opens native app which doesn't support URL subscriptions).
+    // Instead: copy URL to clipboard and show instructions.
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    const googleMobileToast = document.getElementById('google-mobile-toast');
+
+    if (isMobile) {
+      googleBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        try {
+          await navigator.clipboard.writeText(icsUrl.value);
+        } catch {
+          icsUrl.select();
+          document.execCommand('copy');
+        }
+        googleMobileToast.hidden = false;
+        setTimeout(() => { googleMobileToast.hidden = true; }, 10000);
+      });
+    }
 
     // Initialize
     loadStores();
