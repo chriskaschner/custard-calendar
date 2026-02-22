@@ -13,11 +13,15 @@ import { fetchFlavors as defaultFetchFlavors } from './flavor-fetcher.js';
 import { VALID_SLUGS as DEFAULT_VALID_SLUGS } from './valid-slugs.js';
 import { STORE_INDEX as DEFAULT_STORE_INDEX } from './store-index.js';
 import { normalize, matchesFlavor, findSimilarFlavors } from './flavor-matcher.js';
+import { handleAlertRoute } from './alert-routes.js';
+import { handleFlavorCatalog } from './flavor-catalog.js';
+import { checkAlerts } from './alert-checker.js';
 
 import { fetchKoppsFlavors } from './kopp-fetcher.js';
 import { fetchGillesFlavors } from './gilles-fetcher.js';
 import { fetchHefnersFlavors } from './hefners-fetcher.js';
 import { fetchKraverzFlavors } from './kraverz-fetcher.js';
+import { fetchOscarsFlavors } from './oscars-fetcher.js';
 
 const KV_TTL_SECONDS = 86400; // 24 hours
 const CACHE_MAX_AGE = 43200;  // 12 hours
@@ -36,6 +40,7 @@ const BRAND_REGISTRY = [
   { pattern: /^gilles$/, fetcher: fetchGillesFlavors, url: 'https://gillesfrozencustard.com/flavor-of-the-day', brand: "Gille's" },
   { pattern: /^hefners$/, fetcher: fetchHefnersFlavors, url: 'https://www.hefnerscustard.com', brand: "Hefner's" },
   { pattern: /^kraverz$/, fetcher: fetchKraverzFlavors, url: 'https://kraverzcustard.com/FlavorSchedule', brand: 'Kraverz' },
+  { pattern: /^oscars/, fetcher: fetchOscarsFlavors, url: 'https://www.oscarscustard.com/index.php/flavors/', brand: "Oscar's", kvPrefix: 'flavors:oscars-shared' },
 ];
 
 /**
@@ -138,7 +143,7 @@ async function incrementFetchCount(kv) {
  * @param {boolean} isOverride - true when fetchFlavorsFn should override brand routing
  * @returns {Promise<{name: string, flavors: Array}>}
  */
-async function getFlavorsCached(slug, kv, fetchFlavorsFn, isOverride = false) {
+export async function getFlavorsCached(slug, kv, fetchFlavorsFn, isOverride = false) {
   const brandInfo = getFetcherForSlug(slug, fetchFlavorsFn);
   const cacheKey = brandInfo.kvPrefix || `flavors:${slug}`;
   // When isOverride is true, use the provided fetcher for all brands (testing)
@@ -184,7 +189,8 @@ export async function handleRequest(request, env, fetchFlavorsFn = defaultFetchF
   const allowedOrigin = env.ALLOWED_ORIGIN || '*';
   const corsHeaders = {
     'Access-Control-Allow-Origin': allowedOrigin,
-    'Access-Control-Allow-Methods': 'GET, OPTIONS',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
   };
 
   // Handle CORS preflight
@@ -233,8 +239,19 @@ export async function handleRequest(request, env, fetchFlavorsFn = defaultFetchF
     return handleApiNearbyFlavors(url, env, corsHeaders);
   }
 
+  // Flavor catalog endpoint
+  if (url.pathname === '/api/flavors/catalog') {
+    return handleFlavorCatalog(env, corsHeaders);
+  }
+
+  // Alert subscription endpoints
+  if (url.pathname.startsWith('/api/alerts/')) {
+    const alertResponse = await handleAlertRoute(url, request, env, corsHeaders);
+    if (alertResponse) return alertResponse;
+  }
+
   return Response.json(
-    { error: 'Not found. Use /calendar.ics, /api/flavors, /api/stores, /api/geolocate, /api/nearby-flavors, or /health' },
+    { error: 'Not found. Use /calendar.ics, /api/flavors, /api/stores, /api/geolocate, /api/nearby-flavors, /api/flavors/catalog, /api/alerts/*, or /health' },
     { status: 404, headers: corsHeaders }
   );
 }
@@ -603,5 +620,11 @@ export default {
     }
 
     return handleRequest(request, env);
+  },
+
+  async scheduled(event, env, ctx) {
+    // Cron trigger: check subscriptions and send flavor alert emails
+    const fetchFn = async (slug, kv) => getFlavorsCached(slug, kv, defaultFetchFlavors);
+    ctx.waitUntil(checkAlerts(env, fetchFn));
   },
 };

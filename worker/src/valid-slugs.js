@@ -1,6 +1,6 @@
 // Auto-generated from docs/stores.json — do not edit manually.
 // Regenerate with: node worker/scripts/generate-valid-slugs.js
-// 1077 stores as of 2026-02-22
+// 1079 stores as of 2026-02-22
 export const VALID_SLUGS = new Set([
   '10-mile-rd-rockford-mi',
   '87th-st-pkwy-lenexa-ks',
@@ -736,6 +736,8 @@ export const VALID_SLUGS = new Set([
   'owosso-mi-e-main-st',
   'oxford-al-recreation-dr',
   'oxford-mi-lapeer-rd',
+  'oscars-new-berlin',
+  'oscars-muskego',
   'ozark-mo-21st-st',
   'paddock-lake-wi-antioch-rd',
   'paducah-ky-old-hwy-60',

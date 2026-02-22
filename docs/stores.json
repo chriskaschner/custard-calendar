@@ -1,6 +1,6 @@
 {
   "generated": "2026-02-20T23:43:34.829208+00:00",
-  "count": 1077,
+  "count": 1079,
   "stores": [
     {
       "slug": "albertville-al-mathis-mill",
@@ -7544,6 +7544,26 @@
       "brand": "kraverz",
       "lat": 43.7719,
       "lng": -88.4468
+    },
+    {
+      "slug": "oscars-new-berlin",
+      "name": "Oscar's New Berlin, WI",
+      "city": "New Berlin",
+      "state": "WI",
+      "address": "3799 S Moorland Rd",
+      "brand": "oscars",
+      "lat": 42.9611,
+      "lng": -88.1084
+    },
+    {
+      "slug": "oscars-muskego",
+      "name": "Oscar's Muskego, WI",
+      "city": "Muskego",
+      "state": "WI",
+      "address": "S74 W17015 Janesville Rd",
+      "brand": "oscars",
+      "lat": 42.8861,
+      "lng": -88.1359
     },
     {
       "slug": "cheyenne",
