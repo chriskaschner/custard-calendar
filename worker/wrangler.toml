@@ -28,10 +28,8 @@ id = "1642a7da91e144cb9b233b940430250c"
 [[d1_databases]]
 binding = "DB"
 database_name = "custard-snapshots"
-database_id = "TO_BE_CREATED"
-# Create with: npx wrangler d1 create custard-snapshots
-# Then update database_id above and run:
-#   npx wrangler d1 migrations apply custard-snapshots
+database_id = "fa11cb69-1e34-439c-8895-f1c0a938a543"
+migrations_dir = "src/migrations"
 
 # Cron triggers:
 #   Daily alert check at noon UTC (6-7 AM Central)

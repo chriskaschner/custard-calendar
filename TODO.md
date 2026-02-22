@@ -8,15 +8,15 @@ Canonical task list for Custard Calendar. Checked into git so it persists across
 - [ ] **Voice assistant integration** — ask Siri / home assistant "what's the flavor of the day" and get a spoken response (Siri Shortcuts, HomeKit, or Alexa skill)
 - [ ] **Pairwise flavor voting** — group "where should we go tonight?" — multiple people vote/rank flavors, system suggests store by combined preferences + proximity
 - [ ] **Madison-area brand expansion** — selection methodology for adding new brands beyond MKE geo
-- [ ] **Social shareables** — dynamic SVG-based OG cards at `/v1/og/{slug}/{date}.svg` with flavor name, store, streak/rarity stats from metrics; also create static OG preview images (`og-calendar.png`, `og-map.png`, `og-alerts.png` 1200x630) for the three HTML pages (meta tags already in place)
-
 ### Docs
-- [ ] **README with SaaS positioning** — rewrite README with tongue-in-cheek enterprise voice per Language & Voice guidelines
-
-### Infrastructure
-- [ ] **Create D1 database** — run `npx wrangler d1 create custard-snapshots`, update `database_id` in `wrangler.toml`, apply migration
+(none)
 
 ## Completed
+
+- [x] README with SaaS positioning — enterprise-voice README with API v1 docs, brand registry, D1 schema, full project structure (2026-02-22)
+- [x] Social shareables — dynamic SVG OG cards at `/v1/og/{slug}/{date}.svg` + static OG images for all 3 HTML pages (2026-02-22)
+- [x] Metrics HTTP integration tests — 9 tests covering all 3 metrics endpoints (2026-02-22)
+- [x] Create D1 database — `custard-snapshots` created, migration applied (2026-02-22)
 
 - [x] API v1 versioning + Bearer auth — `/api/v1/` prefix, `Authorization: Bearer` header, legacy aliases preserved (2026-02-22)
 - [x] Per-slug fetch budget — replaced global MAX_DAILY_FETCHES=50 with per-slug (3/day) + global circuit breaker (200/day) (2026-02-22)

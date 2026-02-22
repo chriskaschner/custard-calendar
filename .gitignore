@@ -42,6 +42,8 @@ Thumbs.db
 # Tidbyt renders and screenshots
 *.webp
 *.png
+# Exception: OG social preview images served by GitHub Pages
+!docs/og-*.png
 
 # Status and cache
 status.json
@@ -52,3 +54,4 @@ tools/osm_cache.json
 # Cloudflare Worker
 worker/node_modules/
 worker/.wrangler/
+data/backfill/
