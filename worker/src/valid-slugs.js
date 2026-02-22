@@ -1,6 +1,6 @@
 // Auto-generated from docs/stores.json — do not edit manually.
 // Regenerate with: node worker/scripts/generate-valid-slugs.js
-// 1077 stores (1071 Culver's + 6 MKE brands) as of 2026-02-21
+// 1077 stores as of 2026-02-22
 export const VALID_SLUGS = new Set([
   '10-mile-rd-rockford-mi',
   '87th-st-pkwy-lenexa-ks',
@@ -349,6 +349,7 @@ export const VALID_SLUGS = new Set([
   'georgetown-ky-cherry-blossom',
   'georgetown-tx-williams-dr',
   'gilbert-az-val-vista',
+  'gilles',
   'glendale-az',
   'glendale-wi-bayside-dr',
   'glenview-il-waukegan-rd',
@@ -403,6 +404,7 @@ export const VALID_SLUGS = new Set([
   'hastings',
   'hastings-mi-green-st',
   'hazel-green-al-us-231',
+  'hefners',
   'hendersonville-tn',
   'hiawatha',
   'hickory-nc-13th-avenue-se-dr',
@@ -487,6 +489,10 @@ export const VALID_SLUGS = new Set([
   'kissimmee-fl-orange-blossom',
   'knoxville-tn-kingston-pike',
   'kokomo',
+  'kopps-brookfield',
+  'kopps-glendale',
+  'kopps-greenfield',
+  'kraverz',
   'la-crosse',
   'la-porte-in-pine-lake-ave',
   'labelle-fl-lashley-st',
@@ -1073,11 +1079,4 @@ export const VALID_SLUGS = new Set([
   'zephyrhills-fl-gall-blvd',
   'zion',
   'zionsville-in-us-hwy-421',
-  // MKE custard brands
-  'gilles',
-  'hefners',
-  'kopps-brookfield',
-  'kopps-glendale',
-  'kopps-greenfield',
-  'kraverz',
 ]);
