@@ -139,6 +139,17 @@
 
     const ALL_BRANDS = ['culvers', 'kopps', 'gilles', 'hefners', 'kraverz', 'oscars'];
 
+    // Haversine distance in miles between two coordinate pairs
+    function haversine(lat1, lon1, lat2, lon2) {
+      const R = 3958.8; // Earth radius in miles
+      const toRad = d => d * Math.PI / 180;
+      const dLat = toRad(lat2 - lat1);
+      const dLon = toRad(lon2 - lon1);
+      const a = Math.sin(dLat / 2) ** 2 +
+                Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    }
+
     function syncChipStyles() {
       document.querySelectorAll('.brand-chip').forEach(chip => {
         const brand = chip.dataset.brand;
@@ -209,47 +220,102 @@
       }
       const brandResults = brandKey ? cachedBrandResults : [];
 
-      // Merge and render — use separate bounds so brand stores don't pull the map away
-      markers.clearLayers();
-      const culversBounds = L.latLngBounds(); // only Culver's results affect fitBounds
-      let html = '';
+      // Build unified store list with normalized coords + distance
+      const center = map.getCenter();
+      const allStores = [];
+      const matchSlugs = new Set(); // track flavor-matched Culver's slugs
 
       if (culversData) {
-        const hasFlavorFilter = !!culversData.query.flavor;
-        // Render Culver's markers
         for (const store of culversData.matches) {
           if (!store.lat || !store.lon) continue;
-          const marker = L.marker([store.lat, store.lon], { icon: greenIcon }).bindPopup(storePopup(store, true));
-          markers.addLayer(marker);
-          culversBounds.extend([store.lat, store.lon]);
+          matchSlugs.add(store.slug);
+          allStores.push({ ...store, _lat: store.lat, _lon: store.lon, _match: true, _brand: 'culvers',
+            _dist: haversine(center.lat, center.lng, store.lat, store.lon) });
         }
         for (const store of culversData.nearby) {
           if (!store.lat || !store.lon) continue;
-          const marker = L.marker([store.lat, store.lon], {
-            icon: hasFlavorFilter ? blueIcon : defaultIcon,
+          allStores.push({ ...store, _lat: store.lat, _lon: store.lon, _match: false, _brand: 'culvers',
+            _dist: haversine(center.lat, center.lng, store.lat, store.lon) });
+        }
+      }
+
+      for (const store of brandResults) {
+        const lat = store.lat;
+        const lon = store.lng || store.lon;
+        if (!lat || !lon) continue;
+        allStores.push({ ...store, _lat: lat, _lon: lon, _match: false, _brand: store.brand,
+          _dist: haversine(center.lat, center.lng, lat, lon) });
+      }
+
+      // Markers + bounds
+      markers.clearLayers();
+      const allBounds = L.latLngBounds();
+      const hasFlavorFilter = culversData ? !!culversData.query.flavor : false;
+
+      for (const store of allStores) {
+        allBounds.extend([store._lat, store._lon]);
+        if (store._brand === 'culvers') {
+          const icon = store._match ? greenIcon : (hasFlavorFilter ? blueIcon : defaultIcon);
+          const marker = L.marker([store._lat, store._lon], { icon }).bindPopup(storePopup(store, store._match));
+          markers.addLayer(marker);
+        } else {
+          const color = BRAND_COLORS[store._brand] || '#003366';
+          const marker = L.circleMarker([store._lat, store._lon], {
+            radius: 10, fillColor: color, color: '#fff', weight: 2, fillOpacity: 0.9,
           }).bindPopup(storePopup(store, false));
           markers.addLayer(marker);
-          culversBounds.extend([store.lat, store.lon]);
         }
+      }
 
-        // Suggestions
-        if (hasFlavorFilter && culversData.matches.length === 0 && culversData.suggestions.length > 0) {
-          renderSuggestions(culversData);
-        } else {
-          suggestionsPanel.hidden = true;
+      // Suggestions
+      if (culversData && hasFlavorFilter && culversData.matches.length === 0 && culversData.suggestions.length > 0) {
+        renderSuggestions(culversData);
+      } else {
+        suggestionsPanel.hidden = true;
+      }
+
+      // Easter egg quip: no Culver's active, brands only, MKE area stores present
+      let quipHtml = '';
+      if (!hasCulvers && brandResults.length > 0) {
+        const hasMKEStores = brandResults.some(s =>
+          s.lat > 42.8 && s.lat < 43.3 && (s.lng || s.lon) > -88.2 && (s.lng || s.lon) < -87.7
+        );
+        if (hasMKEStores) {
+          const quips = [
+            "Oh sure, skip the ButterBurgers, that'll end well.",
+            "Oh, too good for Culver's now, are we?",
+            "Ope, found the custard hipster.",
+            "You can take the kid outta Culver's, but you can't take the Culver's outta the kid.",
+            "Your aunt from Waukesha is very disappointed you skipped Culver's.",
+            "You're just going to scootch past Culver's?!?!",
+            "You probably left a sticker on the Minnow, didn't you.",
+            "Summerfest is 11 days a year. Custard snobbery is forever.",
+            "Bucks in 6. Custard shops in... well, fewer than 6.",
+            "It's not an ocean, and Culver's isn't just ice cream. We've been over this.",
+            "Da Crusher didn't body-slam his way through South Milwaukee for you to skip Culver's.",
+            "The ghost of Frederick Pabst didn't brew all that beer for you to get picky about custard.",
+            "You'll swim in 52-degree lake water but draw the line at ButterBurgers?",
+            "You can handle Real Chili at 1 a.m. but not Culver's?",
+            "You think the Minnow stranded itself for nothing?",
+          ];
+          quipHtml = `<p style="font-style:italic;color:#888;text-align:center;margin:0.5rem 0">${quips[Math.floor(Math.random() * quips.length)]}</p>`;
         }
+      }
 
-        // Culver's result cards
-        if (hasFlavorFilter && culversData.matches.length > 0) {
-          html += `<div class="results-group"><h3 class="results-group-title match-title">Stores with ${escapeHtml(culversData.query.flavor)} (${culversData.matches.length})</h3>`;
-          for (const store of culversData.matches) html += storeCard(store, true);
+      // Build result cards — unified list sorted by distance
+      let html = '';
+      if (hasFlavorFilter) {
+        const matches = allStores.filter(s => s._match).sort((a, b) => a._dist - b._dist);
+        const rest = allStores.filter(s => !s._match).sort((a, b) => a._dist - b._dist);
+
+        if (matches.length > 0) {
+          html += `<div class="results-group"><h3 class="results-group-title match-title">Stores with ${escapeHtml(culversData.query.flavor)} (${matches.length})</h3>`;
+          for (const store of matches) html += storeCard(store, true);
           html += '</div>';
         }
-        if (culversData.nearby.length > 0) {
+        if (rest.length > 0) {
           let nearbyLabel;
-          if (!hasFlavorFilter) {
-            nearbyLabel = `Nearby stores (${culversData.nearby.length})`;
-          } else if (culversData.matches.length > 0) {
+          if (matches.length > 0) {
             const altIntros = [
               'Meanwhile, nearby',
               'Not your flavor? These stores beg to differ',
@@ -274,73 +340,23 @@
             ];
             nearbyLabel = nearbyIntros[Math.floor(Math.random() * nearbyIntros.length)];
           }
-          html += `<div class="results-group"><h3 class="results-group-title">${nearbyLabel}</h3>`;
-          for (const store of culversData.nearby) html += storeCard(store, false);
+          html += `<div class="results-group">${quipHtml}<h3 class="results-group-title">${nearbyLabel}</h3>`;
+          for (const store of rest) html += storeCard(store, false);
           html += '</div>';
         }
       } else {
-        suggestionsPanel.hidden = true;
-      }
-
-      // Easter egg: no Culver's, brands only, any brand stores in MKE area
-      if (!hasCulvers && brandResults.length > 0) {
-        const hasMKEStores = brandResults.some(s =>
-          s.lat > 42.8 && s.lat < 43.3 && s.lng > -88.2 && s.lng < -87.7
-        );
-        if (hasMKEStores) {
-          const quips = [
-            "Oh sure, skip the ButterBurgers, that'll end well.",
-            "Oh, too good for Culver's now, are we?",
-            "Ope, found the custard hipster.",
-            "You can take the kid outta Culver's, but you can't take the Culver's outta the kid.",
-            "Your aunt from Waukesha is very disappointed you skipped Culver's.",
-            "You're just going to scootch past Culver's?!?!",
-            "You probably left a sticker on the Minnow, didn't you.",
-            "Summerfest is 11 days a year. Custard snobbery is forever.",
-            "Bucks in 6. Custard shops in... well, fewer than 6.",
-            "It's not an ocean, and Culver's isn't just ice cream. We've been over this.",
-            "Da Crusher didn't body-slam his way through South Milwaukee for you to skip Culver's.",
-            "The ghost of Frederick Pabst didn't brew all that beer for you to get picky about custard.",
-            "You'll swim in 52-degree lake water but draw the line at ButterBurgers?",
-            "You can handle Real Chili at 1 a.m. but not Culver's?",
-            "You think the Minnow stranded itself for nothing?",
-          ];
-          html += `<div class="results-group"><p style="font-style:italic;color:#888;text-align:center;margin:0.5rem 0">${quips[Math.floor(Math.random() * quips.length)]}</p></div>`;
-        }
-      }
-
-      // Render brand results — flat list, brand color on cards distinguishes them
-      if (brandResults.length > 0) {
-        for (const store of brandResults) {
-          if (store.lat && store.lng) {
-            const color = BRAND_COLORS[store.brand] || '#003366';
-            const marker = L.circleMarker([store.lat, store.lng], {
-              radius: 10, fillColor: color, color: '#fff', weight: 2, fillOpacity: 0.9,
-            }).bindPopup(storePopup(store, false));
-            markers.addLayer(marker);
-          }
-        }
-        html += `<div class="results-group"><h3 class="results-group-title">MKE Custard Shops (${brandResults.length})</h3>`;
-        for (const store of brandResults) html += storeCard(store, false);
+        // No flavor filter — single flat list sorted by distance
+        allStores.sort((a, b) => a._dist - b._dist);
+        const total = allStores.length;
+        html += `<div class="results-group">${quipHtml}<h3 class="results-group-title">Results (${total})</h3>`;
+        for (const store of allStores) html += storeCard(store, false);
         html += '</div>';
       }
 
-      // fitBounds: only on explicit searches (not map moves), and only to Culver's results
-      // When only brand chips are active (no Culver's), fit to brand stores on first load
-      if (!skipFitBounds) {
-        if (culversBounds.isValid()) {
-          skipMoveHandler = true;
-          map.fitBounds(culversBounds, { padding: [30, 30], maxZoom: 12 });
-        } else if (brandResults.length > 0 && !hasCulvers) {
-          const brandBounds = L.latLngBounds();
-          for (const store of brandResults) {
-            if (store.lat && store.lng) brandBounds.extend([store.lat, store.lng]);
-          }
-          if (brandBounds.isValid()) {
-            skipMoveHandler = true;
-            map.fitBounds(brandBounds, { padding: [30, 30], maxZoom: 12 });
-          }
-        }
+      // fitBounds: only on explicit searches (not map moves)
+      if (!skipFitBounds && allBounds.isValid()) {
+        skipMoveHandler = true;
+        map.fitBounds(allBounds, { padding: [30, 30], maxZoom: 12 });
       }
 
       resultsBody.innerHTML = html || '<div class="no-results">No results.</div>';
@@ -624,11 +640,11 @@
       const culversUrl = store.slug ? (store.brand ? '#' : `https://www.culvers.com/restaurants/${encodeURIComponent(store.slug)}`) : '#';
       const linkText = store.brand ? '' : `<a class="store-card-link" href="${culversUrl}" target="_blank" rel="noopener">View on culvers.com</a>`;
       const desc = store.description ? `<div class="store-card-description">${escapeHtml(store.description)}</div>` : '';
-      const rankHtml = store.rank != null ? `<span class="store-card-rank">#${store.rank}</span>` : '';
+      const distHtml = store._dist != null ? `<span class="store-card-rank">${store._dist.toFixed(1)} mi</span>` : '';
       return `<div class="store-card${matchClass}">
         <div class="store-card-header">
           <span class="store-card-name"${nameColor}>${escapeHtml(store.name)}</span>
-          ${rankHtml}
+          ${distHtml}
         </div>
         <div class="store-card-address">${escapeHtml(store.address || '')}</div>
         <div class="store-card-flavor">${escapeHtml(store.flavor || 'Loading...')}</div>
