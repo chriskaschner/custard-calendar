@@ -264,6 +264,14 @@
       oscars: "Oscar's",
     };
 
+    const BRAND_COLORS = {
+      kopps: '#000000',
+      gilles: '#EBCC35',
+      hefners: '#93BE46',
+      kraverz: '#CE742D',
+      oscars: '#BC272C',
+    };
+
     function brandPrefix(store) {
       if (!store.brand) return '';
       return (BRAND_DISPLAY[store.brand] || store.brand) + ' \u2014 ';
@@ -488,6 +496,11 @@
       previewDate.textContent = '';
       previewLocation.textContent = '';
       previewDesc.innerHTML = '';
+
+      // Set accent color based on primary store's brand
+      const primaryStore = allStores.find(s => s.slug === primarySlug);
+      const accentColor = (primaryStore && primaryStore.brand && BRAND_COLORS[primaryStore.brand]) || '#039be5';
+      document.querySelector('.cal-event-color').style.background = accentColor;
 
       try {
         const resp = await fetch(url, { signal: previewAbort.signal });

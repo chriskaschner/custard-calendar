@@ -43,6 +43,10 @@
           <label>&nbsp;</label>
           <button id="search-btn" class="btn btn-search">Search</button>
         </div>
+        <div class="filter-group filter-group-btn">
+          <label>&nbsp;</label>
+          <button id="not-culvers-btn">Not Culver's</button>
+        </div>
       </div>
     </section>
 
@@ -66,6 +70,22 @@
 
   <script>
     const WORKER_BASE = 'https://custard-calendar.chris-kaschner.workers.dev';
+
+    const BRAND_COLORS = {
+      kopps: '#000000',
+      gilles: '#EBCC35',
+      hefners: '#93BE46',
+      kraverz: '#CE742D',
+      oscars: '#BC272C',
+    };
+
+    const BRAND_DISPLAY = {
+      kopps: "Kopp's",
+      gilles: "Gille's",
+      hefners: "Hefner's",
+      kraverz: "Kraverz",
+      oscars: "Oscar's",
+    };
 
     // Known flavors for autocomplete
     const KNOWN_FLAVORS = [
@@ -103,6 +123,10 @@
     }).addTo(map);
 
     let markers = L.layerGroup().addTo(map);
+    const notCulversBtn = document.getElementById('not-culvers-btn');
+    let notCulversActive = false;
+    let brandStores = []; // loaded from stores.json
+    let skipMoveHandler = false; // flag to skip moveend during programmatic fitBounds
 
     // Populate flavor datalist
     for (const f of KNOWN_FLAVORS) {
@@ -173,9 +197,22 @@
       if (e.key === 'Enter') doSearch();
     });
 
+    // Debounced map move handler for dynamic search
+    let moveTimer = null;
+    map.on('moveend', () => {
+      if (skipMoveHandler) { skipMoveHandler = false; return; }
+      if (notCulversActive) return; // don't re-search in "Not Culver's" mode
+      clearTimeout(moveTimer);
+      moveTimer = setTimeout(() => {
+        const center = map.getCenter();
+        locationInput.value = `${center.lat.toFixed(4)},${center.lng.toFixed(4)}`;
+        doSearch(true); // true = triggered by map move (skip fitBounds)
+      }, 300);
+    });
+
     let searchAbort = null;
 
-    async function doSearch() {
+    async function doSearch(fromMapMove = false) {
       const location = locationInput.value.trim();
       if (!location) {
         locationInput.focus();
@@ -204,7 +241,7 @@
           throw new Error(err.error || `HTTP ${resp.status}`);
         }
         const data = await resp.json();
-        renderResults(data);
+        renderResults(data, fromMapMove);
       } catch (err) {
         if (err.name === 'AbortError') return;
         resultsBody.innerHTML = `<div class="error-msg">Search failed: ${escapeHtml(err.message)}</div>`;
@@ -215,7 +252,7 @@
       }
     }
 
-    function renderResults(data) {
+    function renderResults(data, skipFitBounds = false) {
       markers.clearLayers();
 
       const hasFlavorFilter = !!data.query.flavor;
@@ -292,7 +329,8 @@
         bounds.extend([store.lat, store.lon]);
       }
 
-      if (bounds.isValid()) {
+      if (bounds.isValid() && !skipFitBounds) {
+        skipMoveHandler = true;
         map.fitBounds(bounds, { padding: [30, 30], maxZoom: 12 });
       }
 
@@ -369,26 +407,35 @@
     function storePopup(store, isMatch) {
       const matchBadge = isMatch ? ' <span class="popup-match">MATCH</span>' : '';
       const desc = store.description ? `<br><small>${escapeHtml(store.description)}</small>` : '';
+      const brandLabel = store.brand && BRAND_DISPLAY[store.brand] ? `<small style="color:${BRAND_COLORS[store.brand] || '#003366'}">${escapeHtml(BRAND_DISPLAY[store.brand])}</small><br>` : '';
       return `<div class="store-popup">
-        <strong>${escapeHtml(store.name)}</strong>${matchBadge}<br>
+        ${brandLabel}<strong>${escapeHtml(store.name)}</strong>${matchBadge}<br>
         ${escapeHtml(store.address)}<br>
         <em>${escapeHtml(store.flavor)}</em>${desc}
       </div>`;
     }
 
+    function brandClass(store) {
+      if (store.brand && BRAND_COLORS[store.brand]) return ` brand-${store.brand}`;
+      return '';
+    }
+
     function storeCard(store, isMatch) {
-      const matchClass = isMatch ? ' store-card-match' : '';
-      const culversUrl = store.slug ? `https://www.culvers.com/restaurants/${encodeURIComponent(store.slug)}` : '#';
+      const matchClass = isMatch ? ' store-card-match' : (store.brand ? brandClass(store) : ' brand-culvers');
+      const brandLabel = store.brand && BRAND_DISPLAY[store.brand] ? `<span style="color:${BRAND_COLORS[store.brand] || '#003366'}; font-size:0.75rem; font-weight:600">${escapeHtml(BRAND_DISPLAY[store.brand])}</span> ` : '';
+      const culversUrl = store.slug ? (store.brand ? '#' : `https://www.culvers.com/restaurants/${encodeURIComponent(store.slug)}`) : '#';
+      const linkText = store.brand ? '' : `<a class="store-card-link" href="${culversUrl}" target="_blank" rel="noopener">View on culvers.com</a>`;
       const desc = store.description ? `<div class="store-card-description">${escapeHtml(store.description)}</div>` : '';
+      const rankHtml = store.rank != null ? `<span class="store-card-rank">#${store.rank}</span>` : '';
       return `<div class="store-card${matchClass}">
         <div class="store-card-header">
-          <span class="store-card-name">${escapeHtml(store.name)}</span>
-          <span class="store-card-rank">#${store.rank}</span>
+          <span class="store-card-name">${brandLabel}${escapeHtml(store.name)}</span>
+          ${rankHtml}
         </div>
-        <div class="store-card-address">${escapeHtml(store.address)}</div>
-        <div class="store-card-flavor">${escapeHtml(store.flavor)}</div>
+        <div class="store-card-address">${escapeHtml(store.address || '')}</div>
+        <div class="store-card-flavor">${escapeHtml(store.flavor || 'Loading...')}</div>
         ${desc}
-        <a class="store-card-link" href="${culversUrl}" target="_blank" rel="noopener">View on culvers.com</a>
+        ${linkText}
       </div>`;
     }
 
@@ -400,6 +447,98 @@
     function escapeAttr(str) {
       return escapeHtml(str);
     }
+
+    // Load brand stores from stores.json
+    async function loadBrandStores() {
+      if (brandStores.length > 0) return brandStores;
+      try {
+        const resp = await fetch('stores.json?v=' + new Date().toISOString().slice(0, 10));
+        const data = await resp.json();
+        brandStores = (data.stores || []).filter(s => s.brand);
+      } catch (err) {
+        console.error('Failed to load brand stores:', err);
+      }
+      return brandStores;
+    }
+
+    // "Not Culver's" toggle
+    notCulversBtn.addEventListener('click', async () => {
+      notCulversActive = !notCulversActive;
+      notCulversBtn.classList.toggle('active', notCulversActive);
+
+      if (!notCulversActive) {
+        // Toggle off: clear and re-search normally
+        notCulversBtn.textContent = "Not Culver's";
+        markers.clearLayers();
+        resultsSection.hidden = true;
+        if (locationInput.value.trim()) doSearch();
+        return;
+      }
+
+      notCulversBtn.textContent = 'Loading...';
+      const stores = await loadBrandStores();
+      if (stores.length === 0) {
+        notCulversBtn.textContent = 'No stores';
+        setTimeout(() => {
+          notCulversBtn.textContent = "Not Culver's";
+          notCulversActive = false;
+          notCulversBtn.classList.remove('active');
+        }, 2000);
+        return;
+      }
+
+      // Fetch today's flavor for each brand store in parallel
+      const flavorPromises = stores.map(async (store) => {
+        try {
+          const resp = await fetch(`${WORKER_BASE}/api/flavors?slug=${encodeURIComponent(store.slug)}`);
+          if (!resp.ok) return { ...store, flavor: 'Unavailable' };
+          const data = await resp.json();
+          const today = new Date().toISOString().slice(0, 10);
+          const todayFlavor = (data.flavors || []).find(f => f.date === today);
+          return { ...store, flavor: todayFlavor ? todayFlavor.flavor : (data.flavors && data.flavors[0] ? data.flavors[0].flavor : 'Unavailable'), description: todayFlavor ? (todayFlavor.description || '') : '' };
+        } catch {
+          return { ...store, flavor: 'Unavailable' };
+        }
+      });
+
+      const results = await Promise.all(flavorPromises);
+
+      notCulversBtn.textContent = "Not Culver's";
+
+      // Render brand store results
+      markers.clearLayers();
+      const bounds = L.latLngBounds();
+
+      for (const store of results) {
+        if (!store.lat && !store.lng) continue;
+        const lat = store.lat;
+        const lng = store.lng;
+        const color = BRAND_COLORS[store.brand] || '#003366';
+        const marker = L.circleMarker([lat, lng], {
+          radius: 10,
+          fillColor: color,
+          color: '#fff',
+          weight: 2,
+          fillOpacity: 0.9,
+        }).bindPopup(storePopup(store, false));
+        markers.addLayer(marker);
+        bounds.extend([lat, lng]);
+      }
+
+      if (bounds.isValid()) {
+        skipMoveHandler = true;
+        map.fitBounds(bounds, { padding: [30, 30], maxZoom: 12 });
+      }
+
+      // Render result cards
+      let html = `<div class="results-group"><h3 class="results-group-title">MKE Area Custard Shops (${results.length})</h3>`;
+      for (const store of results) {
+        html += storeCard(store, false);
+      }
+      html += '</div>';
+      resultsBody.innerHTML = html;
+      resultsSection.hidden = false;
+    });
 
     // Auto-detect location on load via Cloudflare geolocation, then search
     async function initLocation() {

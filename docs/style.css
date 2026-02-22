@@ -462,6 +462,28 @@ details ol {
   flex: 0 0 auto;
 }
 
+#not-culvers-btn {
+  padding: 0.5rem 1rem;
+  border: 1px solid #6A1B9A;
+  border-radius: 4px;
+  background: white;
+  color: #6A1B9A;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 1.2rem;
+  white-space: nowrap;
+}
+
+#not-culvers-btn:hover {
+  background: #f5f0fa;
+}
+
+#not-culvers-btn.active {
+  background: #6A1B9A;
+  color: white;
+}
+
 /* Suggestions panel */
 #suggestions-panel {
   background: #fff8e1;
@@ -521,6 +543,14 @@ details ol {
 .store-card-match {
   border-left: 4px solid #2e7d32;
 }
+
+/* Brand color left borders */
+.brand-culvers { border-left: 4px solid #003366; }
+.brand-kopps { border-left: 4px solid #000000; }
+.brand-gilles { border-left: 4px solid #EBCC35; }
+.brand-hefners { border-left: 4px solid #93BE46; }
+.brand-kraverz { border-left: 4px solid #CE742D; }
+.brand-oscars { border-left: 4px solid #BC272C; }
 
 .store-card-header {
   display: flex;
