@@ -401,37 +401,17 @@
       return escapeHtml(str);
     }
 
-    // Auto-detect location on load via Cloudflare geolocation
+    // Auto-detect location on load via Cloudflare geolocation, then search
     async function initLocation() {
       try {
         const resp = await fetch(`${WORKER_BASE}/api/geolocate`);
         const geo = await resp.json();
         if (geo.city && geo.state && !locationInput.value) {
           locationInput.value = `${geo.city}, ${geo.state}`;
+          doSearch();
         }
       } catch (err) {
         console.debug('Auto-geolocation unavailable:', err);
-      }
-    }
-
-    // Load all stores onto the map as a default view
-    async function loadAllStores() {
-      try {
-        const resp = await fetch('stores.json');
-        const data = await resp.json();
-        const bounds = L.latLngBounds();
-        for (const store of data.stores) {
-          if (!store.lat || !store.lng) continue;
-          const marker = L.marker([store.lat, store.lng], { icon: defaultIcon })
-            .bindPopup(`<div class="store-popup"><strong>${escapeHtml(store.name)}</strong><br>${escapeHtml(store.address)}</div>`);
-          markers.addLayer(marker);
-          bounds.extend([store.lat, store.lng]);
-        }
-        if (bounds.isValid()) {
-          map.fitBounds(bounds, { padding: [30, 30], maxZoom: 12 });
-        }
-      } catch (err) {
-        console.debug('Failed to load stores:', err);
       }
     }
 
@@ -440,7 +420,6 @@
     if (params.get('location')) {
       readUrlParams();
     } else {
-      loadAllStores();
       initLocation();
     }
   </script>
