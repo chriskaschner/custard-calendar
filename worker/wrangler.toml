@@ -11,8 +11,19 @@ ACCESS_TOKEN = ""
 # CORS origin restriction. Set to your GitHub Pages URL in production.
 # Leave empty for open access (default).
 ALLOWED_ORIGIN = ""
+# Base URL for alert email links. Set to your Worker URL in production.
+WORKER_BASE_URL = "https://custard-calendar.chris-kaschner.workers.dev"
+# Email sender address for alerts. Requires verified domain in Resend.
+ALERT_FROM_EMAIL = "alerts@custard.chriskaschner.com"
 
-# KV namespace for caching flavor data (24h TTL)
+# Secrets (set via: npx wrangler secret put <NAME>):
+#   RESEND_API_KEY — API key from resend.com for sending alert emails
+
+# KV namespace for caching flavor data + alert subscriptions (24h TTL)
 [[kv_namespaces]]
 binding = "FLAVOR_CACHE"
 id = "1642a7da91e144cb9b233b940430250c"
+
+# Cron trigger: daily alert check at noon UTC (6-7 AM Central)
+[triggers]
+crons = ["0 12 * * *"]

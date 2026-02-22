@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flavor Alerts — Custard Calendar</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍦</text></svg>">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>Flavor Alerts</h1>
+    <p>Get an email when your favorite Culver's flavors are coming up.</p>
+    <nav class="nav-links">
+      <a href="index.html">Calendar</a>
+      <a href="map.html">Custard Map</a>
+    </nav>
+  </header>
+
+  <main>
+    <section id="store-selector">
+      <h2>1. Pick your store</h2>
+      <div class="filter-row">
+        <div class="filter-group">
+          <label for="state-filter">State</label>
+          <select id="state-filter">
+            <option value="">All States</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label for="city-search">Search</label>
+          <input type="text" id="city-search" placeholder="City or store name...">
+        </div>
+      </div>
+
+      <div id="store-selected" class="selected-badge" hidden></div>
+      <select id="store-select" size="6">
+        <option value="" disabled selected>Loading stores...</option>
+      </select>
+    </section>
+
+    <section id="flavor-section" hidden>
+      <h2>2. Pick your favorite flavors</h2>
+      <p class="hint">Search and add up to 10 flavors. We'll email you when any are scheduled.</p>
+
+      <div class="filter-row">
+        <div class="filter-group">
+          <label for="flavor-search">Search flavors</label>
+          <input type="text" id="flavor-search" placeholder="Type a flavor name or ingredient...">
+        </div>
+      </div>
+
+      <div id="flavor-results" class="flavor-results" hidden>
+        <!-- Populated by JS -->
+      </div>
+
+      <div id="selected-flavors" class="selected-badges">
+        <!-- Populated by JS -->
+      </div>
+    </section>
+
+    <section id="email-section" hidden>
+      <h2>3. Enter your email</h2>
+      <div class="email-row">
+        <input type="email" id="email-input" placeholder="you@example.com" autocomplete="email">
+        <button id="subscribe-btn" type="button">Subscribe</button>
+      </div>
+      <div id="subscribe-status" class="subscribe-status" hidden></div>
+    </section>
+  </main>
+
+  <footer>
+    <p>Not affiliated with any restaurant. Flavor data sourced from restaurant websites.</p>
+  </footer>
+
+  <style>
+    #store-select {
+      width: 100%;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 0.8125rem;
+      margin-top: 0.5rem;
+    }
+
+    #flavor-section, #email-section {
+      margin-top: 2rem;
+    }
+
+    #flavor-section h2, #email-section h2 {
+      font-size: 1rem;
+      color: #003366;
+      margin-bottom: 0.5rem;
+    }
+
+    .flavor-results {
+      max-height: 200px;
+      overflow-y: auto;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      background: white;
+      margin-bottom: 0.75rem;
+    }
+
+    .flavor-result-item {
+      padding: 0.5rem 0.75rem;
+      cursor: pointer;
+      border-bottom: 1px solid #f0f0f0;
+      font-size: 0.875rem;
+    }
+
+    .flavor-result-item:last-child {
+      border-bottom: none;
+    }
+
+    .flavor-result-item:hover {
+      background: #f0f4f8;
+    }
+
+    .flavor-result-item .flavor-name {
+      font-weight: 600;
+      color: #1a1a1a;
+    }
+
+    .flavor-result-item .flavor-desc {
+      font-size: 0.75rem;
+      color: #666;
+      margin-top: 0.125rem;
+    }
+
+    .email-row {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .email-row input {
+      flex: 1;
+      padding: 0.5rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 0.875rem;
+    }
+
+    .email-row button {
+      padding: 0.5rem 1.5rem;
+      background: #003366;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 600;
+    }
+
+    .email-row button:hover {
+      background: #004488;
+    }
+
+    .email-row button:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+
+    .subscribe-status {
+      margin-top: 0.75rem;
+      padding: 0.75rem;
+      border-radius: 4px;
+      font-size: 0.875rem;
+    }
+
+    .subscribe-status.success {
+      background: #e8f5e9;
+      color: #2e7d32;
+    }
+
+    .subscribe-status.error {
+      background: #fce4ec;
+      color: #c62828;
+    }
+  </style>
+
+  <script>
+    const WORKER_BASE = 'https://custard-calendar.chris-kaschner.workers.dev';
+
+    let allStores = [];
+    let flavorCatalog = [];
+    let selectedSlug = null;
+    let selectedFlavors = new Set();
+
+    // DOM elements
+    const stateFilter = document.getElementById('state-filter');
+    const citySearch = document.getElementById('city-search');
+    const storeSelect = document.getElementById('store-select');
+    const storeSelected = document.getElementById('store-selected');
+    const flavorSection = document.getElementById('flavor-section');
+    const flavorSearch = document.getElementById('flavor-search');
+    const flavorResults = document.getElementById('flavor-results');
+    const selectedFlavorsEl = document.getElementById('selected-flavors');
+    const emailSection = document.getElementById('email-section');
+    const emailInput = document.getElementById('email-input');
+    const subscribeBtn = document.getElementById('subscribe-btn');
+    const subscribeStatus = document.getElementById('subscribe-status');
+
+    // Load stores
+    async function loadStores() {
+      try {
+        const resp = await fetch('stores.json?v=' + new Date().toISOString().slice(0, 10));
+        const data = await resp.json();
+        allStores = data.stores || [];
+        populateStateFilter();
+        renderStoreList();
+      } catch (err) {
+        storeSelect.innerHTML = '<option disabled>Failed to load stores</option>';
+      }
+    }
+
+    // Load flavor catalog
+    async function loadCatalog() {
+      try {
+        const resp = await fetch(WORKER_BASE + '/api/flavors/catalog');
+        const data = await resp.json();
+        flavorCatalog = data.flavors || [];
+      } catch (err) {
+        console.error('Failed to load flavor catalog:', err);
+      }
+    }
+
+    function populateStateFilter() {
+      const states = [...new Set(allStores.map(s => s.state))].sort();
+      for (const state of states) {
+        const opt = document.createElement('option');
+        opt.value = state;
+        opt.textContent = state;
+        stateFilter.appendChild(opt);
+      }
+    }
+
+    function getFilteredStores() {
+      const state = stateFilter.value;
+      const query = citySearch.value.toLowerCase().trim();
+      return allStores.filter(s => {
+        if (state && s.state !== state) return false;
+        if (query) {
+          const searchable = `${s.name} ${s.city} ${s.address} ${s.slug}`.toLowerCase();
+          return searchable.includes(query);
+        }
+        return true;
+      });
+    }
+
+    function renderStoreList() {
+      const filtered = getFilteredStores();
+      storeSelect.innerHTML = '';
+      if (filtered.length === 0) {
+        storeSelect.innerHTML = '<option disabled>No stores match your search</option>';
+      } else {
+        for (const store of filtered) {
+          const opt = document.createElement('option');
+          opt.value = store.slug;
+          opt.textContent = `${store.city}, ${store.state} \u2014 ${store.address}`;
+          if (store.slug === selectedSlug) opt.selected = true;
+          storeSelect.appendChild(opt);
+        }
+      }
+    }
+
+    function selectStore(slug) {
+      selectedSlug = slug;
+      const store = allStores.find(s => s.slug === slug);
+      if (store) {
+        storeSelected.textContent = `${store.city}, ${store.state} \u2014 ${store.address}`;
+        storeSelected.hidden = false;
+      }
+      flavorSection.hidden = false;
+      updateEmailSection();
+    }
+
+    // Flavor search
+    function searchFlavors(query) {
+      if (!query || query.length < 2) {
+        flavorResults.hidden = true;
+        return;
+      }
+
+      const q = query.toLowerCase();
+      const matches = flavorCatalog.filter(f => {
+        if (selectedFlavors.has(f.title)) return false;
+        const inTitle = f.title.toLowerCase().includes(q);
+        const inDesc = f.description && f.description.toLowerCase().includes(q);
+        return inTitle || inDesc;
+      }).slice(0, 10);
+
+      flavorResults.innerHTML = '';
+      if (matches.length === 0) {
+        flavorResults.innerHTML = '<div class="flavor-result-item"><span class="flavor-desc">No matching flavors found</span></div>';
+        flavorResults.hidden = false;
+        return;
+      }
+
+      for (const f of matches) {
+        const item = document.createElement('div');
+        item.className = 'flavor-result-item';
+        item.innerHTML = `<div class="flavor-name">${escapeHtml(f.title)}</div><div class="flavor-desc">${escapeHtml(f.description || '')}</div>`;
+        item.addEventListener('click', () => addFlavor(f.title));
+        flavorResults.appendChild(item);
+      }
+      flavorResults.hidden = false;
+    }
+
+    function addFlavor(title) {
+      if (selectedFlavors.size >= 10) return;
+      selectedFlavors.add(title);
+      flavorSearch.value = '';
+      flavorResults.hidden = true;
+      renderSelectedFlavors();
+      updateEmailSection();
+    }
+
+    function removeFlavor(title) {
+      selectedFlavors.delete(title);
+      renderSelectedFlavors();
+      updateEmailSection();
+    }
+
+    function renderSelectedFlavors() {
+      selectedFlavorsEl.innerHTML = '';
+      for (const title of selectedFlavors) {
+        const badge = document.createElement('span');
+        badge.className = 'badge';
+        badge.textContent = title;
+        const removeBtn = document.createElement('button');
+        removeBtn.textContent = '\u00d7';
+        removeBtn.title = 'Remove';
+        removeBtn.onclick = () => removeFlavor(title);
+        badge.appendChild(removeBtn);
+        selectedFlavorsEl.appendChild(badge);
+      }
+    }
+
+    function updateEmailSection() {
+      emailSection.hidden = !(selectedSlug && selectedFlavors.size > 0);
+    }
+
+    // Subscribe
+    async function subscribe() {
+      const email = emailInput.value.trim();
+      if (!email) {
+        showStatus('Please enter your email address.', 'error');
+        return;
+      }
+
+      subscribeBtn.disabled = true;
+      subscribeBtn.textContent = 'Subscribing...';
+
+      try {
+        const resp = await fetch(WORKER_BASE + '/api/alerts/subscribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email,
+            slug: selectedSlug,
+            favorites: [...selectedFlavors],
+          }),
+        });
+
+        const data = await resp.json();
+        if (resp.ok && data.ok) {
+          showStatus('Check your email to confirm your subscription!', 'success');
+        } else {
+          showStatus(data.error || 'Something went wrong. Please try again.', 'error');
+        }
+      } catch (err) {
+        showStatus('Network error. Please check your connection and try again.', 'error');
+      } finally {
+        subscribeBtn.disabled = false;
+        subscribeBtn.textContent = 'Subscribe';
+      }
+    }
+
+    function showStatus(message, type) {
+      subscribeStatus.textContent = message;
+      subscribeStatus.className = `subscribe-status ${type}`;
+      subscribeStatus.hidden = false;
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    // Event handlers
+    stateFilter.addEventListener('change', renderStoreList);
+    citySearch.addEventListener('input', renderStoreList);
+    storeSelect.addEventListener('change', () => selectStore(storeSelect.value));
+    flavorSearch.addEventListener('input', () => searchFlavors(flavorSearch.value));
+    flavorSearch.addEventListener('focus', () => searchFlavors(flavorSearch.value));
+    subscribeBtn.addEventListener('click', subscribe);
+
+    // Close flavor results when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('#flavor-section')) {
+        flavorResults.hidden = true;
+      }
+    });
+
+    // Initialize
+    loadStores();
+    loadCatalog();
+  </script>
+</body>
+</html>
