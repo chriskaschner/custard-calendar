@@ -47,6 +47,7 @@
         </div>
       </div>
       <div class="brand-chips">
+        <button class="brand-chip" data-brand="all">All</button>
         <button class="brand-chip active" data-brand="culvers" style="background:#003366;border-color:transparent">Culver's</button>
         <button class="brand-chip" data-brand="kopps">Kopp's</button>
         <button class="brand-chip" data-brand="gilles">Gille's</button>
@@ -136,21 +137,42 @@
     const BRAND_CHIP_COLORS = { culvers: '#003366', ...BRAND_COLORS };
     const activeBrands = new Set(['culvers']);
 
+    const ALL_BRANDS = ['culvers', 'kopps', 'gilles', 'hefners', 'kraverz', 'oscars'];
+
+    function syncChipStyles() {
+      document.querySelectorAll('.brand-chip').forEach(chip => {
+        const brand = chip.dataset.brand;
+        if (brand === 'all') {
+          const allActive = ALL_BRANDS.every(b => activeBrands.has(b));
+          chip.classList.toggle('active', allActive);
+          chip.style.background = allActive ? '#555' : '';
+          chip.style.borderColor = allActive ? 'transparent' : '';
+        } else {
+          const isActive = activeBrands.has(brand);
+          chip.classList.toggle('active', isActive);
+          chip.style.background = isActive ? (BRAND_CHIP_COLORS[brand] || '') : '';
+          chip.style.borderColor = isActive ? 'transparent' : '';
+        }
+      });
+    }
+
     // Wire up brand chips
     document.querySelectorAll('.brand-chip').forEach(chip => {
       chip.addEventListener('click', () => {
         const brand = chip.dataset.brand;
-        if (activeBrands.has(brand)) {
+        if (brand === 'all') {
+          const allActive = ALL_BRANDS.every(b => activeBrands.has(b));
+          if (allActive) {
+            ALL_BRANDS.forEach(b => activeBrands.delete(b));
+          } else {
+            ALL_BRANDS.forEach(b => activeBrands.add(b));
+          }
+        } else if (activeBrands.has(brand)) {
           activeBrands.delete(brand);
-          chip.classList.remove('active');
-          chip.style.background = '';
-          chip.style.borderColor = '';
         } else {
           activeBrands.add(brand);
-          chip.classList.add('active');
-          chip.style.background = BRAND_CHIP_COLORS[brand];
-          chip.style.borderColor = 'transparent';
         }
+        syncChipStyles();
         refreshResults();
       });
     });
