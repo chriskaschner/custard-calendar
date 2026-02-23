@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Flavor Radar — Custard Calendar</title>
@@ -652,7 +653,7 @@
       return tops.slice(0, 4);
     }
 
-    function renderMiniConeSVG(flavorName) {
+    function renderMiniConeSVG(flavorName, scale) {
       if (!flavorColorData) return '';
       var bc = flavorColorData.base_colors || {};
       var rc = flavorColorData.ribbon_colors || {};
@@ -666,7 +667,7 @@
       var ribbonColor = hasRibbon ? (rc[ribbonKey] || null) : null;
       var tSlotKeys = resolveToppingSlots(profile);
 
-      var s = 8;
+      var s = scale || 8;
       var rects = [];
 
       // Scoop base fill (rounded top + bottom)
@@ -1381,7 +1382,7 @@
               '<span class="day-card-badge day-card-badge-confirmed">Confirmed</span>' +
             '</div>' +
             '<div class="day-card-body">' +
-              '<div class="day-card-cone">' + renderMiniConeSVG(day.flavor) + '</div>' +
+              '<div class="day-card-cone">' + renderMiniConeSVG(day.flavor, 10) + '</div>' +
               '<div class="day-card-text">' +
                 '<div class="day-card-flavor">' +
                   (hasFav ? '<span class="star-indicator">*</span>' : '') + escapeHtml(day.flavor) +

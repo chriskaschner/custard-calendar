@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Custard Forecast — Today's Flavor of the Day</title>
@@ -87,8 +88,13 @@
             <span class="today-card-label">Today's Flavor</span>
             <span id="today-badge" class="day-card-badge"></span>
           </div>
-          <div class="today-flavor-name" id="today-flavor"></div>
-          <div class="today-flavor-desc" id="today-desc"></div>
+          <div class="today-flavor-body">
+            <div class="today-flavor-cone" id="today-cone"></div>
+            <div class="today-flavor-content">
+              <div class="today-flavor-name" id="today-flavor"></div>
+              <div class="today-flavor-desc" id="today-desc"></div>
+            </div>
+          </div>
           <div class="today-predictions" id="today-predictions"></div>
           <div class="today-meta">
             <span class="today-store" id="today-store"></span>
@@ -202,7 +208,7 @@
       return tops.slice(0, 4);
     }
 
-    function renderMiniConeSVG(flavorName) {
+    function renderMiniConeSVG(flavorName, scale) {
       if (!flavorColorData || !flavorName) return '';
       var bc = flavorColorData.base_colors || {};
       var rc = flavorColorData.ribbon_colors || {};
@@ -214,7 +220,7 @@
       var hasRibbon = ribbonKey && (!profile || profile.density !== 'pure');
       var ribbonColor = hasRibbon ? (rc[ribbonKey] || null) : null;
       var tSlotKeys = resolveToppingSlots(profile);
-      var s = 5;
+      var s = scale || 5;
       var rects = [];
       // Scoop base fill (rounded top + bottom)
       var scoopRows = [[2,6],[1,7],[1,7],[1,7],[1,7],[2,6]];
@@ -302,6 +308,7 @@
     const todayAccent = document.getElementById('today-accent');
     const todayBadge = document.getElementById('today-badge');
     const todayFlavor = document.getElementById('today-flavor');
+    const todayCone = document.getElementById('today-cone');
     const todayDesc = document.getElementById('today-desc');
     const todayPredictions = document.getElementById('today-predictions');
     const todayStore = document.getElementById('today-store');
@@ -553,7 +560,9 @@
       if (day.type === 'confirmed') {
         todayBadge.textContent = 'Confirmed';
         todayBadge.className = 'day-card-badge day-card-badge-confirmed';
-        todayFlavor.innerHTML = renderMiniConeSVG(day.flavor) + escapeHtml(day.flavor);
+        todayCone.innerHTML = renderMiniConeSVG(day.flavor, 10);
+        todayCone.hidden = false;
+        todayFlavor.textContent = day.flavor;
         todayFlavor.style.color = '';
         todayDesc.textContent = day.description || '';
         todayDesc.hidden = !day.description;
@@ -561,7 +570,9 @@
       } else if (day.type === 'predicted') {
         todayBadge.textContent = 'Predicted';
         todayBadge.className = 'day-card-badge day-card-badge-predicted';
-        todayFlavor.innerHTML = renderMiniConeSVG(day.flavor) + escapeHtml(day.flavor);
+        todayCone.innerHTML = renderMiniConeSVG(day.flavor, 10);
+        todayCone.hidden = false;
+        todayFlavor.textContent = day.flavor;
         todayFlavor.style.color = '';
         todayDesc.textContent = '';
         todayDesc.hidden = true;
@@ -587,6 +598,8 @@
       } else {
         todayBadge.textContent = '';
         todayBadge.className = 'day-card-badge';
+        todayCone.innerHTML = '';
+        todayCone.hidden = true;
         todayFlavor.textContent = 'No data yet';
         todayFlavor.style.color = '#999';
         todayDesc.textContent = 'Check back later -- flavor data updates throughout the day.';

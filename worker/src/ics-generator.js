@@ -136,6 +136,7 @@ export function generateIcs({ calendarName, stores, flavorsBySlug }) {
       addLine(`LOCATION:${escapeText(primary.address)}`);
     }
     addLine(`TRANSP:TRANSPARENT`);
+    addLine('X-APPLE-DEFAULT-ALARM:FALSE');
 
     // Build description: flavor description + restaurant link + backup options
     let desc = flavor.description || '';

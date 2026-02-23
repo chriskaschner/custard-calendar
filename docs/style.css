@@ -1045,14 +1045,28 @@ footer a {
   letter-spacing: 0.05em;
 }
 
+.today-flavor-body {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.today-flavor-cone {
+  flex-shrink: 0;
+}
+
+.today-flavor-content {
+  flex: 1;
+  min-width: 0;
+}
+
 .today-flavor-name {
   font-size: 1.75rem;
   font-weight: 700;
   color: #1a1a1a;
   line-height: 1.2;
   margin-bottom: 0.375rem;
-  display: flex;
-  align-items: center;
 }
 
 .today-flavor-desc {
