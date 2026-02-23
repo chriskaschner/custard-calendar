@@ -112,9 +112,9 @@ describe('handleSocialCard', () => {
   });
 
   it('produces different fill colors for different flavors', async () => {
-    const mintEnv = {
+    const peachEnv = {
       DB: createMockD1({
-        snapshot: { flavor: 'Mint Explosion', description: '' },
+        snapshot: { flavor: 'Georgia Peach', description: '' },
       }),
     };
     const chocEnv = {
@@ -122,14 +122,14 @@ describe('handleSocialCard', () => {
         snapshot: { flavor: 'Dark Chocolate Decadence', description: '' },
       }),
     };
-    const mintRes = await handleSocialCard('/og/mt-horeb/2026-02-22.svg', mintEnv, CORS);
+    const peachRes = await handleSocialCard('/og/mt-horeb/2026-02-22.svg', peachEnv, CORS);
     const chocRes = await handleSocialCard('/og/mt-horeb/2026-02-22.svg', chocEnv, CORS);
-    const mintBody = await mintRes.text();
+    const peachBody = await peachRes.text();
     const chocBody = await chocRes.text();
-    // Mint base color = #2ECC71, dark chocolate = #3B1F0B
-    expect(mintBody).toContain('#2ECC71');
+    // Peach base color = #FFE5B4, dark chocolate = #3B1F0B
+    expect(peachBody).toContain('#FFE5B4');
     expect(chocBody).toContain('#3B1F0B');
     // They should not share base fills
-    expect(mintBody).not.toContain('#3B1F0B');
+    expect(peachBody).not.toContain('#3B1F0B');
   });
 });

@@ -10,7 +10,7 @@
  */
 
 import { normalize } from './flavor-matcher.js';
-import { getFlavorProfile, BASE_COLORS, CONE_COLORS, TOPPING_COLORS, RIBBON_COLORS } from './flavor-colors.js';
+import { getFlavorProfile, renderConeSVG, BASE_COLORS, CONE_COLORS, TOPPING_COLORS, RIBBON_COLORS } from './flavor-colors.js';
 
 /**
  * Route handler for social card requests.
@@ -92,43 +92,13 @@ export async function handleSocialCard(path, env, corsHeaders) {
 
 /**
  * Render a pixel-art cone SVG group for embedding in the social card.
+ * Extracts the inner SVG content from renderConeSVG and wraps it in a <g>.
  */
 function renderConeGroup(flavorName, x, y, scale) {
-  const profile = getFlavorProfile(flavorName);
-  const baseColor = BASE_COLORS[profile.base] || BASE_COLORS.vanilla;
-  const ribbonColor = profile.ribbon ? (RIBBON_COLORS[profile.ribbon] || null) : null;
-  const toppingColor = profile.toppings.length > 0
-    ? (TOPPING_COLORS[profile.toppings[0]] || null)
-    : null;
-
-  const s = scale;
-  const rects = [];
-
-  const scoopRows = [[2,6],[1,7],[1,7],[1,7],[1,7],[2,6]];
-  for (let row = 0; row < scoopRows.length; row++) {
-    const [sc, ec] = scoopRows[row];
-    for (let col = sc; col <= ec; col++) {
-      let color = baseColor;
-      if (ribbonColor && (row === 2 || row === 3) && col >= 2 && col <= 5 && ((row + col) % 3 === 0)) {
-        color = ribbonColor;
-      }
-      if (toppingColor && row <= 1 && col >= sc + 1 && col <= ec - 1 && (col % 2 === 0)) {
-        color = toppingColor;
-      }
-      rects.push(`<rect x="${col * s}" y="${row * s}" width="${s}" height="${s}" fill="${color}"/>`);
-    }
-  }
-
-  const coneRows = [[2,6],[3,5],[3,5],[4,4],[4,4]];
-  for (let row = 0; row < coneRows.length; row++) {
-    const [sc, ec] = coneRows[row];
-    for (let col = sc; col <= ec; col++) {
-      const c = ((row + col) % 2 === 0) ? CONE_COLORS.waffle : CONE_COLORS.waffle_dark;
-      rects.push(`<rect x="${col * s}" y="${(row + 6) * s}" width="${s}" height="${s}" fill="${c}"/>`);
-    }
-  }
-
-  return `<g transform="translate(${x},${y})">${rects.join('')}</g>`;
+  const svg = renderConeSVG(flavorName, scale);
+  // Extract inner content between <svg...> and </svg>
+  const inner = svg.replace(/<svg[^>]*>/, '').replace(/<\/svg>/, '');
+  return `<g transform="translate(${x},${y})">${inner}</g>`;
 }
 
 /**

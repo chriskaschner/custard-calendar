@@ -47,8 +47,8 @@ export const TOPPING_COLORS = {
 };
 
 export const CONE_COLORS = {
-  waffle: '#D4A574',
-  waffle_dark: '#A0784C',
+  waffle: '#D2691E',
+  waffle_dark: '#B8860B',
 };
 
 /**
@@ -117,10 +117,30 @@ export function getFlavorProfile(name) {
 }
 
 /**
+ * Resolve topping slots based on density encoding (matches Tidbyt cone_spec).
+ * Returns array of topping color keys for fixed-slot placement.
+ */
+function resolveToppingSlots(profile) {
+  const toppings = profile.toppings || [];
+  const density = profile.density || 'standard';
+  if (density === 'pure') return [];
+  if (density === 'double') {
+    const slots = toppings.length > 0 ? [toppings[0], toppings[0]] : [];
+    if (toppings.length > 1) slots.push(toppings[1]);
+    return slots;
+  }
+  if (density === 'explosion') return toppings.slice(0, 4);
+  if (density === 'overload') return toppings.length > 0 ? [toppings[0], toppings[0]] : [];
+  return toppings.slice(0, 4); // standard
+}
+
+/**
  * Render an SVG cone for a flavor at the given scale.
  *
- * The base grid is 9x11 pixels (matching Tidbyt pixel art). Scale multiplies
- * the grid to produce larger output (e.g., scale=10 -> 90x110 SVG).
+ * Grid: 9x11 pixels matching Tidbyt mini-cone spec.
+ * Rendering: base fill -> fixed-slot toppings -> fixed-slot ribbon -> cone.
+ * Ribbon wins at T4/R3 overlap. Scoop has rounded top+bottom.
+ * Cone uses Tidbyt checkerboard (#D2691E / #B8860B) with 1px tip.
  *
  * @param {string} flavorName
  * @param {number} [scale=1]
@@ -129,58 +149,70 @@ export function getFlavorProfile(name) {
 export function renderConeSVG(flavorName, scale = 1) {
   const profile = getFlavorProfile(flavorName);
   const baseColor = BASE_COLORS[profile.base] || BASE_COLORS.vanilla;
-  const ribbonColor = profile.ribbon ? (RIBBON_COLORS[profile.ribbon] || null) : null;
-  const toppingColor = profile.toppings.length > 0
-    ? (TOPPING_COLORS[profile.toppings[0]] || null)
-    : null;
+  const ribbonKey = profile.ribbon;
+  const hasRibbon = ribbonKey && profile.density !== 'pure';
+  const ribbonColor = hasRibbon ? (RIBBON_COLORS[ribbonKey] || null) : null;
+  const toppingSlots = resolveToppingSlots(profile);
 
   const w = 9 * scale;
   const h = 11 * scale;
   const s = scale;
   const rects = [];
 
-  // Scoop (rows 0-5, columns 1-7 with rounded shape)
+  // Scoop (rows 0-5, rounded top and bottom)
   const scoopRows = [
-    [2, 6],   // row 0: cols 2-6
+    [2, 6],   // row 0: cols 2-6 (rounded top)
     [1, 7],   // row 1: cols 1-7
-    [1, 7],   // row 2: cols 1-7
-    [1, 7],   // row 3: cols 1-7
-    [1, 7],   // row 4: cols 1-7
-    [2, 6],   // row 5: cols 2-6
+    [1, 7],   // row 2
+    [1, 7],   // row 3
+    [1, 7],   // row 4
+    [2, 6],   // row 5: cols 2-6 (rounded bottom)
   ];
 
+  // Base fill
   for (let row = 0; row < scoopRows.length; row++) {
-    const [startCol, endCol] = scoopRows[row];
-    for (let col = startCol; col <= endCol; col++) {
-      let color = baseColor;
-      // Ribbon diagonal (row 2-3, offset columns)
-      if (ribbonColor && (row === 2 || row === 3) && col >= 2 && col <= 5 && ((row + col) % 3 === 0)) {
-        color = ribbonColor;
-      }
-      // Topping accents (row 0-1, scattered)
-      if (toppingColor && row <= 1 && col >= startCol + 1 && col <= endCol - 1 && (col % 2 === 0)) {
-        color = toppingColor;
-      }
-      rects.push(`<rect x="${col * s}" y="${row * s}" width="${s}" height="${s}" fill="${color}"/>`);
+    const [sc, ec] = scoopRows[row];
+    for (let col = sc; col <= ec; col++) {
+      rects.push(`<rect x="${col * s}" y="${row * s}" width="${s}" height="${s}" fill="${baseColor}"/>`);
     }
   }
 
-  // Cone (rows 6-10, narrowing V-shape)
-  const coneRows = [
-    [2, 6],  // row 6
-    [3, 5],  // row 7
-    [3, 5],  // row 8
-    [4, 4],  // row 9
-    [4, 4],  // row 10
-  ];
+  // Fixed topping slots (T1-T4) per Tidbyt cone_spec
+  // T1: (2,1), T2: (6,1), T3: (3,3), T4: (5,2) -- skip T4 if ribbon present
+  const tSlots = [[2,1],[6,1],[3,3],[5,2]];
+  for (let i = 0; i < toppingSlots.length && i < tSlots.length; i++) {
+    if (i === 3 && hasRibbon) continue; // T4 collision with R3
+    const color = TOPPING_COLORS[toppingSlots[i]];
+    if (!color) continue;
+    const [tx, ty] = tSlots[i];
+    rects.push(`<rect x="${tx * s}" y="${ty * s}" width="${s}" height="${s}" fill="${color}"/>`);
+  }
 
+  // Fixed ribbon slots (R1-R3) -- rendered after toppings, ribbon wins at overlap
+  // R1: (3,0), R2: (4,1), R3: (5,2)
+  if (ribbonColor) {
+    const rSlots = [[3,0],[4,1],[5,2]];
+    for (const [rx, ry] of rSlots) {
+      rects.push(`<rect x="${rx * s}" y="${ry * s}" width="${s}" height="${s}" fill="${ribbonColor}"/>`);
+    }
+  }
+
+  // Cone (rows 6-9: checkerboard, row 10: 1px tip)
+  const coneRows = [
+    [2, 6],  // row 6: 5px
+    [2, 6],  // row 7: 5px
+    [3, 5],  // row 8: 3px
+    [3, 5],  // row 9: 3px
+  ];
   for (let row = 0; row < coneRows.length; row++) {
-    const [startCol, endCol] = coneRows[row];
-    for (let col = startCol; col <= endCol; col++) {
+    const [sc, ec] = coneRows[row];
+    for (let col = sc; col <= ec; col++) {
       const color = ((row + col) % 2 === 0) ? CONE_COLORS.waffle : CONE_COLORS.waffle_dark;
       rects.push(`<rect x="${col * s}" y="${(row + 6) * s}" width="${s}" height="${s}" fill="${color}"/>`);
     }
   }
+  // Tip at (4, 10)
+  rects.push(`<rect x="${4 * s}" y="${10 * s}" width="${s}" height="${s}" fill="${CONE_COLORS.waffle_dark}"/>`);
 
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}">${rects.join('')}</svg>`;
 }
