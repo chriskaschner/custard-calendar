@@ -62,7 +62,6 @@ Working. Pixel-art renderer with 29-profile flavor color system. Community app P
 | Item | Type | Effort | Notes |
 |------|------|--------|-------|
 | Map visuals v2: clustered flavor fronts | Feature | Medium | Add dynamic weather-map style clustering/grouping and category views (caramels, cookies/cakes) across map/fronts |
-| OG share image | Polish | Small | Replace placeholder tilted mint cone with pixel-art custard rain |
 | Google Calendar alerts | Known limitation | None | Google ignores VALARM in ICS subscriptions; no code fix possible |
 | Pairwise flavor voting | Deprioritized | Large | Group "where should we go tonight?" -- shelved, no clear MVP |
 | Alexa skill | Feature | Medium | Custom skill using `/api/v1/today`, needs Amazon dev account + certification |
@@ -89,6 +88,21 @@ Working. Pixel-art renderer with 29-profile flavor color system. Community app P
 
 - `cd worker && npx vitest run test/flavor-colors.test.js test/social-card.test.js` -- 31 passed
 - `cd worker && npm run test:browser -- --workers=1` -- 6 passed
+- `.venv/bin/pytest -q tests/test_static_assets.py` -- 8 passed
+
+---
+
+## Session Update (2026-02-23) -- OG Cone Share Image
+
+### Shipped
+
+- Reworked `tools/generate_og_images.py` calendar-card renderer to a non-generic pixel-art scene.
+- New `docs/og-calendar.png` now shows a stylized cloud with cone-rain (multi-flavor scoop colors), replacing the prior placeholder-style visual.
+- Existing OG file names and HTML meta tags remain unchanged, so deploy wiring does not change.
+
+### Validation
+
+- `.venv/bin/python tools/generate_og_images.py` -- regenerated `docs/og-calendar.png`
 - `.venv/bin/pytest -q tests/test_static_assets.py` -- 8 passed
 
 ---

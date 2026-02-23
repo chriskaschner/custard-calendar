@@ -40,7 +40,7 @@ Canonical task list for Custard Calendar. Checked into git so it persists across
 
 ### Bugs / Polish
 - [x] **HD cone topping density** — made HD cone topping placement denser and intentionally asymmetric across canonical renderer + web mirror renderers (`worker/src/flavor-colors.js`, `docs/index.html`, `docs/radar.html`) (2026-02-23)
-- [ ] **OG share image** — replace generic card with pixel-art cloud raining custard cones (current tilted mint cone is a placeholder)
+- [x] **OG share image** — replaced generic placeholder card with pixel-art cloud raining custard cones in `docs/og-calendar.png` via `tools/generate_og_images.py` (2026-02-23)
 - [x] **Siri page broken** — `stores.json` parsed as raw object instead of extracting `.stores` array (2026-02-23)
 - [x] **Siri API URL shows workers.dev** — user-facing API URL in siri.html now uses custom domain `custard.chriskaschner.com` (2026-02-23)
 - [x] **Siri spoken text reads awkwardly** — removed raw brand slug, changed to natural phrasing "Today the flavor of the day at..." (2026-02-23)
