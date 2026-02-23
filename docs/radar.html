@@ -758,7 +758,7 @@
       var rects = [];
 
       // Scoop (rows 0-11)
-      var scoopRows = [[5,12],[4,13],[3,14],[2,15],[2,15],[2,15],[2,15],[2,15],[2,15],[3,14],[4,13],[5,12]];
+      var scoopRows = [[4,13],[3,14],[2,15],[2,15],[2,15],[2,15],[2,15],[2,15],[2,15],[2,15],[3,14],[4,13]];
       for (var row = 0; row < scoopRows.length; row++) {
         var sc = scoopRows[row][0], ec = scoopRows[row][1];
         for (var col = sc; col <= ec; col++) {
@@ -767,7 +767,7 @@
       }
 
       // Highlight (upper-left shine)
-      var hlSlots = [[5,0],[4,1]];
+      var hlSlots = [[4,0],[3,1]];
       for (var hi = 0; hi < hlSlots.length; hi++) {
         rects.push('<rect x="' + (hlSlots[hi][0]*s) + '" y="' + (hlSlots[hi][1]*s) + '" width="' + s + '" height="' + s + '" fill="' + highlightColor + '"/>');
       }

@@ -1047,7 +1047,7 @@ footer a {
 
 .today-flavor-body {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 1rem;
   margin-bottom: 0.5rem;
 }

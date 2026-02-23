@@ -287,21 +287,22 @@ export function renderConeHDSVG(flavorName, scale = 1) {
   const s = scale;
   const rects = [];
 
-  // Scoop (rows 0-11, smooth oval with 4-stage width progression)
+  // Scoop (rows 0-11): flat rectangle with just corners nipped,
+  // matching the 9x11 shape (5->7->7->7->7->5 doubled).
   // Each entry: [startCol, endCol]
   const scoopRows = [
-    [5, 12],   // row 0:  8px (top)
-    [4, 13],   // row 1: 10px
-    [3, 14],   // row 2: 12px
-    [2, 15],   // row 3: 14px (widest)
+    [4, 13],   // row 0: 10px (top corners nipped)
+    [3, 14],   // row 1: 12px
+    [2, 15],   // row 2: 14px (full width)
+    [2, 15],   // row 3: 14px
     [2, 15],   // row 4: 14px
     [2, 15],   // row 5: 14px
     [2, 15],   // row 6: 14px
     [2, 15],   // row 7: 14px
     [2, 15],   // row 8: 14px
-    [3, 14],   // row 9: 12px
-    [4, 13],   // row 10: 10px
-    [5, 12],   // row 11:  8px (bottom)
+    [2, 15],   // row 9: 14px
+    [3, 14],   // row 10: 12px
+    [4, 13],   // row 11: 10px (bottom corners nipped)
   ];
 
   // Base fill
@@ -313,7 +314,7 @@ export function renderConeHDSVG(flavorName, scale = 1) {
   }
 
   // Highlight slots (upper-left specular shine)
-  const hlSlots = [[5, 0], [4, 1]];
+  const hlSlots = [[4, 0], [3, 1]];
   for (const [hx, hy] of hlSlots) {
     rects.push(`<rect x="${hx * s}" y="${hy * s}" width="${s}" height="${s}" fill="${highlightColor}"/>`);
   }
