@@ -44,7 +44,8 @@ function createMockD1(rows = []) {
         }
         if (sql.includes('WHERE date >=') && sql.includes('GROUP BY normalized_flavor')) {
           const weekAgo = args[0];
-          const filtered = rows.filter(r => r.date >= weekAgo);
+          const todayBound = args[1] || '9999-12-31';
+          const filtered = rows.filter(r => r.date >= weekAgo && r.date <= todayBound);
           const groups = {};
           for (const r of filtered) {
             if (!groups[r.normalized_flavor]) groups[r.normalized_flavor] = { flavor: r.flavor, normalized_flavor: r.normalized_flavor, count: 0 };
@@ -212,6 +213,31 @@ describe('GET /api/metrics/trending', () => {
     const body = await res.json();
     expect(body.this_week).toEqual([]);
     expect(body.all_time).toEqual([]);
+  });
+
+  it('excludes future-dated snapshots from this_week', async () => {
+    // Use fake timers to control "today"
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-02-22T12:00:00Z'));
+
+    const rows = [
+      { slug: 'mt-horeb', date: '2026-02-20', flavor: 'Turtle', normalized_flavor: 'turtle' },
+      { slug: 'mt-horeb', date: '2026-02-25', flavor: 'Future Flavor', normalized_flavor: 'future flavor' },
+    ];
+
+    const db = createMockD1(rows);
+    const res = await handleMetricsRoute('/api/metrics/trending', { DB: db }, CORS);
+    const body = await res.json();
+
+    // Future flavor (2026-02-25) should be excluded from this_week
+    const futureInWeek = body.this_week.find(e => e.normalized === 'future flavor');
+    expect(futureInWeek).toBeUndefined();
+
+    // Past flavor should be included
+    const pastInWeek = body.this_week.find(e => e.normalized === 'turtle');
+    expect(pastInWeek).toBeDefined();
+
+    vi.useRealTimers();
   });
 });
 

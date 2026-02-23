@@ -122,19 +122,21 @@ async function handleStoreMetrics(db, slug, corsHeaders) {
  * Trending: most and least common flavors this week vs overall.
  */
 async function handleTrending(db, corsHeaders) {
-  // This week = last 7 days
-  const weekAgo = new Date();
+  // This week = last 7 days, capped at today
+  const today = new Date();
+  const todayStr = today.toISOString().slice(0, 10);
+  const weekAgo = new Date(today);
   weekAgo.setDate(weekAgo.getDate() - 7);
   const weekAgoStr = weekAgo.toISOString().slice(0, 10);
 
   const [thisWeekResult, allTimeResult] = await Promise.all([
     db.prepare(
       `SELECT normalized_flavor, flavor, COUNT(*) as count
-       FROM snapshots WHERE date >= ?
+       FROM snapshots WHERE date >= ? AND date <= ?
        GROUP BY normalized_flavor
        ORDER BY count DESC
        LIMIT 10`
-    ).bind(weekAgoStr).all(),
+    ).bind(weekAgoStr, todayStr).all(),
     db.prepare(
       `SELECT normalized_flavor, flavor, COUNT(*) as count
        FROM snapshots
