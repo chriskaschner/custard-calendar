@@ -287,13 +287,13 @@ export function renderConeHDSVG(flavorName, scale = 1) {
   const s = scale;
   const rects = [];
 
-  // Scoop (rows 0-11): flat rectangle with just corners nipped,
-  // matching the 9x11 shape (5->7->7->7->7->5 doubled).
-  // Each entry: [startCol, endCol]
+  // Scoop (rows 0-11): faithful doubling of 9x11 shape.
+  // Original: 5->7->7->7->7->5 (single-step corner nip).
+  // Doubled: 10->14->...->14->10 (same single-step nip).
   const scoopRows = [
-    [4, 13],   // row 0: 10px (top corners nipped)
-    [3, 14],   // row 1: 12px
-    [2, 15],   // row 2: 14px (full width)
+    [4, 13],   // row 0: 10px (corners nipped)
+    [2, 15],   // row 1: 14px (full width)
+    [2, 15],   // row 2: 14px
     [2, 15],   // row 3: 14px
     [2, 15],   // row 4: 14px
     [2, 15],   // row 5: 14px
@@ -301,8 +301,8 @@ export function renderConeHDSVG(flavorName, scale = 1) {
     [2, 15],   // row 7: 14px
     [2, 15],   // row 8: 14px
     [2, 15],   // row 9: 14px
-    [3, 14],   // row 10: 12px
-    [4, 13],   // row 11: 10px (bottom corners nipped)
+    [2, 15],   // row 10: 14px
+    [4, 13],   // row 11: 10px (corners nipped)
   ];
 
   // Base fill

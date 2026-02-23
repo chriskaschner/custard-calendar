@@ -1,6 +1,7 @@
 name = "custard-calendar"
 main = "src/index.js"
 compatibility_date = "2024-09-23"
+workers_dev = true
 
 [vars]
 ENVIRONMENT = "production"
@@ -30,6 +31,27 @@ binding = "DB"
 database_name = "custard-snapshots"
 database_id = "fa11cb69-1e34-439c-8895-f1c0a938a543"
 migrations_dir = "src/migrations"
+
+# Workers routes for custom domain (requires Cloudflare DNS proxy on custard CNAME)
+[[routes]]
+pattern = "custard.chriskaschner.com/api/*"
+zone_name = "chriskaschner.com"
+
+[[routes]]
+pattern = "custard.chriskaschner.com/v1/*"
+zone_name = "chriskaschner.com"
+
+[[routes]]
+pattern = "custard.chriskaschner.com/og/*"
+zone_name = "chriskaschner.com"
+
+[[routes]]
+pattern = "custard.chriskaschner.com/health"
+zone_name = "chriskaschner.com"
+
+[[routes]]
+pattern = "custard.chriskaschner.com/calendar.ics"
+zone_name = "chriskaschner.com"
 
 # Cron triggers:
 #   Daily alert check at noon UTC (6-7 AM Central)
