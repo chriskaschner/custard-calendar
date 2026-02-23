@@ -51,6 +51,11 @@ export async function handleMetricsRoute(path, env, corsHeaders) {
     return handleAccuracy(db, corsHeaders);
   }
 
+  // /api/metrics/coverage
+  if (path === '/api/metrics/coverage') {
+    return handleCoverage(db, corsHeaders);
+  }
+
   return null;
 }
 
@@ -212,6 +217,46 @@ async function handleAccuracyByStore(db, slug, corsHeaders) {
   }
 
   return Response.json({ slug, metrics }, {
+    headers: { ...corsHeaders, 'Cache-Control': 'public, max-age=3600' },
+  });
+}
+
+/**
+ * Coverage: how many forecast slugs exist and which have recent snapshot backing.
+ */
+async function handleCoverage(db, corsHeaders) {
+  const [forecastResult, snapshotResult] = await Promise.all([
+    db.prepare(
+      `SELECT slug, generated_at FROM forecasts ORDER BY slug`
+    ).all(),
+    db.prepare(
+      `SELECT DISTINCT slug FROM snapshots
+       WHERE date >= date('now', '-2 days')
+       AND fetched_at >= datetime('now', '-48 hours')`
+    ).all(),
+  ]);
+
+  const forecastRows = forecastResult?.results || [];
+  const snapshotSlugs = new Set((snapshotResult?.results || []).map(r => r.slug));
+
+  const forecastSlugs = forecastRows.map(r => r.slug);
+  const lastGenerated = forecastRows.length > 0
+    ? forecastRows.reduce((latest, r) => (r.generated_at > latest ? r.generated_at : latest), forecastRows[0].generated_at)
+    : null;
+
+  const withSnapshot = forecastSlugs.filter(s => snapshotSlugs.has(s));
+  const missingSlugs = forecastSlugs.filter(s => !snapshotSlugs.has(s));
+
+  return Response.json({
+    forecast_slugs: forecastSlugs,
+    total_forecasts: forecastSlugs.length,
+    snapshot_coverage: {
+      stores_with_recent_snapshots: snapshotSlugs.size,
+      stores_with_forecast_and_snapshot: withSnapshot.length,
+    },
+    last_generated: lastGenerated,
+    missing_slugs: missingSlugs,
+  }, {
     headers: { ...corsHeaders, 'Cache-Control': 'public, max-age=3600' },
   });
 }

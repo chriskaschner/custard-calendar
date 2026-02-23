@@ -324,6 +324,68 @@ describe('GET /api/metrics/accuracy/{slug}', () => {
   });
 });
 
+// --- Coverage endpoint tests ---
+
+describe('GET /api/metrics/coverage', () => {
+  function createCoverageMockD1({ forecastRows = [], snapshotSlugs = [] } = {}) {
+    return {
+      prepare: vi.fn((sql) => {
+        const methods = {
+          first: vi.fn(async () => null),
+          all: vi.fn(async () => {
+            if (sql.includes('FROM forecasts')) {
+              return { results: forecastRows };
+            }
+            if (sql.includes('FROM snapshots')) {
+              return { results: snapshotSlugs.map(s => ({ slug: s })) };
+            }
+            return { results: [] };
+          }),
+        };
+        return {
+          ...methods,
+          bind: vi.fn(() => methods),
+        };
+      }),
+    };
+  }
+
+  it('returns correct forecast slug count', async () => {
+    const db = createCoverageMockD1({
+      forecastRows: [
+        { slug: 'mt-horeb', generated_at: '2026-02-22T00:00:00Z' },
+        { slug: 'madison-todd-drive', generated_at: '2026-02-22T00:00:00Z' },
+      ],
+      snapshotSlugs: ['mt-horeb', 'madison-todd-drive'],
+    });
+    const res = await handleMetricsRoute('/api/metrics/coverage', { DB: db }, CORS);
+
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.total_forecasts).toBe(2);
+    expect(body.forecast_slugs).toEqual(['mt-horeb', 'madison-todd-drive']);
+    expect(body.snapshot_coverage.stores_with_forecast_and_snapshot).toBe(2);
+    expect(body.missing_slugs).toEqual([]);
+  });
+
+  it('returns missing slugs when forecast exists but no recent snapshot', async () => {
+    const db = createCoverageMockD1({
+      forecastRows: [
+        { slug: 'mt-horeb', generated_at: '2026-02-22T00:00:00Z' },
+        { slug: 'no-snapshot-store', generated_at: '2026-02-22T00:00:00Z' },
+      ],
+      snapshotSlugs: ['mt-horeb'],  // no-snapshot-store has no recent snapshot
+    });
+    const res = await handleMetricsRoute('/api/metrics/coverage', { DB: db }, CORS);
+
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.total_forecasts).toBe(2);
+    expect(body.missing_slugs).toEqual(['no-snapshot-store']);
+    expect(body.snapshot_coverage.stores_with_forecast_and_snapshot).toBe(1);
+  });
+});
+
 describe('detectStreaks', () => {
   it('detects a streak of 3 consecutive same-flavor days', () => {
     const history = [
