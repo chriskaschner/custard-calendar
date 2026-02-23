@@ -14,6 +14,8 @@ Canonical task list for Custard Calendar. Checked into git so it persists across
 - [ ] **Pairwise flavor voting** — group "where should we go tonight?" (deprioritized per WORKLOG)
 - [ ] **Madison-area brand expansion** — selection methodology for adding new brands beyond MKE geo
 - [x] **Forecast-style weekly email** — feed ML predictions into weekly digest emails with weather-style prose (Worker code done, batch pipeline + D1 upload wired) (2026-02-23)
+- [x] **Accuracy + snapshot hardening** -- future-date guard, snapshot upsert, cron harvest with D1 cursor, KV 429 resilience, trending date bound, backfill script, coverage gate (2026-02-23)
+
 ### Bugs / Polish
 - [x] **Google Calendar event color** — calendar events use Blueberry colorId 9, closest to Culver's #005696 (2026-02-23)
 

@@ -1,5 +1,40 @@
 # Worklog
 
+## Session Update (2026-02-23) -- Accuracy Correctness, Snapshot Coverage, Backfill
+
+### Shipped
+
+Eight commits on `codex/kv-d1-hardening` hardening the D1 snapshot pipeline:
+
+1. **Accuracy correctness** -- `evaluate_store_forecasts()` now rejects future dates (was only lower-bounded, so forecasts matched themselves). Adds `n_forecasted` and `n_orphaned` counters. `evaluate_forecasts.py` SQL uses proper date bounds instead of row LIMIT. 4 new Python tests + 1 script test.
+
+2. **Snapshot upsert** -- `INSERT OR IGNORE` made wrong first-writes permanent. Changed to `ON CONFLICT DO UPDATE` with 7-day recency guard so fresh fetches correct stale data while older rows stay immutable.
+
+3. **Cron snapshot harvest** -- Coverage was subscription-only and cache-hit-blind. The cron now resolves `forecast UNION subscription` slugs, skips already-fetched stores, and processes batches of 50 per run with a D1-persisted cursor (`cron_state` table, migration 005). `getFlavorsCached` gains `recordOnHit` option. 8 new Worker tests.
+
+4. **KV 429 resilience** -- Dedup key, run metadata, and flavor catalog KV writes wrapped in try/catch. 3 new Worker tests.
+
+5. **Trending date guard** -- `handleTrending()` this_week query now uses `date <= today`. 1 new Worker test.
+
+6. **Backfill script** -- `scripts/backfill_snapshots.py` reads from `data/backfill/flavors.sqlite` (38K+ rows), normalizes flavors matching `flavor-matcher.js`, derives brand from slug patterns, and uploads in batches of 200 with `ON CONFLICT DO NOTHING`.
+
+7. **Coverage gate** -- `scripts/check_forecast_coverage.py` verifies each forecast slug has at least one snapshot from today/yesterday with `fetched_at` within 48h. Exits non-zero on gaps.
+
+### Validation
+
+- `uv run pytest analytics/tests/test_accuracy.py scripts/tests/ -v` -- 16 passed
+- `cd worker && npm test` -- 308 passed (19 suites, up from 296/17)
+
+### Follow-up Ops
+
+1. Apply D1 migration `005_cron_state.sql` in production.
+2. Deploy Worker.
+3. Run `uv run python scripts/backfill_snapshots.py --store mt-horeb` to seed D1 from SQLite.
+4. Run `uv run python scripts/check_forecast_coverage.py` to verify coverage.
+5. Run `uv run python scripts/evaluate_forecasts.py --store mt-horeb` to verify accuracy with real data.
+
+---
+
 ## Session Update (2026-02-23) -- Accuracy + Email + Calendar Color
 
 ### Shipped
