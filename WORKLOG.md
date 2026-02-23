@@ -1,5 +1,46 @@
 # Worklog
 
+## Session Update (2026-02-23)
+
+### Shipped In This Session
+
+- KV write budget hardening in Worker runtime:
+  - removed KV fetch-counter writes from flavor-cache miss path
+  - wrapped flavor and locator cache `kv.put()` calls in best-effort error handling (429-safe)
+  - added slug-scoped cache integrity metadata + mismatch rejection for poisoned entries
+- Snapshot persistence migrated to D1-only write path:
+  - removed KV `snap:*` writes from `snapshot-writer.js`
+  - social card flavor lookup now reads snapshot rows from D1 (no KV snapshot dependency)
+- Forecast data path moved to D1-primary reads:
+  - `forecast.js` now resolves forecasts from D1 first, KV fallback second
+  - weekly digest forecast enrichment now uses same D1/KV resolution path
+  - added D1 migration `worker/src/migrations/003_forecasts.sql`
+  - updated `scripts/upload_forecasts.py` to batch upserts into D1 forecasts table via Wrangler
+- Domain configuration updated:
+  - `worker/wrangler.toml` `WORKER_BASE_URL` set to `https://custard.chriskaschner.com` (primary)
+  - workers.dev remains compatible as runtime fallback endpoint where needed
+- Test harness cleanup:
+  - `worker/vitest.config.js` now excludes Playwright browser specs so `cd worker && npm test` is reliable
+  - refreshed tests for snapshot writer, social card, forecast endpoint, and integration cache hardening cases
+
+### Validation Status
+
+- `cd worker && npm test` passes (291 tests).
+- `cd worker && npx vitest run test/*.test.js` passes (291 tests).
+- `cd worker && npm run test:browser -- --workers=1` passes (2 Playwright browser tests).
+
+### Follow-up Ops Checklist
+
+1. Apply D1 migration in production (`003_forecasts.sql`).
+2. Deploy Worker.
+3. Run `uv run python scripts/upload_forecasts.py` to seed D1 forecasts.
+4. Verify production endpoints:
+   - `/api/v1/flavors?slug=mt-horeb`
+   - `/api/v1/flavors?slug=madison-wi-mineral-point-rd`
+   - `/api/v1/forecast/mt-horeb`
+   - `/v1/og/{slug}/{date}.svg`
+5. Monitor Cloudflare KV write usage for 24h (target: well below 1,000/day).
+
 ## Session Update (2026-02-22)
 
 ### Shipped In This Session

@@ -3,17 +3,19 @@ import { handleSocialCard } from '../src/social-card.js';
 
 const CORS = { 'Access-Control-Allow-Origin': '*' };
 
-function createMockKV(snapshots = {}) {
+function createMockD1({ snapshot = null, appearances = 0, storeCount = 0, failSnapshot = false } = {}) {
   return {
-    get: vi.fn(async (key) => snapshots[key] || null),
-  };
-}
-
-function createMockD1(appearances = 0, storeCount = 0) {
-  return {
-    prepare: vi.fn(() => ({
+    prepare: vi.fn((sql) => ({
       bind: vi.fn(() => ({
-        first: vi.fn(async () => ({ n: appearances || storeCount })),
+        first: vi.fn(async () => {
+          if (sql.includes('SELECT flavor, description FROM snapshots')) {
+            if (failSnapshot) throw new Error('snapshot query failed');
+            return snapshot;
+          }
+          if (sql.includes('COUNT(*) as n')) return { n: appearances };
+          if (sql.includes('COUNT(DISTINCT slug) as n')) return { n: storeCount };
+          return null;
+        }),
       })),
     })),
   };
@@ -30,15 +32,15 @@ describe('handleSocialCard', () => {
     expect(res).toBeNull();
   });
 
-  it('returns SVG for valid slug/date with snapshot data', async () => {
-    const kv = createMockKV({
-      'snap:mt-horeb:2026-02-22': JSON.stringify({
-        flavor: 'Mint Explosion',
-        description: 'Cool mint custard',
-        fetchedAt: '2026-02-22T12:00:00Z',
+  it('returns SVG with snapshot data from D1', async () => {
+    const env = {
+      DB: createMockD1({
+        snapshot: {
+          flavor: 'Mint Explosion',
+          description: 'Cool mint custard',
+        },
       }),
-    });
-    const env = { FLAVOR_CACHE: kv };
+    };
 
     const res = await handleSocialCard('/og/mt-horeb/2026-02-22.svg', env, CORS);
 
@@ -52,33 +54,21 @@ describe('handleSocialCard', () => {
   });
 
   it('returns fallback card when no snapshot exists', async () => {
-    const kv = createMockKV({});
-    const env = { FLAVOR_CACHE: kv };
-
+    const env = { DB: createMockD1({ snapshot: null }) };
     const res = await handleSocialCard('/og/mt-horeb/2026-02-22.svg', env, CORS);
-
     expect(res.status).toBe(200);
     const body = await res.text();
     expect(body).toContain('No flavor data');
   });
 
-  it('includes metrics when D1 is available', async () => {
-    const kv = createMockKV({
-      'snap:mt-horeb:2026-02-22': JSON.stringify({
-        flavor: 'Turtle',
-        description: '',
-        fetchedAt: '2026-02-22T12:00:00Z',
+  it('includes metrics when snapshot exists and D1 metrics are available', async () => {
+    const env = {
+      DB: createMockD1({
+        snapshot: { flavor: 'Turtle', description: '' },
+        appearances: 42,
+        storeCount: 8,
       }),
-    });
-    const mockFirst = vi.fn()
-      .mockResolvedValueOnce({ n: 42 })   // appearances
-      .mockResolvedValueOnce({ n: 8 });    // store count
-    const db = {
-      prepare: vi.fn(() => ({
-        bind: vi.fn(() => ({ first: mockFirst })),
-      })),
     };
-    const env = { FLAVOR_CACHE: kv, DB: db };
 
     const res = await handleSocialCard('/og/mt-horeb/2026-02-22.svg', env, CORS);
 
@@ -87,16 +77,23 @@ describe('handleSocialCard', () => {
     expect(body).toContain('at 8 stores');
   });
 
-  it('works without KV (no FLAVOR_CACHE)', async () => {
+  it('works without D1 by returning fallback card', async () => {
     const res = await handleSocialCard('/og/mt-horeb/2026-02-22.svg', {}, CORS);
+    expect(res.status).toBe(200);
+    const body = await res.text();
+    expect(body).toContain('No flavor data');
+  });
 
+  it('handles snapshot query errors gracefully', async () => {
+    const env = { DB: createMockD1({ failSnapshot: true }) };
+    const res = await handleSocialCard('/og/mt-horeb/2026-02-22.svg', env, CORS);
     expect(res.status).toBe(200);
     const body = await res.text();
     expect(body).toContain('No flavor data');
   });
 
   it('sets long cache TTL', async () => {
-    const env = { FLAVOR_CACHE: createMockKV({}) };
+    const env = { DB: createMockD1() };
     const res = await handleSocialCard('/og/mt-horeb/2026-02-22.svg', env, CORS);
     expect(res.headers.get('Cache-Control')).toBe('public, max-age=86400');
   });

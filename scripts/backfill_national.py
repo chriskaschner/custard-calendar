@@ -25,7 +25,10 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 from pathlib import Path
 
-API_BASE = "https://custard-calendar.chris-kaschner.workers.dev"
+API_BASES = [
+    "https://custard.chriskaschner.com",
+    "https://custard-calendar.chris-kaschner.workers.dev",
+]
 USER_AGENT = "custard-backfill/2.0"
 DB_PATH = Path("data/backfill/flavors.sqlite")
 MANIFEST_PATH = Path("docs/stores.json")
@@ -36,10 +39,17 @@ stats = {"success": 0, "failures": 0, "flavors": 0, "done": 0}
 
 
 def fetch_flavors(slug: str, timeout: int = 30) -> dict:
-    url = f"{API_BASE}/api/v1/flavors?slug={slug}"
-    req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
-    with urllib.request.urlopen(req, timeout=timeout) as resp:
-        return json.loads(resp.read().decode("utf-8"))
+    last_err: Exception | None = None
+    for base in API_BASES:
+        url = f"{base}/api/v1/flavors?slug={slug}"
+        req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+        try:
+            with urllib.request.urlopen(req, timeout=timeout) as resp:
+                return json.loads(resp.read().decode("utf-8"))
+        except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as err:
+            last_err = err
+            continue
+    raise last_err if last_err else RuntimeError("Unknown fetch failure")
 
 
 def process_store(slug: str, conn: sqlite3.Connection, fetched_at: str, total: int) -> None:

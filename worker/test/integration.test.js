@@ -199,22 +199,6 @@ describe('Security hardening', () => {
     expect(mockFetchFlavors).not.toHaveBeenCalled();
   });
 
-  it('11: returns fallback event when daily fetch budget is exhausted', async () => {
-    // Pre-fill the per-slug fetch counter to the limit
-    mockKV._store.set('meta:fetch-count:mt-horeb', '3');
-
-    const req = makeRequest('/calendar.ics?primary=mt-horeb');
-    const res = await handleRequest(req, env, mockFetchFlavors);
-
-    // With fallback, budget exhaustion returns 200 with a "See website" event
-    expect(res.status).toBe(200);
-    const body = await res.text();
-    const unfolded = body.replace(/\r\n[ \t]/g, '');
-    expect(unfolded).toContain('See');
-    expect(unfolded).toContain('culvers.com');
-    expect(mockFetchFlavors).not.toHaveBeenCalled();
-  });
-
   it('12: rejects slug with special characters', async () => {
     const req = makeRequest('/calendar.ics?primary=store%3Cscript%3E');
     const res = await handleRequest(req, env, mockFetchFlavors);
@@ -330,6 +314,39 @@ describe('/api/flavors endpoint', () => {
     const req2 = makeRequest('/api/flavors?slug=mt-horeb');
     await handleRequest(req2, env, mockFetchFlavors);
     expect(mockFetchFlavors).not.toHaveBeenCalled();
+  });
+
+  it('22b: rejects cache record when slug metadata mismatches and refetches upstream', async () => {
+    // Seed a poisoned slug-scoped cache entry.
+    mockKV._store.set('flavors:mt-horeb', JSON.stringify({
+      _meta: { v: 1, shared: false, slug: 'pensacola-fl', cachedAt: '2026-02-22T00:00:00.000Z' },
+      data: {
+        name: 'Pensacola',
+        flavors: [{ date: '2026-02-20', title: 'Wrong Flavor', description: '' }],
+      },
+    }));
+
+    const req = makeRequest('/api/flavors?slug=mt-horeb');
+    const res = await handleRequest(req, env, mockFetchFlavors);
+    expect(res.status).toBe(200);
+
+    const body = await res.json();
+    expect(body.name).toBe('Mt. Horeb');
+    expect(mockFetchFlavors).toHaveBeenCalledTimes(1);
+  });
+
+  it('22c: returns fresh data even when KV put fails (429 resilience)', async () => {
+    mockKV.put = vi.fn(async () => {
+      throw new Error('KV write failed: 429 Too Many Requests');
+    });
+
+    const req = makeRequest('/api/flavors?slug=mt-horeb');
+    const res = await handleRequest(req, env, mockFetchFlavors);
+    expect(res.status).toBe(200);
+
+    const body = await res.json();
+    expect(body.name).toBe('Mt. Horeb');
+    expect(mockFetchFlavors).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -830,56 +847,6 @@ describe('API v1 versioned endpoints', () => {
 
     expect(res.status).toBe(200);
     expect(res.headers.get('API-Version')).toBeNull();
-  });
-});
-
-describe('Per-slug fetch budget', () => {
-  let mockKV;
-  let mockFetchFlavors;
-  let env;
-
-  beforeEach(() => {
-    mockKV = createMockKV();
-    mockFetchFlavors = createMockFetchFlavors();
-    env = {
-      FLAVOR_CACHE: mockKV,
-      _validSlugsOverride: TEST_VALID_SLUGS,
-    };
-  });
-
-  it('61: blocks slug at per-slug limit while other slugs still work', async () => {
-    // Exhaust mt-horeb budget
-    mockKV._store.set('meta:fetch-count:mt-horeb', '3');
-
-    // mt-horeb should get fallback
-    const req1 = makeRequest('/api/v1/flavors?slug=mt-horeb');
-    const res1 = await handleRequest(req1, env, mockFetchFlavors);
-    expect(res1.status).toBe(400); // budget exhausted error
-    expect(mockFetchFlavors).not.toHaveBeenCalled();
-
-    // madison-todd-drive should still work
-    const req2 = makeRequest('/api/v1/flavors?slug=madison-todd-drive');
-    const res2 = await handleRequest(req2, env, mockFetchFlavors);
-    expect(res2.status).toBe(200);
-    const body = await res2.json();
-    expect(body.name).toBe('Madison Todd Dr');
-  });
-
-  it('62: blocks all slugs when global circuit breaker is tripped', async () => {
-    mockKV._store.set('meta:fetch-count', '200');
-
-    const req = makeRequest('/api/v1/flavors?slug=mt-horeb');
-    const res = await handleRequest(req, env, mockFetchFlavors);
-    expect(res.status).toBe(400);
-    expect(mockFetchFlavors).not.toHaveBeenCalled();
-  });
-
-  it('63: increments both per-slug and global counters on fetch', async () => {
-    const req = makeRequest('/api/v1/flavors?slug=mt-horeb');
-    await handleRequest(req, env, mockFetchFlavors);
-
-    expect(mockKV._store.get('meta:fetch-count:mt-horeb')).toBe('1');
-    expect(mockKV._store.get('meta:fetch-count')).toBe('1');
   });
 });
 

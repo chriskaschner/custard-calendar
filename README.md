@@ -52,8 +52,8 @@ Culver's, Kopp's, Gille's, Hefner's, Kraverz, and Oscar's. The brand registry in
 ### Data Flow
 
 1. **Cloudflare Worker** — The single source of truth. Fetches from upstream brand sites on KV cache miss, caches 24h, serves all consumers via versioned API.
-2. **KV Cache** — Flavor data (`flavors:{slug}`), locator results, fetch budgets, alert subscriptions, and append-only snapshot history.
-3. **D1 (SQLite)** — Queryable historical snapshots. Powers metrics endpoints (frequency, streaks, trending).
+2. **KV Cache** — Hot cache + ephemeral state: flavor cache (`flavors:{slug}`), locator results, and alert subscription/rate-limit keys.
+3. **D1 (SQLite)** — Durable store for snapshots, forecasts, and cron observability. Powers metrics endpoints and social card snapshot reads.
 4. **Python Pipeline** — Calls the Worker API (no direct scraping), writes local cache, syncs to Google Calendar, pushes to Tidbyt.
 
 ### API v1
@@ -79,7 +79,7 @@ GET /health
 
 **Auth:** `Authorization: Bearer <token>` header (preferred) or `?token=` query param (legacy). When no `ACCESS_TOKEN` is configured, all requests are open.
 
-**Rate limiting:** Per-slug fetch budget (3 upstream requests/day/slug) + global circuit breaker (200/day). Prevents any single store from exhausting the fleet's budget. Note: Cloudflare itself may return 429s under sustained burst traffic to upstream brand sites.
+**Write resilience:** KV writes are best-effort (cache updates cannot break API responses). Slug-scoped cache records include integrity metadata so poisoned cache entries are rejected and refreshed.
 
 ## Quick Start
 
@@ -133,7 +133,7 @@ stores:
     name: "Kopp's Greenfield"
     role: "secondary"
 
-worker_base: "https://custard-calendar.chris-kaschner.workers.dev"
+worker_base: "https://custard.chriskaschner.com"
 ```
 
 Secrets go in `.env` and `credentials/` (all gitignored).
@@ -141,7 +141,7 @@ Secrets go in `.env` and `credentials/` (all gitignored).
 ## Testing
 
 ```bash
-# Worker (Vitest) -- 294 tests across 16 suites
+# Worker (Vitest) -- 291 tests across 16 suites
 cd worker && npm test
 
 # Browser smoke suite (Playwright: nav + Radar Phase 2)
@@ -170,14 +170,9 @@ uv run pytest tools/
 |-------------|----------|-----|
 | `flavors:{slug}` | Cached upstream flavor data | 24h |
 | `flavors:kopps-shared` | Shared cache for all Kopp's locations | 24h |
-| `meta:fetch-count:{slug}` | Per-slug upstream fetch counter | 24h |
-| `meta:fetch-count` | Global circuit breaker counter | 24h |
-| `snap:{slug}:{date}` | Snapshot observation | permanent |
-| `snap:date:{date}` | Date index (all stores for a date) | permanent |
-| `snap:flavor:{normalized}` | Flavor index (all appearances) | permanent |
 | `alert:sub:{id}` | Alert subscription | permanent |
 | `alert:pending:{token}` | Double opt-in confirmation | 24h |
-| `forecast:{slug}` | Pre-computed ML predictions | 24h |
+| `forecast:{slug}` | Pre-computed ML predictions (legacy fallback during D1 migration) | 24h |
 | `locator:{location}:{limit}` | Culver's locator API cache | 1h |
 
 ### D1 Schema
@@ -195,6 +190,13 @@ CREATE TABLE snapshots (
   UNIQUE(slug, date)
 );
 -- Indexes on normalized_flavor, date, slug, brand
+
+CREATE TABLE forecasts (
+  slug TEXT PRIMARY KEY,
+  data TEXT NOT NULL,
+  generated_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
 ```
 
 ## Project Structure
@@ -209,7 +211,7 @@ custard-calendar/
 │   └── culvers_fotd.star          # Starlark pixel-art renderer
 ├── worker/
 │   ├── src/
-│   │   ├── index.js               # Router, auth, caching, fetch budget
+│   │   ├── index.js               # Router, auth, caching, resilience guards
 │   │   ├── ics-generator.js       # RFC 5545 .ics generation
 │   │   ├── flavor-fetcher.js      # Culver's __NEXT_DATA__ parser
 │   │   ├── kopp-fetcher.js        # Kopp's HTML parser
@@ -219,7 +221,7 @@ custard-calendar/
 │   │   ├── oscars-fetcher.js      # Oscar's HTML parser
 │   │   ├── flavor-matcher.js      # Normalization + similarity matching
 │   │   ├── flavor-catalog.js      # Aggregated flavor catalog
-│   │   ├── snapshot-writer.js     # Dual-write KV + D1 snapshots
+│   │   ├── snapshot-writer.js     # D1 snapshot persistence
 │   │   ├── metrics.js             # D1 query endpoints (frequency, streaks, trending)
 │   │   ├── social-card.js         # Dynamic SVG OG image generation
 │   │   ├── alert-routes.js        # Subscription CRUD + double opt-in
@@ -227,7 +229,7 @@ custard-calendar/
 │   │   ├── email-sender.js        # Resend templates + rotating quips
 │   │   ├── valid-slugs.js         # Generated allowlist (~1,079 slugs)
 │   │   ├── store-index.js         # Generated store search index
-│   │   ├── forecast.js            # ML forecast endpoint + KV read
+│   │   ├── forecast.js            # ML forecast endpoint (D1 primary + KV fallback)
 │   │   └── migrations/            # D1 schema migrations
 │   └── test/                      # Vitest (294 tests, 16 suites)
 ├── analytics/                     # ML prediction pipeline (84 tests)
@@ -239,7 +241,7 @@ custard-calendar/
 │   ├── predict.py                 # FrequencyRecency + Markov models
 │   ├── embeddings.py              # Flavor similarity (TF-IDF, sentence-transformer)
 │   ├── forecast_writer.py         # Weather-style prose generation
-│   ├── batch_forecast.py          # CLI batch forecast + KV upload
+│   ├── batch_forecast.py          # CLI batch forecast generation
 │   ├── evaluate.py                # Train/test split, accuracy metrics
 │   └── tests/                     # 84 pytest tests
 ├── docs/                          # GitHub Pages (custard.chriskaschner.com)

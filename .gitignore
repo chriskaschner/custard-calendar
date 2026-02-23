@@ -53,4 +53,6 @@ tools/osm_cache.json
 # Cloudflare Worker
 worker/node_modules/
 worker/.wrangler/
+worker/test-results/
+worker/playwright-report/
 data/backfill/
