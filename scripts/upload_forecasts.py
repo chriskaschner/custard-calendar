@@ -94,9 +94,42 @@ def main() -> int:
     print(f"Target date: {data.get('target_date', '?')}")
     print(f"Stores: {len(forecasts)}")
 
+    # Per-store validation: require >= 3 days with >= 1 prediction each
+    valid_forecasts = {}
+    skipped = 0
+    for slug, forecast in forecasts.items():
+        days = forecast.get("days", [])
+        if len(days) < 3:
+            print(f"  SKIP {slug}: only {len(days)} day(s) (need >= 3)", file=sys.stderr)
+            skipped += 1
+            continue
+        empty_days = [d for d in days if not d.get("predictions")]
+        if empty_days:
+            print(f"  SKIP {slug}: {len(empty_days)} day(s) with no predictions", file=sys.stderr)
+            skipped += 1
+            continue
+        valid_forecasts[slug] = forecast
+
+    if skipped:
+        print(f"Skipped {skipped} store(s) failing per-store validation")
+
+    # Global guard: refuse to upload if the batch is empty or badly degraded
+    total_input = len(forecasts)
+    total_valid = len(valid_forecasts)
+    if total_valid == 0:
+        print("FAILED: No valid forecasts to upload", file=sys.stderr)
+        return 1
+    if total_input > 0 and total_valid / total_input < 0.10:
+        print(
+            f"FAILED: Only {total_valid}/{total_input} stores passed validation "
+            f"({total_valid / total_input:.0%}) -- refusing upload",
+            file=sys.stderr,
+        )
+        return 1
+
     if args.dry_run:
-        for slug in list(forecasts)[:5]:
-            f = forecasts[slug]
+        for slug in list(valid_forecasts)[:5]:
+            f = valid_forecasts[slug]
             if "days" in f:
                 n_days = len(f["days"])
                 first_day = f["days"][0] if f["days"] else {}
@@ -105,15 +138,15 @@ def main() -> int:
             else:
                 top = f["predictions"][0] if f.get("predictions") else {}
                 print(f"  forecasts.{slug} -> top: {top.get('flavor', '?')} ({top.get('probability', 0):.1%})")
-        if len(forecasts) > 5:
-            print(f"  ... and {len(forecasts) - 5} more")
+        if len(valid_forecasts) > 5:
+            print(f"  ... and {len(valid_forecasts) - 5} more")
         return 0
 
     success = 0
     failures = 0
     rows = [
         (slug, json.dumps(forecast, separators=(",", ":")), generated_at)
-        for slug, forecast in forecasts.items()
+        for slug, forecast in valid_forecasts.items()
     ]
 
     for i in range(0, len(rows), args.batch_size):
