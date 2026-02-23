@@ -1,5 +1,80 @@
 # Worklog
 
+## Platform Status (2026-02-23)
+
+Comprehensive state of the entire custard telemetry stack.
+
+### Cloudflare Worker (`worker/`)
+
+Fully operational. 336 tests passing across 20 suites.
+
+- 6 brand fetchers: Culver's (`__NEXT_DATA__` JSON), Kopp's, Gille's, Hefner's, Kraverz, Oscar's (HTML parsers)
+- KV caching (24h TTL) + D1 snapshot persistence (13,868 snapshots, 857 stores, back to Jan 2024)
+- API v1 endpoints: `/flavors`, `/today`, `/stores`, `/forecast/{slug}`, `/metrics/*`, `/flavor-colors`, `/coverage`
+- `.ics` calendar feed, dynamic SVG OG social cards
+- Alert emails: daily flavor match + weekly digest with forecast prose
+- Rarity computation from D1 snapshots (percentile-based: Ultra Rare / Rare / Uncommon)
+- Siri spoken text enriched with rarity gap info for rare flavors
+
+### Python Pipeline (`src/`, `main.py`)
+
+Working. Calls Worker API (no direct scraping), writes local cache, syncs Google Calendar (with Blueberry colorId), pushes to Tidbyt.
+
+### Analytics (`analytics/`)
+
+Working. 84 tests passing. Full ML pipeline:
+- Data loader, basic metrics (frequency/recency/entropy/surprise)
+- Pattern detection (DOW bias, Markov transitions, seasonality)
+- Collaborative filtering (NMF store clustering)
+- Prediction models (FrequencyRecency, MarkovRecency)
+- Batch forecast generation + D1 upload
+- Accuracy evaluation (top-1, top-5, log-loss) against D1 snapshots
+
+### Tidbyt (`tidbyt/`)
+
+Working. Pixel-art renderer with 29-profile flavor color system. Community app PR #3182 submitted to `tidbyt/community` (multi-brand, API v1, Typeahead store search across 1,079 stores).
+
+### GitHub Pages (`docs/`)
+
+6 live pages, all functional:
+
+| Page | URL | Description |
+|------|-----|-------------|
+| Forecast | `index.html` | Today card with rarity badge, 7-day strip, confidence strips, mini pixel-art cones |
+| Calendar | `calendar.html` | .ics subscription with Google/Apple buttons, live event preview |
+| Map | `map.html` | 1,012 geocoded stores, brand chips, flavor search, distance sorting |
+| Radar | `radar.html` | 7-day personalized outlook, next-best-store, rarity/streak badges, accuracy dashboard |
+| Alerts | `alerts.html` | Email subscriptions, daily + weekly digest, double opt-in |
+| Siri | `siri.html` | Store picker, live preview, Shortcut builder (Show Result, not Speak Text) |
+
+### Test Coverage
+
+| Suite | Tests | Command |
+|-------|-------|---------|
+| Worker (Vitest) | 336 | `cd worker && npm test` |
+| Browser (Playwright) | 2 | `cd worker && npm run test:browser -- --workers=1` |
+| Python (pytest) | ~142 | `uv run pytest` |
+| Analytics only | 84 | `uv run pytest analytics/tests/ -v` |
+
+### Open Work
+
+| Item | Type | Effort | Notes |
+|------|------|--------|-------|
+| Alexa skill | Feature | Medium | Custom skill using `/api/v1/today`, needs Amazon dev account + certification |
+| Flavor chatbot | Feature | Large | Conversational Q&A via web chat UI over `/api/v1` endpoints |
+| Madison brand expansion | Feature | Research | Methodology for adding new brands outside MKE geo |
+| HD cone topping density | Polish | Small | Toppings sparse and symmetrically mirrored; need denser asymmetric placement |
+| OG share image | Polish | Small | Replace placeholder tilted mint cone with pixel-art custard rain |
+| Google Calendar alerts | Known limitation | None | Google ignores VALARM in ICS subscriptions; no code fix possible |
+| Pairwise flavor voting | Deprioritized | Large | Group "where should we go tonight?" -- shelved, no clear MVP |
+
+### Session Commits
+
+- `a3ebdec` feat: flavor rarity badge on Forecast page
+- `2e2b150` fix: replace Speak Text with Show Result in Siri Shortcut instructions
+
+---
+
 ## Session Update (2026-02-23) -- Accuracy Correctness, Snapshot Coverage, Backfill
 
 ### Shipped
