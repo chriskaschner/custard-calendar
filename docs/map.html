@@ -464,6 +464,12 @@
           _dist: haversine(center.lat, center.lng, lat, lon) });
       }
 
+      // On map-move refreshes, preserve existing markers/results if lookup
+      // yields no stores (common when reverse-geocode/API is transiently limited).
+      if (skipFitBounds && allStores.length === 0) {
+        return;
+      }
+
       // Markers + bounds
       markers.clearLayers();
       const allBounds = L.latLngBounds();
@@ -745,6 +751,10 @@
       }
     }
 
+    function isCoordinateLocation(value) {
+      return /^-?\d+(\.\d+)?\s*,\s*-?\d+(\.\d+)?$/.test(String(value || '').trim());
+    }
+
     // Debounced map move handler for dynamic search
     let moveTimer = null;
     map.on('moveend', () => {
@@ -754,6 +764,7 @@
       moveTimer = setTimeout(async () => {
         const center = map.getCenter();
         const placeName = await reverseGeocode(center.lat, center.lng);
+        if (!placeName || isCoordinateLocation(placeName)) return;
         locationInput.value = placeName;
         doSearch(true);
       }, 300);
