@@ -401,6 +401,58 @@ describe('Alert checker (cron handler)', () => {
   });
 });
 
+describe('KV 429 resilience', () => {
+  let env;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(`${TODAY}T12:00:00Z`));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('dedup key KV write failure does not throw', async () => {
+    const mockKV = createMockKV({
+      'alert:sub:abc123': makeSubscription({ favorites: ['Turtle'] }),
+    });
+    // Make put throw on dedup key writes
+    mockKV.put.mockImplementation(async (key) => {
+      if (key.startsWith('alert:sent:')) throw new Error('KV 429');
+    });
+    env = { FLAVOR_CACHE: mockKV, RESEND_API_KEY: 'test-key', WORKER_BASE_URL: 'https://example.com' };
+
+    const getFlavorsCached = makeMockGetFlavorsCached({
+      'mt-horeb': {
+        name: 'Mt. Horeb',
+        flavors: [
+          { date: TOMORROW, title: 'Turtle', description: 'Pecan.' },
+        ],
+      },
+    });
+
+    // Should not throw despite KV write failure
+    const result = await checkAlerts(env, getFlavorsCached);
+    expect(result.sent).toBe(1);
+  });
+
+  it('run metadata KV write failure does not throw', async () => {
+    const mockKV = createMockKV();
+    // Make put throw on metadata writes
+    mockKV.put.mockImplementation(async (key) => {
+      if (key === 'meta:last-alert-run') throw new Error('KV 429');
+    });
+    env = { FLAVOR_CACHE: mockKV, RESEND_API_KEY: 'test-key' };
+
+    // Should not throw
+    const result = await checkAlerts(env, vi.fn());
+    expect(result.sent).toBe(0);
+    expect(result.checked).toBe(0);
+  });
+});
+
 describe('Weekly digest checker', () => {
   let env;
 

@@ -94,8 +94,12 @@ export async function checkAlerts(env, getFlavorsCachedFn) {
           const alreadySent = await kv.get(dedupKey);
           if (!alreadySent) {
             matches.push(flavor);
-            // Write dedup key with 7-day TTL
-            await kv.put(dedupKey, '1', { expirationTtl: 604800 });
+            // Write dedup key with 7-day TTL (best-effort)
+            try {
+              await kv.put(dedupKey, '1', { expirationTtl: 604800 });
+            } catch (err) {
+              console.error(`Dedup key write failed for ${dedupKey}: ${err.message}`);
+            }
           }
           break; // Don't double-match same flavor against multiple favorites
         }
@@ -300,9 +304,13 @@ async function listAllSubscriptions(kv) {
  * Write metadata about the latest alert run for health monitoring.
  */
 async function writeRunMetadata(kv, checked, sent) {
-  await kv.put('meta:last-alert-run', JSON.stringify({
-    timestamp: new Date().toISOString(),
-    checked,
-    sent,
-  }));
+  try {
+    await kv.put('meta:last-alert-run', JSON.stringify({
+      timestamp: new Date().toISOString(),
+      checked,
+      sent,
+    }));
+  } catch (err) {
+    console.error(`Run metadata write failed: ${err.message}`);
+  }
 }

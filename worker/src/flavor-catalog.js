@@ -123,10 +123,14 @@ export async function accumulateFlavors(kv, newFlavors) {
   }
 
   if (added) {
-    await kv.put('meta:flavor-catalog', JSON.stringify({
-      flavors: accumulated,
-      updatedAt: new Date().toISOString(),
-    }));
+    try {
+      await kv.put('meta:flavor-catalog', JSON.stringify({
+        flavors: accumulated,
+        updatedAt: new Date().toISOString(),
+      }));
+    } catch (err) {
+      console.error(`Flavor catalog write failed: ${err.message}`);
+    }
   }
 }
 
