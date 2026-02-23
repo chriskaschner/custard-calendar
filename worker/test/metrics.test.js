@@ -215,6 +215,89 @@ describe('GET /api/metrics/trending', () => {
   });
 });
 
+// --- Accuracy endpoint tests ---
+
+describe('GET /api/metrics/accuracy', () => {
+  function createAccuracyMockD1(accuracyRows = []) {
+    return {
+      prepare: vi.fn((sql) => {
+        const methods = {
+          first: vi.fn(async () => null),
+          all: vi.fn(async () => ({ results: accuracyRows })),
+        };
+        return {
+          ...methods,
+          bind: vi.fn(() => methods),
+        };
+      }),
+    };
+  }
+
+  it('returns grouped accuracy data when rows exist', async () => {
+    const rows = [
+      { slug: 'mt-horeb', window: '7d', top_1_hit_rate: 0.15, top_5_hit_rate: 0.55, avg_log_loss: 2.1, n_samples: 7, computed_at: '2026-02-23T00:00:00Z' },
+      { slug: 'mt-horeb', window: '30d', top_1_hit_rate: 0.10, top_5_hit_rate: 0.45, avg_log_loss: 2.5, n_samples: 20, computed_at: '2026-02-23T00:00:00Z' },
+    ];
+    const db = createAccuracyMockD1(rows);
+    const res = await handleMetricsRoute('/api/metrics/accuracy', { DB: db }, CORS);
+
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body['mt-horeb']).toBeDefined();
+    expect(body['mt-horeb']['7d'].top_1_hit_rate).toBe(0.15);
+    expect(body['mt-horeb']['30d'].n_samples).toBe(20);
+  });
+
+  it('returns empty object when no accuracy data', async () => {
+    const db = createAccuracyMockD1([]);
+    const res = await handleMetricsRoute('/api/metrics/accuracy', { DB: db }, CORS);
+
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body).toEqual({});
+  });
+});
+
+describe('GET /api/metrics/accuracy/{slug}', () => {
+  function createPerStoreAccuracyMockD1(rows = []) {
+    return {
+      prepare: vi.fn((sql) => {
+        const methods = {
+          first: vi.fn(async () => null),
+          all: vi.fn(async () => ({ results: rows })),
+        };
+        return {
+          ...methods,
+          bind: vi.fn(() => methods),
+        };
+      }),
+    };
+  }
+
+  it('returns per-store accuracy filtered by slug', async () => {
+    const rows = [
+      { window: '7d', top_1_hit_rate: 0.20, top_5_hit_rate: 0.60, avg_log_loss: 1.9, n_samples: 5, computed_at: '2026-02-23T00:00:00Z' },
+    ];
+    const db = createPerStoreAccuracyMockD1(rows);
+    const res = await handleMetricsRoute('/api/metrics/accuracy/mt-horeb', { DB: db }, CORS);
+
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.slug).toBe('mt-horeb');
+    expect(body.metrics['7d'].top_1_hit_rate).toBe(0.20);
+  });
+
+  it('returns empty metrics for unknown store', async () => {
+    const db = createPerStoreAccuracyMockD1([]);
+    const res = await handleMetricsRoute('/api/metrics/accuracy/nonexistent', { DB: db }, CORS);
+
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.slug).toBe('nonexistent');
+    expect(body.metrics).toEqual({});
+  });
+});
+
 describe('detectStreaks', () => {
   it('detects a streak of 3 consecutive same-flavor days', () => {
     const history = [
