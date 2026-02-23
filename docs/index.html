@@ -255,7 +255,7 @@
         }
       }
       rects.push('<rect x="' + (4*s) + '" y="' + (10*s) + '" width="' + s + '" height="' + s + '" fill="' + cc.waffle_dark + '"/>');
-      return '<svg class="mini-cone" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + (9*s) + ' ' + (11*s) + '" width="' + (9*s) + '" height="' + (11*s) + '">' + rects.join('') + '</svg>';
+      return '<svg class="mini-cone" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + (9*s) + ' ' + (11*s) + '" width="' + (9*s) + '" height="' + (11*s) + '" shape-rendering="crispEdges">' + rects.join('') + '</svg>';
     }
 
     const BRAND_COLORS = {

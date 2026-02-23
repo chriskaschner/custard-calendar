@@ -214,5 +214,5 @@ export function renderConeSVG(flavorName, scale = 1) {
   // Tip at (4, 10)
   rects.push(`<rect x="${4 * s}" y="${10 * s}" width="${s}" height="${s}" fill="${CONE_COLORS.waffle_dark}"/>`);
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}">${rects.join('')}</svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" shape-rendering="crispEdges">${rects.join('')}</svg>`;
 }
