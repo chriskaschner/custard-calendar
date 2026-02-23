@@ -245,6 +245,14 @@
   <script>
     const WORKER_BASE = 'https://custard-calendar.chris-kaschner.workers.dev';
 
+    const BRAND_DISPLAY = {
+      kopps: "Kopp's",
+      gilles: "Gille's",
+      hefners: "Hefner's",
+      kraverz: "Kraverz",
+      oscars: "Oscar's",
+    };
+
     let allStores = [];
     let flavorCatalog = [];
     let selectedSlug = null;
@@ -320,7 +328,9 @@
         for (const store of filtered) {
           const opt = document.createElement('option');
           opt.value = store.slug;
-          opt.textContent = `${store.city}, ${store.state} \u2014 ${store.address}`;
+          const brand = store.brand ? (BRAND_DISPLAY[store.brand] || store.brand) : '';
+          const prefix = brand ? brand + ' \u2014 ' : '';
+          opt.textContent = prefix + store.city + ', ' + store.state + ' \u2014 ' + store.address;
           if (store.slug === selectedSlug) opt.selected = true;
           storeSelect.appendChild(opt);
         }
@@ -331,7 +341,9 @@
       selectedSlug = slug;
       const store = allStores.find(s => s.slug === slug);
       if (store) {
-        storeSelected.textContent = `${store.city}, ${store.state} \u2014 ${store.address}`;
+        const brand = store.brand ? (BRAND_DISPLAY[store.brand] || store.brand) : '';
+        const prefix = brand ? brand + ' \u2014 ' : '';
+        storeSelected.textContent = prefix + store.city + ', ' + store.state + ' \u2014 ' + store.address;
         storeSelected.hidden = false;
       }
       flavorSection.hidden = false;

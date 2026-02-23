@@ -394,6 +394,24 @@
     const STORAGE_KEY = 'custard-radar';
     const MAX_FAVORITES = 3;
 
+    const BRAND_DISPLAY = {
+      kopps: "Kopp's",
+      gilles: "Gille's",
+      hefners: "Hefner's",
+      kraverz: "Kraverz",
+      oscars: "Oscar's",
+    };
+
+    function brandFromSlug(slug) {
+      if (!slug) return 'culvers';
+      if (slug.startsWith('kopps-')) return 'kopps';
+      if (slug === 'gilles') return 'gilles';
+      if (slug === 'hefners') return 'hefners';
+      if (slug === 'kraverz') return 'kraverz';
+      if (slug.startsWith('oscars')) return 'oscars';
+      return 'culvers';
+    }
+
     // Similarity groups — mirrored from worker/src/flavor-matcher.js
     const SIMILARITY_GROUPS = {
       mint: ['andes mint avalanche', 'mint cookie', 'mint explosion'],
@@ -472,8 +490,8 @@
       const tomorrowStr = toISODate(addDays(today, 1));
 
       let label = d.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
-      if (dateStr === todayStr) label = 'Today -- ' + label;
-      else if (dateStr === tomorrowStr) label = 'Tomorrow -- ' + label;
+      if (dateStr === todayStr) label = 'Today \u2014 ' + label;
+      else if (dateStr === tomorrowStr) label = 'Tomorrow \u2014 ' + label;
       return label;
     }
 
@@ -758,7 +776,7 @@
       var rects = [];
 
       // Scoop (rows 0-11)
-      var scoopRows = [[4,13],[3,14],[2,15],[2,15],[2,15],[2,15],[2,15],[2,15],[2,15],[2,15],[3,14],[4,13]];
+      var scoopRows = [[4,13],[2,15],[2,15],[2,15],[2,15],[2,15],[2,15],[2,15],[2,15],[2,15],[2,15],[4,13]];
       for (var row = 0; row < scoopRows.length; row++) {
         var sc = scoopRows[row][0], ec = scoopRows[row][1];
         for (var col = sc; col <= ec; col++) {
@@ -835,7 +853,9 @@
         for (const store of filtered) {
           const opt = document.createElement('option');
           opt.value = store.slug;
-          opt.textContent = store.city + ', ' + store.state + ' \u2014 ' + store.address;
+          const brand = store.brand ? (BRAND_DISPLAY[store.brand] || store.brand) : '';
+          const prefix = brand ? brand + ' \u2014 ' : '';
+          opt.textContent = prefix + store.city + ', ' + store.state + ' \u2014 ' + store.address;
           if (store.slug === selectedSlug) opt.selected = true;
           storeSelect.appendChild(opt);
         }
@@ -846,7 +866,9 @@
       selectedSlug = slug;
       const store = allStores.find(s => s.slug === slug);
       if (store) {
-        storeSelected.textContent = store.city + ', ' + store.state + ' \u2014 ' + store.address;
+        const brand = store.brand ? (BRAND_DISPLAY[store.brand] || store.brand) : '';
+        const prefix = brand ? brand + ' \u2014 ' : '';
+        storeSelected.textContent = prefix + store.city + ', ' + store.state + ' \u2014 ' + store.address;
         storeSelected.hidden = false;
       }
       flavorSection.hidden = false;
@@ -1302,7 +1324,7 @@
       if (allRecs.length === 0) {
         const checkedCount = forecastCount + confirmedOnlyCount;
         if (checkedCount === 0) {
-          nextBestStatus.textContent = candidates.length + ' nearby stores checked -- no flavor data available yet.';
+          nextBestStatus.textContent = candidates.length + ' nearby stores checked \u2014 no flavor data available yet.';
         } else {
           nextBestStatus.textContent = 'No stronger nearby alternatives found this week.';
         }
@@ -1341,7 +1363,7 @@
                 ' <span class="next-best-badge next-best-badge-confirmed">Confirmed</span>' +
               '</div>' +
               '<div class="next-best-detail">' +
-                escapeHtml(rec.store.address || locationQ) + ' -- ' + distText +
+                escapeHtml(rec.store.address || locationQ) + ' \u2014 ' + distText +
               '</div>' +
               '<div class="next-best-links"><a href="' + mapHref + '">See on map</a></div>' +
             '</div>'
@@ -1352,12 +1374,12 @@
           '<div class="next-best-card">' +
             '<div class="next-best-title">' + escapeHtml(rec.flavor) + ': better odds at ' + escapeHtml(rec.store.name) + '</div>' +
             '<div class="next-best-detail">' +
-              escapeHtml(formatDate(rec.date)) + ' -- ' +
+              escapeHtml(formatDate(rec.date)) + ' \u2014 ' +
               (rec.probability * 100).toFixed(1) + '% (' + escapeHtml(rec.confidence) + ')' +
               ' vs ' + (rec.primaryScore * 100).toFixed(1) + '% at your primary store.' +
             '</div>' +
             '<div class="next-best-detail">' +
-              escapeHtml(rec.store.address || locationQ) + ' -- ' + distText +
+              escapeHtml(rec.store.address || locationQ) + ' \u2014 ' + distText +
             '</div>' +
             '<div class="next-best-links"><a href="' + mapHref + '">See on map</a></div>' +
           '</div>'
@@ -1512,7 +1534,7 @@
             html +=
               '<div class="prediction-row">' +
                 '<span class="prediction-name' + (fav ? ' prediction-name-favorite' : '') + '">' +
-                  renderMiniConeSVG(p.flavor) +
+                  renderMiniConeSVG(p.flavor, 5) +
                   (fav ? '<span class="star-indicator">*</span>' : '') +
                   escapeHtml(p.flavor) +
                 '</span>' +

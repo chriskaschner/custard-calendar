@@ -27,6 +27,7 @@ Canonical task list for Custard Calendar. Checked into git so it persists across
 - [x] **Radar next-best-store empty** — added confirmed-schedule fallback: checks `/api/v1/flavors` when forecast unavailable, separate ranking path, "Confirmed" badge (2026-02-23)
 - [x] **Forecast weather graphic** — confidence strips at top of each day card (blue=confirmed, green=high, amber=medium, grey=low) + mini pixel-art cones next to flavor names (2026-02-23)
 - [x] **Flavor-of-the-day pixel art** — canonical flavor color system at `/api/v1/flavor-colors` (29 profiles), social card cones replace emoji, Radar mini-cones with flavor-colored prediction bars (2026-02-23)
+- [x] **Cross-page display consistency** — standardized store names (Brand + em-dash + City, State + Address), date formats (Today/Tomorrow labels, em-dashes), confidence strips on Forecast week cards, prediction cone scale normalization across all 5 pages (2026-02-23)
 
 ### Docs
 (none)

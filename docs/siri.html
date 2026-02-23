@@ -222,6 +222,15 @@
 
   <script>
     const WORKER_BASE = 'https://custard-calendar.chris-kaschner.workers.dev';
+
+    const BRAND_DISPLAY = {
+      kopps: "Kopp's",
+      gilles: "Gille's",
+      hefners: "Hefner's",
+      kraverz: "Kraverz",
+      oscars: "Oscar's",
+    };
+
     let allStores = [];
     let selectedSlug = null;
 
@@ -265,7 +274,9 @@
       filtered.slice(0, 50).forEach(s => {
         const opt = document.createElement('option');
         opt.value = s.slug;
-        opt.textContent = `${s.name} — ${s.city}, ${s.state}`;
+        const brand = s.brand ? (BRAND_DISPLAY[s.brand] || s.brand) : '';
+        const prefix = brand ? brand + ' \u2014 ' : '';
+        opt.textContent = prefix + s.city + ', ' + s.state + ' \u2014 ' + (s.address || '');
         sel.appendChild(opt);
       });
 
@@ -280,7 +291,9 @@
       if (!store) return;
 
       const badge = document.getElementById('store-selected');
-      badge.textContent = `${store.name} — ${store.city}, ${store.state}`;
+      const brand = store.brand ? (BRAND_DISPLAY[store.brand] || store.brand) : '';
+      const prefix = brand ? brand + ' \u2014 ' : '';
+      badge.textContent = prefix + store.city + ', ' + store.state + ' \u2014 ' + (store.address || '');
       badge.hidden = false;
 
       document.getElementById('try-section').hidden = false;

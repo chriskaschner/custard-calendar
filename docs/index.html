@@ -305,7 +305,7 @@
       var s = scale || 5;
       var rects = [];
 
-      var scoopRows = [[4,13],[3,14],[2,15],[2,15],[2,15],[2,15],[2,15],[2,15],[2,15],[2,15],[3,14],[4,13]];
+      var scoopRows = [[4,13],[2,15],[2,15],[2,15],[2,15],[2,15],[2,15],[2,15],[2,15],[2,15],[2,15],[4,13]];
       for (var row = 0; row < scoopRows.length; row++) {
         var sc = scoopRows[row][0], ec = scoopRows[row][1];
         for (var col = sc; col <= ec; col++) {
@@ -485,10 +485,10 @@
         const item = document.createElement('div');
         item.className = 'store-dropdown-item';
         const brand = store.brand ? (BRAND_DISPLAY[store.brand] || store.brand) : '';
-        const prefix = brand ? brand + ' -- ' : '';
+        const prefix = brand ? brand + ' \u2014 ' : '';
         const dist = (store._dist != null && store._dist !== Infinity) ? ' (' + store._dist.toFixed(1) + ' mi)' : '';
         item.innerHTML = '<div class="store-dropdown-name">' + escapeHtml(prefix + store.name) + '</div>'
-          + '<div class="store-dropdown-detail">' + escapeHtml(store.city + ', ' + store.state + ' -- ' + (store.address || '')) + escapeHtml(dist) + '</div>';
+          + '<div class="store-dropdown-detail">' + escapeHtml(store.city + ', ' + store.state + ' \u2014 ' + (store.address || '')) + escapeHtml(dist) + '</div>';
         item.addEventListener('click', () => selectStore(store.slug));
         storeDropdown.appendChild(item);
       }
@@ -504,8 +504,8 @@
       try { localStorage.setItem('custard-primary', slug); } catch (e) {}
 
       // Update UI
-      const brand = store.brand ? (BRAND_DISPLAY[store.brand] || store.brand) + ' -- ' : '';
-      currentStoreName.textContent = brand + store.city + ', ' + store.state + ' -- ' + (store.address || '');
+      const brand = store.brand ? (BRAND_DISPLAY[store.brand] || store.brand) + ' \u2014 ' : '';
+      currentStoreName.textContent = brand + store.city + ', ' + store.state + ' \u2014 ' + (store.address || '');
       currentStoreEl.hidden = false;
       storeSearch.value = '';
       storeDropdown.hidden = true;
@@ -690,7 +690,7 @@
         todayCone.hidden = true;
         todayFlavor.textContent = 'No data yet';
         todayFlavor.style.color = '#999';
-        todayDesc.textContent = 'Check back later -- flavor data updates throughout the day.';
+        todayDesc.textContent = 'Check back later \u2014 flavor data updates throughout the day.';
         todayDesc.hidden = false;
         todayPredictions.innerHTML = '';
       }
@@ -703,6 +703,28 @@
       todaySection.hidden = false;
     }
 
+    function confidenceStripClass(day) {
+      if (day.type === 'confirmed') return 'confidence-strip confidence-strip-confirmed';
+      if (day.type === 'predicted') {
+        var prob = day.probability || 0;
+        if (prob > 0.10) return 'confidence-strip confidence-strip-high';
+        if (prob >= 0.05) return 'confidence-strip confidence-strip-medium';
+        return 'confidence-strip confidence-strip-low';
+      }
+      return 'confidence-strip confidence-strip-none';
+    }
+
+    function formatDateLabel(dateStr) {
+      const today = new Date();
+      today.setHours(12, 0, 0, 0);
+      var todayStr = toISODate(today);
+      var tomorrowStr = toISODate(addDays(today, 1));
+      if (dateStr === todayStr) return 'Today';
+      if (dateStr === tomorrowStr) return 'Tmrw';
+      var d = new Date(dateStr + 'T12:00:00');
+      return d.toLocaleDateString('en-US', { weekday: 'short' });
+    }
+
     function renderWeekStrip(days, fetchedAt) {
       weekStrip.innerHTML = '';
       const today = new Date();
@@ -712,7 +734,7 @@
 
       for (const day of days) {
         const d = new Date(day.date + 'T12:00:00');
-        const dayName = d.toLocaleDateString('en-US', { weekday: 'short' });
+        const dayName = formatDateLabel(day.date);
         const dateLabel = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
         const card = document.createElement('div');
@@ -721,7 +743,8 @@
           hasAnyData = true;
           card.className = 'week-day-card';
           card.innerHTML =
-            '<div class="week-day-name">' + escapeHtml(dayName) + '</div>'
+            '<div class="' + confidenceStripClass(day) + '"></div>'
+            + '<div class="week-day-name">' + escapeHtml(dayName) + '</div>'
             + '<div class="week-day-date">' + escapeHtml(dateLabel) + '</div>'
             + '<div style="text-align:center;margin:0.25rem 0;">' + renderMiniConeSVG(day.flavor) + '</div>'
             + '<div class="week-day-flavor">' + escapeHtml(day.flavor) + '</div>'
@@ -731,7 +754,8 @@
           const pct = day.probability ? (day.probability * 100).toFixed(0) + '%' : '';
           card.className = 'week-day-card week-day-card-predicted';
           card.innerHTML =
-            '<div class="week-day-name">' + escapeHtml(dayName) + '</div>'
+            '<div class="' + confidenceStripClass(day) + '"></div>'
+            + '<div class="week-day-name">' + escapeHtml(dayName) + '</div>'
             + '<div class="week-day-date">' + escapeHtml(dateLabel) + '</div>'
             + '<div style="text-align:center;margin:0.25rem 0;">' + renderMiniConeSVG(day.flavor) + '</div>'
             + '<div class="week-day-flavor">' + escapeHtml(day.flavor) + '</div>'
@@ -739,7 +763,8 @@
         } else {
           card.className = 'week-day-card week-day-card-none';
           card.innerHTML =
-            '<div class="week-day-name">' + escapeHtml(dayName) + '</div>'
+            '<div class="' + confidenceStripClass(day) + '"></div>'
+            + '<div class="week-day-name">' + escapeHtml(dayName) + '</div>'
             + '<div class="week-day-date">' + escapeHtml(dateLabel) + '</div>'
             + '<div class="week-day-flavor" style="color:#999;font-style:italic;">No data</div>';
         }
