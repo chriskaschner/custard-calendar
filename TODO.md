@@ -19,6 +19,7 @@ Canonical task list for Custard Calendar. Checked into git so it persists across
 - [x] **Accuracy + snapshot hardening** -- future-date guard, snapshot upsert, cron harvest with D1 cursor, KV 429 resilience, trending date bound, backfill script, coverage gate (2026-02-23)
 - [x] **Forecast pipeline reliability** — coverage gate hard-fails on D1 errors, backfill filters closed-day sentinels, upload guards (per-store >=3 days + global 10% floor), coverage metrics endpoint (2026-02-23)
 - [x] **Flavor rarity badge on Forecast page** — `/api/v1/today` computes rarity from D1 snapshots (appearances, avg gap, percentile label), Siri spoken text includes gap for rare flavors, homepage renders rarity badge + gap text below today's flavor (2026-02-23)
+- [ ] **Map visuals v2: clustered flavor fronts** -- Add dynamic weather-map style clustering/grouping and category views (caramels, cookies/cakes) across map/fronts experiences. (feedback fb_20260223214858_6142)
 
 ### Engineering Backlog (2026-02-23 review)
 

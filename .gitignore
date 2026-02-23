@@ -56,6 +56,7 @@ test-results/
 analytics/executed_review.html
 analytics/executed_review.ipynb
 data/forecasts/
+data/feedback_queue.json
 
 # Cloudflare Worker
 worker/node_modules/

@@ -175,6 +175,28 @@ uv run pytest tests/ -v
 uv run pytest tools/
 ```
 
+## Feedback Queue
+
+Capture product feedback in a structured queue and optionally promote it to `TODO.md` while development is in progress.
+
+```bash
+# Add feedback only
+python3 scripts/feedback_queue.py add \
+  --text "Map needs stronger clustering visuals" \
+  --source "user-session" \
+  --tags "map,visual"
+
+# Add + immediately promote to TODO Product Features
+python3 scripts/feedback_queue.py add \
+  --text "Add category overlays for caramels and cookies/cakes" \
+  --promote \
+  --section "### Product Features" \
+  --title "Map visuals v2: clustered flavor fronts"
+
+# Review queue
+python3 scripts/feedback_queue.py list --status open
+```
+
 ## Data Storage
 
 ### KV Schema
@@ -274,6 +296,7 @@ custard-calendar/
 │   ├── generate_og_images.py      # Static OG social preview generator
 │   ├── capture_fixture.py         # Test fixture capture
 │   └── backfill_flavors.py        # Historical snapshot backfill
+├── scripts/feedback_queue.py      # Feedback inbox + TODO promotion utility
 ├── main.py                        # Pipeline orchestrator
 ├── config.yaml                    # Multi-brand store + service config
 └── TODO.md                        # Canonical task list

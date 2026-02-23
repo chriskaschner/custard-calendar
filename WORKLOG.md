@@ -73,6 +73,21 @@ Working. Pixel-art renderer with 29-profile flavor color system. Community app P
 - `a3ebdec` feat: flavor rarity badge on Forecast page
 - `2e2b150` fix: replace Speak Text with Show Result in Siri Shortcut instructions
 
+## Session Update (2026-02-23) -- Feedback Queue + TODO Promotion
+
+### Shipped
+
+- Added `scripts/feedback_queue.py` CLI to capture feedback entries, list queue state, and promote selected feedback directly into a target section in `TODO.md`.
+- Added tests in `scripts/tests/test_feedback_queue.py` covering tag parsing, TODO insertion, and promote flow.
+- Seeded queue entry `fb_20260223214858_6142` and promoted it into Product Features as `Map visuals v2: clustered flavor fronts`.
+
+### Validation
+
+- `.venv/bin/pytest -q scripts/tests/test_feedback_queue.py` -- 4 passed
+- `.venv/bin/pytest -q scripts/tests` -- 15 passed
+
+---
+
 ## Session Update (2026-02-23) -- Map Flavor Cone Markers
 
 ### Shipped
