@@ -97,4 +97,39 @@ describe('handleSocialCard', () => {
     const res = await handleSocialCard('/og/mt-horeb/2026-02-22.svg', env, CORS);
     expect(res.headers.get('Cache-Control')).toBe('public, max-age=86400');
   });
+
+  it('contains pixel-art cone rect elements instead of emoji', async () => {
+    const env = {
+      DB: createMockD1({
+        snapshot: { flavor: 'Mint Explosion', description: '' },
+      }),
+    };
+    const res = await handleSocialCard('/og/mt-horeb/2026-02-22.svg', env, CORS);
+    const body = await res.text();
+    expect(body).toContain('<rect');
+    expect(body).toContain('<g transform="translate(');
+    expect(body).not.toContain('\uD83C\uDF66'); // no ice cream emoji
+  });
+
+  it('produces different fill colors for different flavors', async () => {
+    const mintEnv = {
+      DB: createMockD1({
+        snapshot: { flavor: 'Mint Explosion', description: '' },
+      }),
+    };
+    const chocEnv = {
+      DB: createMockD1({
+        snapshot: { flavor: 'Dark Chocolate Decadence', description: '' },
+      }),
+    };
+    const mintRes = await handleSocialCard('/og/mt-horeb/2026-02-22.svg', mintEnv, CORS);
+    const chocRes = await handleSocialCard('/og/mt-horeb/2026-02-22.svg', chocEnv, CORS);
+    const mintBody = await mintRes.text();
+    const chocBody = await chocRes.text();
+    // Mint base color = #2ECC71, dark chocolate = #3B1F0B
+    expect(mintBody).toContain('#2ECC71');
+    expect(chocBody).toContain('#3B1F0B');
+    // They should not share base fills
+    expect(mintBody).not.toContain('#3B1F0B');
+  });
 });

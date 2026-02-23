@@ -1,14 +1,16 @@
 /**
  * Dynamic SVG social card generator.
  *
- * Generates 1200×630 OG-image-compatible SVG cards for individual
+ * Generates 1200x630 OG-image-compatible SVG cards for individual
  * store/date combos. Cards show the flavor name, store, and metrics
- * (frequency, streak) when available from D1.
+ * (frequency, streak) when available from D1. Embeds a pixel-art cone
+ * colored to match the flavor profile.
  *
  * Endpoint: GET /v1/og/{slug}/{date}.svg
  */
 
 import { normalize } from './flavor-matcher.js';
+import { getFlavorProfile, BASE_COLORS, CONE_COLORS, TOPPING_COLORS, RIBBON_COLORS } from './flavor-colors.js';
 
 /**
  * Route handler for social card requests.
@@ -89,7 +91,48 @@ export async function handleSocialCard(path, env, corsHeaders) {
 }
 
 /**
- * Render a 1200×630 SVG social card.
+ * Render a pixel-art cone SVG group for embedding in the social card.
+ */
+function renderConeGroup(flavorName, x, y, scale) {
+  const profile = getFlavorProfile(flavorName);
+  const baseColor = BASE_COLORS[profile.base] || BASE_COLORS.vanilla;
+  const ribbonColor = profile.ribbon ? (RIBBON_COLORS[profile.ribbon] || null) : null;
+  const toppingColor = profile.toppings.length > 0
+    ? (TOPPING_COLORS[profile.toppings[0]] || null)
+    : null;
+
+  const s = scale;
+  const rects = [];
+
+  const scoopRows = [[2,6],[1,7],[1,7],[1,7],[1,7],[2,6]];
+  for (let row = 0; row < scoopRows.length; row++) {
+    const [sc, ec] = scoopRows[row];
+    for (let col = sc; col <= ec; col++) {
+      let color = baseColor;
+      if (ribbonColor && (row === 2 || row === 3) && col >= 2 && col <= 5 && ((row + col) % 3 === 0)) {
+        color = ribbonColor;
+      }
+      if (toppingColor && row <= 1 && col >= sc + 1 && col <= ec - 1 && (col % 2 === 0)) {
+        color = toppingColor;
+      }
+      rects.push(`<rect x="${col * s}" y="${row * s}" width="${s}" height="${s}" fill="${color}"/>`);
+    }
+  }
+
+  const coneRows = [[2,6],[3,5],[3,5],[4,4],[4,4]];
+  for (let row = 0; row < coneRows.length; row++) {
+    const [sc, ec] = coneRows[row];
+    for (let col = sc; col <= ec; col++) {
+      const c = ((row + col) % 2 === 0) ? CONE_COLORS.waffle : CONE_COLORS.waffle_dark;
+      rects.push(`<rect x="${col * s}" y="${(row + 6) * s}" width="${s}" height="${s}" fill="${c}"/>`);
+    }
+  }
+
+  return `<g transform="translate(${x},${y})">${rects.join('')}</g>`;
+}
+
+/**
+ * Render a 1200x630 SVG social card.
  */
 function renderCard({ flavor, storeName, dateDisplay, appearances, storeCount }) {
   // Escape XML special characters
@@ -112,6 +155,13 @@ function renderCard({ flavor, storeName, dateDisplay, appearances, storeCount })
     ? flavor.slice(0, maxFlavorLen - 1) + '\u2026'
     : flavor;
 
+  // Get flavor base color for accent bar
+  const profile = getFlavorProfile(flavor);
+  const accentColor = BASE_COLORS[profile.base] || '#e94560';
+
+  // Render pixel-art cone (scale=10 -> 90x110 pixels)
+  const coneGroup = renderConeGroup(flavor, 80, 170, 10);
+
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
@@ -123,11 +173,11 @@ function renderCard({ flavor, storeName, dateDisplay, appearances, storeCount })
   <!-- Background -->
   <rect width="1200" height="630" fill="url(#bg)"/>
 
-  <!-- Accent bar -->
-  <rect y="0" width="1200" height="8" fill="#e94560"/>
+  <!-- Accent bar (tinted to flavor base color) -->
+  <rect y="0" width="1200" height="8" fill="${accentColor}"/>
 
-  <!-- Ice cream cone emoji (text) -->
-  <text x="100" y="280" font-size="120" font-family="sans-serif">🍦</text>
+  <!-- Pixel-art cone -->
+  ${coneGroup}
 
   <!-- Flavor name -->
   <text x="280" y="240" font-size="64" font-weight="bold" fill="#ffffff" font-family="system-ui, -apple-system, sans-serif">${esc(displayFlavor)}</text>
@@ -136,7 +186,7 @@ function renderCard({ flavor, storeName, dateDisplay, appearances, storeCount })
   <text x="280" y="310" font-size="36" fill="#a8a8b3" font-family="system-ui, -apple-system, sans-serif">${esc(storeName)}</text>
 
   <!-- Date -->
-  <text x="280" y="370" font-size="32" fill="#e94560" font-family="system-ui, -apple-system, sans-serif">${esc(dateDisplay)}</text>
+  <text x="280" y="370" font-size="32" fill="${accentColor}" font-family="system-ui, -apple-system, sans-serif">${esc(dateDisplay)}</text>
 
   <!-- Metrics -->
   ${metricsLine ? `<text x="280" y="430" font-size="28" fill="#6c6c80" font-family="system-ui, -apple-system, sans-serif">${esc(metricsLine)}</text>` : ''}
