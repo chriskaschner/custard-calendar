@@ -57,6 +57,7 @@ def evaluate_store_forecasts(
     forecast_data: dict,
     actuals: dict[str, str],
     window_days: int = 30,
+    today: str | None = None,
 ) -> dict:
     """Evaluate a store's multi-day forecast against actual snapshots.
 
@@ -65,12 +66,15 @@ def evaluate_store_forecasts(
             Expected shape: ``{days: [{date, predictions: [{flavor, probability}]}]}``.
         actuals: ``{date_str: actual_flavor}`` from D1 snapshots.
         window_days: Only evaluate days within this window from today.
+        today: Override for today's date (YYYY-MM-DD). Defaults to now.
 
     Returns:
-        ``{top_1_hit_rate, top_5_hit_rate, avg_log_loss, n_samples, details}``
+        ``{top_1_hit_rate, top_5_hit_rate, avg_log_loss, n_samples, n_forecasted, n_orphaned, details}``
     """
-    cutoff = (datetime.now() - timedelta(days=window_days)).strftime("%Y-%m-%d")
+    today_str = today or datetime.now().strftime("%Y-%m-%d")
+    cutoff = (datetime.strptime(today_str, "%Y-%m-%d") - timedelta(days=window_days)).strftime("%Y-%m-%d")
     details = []
+    n_forecasted = 0
 
     days = forecast_data.get("days", [])
     if not days:
@@ -82,13 +86,16 @@ def evaluate_store_forecasts(
 
     for day in days:
         date = day.get("date", "")
-        if date < cutoff:
-            continue
-        if date not in actuals:
+        if date < cutoff or date > today_str:
             continue
 
         predictions = day.get("predictions", [])
         if not predictions:
+            continue
+
+        n_forecasted += 1
+
+        if date not in actuals:
             continue
 
         result = evaluate_forecast_day(predictions, actuals[date])
@@ -96,12 +103,16 @@ def evaluate_store_forecasts(
         details.append(result)
 
     n = len(details)
+    n_orphaned = n_forecasted - n
+
     if n == 0:
         return {
             "top_1_hit_rate": 0.0,
             "top_5_hit_rate": 0.0,
             "avg_log_loss": None,
             "n_samples": 0,
+            "n_forecasted": n_forecasted,
+            "n_orphaned": n_orphaned,
             "details": [],
         }
 
@@ -114,6 +125,8 @@ def evaluate_store_forecasts(
         "top_5_hit_rate": top_5_hits / n,
         "avg_log_loss": sum(log_losses) / len(log_losses) if log_losses else None,
         "n_samples": n,
+        "n_forecasted": n_forecasted,
+        "n_orphaned": n_orphaned,
         "details": details,
     }
 
@@ -128,19 +141,20 @@ def generate_accuracy_report(results: dict[str, dict]) -> str:
         Formatted string table.
     """
     lines = []
-    header = f"{'Store':<30} {'Top-1':>7} {'Top-5':>7} {'LogLoss':>8} {'N':>5}"
+    header = f"{'Store':<30} {'Top-1':>7} {'Top-5':>7} {'LogLoss':>8} {'N':>5} {'Orphan':>7}"
     lines.append(header)
     lines.append("-" * len(header))
 
     for slug, metrics in sorted(results.items()):
         n = metrics["n_samples"]
+        orphaned = metrics.get("n_orphaned", 0)
         if n == 0:
-            lines.append(f"{slug:<30} {'--':>7} {'--':>7} {'--':>8} {0:>5}")
+            lines.append(f"{slug:<30} {'--':>7} {'--':>7} {'--':>8} {0:>5} {orphaned:>7}")
             continue
 
         t1 = f"{metrics['top_1_hit_rate']:.1%}"
         t5 = f"{metrics['top_5_hit_rate']:.1%}"
         ll = f"{metrics['avg_log_loss']:.3f}" if metrics["avg_log_loss"] is not None else "--"
-        lines.append(f"{slug:<30} {t1:>7} {t5:>7} {ll:>8} {n:>5}")
+        lines.append(f"{slug:<30} {t1:>7} {t5:>7} {ll:>8} {n:>5} {orphaned:>7}")
 
     return "\n".join(lines)

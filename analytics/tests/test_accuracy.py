@@ -83,7 +83,7 @@ class TestEvaluateStoreForecasts:
             "2026-02-20": "Turtle",
             "2026-02-21": "Butter Pecan",
         }
-        result = evaluate_store_forecasts(forecast, actuals, window_days=365)
+        result = evaluate_store_forecasts(forecast, actuals, window_days=365, today="2026-02-21")
         assert result["n_samples"] == 2
         assert result["top_1_hit_rate"] == 0.5  # 1 of 2
         assert result["top_5_hit_rate"] == 0.5  # same 1 of 2
@@ -97,7 +97,7 @@ class TestEvaluateStoreForecasts:
                 ]},
             ],
         }
-        result = evaluate_store_forecasts(forecast, {}, window_days=365)
+        result = evaluate_store_forecasts(forecast, {}, window_days=365, today="2026-02-20")
         assert result["n_samples"] == 0
         assert result["top_1_hit_rate"] == 0.0
 
@@ -109,9 +109,58 @@ class TestEvaluateStoreForecasts:
             ],
         }
         actuals = {"2026-02-20": "Turtle"}
-        result = evaluate_store_forecasts(forecast, actuals, window_days=365)
+        result = evaluate_store_forecasts(forecast, actuals, window_days=365, today="2026-02-20")
         assert result["n_samples"] == 1
         assert result["top_1_hit_rate"] == 1.0
+
+    def test_future_dates_excluded(self):
+        """Forecast with tomorrow's date + matching actual should NOT count."""
+        forecast = {
+            "days": [
+                {"date": "2026-02-22", "predictions": [
+                    {"flavor": "Turtle", "probability": 0.5},
+                ]},
+            ],
+        }
+        actuals = {"2026-02-22": "Turtle"}
+        result = evaluate_store_forecasts(forecast, actuals, window_days=365, today="2026-02-21")
+        assert result["n_samples"] == 0
+        assert result["n_forecasted"] == 0
+
+    def test_partial_snapshot_coverage(self):
+        """2 past dates, only 1 has an actual snapshot."""
+        forecast = {
+            "days": [
+                {"date": "2026-02-19", "predictions": [
+                    {"flavor": "Turtle", "probability": 0.5},
+                ]},
+                {"date": "2026-02-20", "predictions": [
+                    {"flavor": "Mint", "probability": 0.5},
+                ]},
+            ],
+        }
+        actuals = {"2026-02-19": "Turtle"}
+        result = evaluate_store_forecasts(forecast, actuals, window_days=365, today="2026-02-20")
+        assert result["n_samples"] == 1
+        assert result["n_orphaned"] == 1
+        assert result["n_forecasted"] == 2
+
+    def test_all_forecasts_orphaned(self):
+        """All forecast dates in window but no actuals at all."""
+        forecast = {
+            "days": [
+                {"date": "2026-02-18", "predictions": [
+                    {"flavor": "Turtle", "probability": 0.5},
+                ]},
+                {"date": "2026-02-19", "predictions": [
+                    {"flavor": "Mint", "probability": 0.5},
+                ]},
+            ],
+        }
+        result = evaluate_store_forecasts(forecast, {}, window_days=365, today="2026-02-20")
+        assert result["n_samples"] == 0
+        assert result["n_orphaned"] == 2
+        assert result["n_forecasted"] == 2
 
 
 # --- generate_accuracy_report ---
@@ -124,12 +173,14 @@ class TestGenerateReport:
                 "top_5_hit_rate": 0.60,
                 "avg_log_loss": 2.345,
                 "n_samples": 10,
+                "n_orphaned": 2,
             },
             "madison-todd-drive": {
                 "top_1_hit_rate": 0.0,
                 "top_5_hit_rate": 0.0,
                 "avg_log_loss": None,
                 "n_samples": 0,
+                "n_orphaned": 0,
             },
         }
         report = generate_accuracy_report(results)
@@ -140,3 +191,20 @@ class TestGenerateReport:
         assert "2.345" in report
         # Zero-sample store shows dashes
         assert "--" in report
+
+    def test_report_includes_orphaned_column(self):
+        results = {
+            "mt-horeb": {
+                "top_1_hit_rate": 0.5,
+                "top_5_hit_rate": 0.5,
+                "avg_log_loss": 1.0,
+                "n_samples": 2,
+                "n_orphaned": 3,
+            },
+        }
+        report = generate_accuracy_report(results)
+        assert "Orphan" in report
+        # The orphan count (3) should appear in the output
+        lines = report.split("\n")
+        data_line = [l for l in lines if "mt-horeb" in l][0]
+        assert "3" in data_line

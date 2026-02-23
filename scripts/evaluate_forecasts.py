@@ -79,10 +79,13 @@ def fetch_forecasts(store: str | None = None) -> dict[str, dict]:
 
 def fetch_snapshots(store: str | None = None, days: int = 30) -> dict[str, dict[str, str]]:
     """Fetch actual flavor snapshots from D1, keyed by slug then date."""
-    where = f"WHERE slug = '{store}'" if store else ""
+    if store:
+        where = f"WHERE slug = '{store}' AND date >= date('now', '-{days} days') AND date <= date('now')"
+    else:
+        where = f"WHERE date >= date('now', '-{days} days') AND date <= date('now')"
     sql = (
         f"SELECT slug, date, flavor FROM snapshots {where} "
-        f"ORDER BY date DESC LIMIT {days * 200}"
+        f"ORDER BY date DESC"
     )
     rows = d1_query(sql)
     result: dict[str, dict[str, str]] = {}
@@ -176,6 +179,15 @@ def main() -> int:
     print()
     report = generate_accuracy_report(results)
     print(report)
+
+    # Warn about orphaned forecasts (no matching snapshot)
+    for slug, metrics in sorted(results.items()):
+        orphaned = metrics.get("n_orphaned", 0)
+        if orphaned > 0:
+            print(
+                f"WARNING: {slug} has {orphaned} forecast date(s) with no snapshot match",
+                file=sys.stderr,
+            )
 
     # Upload if requested
     if args.upload:
