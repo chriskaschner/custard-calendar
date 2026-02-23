@@ -12,7 +12,6 @@
   <meta property="og:type" content="website">
   <meta property="og:image" content="https://custard.chriskaschner.com/og-calendar.png">
   <meta name="twitter:card" content="summary_large_image">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍦</text></svg>">
   <link rel="stylesheet" href="style.css">
   <style>
     .step-card {
@@ -230,7 +229,8 @@
     async function loadStores() {
       try {
         const res = await fetch('stores.json');
-        allStores = await res.json();
+        const data = await res.json();
+        allStores = data.stores || data;
         populateStates();
         filterStores();
       } catch (e) {
