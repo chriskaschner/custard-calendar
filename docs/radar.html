@@ -785,15 +785,41 @@
       }
       for (const f of selectedFlavors) unique.add(f);
       await Promise.all([...unique].map(loadFlavorMetrics));
+      computeRarityPercentiles();
+    }
+
+    // Percentile-based rarity: ranks flavors relative to the loaded dataset
+    let rarityPercentileMap = new Map(); // normalized_flavor -> percentile (0-100)
+
+    function computeRarityPercentiles() {
+      rarityPercentileMap = new Map();
+      const entries = [];
+      for (const [key, metrics] of flavorMetricsCache) {
+        if (!metrics) continue;
+        const total = Number(metrics.total_appearances || 0);
+        entries.push({ key, total });
+      }
+
+      // Sample floor: skip all badges if fewer than 10 distinct flavors
+      if (entries.length < 10) return;
+
+      // Sort ascending by appearance count
+      entries.sort((a, b) => a.total - b.total);
+
+      // Assign percentile rank
+      for (let i = 0; i < entries.length; i++) {
+        const percentile = (i / (entries.length - 1)) * 100;
+        rarityPercentileMap.set(entries[i].key, percentile);
+      }
     }
 
     function rarityBadge(flavorName) {
-      const metrics = flavorMetricsCache.get(normalize(flavorName));
-      if (!metrics) return null;
-      const total = Number(metrics.total_appearances || 0);
-      if (total <= 150) return 'Ultra Rare';
-      if (total <= 500) return 'Rare';
-      if (total <= 1500) return 'Uncommon';
+      const key = normalize(flavorName);
+      const percentile = rarityPercentileMap.get(key);
+      if (percentile === undefined) return null;
+      if (percentile <= 10) return 'Ultra Rare';
+      if (percentile <= 25) return 'Rare';
+      if (percentile <= 50) return 'Uncommon';
       return null;
     }
 

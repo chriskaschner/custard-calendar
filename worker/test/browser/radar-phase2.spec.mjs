@@ -336,3 +336,284 @@ test("candidate with confirmed schedule shows Confirmed badge, not probability",
     expect(cardText).not.toMatch(/\d+\.\d+%.*vs/);
   }
 });
+
+test("rarity badges use percentile distribution, not absolute counts", async ({ page }) => {
+  let primarySlug = null;
+
+  // Use actual catalog flavors (from docs/flavors.json) so search works
+  const predictionFlavors = [
+    "Turtle", "Vanilla", "Mint Explosion", "Butter Pecan",
+    "Caramel Cashew", "Snickers Swirl", "Andes Mint Avalanche",
+    "Dark Chocolate Decadence", "Chocolate Oreo Volcano",
+    "Crazy for Cookie Dough", "OREO Cheesecake", "Georgia Peach",
+  ];
+
+  // Varied appearance counts: Georgia Peach is rarest
+  const appearanceCounts = {
+    "turtle": 5000,
+    "vanilla": 4500,
+    "mint explosion": 4000,
+    "butter pecan": 3500,
+    "caramel cashew": 2500,
+    "snickers swirl": 300,
+    "andes mint avalanche": 50,
+    "dark chocolate decadence": 20,
+    "chocolate oreo volcano": 3000,
+    "crazy for cookie dough": 500,
+    "oreo cheesecake": 2000,
+    "georgia peach": 5,
+  };
+
+  await page.route("**/api/v1/**", async (route) => {
+    const url = new URL(route.request().url());
+    const path = url.pathname;
+
+    if (path === "/api/v1/geolocate") {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ state: "WI", stateName: "Wisconsin", city: "Madison", country: "US" }),
+      });
+      return;
+    }
+
+    if (path === "/api/v1/flavors") {
+      const slug = url.searchParams.get("slug") || "unknown";
+      if (!primarySlug) primarySlug = slug;
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          slug,
+          name: "Test Store",
+          address: "123 Main St",
+          flavors: [
+            { date: isoDateOffset(0), title: "Georgia Peach", description: "Rare treat" },
+          ],
+        }),
+      });
+      return;
+    }
+
+    if (path.startsWith("/api/v1/forecast/")) {
+      const slug = decodeURIComponent(path.replace("/api/v1/forecast/", ""));
+      if (!primarySlug) primarySlug = slug;
+      // Rotate by 2 each day so top-3 slices cover more unique flavors
+      const days = [];
+      for (let d = 0; d < 7; d++) {
+        const offset = (d * 2) % predictionFlavors.length;
+        const rotated = [...predictionFlavors.slice(offset), ...predictionFlavors.slice(0, offset)];
+        const preds = rotated.map((f, i) => ({
+          flavor: f,
+          probability: 0.15 - i * 0.005,
+          confidence: i < 4 ? "high" : i < 8 ? "medium" : "low",
+        }));
+        days.push({
+          date: isoDateOffset(d),
+          predictions: preds,
+          overdue_flavors: [],
+          prose: "Forecast prose",
+        });
+      }
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          store_slug: slug,
+          generated_at: new Date().toISOString(),
+          history_depth: 2100,
+          days,
+        }),
+      });
+      return;
+    }
+
+    if (path.startsWith("/api/v1/metrics/store/")) {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          slug: "test",
+          unique_flavors: 88,
+          total_days: 1400,
+          recent_history: [],
+          active_streaks: [],
+        }),
+      });
+      return;
+    }
+
+    if (path.startsWith("/api/v1/metrics/flavor/")) {
+      const normalized = decodeURIComponent(path.replace("/api/v1/metrics/flavor/", ""));
+      const totalAppearances = appearanceCounts[normalized] || 1000;
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          normalized_flavor: normalized,
+          total_appearances: totalAppearances,
+          store_count: 35,
+          recent: [],
+        }),
+      });
+      return;
+    }
+
+    await route.fallback();
+  });
+
+  await page.goto("/radar.html");
+  await page.waitForSelector("#store-select option:not([disabled])[value]");
+  const firstValue = await page.$eval("#store-select option:not([disabled])[value]", (el) => el.value);
+  await page.selectOption("#store-select", firstValue);
+  await page.waitForSelector("#timeline-section:not([hidden])");
+
+  // Select Georgia Peach as favorite (rarest flavor, 5 appearances)
+  await page.fill("#flavor-search", "georgia");
+  await page.waitForSelector("#flavor-results .flavor-result-item .flavor-name", { timeout: 5000 });
+  await page.click("#flavor-results .flavor-result-item");
+
+  // Select Turtle as second favorite to push metrics cache above sample floor
+  await page.fill("#flavor-search", "turtle");
+  await page.waitForSelector("#flavor-results .flavor-result-item .flavor-name", { timeout: 5000 });
+  const turtleItem = page.locator("#flavor-results .flavor-result-item", {
+    has: page.locator(".flavor-name", { hasText: /^Turtle$/ }),
+  });
+  if (await turtleItem.count()) {
+    await turtleItem.first().click();
+  } else {
+    await page.click("#flavor-results .flavor-result-item");
+  }
+
+  // Wait for metrics preload + re-render with badges
+  await page.waitForTimeout(5000);
+
+  // Georgia Peach (5 appearances, bottom percentile of 12) should get "Ultra Rare"
+  const rarityBadges = page.locator(".intel-badge-rarity");
+  const badgeTexts = await rarityBadges.allTextContents();
+  // At least one should be "Ultra Rare" (Georgia Peach)
+  expect(badgeTexts).toContain("Ultra Rare");
+});
+
+test("rarity badges suppressed when fewer than 10 flavors have metrics", async ({ page }) => {
+  let primarySlug = null;
+
+  await page.route("**/api/v1/**", async (route) => {
+    const url = new URL(route.request().url());
+    const path = url.pathname;
+
+    if (path === "/api/v1/geolocate") {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ state: "WI", stateName: "Wisconsin", city: "Madison", country: "US" }),
+      });
+      return;
+    }
+
+    if (path === "/api/v1/flavors") {
+      const slug = url.searchParams.get("slug") || "unknown";
+      if (!primarySlug) primarySlug = slug;
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          slug,
+          name: "Test Store",
+          address: "123 Main St",
+          flavors: [
+            { date: isoDateOffset(0), title: "Turtle", description: "Classic" },
+          ],
+        }),
+      });
+      return;
+    }
+
+    if (path.startsWith("/api/v1/forecast/")) {
+      const slug = decodeURIComponent(path.replace("/api/v1/forecast/", ""));
+      if (!primarySlug) primarySlug = slug;
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          store_slug: slug,
+          generated_at: new Date().toISOString(),
+          history_depth: 2100,
+          days: [0, 1, 2, 3, 4, 5, 6].map((d) => ({
+            date: isoDateOffset(d),
+            predictions: [
+              { flavor: "Turtle", probability: 0.15, confidence: "high" },
+              { flavor: "Vanilla", probability: 0.10, confidence: "medium" },
+            ],
+            overdue_flavors: [],
+            prose: "Forecast prose",
+          })),
+        }),
+      });
+      return;
+    }
+
+    if (path.startsWith("/api/v1/metrics/store/")) {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          slug: "test",
+          unique_flavors: 2,
+          total_days: 50,
+          recent_history: [],
+          active_streaks: [],
+        }),
+      });
+      return;
+    }
+
+    if (path.startsWith("/api/v1/metrics/flavor/")) {
+      // Only 2 flavors have metrics -- below sample floor of 10
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          normalized_flavor: decodeURIComponent(path.replace("/api/v1/metrics/flavor/", "")),
+          total_appearances: 10,
+          store_count: 5,
+          recent: [],
+        }),
+      });
+      return;
+    }
+
+    if (path === "/api/v1/flavors/catalog") {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          flavors: [
+            { normalized: "turtle", display: "Turtle" },
+            { normalized: "vanilla", display: "Vanilla" },
+          ],
+        }),
+      });
+      return;
+    }
+
+    await route.fallback();
+  });
+
+  await page.goto("/radar.html");
+  await page.waitForSelector("#store-select option:not([disabled])[value]");
+  const firstValue = await page.$eval("#store-select option:not([disabled])[value]", (el) => el.value);
+  await page.selectOption("#store-select", firstValue);
+  await page.waitForSelector("#timeline-section:not([hidden])");
+
+  await page.fill("#flavor-search", "turtle");
+  await page.waitForSelector("#flavor-results .flavor-result-item .flavor-name");
+  await page.click("#flavor-results .flavor-result-item");
+
+  // Wait a bit for badges to compute
+  await page.waitForTimeout(2000);
+
+  // No rarity badges should appear (fewer than 10 flavors in metrics)
+  const rarityBadges = page.locator(".intel-badge-rarity");
+  expect(await rarityBadges.count()).toBe(0);
+});
