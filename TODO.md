@@ -67,17 +67,21 @@ Turn high-specificity seasonal/store insights into explainable content with evid
 PCA/category overlays + improved weather-motion aesthetics, tied directly to decisions.
 
 - [x] **Decision-driven visuals** -- Map + Fronts popups now show Confirmed badges and Directions/Alert/Calendar CTAs via `CustardPlanner.actionCTAsHTML()`. Map result cards also have CTAs. Forecast-mode and confirmed-mode popups both enhanced. (2026-02-27)
-- [ ] **Interaction-to-action metrics** -- measure CTA clicks, signal views, popup opens. No usability/performance regressions.
+- [ ] **Interaction-to-action metrics** -- D1 `interaction_events` table, `POST /api/v1/events` (sendBeacon), `GET /api/v1/events/summary`. Track CTA clicks (directions/alert/subscribe), signal card views (IntersectionObserver), map popup opens. Anonymous (page_load_id + CF geo, no cookies). See WORKLOG.md for full schema and implementation plan.
 
 ## Later -- Refactor / Re-Architecture
 
-"Are we DRY?", "Can rendering be standardized?", "If built today, what architecture wins do we capture?"
+"Are we DRY?", "Can rendering be standardized?", "If built today, what architecture wins do we capture?" Full plan in WORKLOG.md.
 
-- [x] **DRY audit** -- Identified 7 duplication hotspots: certainty thresholds (CRITICAL fix applied), escapeHtml (7 files), similarity groups (3 files), flavor families, haversine, WORKER_BASE, brand colors. (2026-02-27)
-- [ ] **Canonical render spec** -- palette + geometry + toppings with adapters per surface.
+- [x] **DRY audit** -- Identified 7 duplication hotspots: certainty thresholds (CRITICAL fix applied), escapeHtml (11 files), similarity groups (2 implementations), flavor families, haversine (8 files), WORKER_BASE (9 hardcoded, 1 URL mismatch), brand colors. (2026-02-27)
+- [ ] **WORKER_BASE consolidation** -- expose `CustardPlanner.WORKER_BASE`, replace 9 hardcoded constants across HTML/JS. Fix engine.js URL mismatch (`custard.chriskaschner.com` vs `custard-calendar.chris-kaschner.workers.dev`). ~30 min.
+- [ ] **escapeHtml consolidation** -- remove inline copies from ~7 HTML pages, use `CustardPlanner.escapeHtml()`. ~20 min.
+- [ ] **haversine consolidation** -- remove inline copies from ~6 HTML pages, use `CustardPlanner.haversineMiles()`. Verify load order. ~20 min.
+- [ ] **Flavor config API** -- `GET /api/v1/flavor-config` returns similarity groups + flavor families + brand colors from single server source (flavor-matcher.js). Eliminates manual sync between server and client. Option A over build-time sync.
 - [x] **Shared decision/certainty modules** -- Fixed critical threshold divergence: planner-shared.js now matches worker/src/certainty.js (MIN_PROBABILITY=0.02, MIN_HISTORY_DEPTH=14, MAX_FORECAST_AGE_HOURS=168). Added escapeHtml export. (2026-02-27)
-- [ ] **Decompose large modules** -- formalize API/data contracts to prevent drift.
-- [ ] **Greenfield target architecture** -- define data layer, decision layer, presentation layer. Migrate incrementally, not rewrite. Staged cutovers with rollback safety.
+- [ ] **Decompose index.js** -- extract route-today.js (~160 lines), route-calendar.js (~100), route-nearby.js (~120), kv-cache.js (~100), brand-registry.js (~30). index.js drops from 1,072 to ~550 lines.
+- [ ] **Canonical render spec** -- palette + geometry + toppings with adapters per surface.
+- [ ] **Greenfield target architecture** -- three-layer model: Presentation (docs), Decision (planner/certainty/signals/reliability as pure functions), Data (KV/D1 access). Incremental migration, not rewrite.
 
 ## Someday/Maybe
 
