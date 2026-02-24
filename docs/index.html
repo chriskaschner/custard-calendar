@@ -125,6 +125,7 @@
             <span class="today-store" id="today-store"></span>
             <span class="freshness-ts" id="today-freshness"></span>
           </div>
+          <div id="today-ctas"></div>
         </div>
       </div>
     </section>
@@ -146,6 +147,8 @@
         </div>
       </div>
     </section>
+
+    <div id="watch-banner-container"></div>
 
     <!-- Week strip -->
     <section id="week-section" hidden>
@@ -205,34 +208,11 @@
 
   <script>var WORKER_BASE = 'https://custard-calendar.chris-kaschner.workers.dev';</script>
   <script src="cone-renderer.js"></script>
+  <script src="planner-shared.js"></script>
   <script>
-    const BRAND_COLORS = {
-      culvers: '#005696',
-      kopps: '#000000',
-      gilles: '#EBCC35',
-      hefners: '#93BE46',
-      kraverz: '#CE742D',
-      oscars: '#BC272C',
-    };
-
-    const BRAND_DISPLAY = {
-      kopps: "Kopp's",
-      gilles: "Gille's",
-      hefners: "Hefner's",
-      kraverz: "Kraverz",
-      oscars: "Oscar's",
-    };
-
-    // Brand detection from slug (mirrors Worker's BRAND_REGISTRY)
-    function brandFromSlug(slug) {
-      if (!slug) return 'culvers';
-      if (slug.startsWith('kopps-')) return 'kopps';
-      if (slug === 'gilles') return 'gilles';
-      if (slug === 'hefners') return 'hefners';
-      if (slug === 'kraverz') return 'kraverz';
-      if (slug.startsWith('oscars')) return 'oscars';
-      return 'culvers';
-    }
+    var BRAND_COLORS = CustardPlanner.BRAND_COLORS;
+    var BRAND_DISPLAY = CustardPlanner.BRAND_DISPLAY;
+    var brandFromSlug = CustardPlanner.brandFromSlug;
 
     let allStores = [];
     let currentSlug = null;
@@ -324,7 +304,7 @@
       const flavor = day && day.flavor ? day.flavor : 'Flavor Preview';
       let status = 'Forecast';
       if (day && day.type === 'confirmed') status = 'Confirmed';
-      if (day && day.type === 'predicted') status = 'Predicted';
+      if (day && day.type === 'predicted') status = 'Estimated';
 
       const location = store
         ? (store.address ? store.address + ', ' : '') + store.city + ', ' + store.state
@@ -334,7 +314,7 @@
       if (day && day.type === 'confirmed' && day.description) {
         detail = day.description;
       } else if (day && day.type === 'predicted') {
-        detail = 'Likely flavor based on recent schedule patterns.';
+        detail = 'Estimated flavor based on historical schedule patterns.';
       }
 
       const color = accentColor || '#005696';
@@ -350,15 +330,7 @@
       sampleAppleLocation.textContent = location;
     }
 
-    function haversine(lat1, lng1, lat2, lng2) {
-      const R = 3958.8;
-      const dLat = (lat2 - lat1) * Math.PI / 180;
-      const dLng = (lng2 - lng1) * Math.PI / 180;
-      const a = Math.sin(dLat / 2) ** 2 +
-        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-        Math.sin(dLng / 2) ** 2;
-      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    }
+    var haversine = CustardPlanner.haversineMiles;
 
     function firstStoreMatching(predicate, usedSlugs) {
       for (const store of allStores) {
@@ -651,6 +623,12 @@
         } else {
           renderTodayCard({ date: toISODate(today), type: 'none' }, slug, fetchedAt, forecast, todayData);
         }
+
+        // Fetch reliability and show Watch banner if needed
+        var watchEl = document.getElementById('watch-banner-container');
+        CustardPlanner.fetchReliability(WORKER_BASE, slug).then(function (rel) {
+          watchEl.innerHTML = CustardPlanner.watchBannerHTML(rel);
+        });
       } catch (err) {
         console.error('Forecast load error:', err);
         todayLoading.hidden = true;
@@ -660,34 +638,7 @@
     }
 
     function buildTimeline(confirmedFlavors, forecast, today) {
-      const timeline = [];
-      for (let i = 0; i < 7; i++) {
-        const date = addDays(today, i);
-        const dateStr = toISODate(date);
-
-        const confirmed = confirmedFlavors.find(f => f.date === dateStr);
-        if (confirmed) {
-          timeline.push({ date: dateStr, type: 'confirmed', flavor: confirmed.title, description: confirmed.description || '' });
-          continue;
-        }
-
-        const forecastDay = forecast && forecast.days
-          ? forecast.days.find(d => d.date === dateStr)
-          : null;
-        if (forecastDay && forecastDay.predictions && forecastDay.predictions.length > 0) {
-          timeline.push({
-            date: dateStr,
-            type: 'predicted',
-            flavor: forecastDay.predictions[0].flavor,
-            probability: forecastDay.predictions[0].probability,
-            predictions: forecastDay.predictions.slice(0, 3),
-          });
-          continue;
-        }
-
-        timeline.push({ date: dateStr, type: 'none' });
-      }
-      return timeline;
+      return CustardPlanner.buildTimeline(confirmedFlavors, forecast, today, { maxPredictions: 3 });
     }
 
     // --- Rendering ---
@@ -772,8 +723,8 @@
         todayPredictions.innerHTML = '';
         renderRarity(todayData && todayData.rarity);
       } else if (day.type === 'predicted') {
-        todayBadge.textContent = 'Predicted';
-        todayBadge.className = 'day-card-badge day-card-badge-predicted';
+        todayBadge.textContent = 'Estimated';
+        todayBadge.className = 'day-card-badge day-card-badge-estimated';
         todayCone.innerHTML = renderMiniConeHDSVG(day.flavor, 5);
         todayCone.hidden = false;
         todayFlavor.textContent = day.flavor;
@@ -786,13 +737,11 @@
           const maxProb = day.predictions[0].probability || 0.1;
           let html = '';
           for (const p of day.predictions) {
-            const pct = (p.probability * 100).toFixed(1);
             const barWidth = Math.max(5, (p.probability / Math.max(maxProb, 0.01)) * 100);
-            const conf = p.confidence || (p.probability > 0.10 ? 'high' : p.probability >= 0.05 ? 'medium' : 'low');
             html += '<div class="prediction-row">'
               + '<span class="prediction-name">' + renderMiniConeSVG(p.flavor) + escapeHtml(p.flavor) + '</span>'
-              + '<div class="prediction-bar-wrap"><div class="prediction-bar prediction-bar-' + conf + '" style="width:' + barWidth + '%"></div></div>'
-              + '<span class="prediction-pct">' + pct + '%</span>'
+              + '<div class="prediction-bar-wrap"><div class="prediction-bar prediction-bar-estimated" style="width:' + barWidth + '%"></div></div>'
+              + '<span class="prediction-pct" style="font-size:0.7rem;color:#999;">Estimated</span>'
               + '</div>';
           }
           todayPredictions.innerHTML = html;
@@ -818,21 +767,24 @@
       const freshness = fetchedAt ? 'Updated ' + timeSince(fetchedAt) : '';
       todayFreshness.textContent = freshness;
 
+      // Render action CTAs
+      var ctaEl = document.getElementById('today-ctas');
+      var ctaActions = day.type === 'confirmed' ? ['directions', 'alert', 'calendar'] : ['alert', 'calendar'];
+      ctaEl.innerHTML = CustardPlanner.actionCTAsHTML({
+        slug: slug,
+        storeName: store ? store.name : slug,
+        lat: store ? Number(store.lat) : null,
+        lon: store ? Number(store.lng) : null,
+        workerBase: WORKER_BASE,
+        actions: ctaActions,
+      });
+
       todaySection.hidden = false;
       updateCalendarPreview(day, store, color);
       showCalendarCTA(slug);
     }
 
-    function confidenceStripClass(day) {
-      if (day.type === 'confirmed') return 'confidence-strip confidence-strip-confirmed';
-      if (day.type === 'predicted') {
-        var prob = day.probability || 0;
-        if (prob > 0.10) return 'confidence-strip confidence-strip-high';
-        if (prob >= 0.05) return 'confidence-strip confidence-strip-medium';
-        return 'confidence-strip confidence-strip-low';
-      }
-      return 'confidence-strip confidence-strip-none';
-    }
+    var certaintyStripClass = CustardPlanner.confidenceStripClass;
 
     function formatDateLabel(dateStr) {
       const today = new Date();
@@ -863,7 +815,7 @@
           hasAnyData = true;
           card.className = 'week-day-card';
           card.innerHTML =
-            '<div class="' + confidenceStripClass(day) + '"></div>'
+            '<div class="' + certaintyStripClass(day) + '"></div>'
             + '<div class="week-day-name">' + escapeHtml(dayName) + '</div>'
             + '<div class="week-day-date">' + escapeHtml(dateLabel) + '</div>'
             + '<div style="text-align:center;margin:0.25rem 0;">' + renderMiniConeSVG(day.flavor) + '</div>'
@@ -872,18 +824,18 @@
         } else if (day.type === 'predicted') {
           hasAnyData = true;
           const pct = day.probability ? (day.probability * 100).toFixed(0) + '%' : '';
-          card.className = 'week-day-card week-day-card-predicted';
+          card.className = 'week-day-card week-day-card-estimated';
           card.innerHTML =
-            '<div class="' + confidenceStripClass(day) + '"></div>'
+            '<div class="' + certaintyStripClass(day) + '"></div>'
             + '<div class="week-day-name">' + escapeHtml(dayName) + '</div>'
             + '<div class="week-day-date">' + escapeHtml(dateLabel) + '</div>'
             + '<div style="text-align:center;margin:0.25rem 0;">' + renderMiniConeSVG(day.flavor) + '</div>'
             + '<div class="week-day-flavor">' + escapeHtml(day.flavor) + '</div>'
-            + (pct ? '<div class="week-day-confidence">' + pct + ' likely</div>' : '');
+            + (pct ? '<div class="week-day-confidence">Estimated</div>' : '');
         } else {
           card.className = 'week-day-card week-day-card-none';
           card.innerHTML =
-            '<div class="' + confidenceStripClass(day) + '"></div>'
+            '<div class="' + certaintyStripClass(day) + '"></div>'
             + '<div class="week-day-name">' + escapeHtml(dayName) + '</div>'
             + '<div class="week-day-date">' + escapeHtml(dateLabel) + '</div>'
             + '<div class="week-day-flavor" style="color:#999;font-style:italic;">No data</div>';

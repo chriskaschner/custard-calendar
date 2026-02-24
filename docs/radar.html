@@ -71,7 +71,7 @@
 
     <section id="timeline-section" hidden>
       <h2>7-Day Outlook</h2>
-      <p class="hint">Solid blue cards are confirmed from the store. Faded cards are model predictions.</p>
+      <p class="hint">Confirmed cards show store schedule data. Watch cards flag reliability concerns. Estimated cards are model-based.</p>
       <div id="timeline" class="day-cards"></div>
       <div id="trust-banner" class="trust-banner" hidden></div>
     </section>
@@ -109,7 +109,7 @@
         <div class="accuracy-card">
           <div class="accuracy-label">Confidence Mix</div>
           <div class="accuracy-value" id="acc-confidence">--</div>
-          <div class="accuracy-note">Top prediction confidence by day (High/Med/Low).</div>
+          <div class="accuracy-note">Certainty breakdown (Confirmed / Estimated).</div>
         </div>
         <div class="accuracy-card">
           <div class="accuracy-label">Model Depth</div>
@@ -394,40 +394,14 @@
 
   <script>var WORKER_BASE = 'https://custard-calendar.chris-kaschner.workers.dev';</script>
   <script src="cone-renderer.js"></script>
+  <script src="planner-shared.js"></script>
   <script>
     const STORAGE_KEY = 'custard-radar';
     const MAX_FAVORITES = 3;
 
-    const BRAND_DISPLAY = {
-      kopps: "Kopp's",
-      gilles: "Gille's",
-      hefners: "Hefner's",
-      kraverz: "Kraverz",
-      oscars: "Oscar's",
-    };
-
-    function brandFromSlug(slug) {
-      if (!slug) return 'culvers';
-      if (slug.startsWith('kopps-')) return 'kopps';
-      if (slug === 'gilles') return 'gilles';
-      if (slug === 'hefners') return 'hefners';
-      if (slug === 'kraverz') return 'kraverz';
-      if (slug.startsWith('oscars')) return 'oscars';
-      return 'culvers';
-    }
-
-    // Similarity groups — mirrored from worker/src/flavor-matcher.js
-    const SIMILARITY_GROUPS = {
-      mint: ['andes mint avalanche', 'mint cookie', 'mint explosion'],
-      chocolate: ['chocolate caramel twist', 'chocolate heath crunch', 'chocolate volcano', 'dark chocolate decadence', 'dark chocolate pb crunch', 'chocolate oreo volcano'],
-      caramel: ['caramel cashew', 'caramel fudge cookie dough', 'caramel pecan', 'caramel turtle', 'salted caramel pecan pie', 'chocolate caramel twist'],
-      cheesecake: ['oreo cheesecake', 'oreo cookie cheesecake', 'raspberry cheesecake', 'strawberry cheesecake', 'turtle cheesecake'],
-      turtle: ['turtle', 'turtle dove', 'turtle cheesecake', 'caramel turtle'],
-      cookie: ['crazy for cookie dough', 'caramel fudge cookie dough', 'mint cookie', 'oreo cookie cheesecake', 'oreo cookies and cream'],
-      peanutButter: ['dark chocolate pb crunch', 'peanut butter cup', 'reeses peanut butter cup'],
-      berry: ['blackberry cobbler', 'raspberry cheesecake', 'strawberry cheesecake', 'lemon berry layer cake'],
-      pecan: ['butter pecan', 'caramel pecan', 'salted caramel pecan pie', 'georgia peach pecan'],
-    };
+    var BRAND_DISPLAY = CustardPlanner.BRAND_DISPLAY;
+    var brandFromSlug = CustardPlanner.brandFromSlug;
+    var SIMILARITY_GROUPS = CustardPlanner.SIMILARITY_GROUPS;
 
     let allStores = [];
     let flavorCatalog = [];
@@ -503,9 +477,7 @@
       return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     }
 
-    function normalize(s) {
-      return String(s || '').toLowerCase().replace(/[^a-z0-9 ]/g, '').trim();
-    }
+    var normalize = CustardPlanner.normalize;
 
     function timeSince(iso) {
       if (!iso) return 'Unknown';
@@ -521,15 +493,7 @@
       return days + ' day' + (days === 1 ? '' : 's') + ' ago';
     }
 
-    function haversineMiles(lat1, lon1, lat2, lon2) {
-      const toRad = (d) => d * Math.PI / 180;
-      const R = 3958.8;
-      const dLat = toRad(lat2 - lat1);
-      const dLon = toRad(lon2 - lon1);
-      const a = Math.sin(dLat / 2) ** 2 +
-        Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
-      return 2 * R * Math.asin(Math.sqrt(a));
-    }
+    var haversineMiles = CustardPlanner.haversineMiles;
 
     function selectedStore() {
       return allStores.find(s => s.slug === selectedSlug) || null;
@@ -543,20 +507,7 @@
       return false;
     }
 
-    function findSimilarFlavors(favorites) {
-      const favNorms = [...favorites].map(normalize);
-      const similar = new Set();
-      for (const fav of favNorms) {
-        for (const group of Object.values(SIMILARITY_GROUPS)) {
-          if (group.includes(fav)) {
-            for (const f of group) {
-              if (!favNorms.includes(f)) similar.add(f);
-            }
-          }
-        }
-      }
-      return [...similar];
-    }
+    var findSimilarFlavors = CustardPlanner.findSimilarToFavorites;
 
     // --- localStorage ---
     function savePrefs() {
@@ -919,7 +870,7 @@
       const confirmed = cachedTimeline.filter(d => d.type === 'confirmed');
       const coveredDays = predicted.length + confirmed.length;
       const topScores = [];
-      const confidenceCounts = { high: 0, medium: 0, low: 0 };
+      const certaintyCounts = { confirmed: confirmed.length, estimated: 0, none: 0 };
 
       for (const day of confirmed) {
         topScores.push(1.0);
@@ -928,8 +879,7 @@
         const top = day.predictions[0];
         if (top && Number.isFinite(top.probability)) {
           topScores.push(top.probability);
-          const conf = top.confidence || (top.probability > 0.10 ? 'high' : top.probability >= 0.05 ? 'medium' : 'low');
-          if (confidenceCounts[conf] !== undefined) confidenceCounts[conf]++;
+          certaintyCounts.estimated++;
         }
       }
 
@@ -938,8 +888,8 @@
         : 0;
       accTop1.textContent = (avgTop * 100).toFixed(1) + '%';
       accCoverage.textContent = Math.round((coveredDays / 7) * 100) + '%';
-      accCoverageNote.textContent = coveredDays + '/7 days with confirmed or predicted data';
-      accConfidence.textContent = confidenceCounts.high + ' / ' + confidenceCounts.medium + ' / ' + confidenceCounts.low;
+      accCoverageNote.textContent = coveredDays + '/7 days with confirmed or estimated data';
+      accConfidence.textContent = certaintyCounts.confirmed + ' Confirmed / ' + certaintyCounts.estimated + ' Estimated';
 
       if (cachedForecast && cachedForecast.history_depth) {
         accDepth.textContent = cachedForecast.history_depth.toLocaleString();
@@ -988,7 +938,7 @@
             best = {
               date: day.date,
               probability: p.probability,
-              confidence: p.confidence || (p.probability > 0.10 ? 'high' : p.probability >= 0.05 ? 'medium' : 'low'),
+              certainty_tier: 'estimated',
             };
           }
         }
@@ -1079,7 +1029,7 @@
               flavor: fav,
               date: best.date,
               probability: best.probability,
-              confidence: best.confidence,
+              certainty_tier: best.certainty_tier,
               primaryScore,
               delta: best.probability - primaryScore,
             });
@@ -1175,7 +1125,7 @@
             '<div class="next-best-title">' + escapeHtml(rec.flavor) + ': better odds at ' + escapeHtml(rec.store.name) + '</div>' +
             '<div class="next-best-detail">' +
               escapeHtml(formatDate(rec.date)) + ' \u2014 ' +
-              (rec.probability * 100).toFixed(1) + '% (' + escapeHtml(rec.confidence) + ')' +
+              'Estimated' +
               ' vs ' + (rec.primaryScore * 100).toFixed(1) + '% at your primary store.' +
             '</div>' +
             '<div class="next-best-detail">' +
@@ -1187,38 +1137,8 @@
       }).join('');
     }
 
-    function findForecastDay(forecast, dateStr) {
-      if (!forecast) return null;
-      // Multi-day format
-      if (forecast.days) {
-        return forecast.days.find(d => d.date === dateStr) || null;
-      }
-      // Legacy single-day format
-      if (forecast.date === dateStr) return forecast;
-      return null;
-    }
-
     function buildTimeline(confirmedFlavors, forecast, today) {
-      const timeline = [];
-      for (let i = 0; i < 7; i++) {
-        const date = addDays(today, i);
-        const dateStr = toISODate(date);
-
-        const confirmed = confirmedFlavors.find(f => f.date === dateStr);
-        if (confirmed) {
-          timeline.push({ date: dateStr, type: 'confirmed', flavor: confirmed.title, description: confirmed.description || '' });
-          continue;
-        }
-
-        const forecastDay = findForecastDay(forecast, dateStr);
-        if (forecastDay && forecastDay.predictions && forecastDay.predictions.length > 0) {
-          timeline.push({ date: dateStr, type: 'predicted', predictions: forecastDay.predictions.slice(0, 5), overdue: forecastDay.overdue_flavors || [] });
-          continue;
-        }
-
-        timeline.push({ date: dateStr, type: 'none' });
-      }
-      return timeline;
+      return CustardPlanner.buildTimeline(confirmedFlavors, forecast, today, { maxPredictions: 5 });
     }
 
     async function fetchAndRenderTimeline() {
@@ -1263,24 +1183,21 @@
           trustBanner.hidden = true;
         }
 
+        // Fetch reliability and show Watch banner if needed
+        CustardPlanner.fetchReliability(WORKER_BASE, selectedSlug).then(function (rel) {
+          var banner = CustardPlanner.watchBannerHTML(rel);
+          if (banner) {
+            trustBanner.insertAdjacentHTML('afterend', banner);
+          }
+        });
+
       } catch (err) {
         console.error('Timeline fetch error:', err);
         timelineEl.innerHTML = '<p style="color:#c00;font-size:0.875rem;">Failed to load forecast data. Please try again.</p>';
       }
     }
 
-    function confidenceStripClass(day) {
-      if (day.type === 'confirmed') return 'confidence-strip confidence-strip-confirmed';
-      if (day.type === 'predicted') {
-        const top = day.predictions[0];
-        if (!top) return 'confidence-strip confidence-strip-low';
-        const prob = top.probability || 0;
-        if (prob > 0.10) return 'confidence-strip confidence-strip-high';
-        if (prob >= 0.05) return 'confidence-strip confidence-strip-medium';
-        return 'confidence-strip confidence-strip-low';
-      }
-      return 'confidence-strip confidence-strip-none';
-    }
+    var certaintyStripClass = CustardPlanner.confidenceStripClass;
 
     function renderTimeline() {
       timelineEl.innerHTML = '';
@@ -1291,7 +1208,7 @@
           const hasFav = isFavorite(day.flavor);
           card.className = 'day-card day-card-confirmed' + (hasFav ? ' day-card-highlight' : '');
           card.innerHTML =
-            '<div class="' + confidenceStripClass(day) + '"></div>' +
+            '<div class="' + certaintyStripClass(day) + '"></div>' +
             '<div class="day-card-header">' +
               '<span class="day-card-date">' + escapeHtml(formatDate(day.date)) + '</span>' +
               '<span class="day-card-badge day-card-badge-confirmed">Confirmed</span>' +
@@ -1312,25 +1229,21 @@
           card.className = 'day-card day-card-predicted' + (anyFav ? ' day-card-highlight' : '');
 
           let html =
-            '<div class="' + confidenceStripClass(day) + '"></div>' +
+            '<div class="' + certaintyStripClass(day) + '"></div>' +
             '<div class="day-card-header">' +
               '<span class="day-card-date">' + escapeHtml(formatDate(day.date)) + '</span>' +
-              '<span class="day-card-badge day-card-badge-predicted">Predicted</span>' +
+              '<span class="day-card-badge day-card-badge-estimated">Estimated</span>' +
             '</div>';
 
           const maxProb = day.predictions[0] ? day.predictions[0].probability : 0.1;
           for (const p of day.predictions) {
-            const pct = (p.probability * 100).toFixed(1);
             const barWidth = Math.max(5, (p.probability / Math.max(maxProb, 0.01)) * 100);
-            const conf = p.confidence || (p.probability > 0.10 ? 'high' : p.probability >= 0.05 ? 'medium' : 'low');
             const fav = isFavorite(p.flavor);
-            // Use flavor base color for bar if available, with confidence-based opacity
             const flavorBase = getFlavorBaseColor(p.flavor);
-            const opacity = conf === 'high' ? 1.0 : conf === 'medium' ? 0.65 : 0.35;
             const barStyle = flavorBase
-              ? 'width:' + barWidth + '%;background:' + flavorBase + ';opacity:' + opacity
+              ? 'width:' + barWidth + '%;background:' + flavorBase + ';opacity:0.6'
               : 'width:' + barWidth + '%';
-            const barClass = flavorBase ? 'prediction-bar' : 'prediction-bar prediction-bar-' + conf;
+            const barClass = flavorBase ? 'prediction-bar' : 'prediction-bar prediction-bar-estimated';
             html +=
               '<div class="prediction-row">' +
                 '<span class="prediction-name' + (fav ? ' prediction-name-favorite' : '') + '">' +
@@ -1342,7 +1255,7 @@
                 '<div class="prediction-bar-wrap">' +
                   '<div class="' + barClass + '" style="' + barStyle + '"></div>' +
                 '</div>' +
-                '<span class="prediction-pct">' + pct + '%</span>' +
+                '<span class="prediction-pct" style="font-size:0.7rem;color:#999;">Est.</span>' +
               '</div>';
           }
           card.innerHTML = html;

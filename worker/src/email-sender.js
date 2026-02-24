@@ -207,18 +207,15 @@ export async function sendWeeklyDigestEmail({ email, storeName, storeAddress, ma
   // Build forecast predictions block if available
   let forecastBlock = '';
   if (forecast && forecast.predictions && forecast.predictions.length > 0) {
-    const predRows = forecast.predictions.slice(0, 5).map(p => {
-      const pct = Math.round(p.probability * 100);
-      const barWidth = Math.max(pct, 2);
+    const predRows = forecast.predictions.slice(0, 5).map((p, i) => {
+      const rank = i + 1;
       return `
       <tr>
+        <td style="padding: 4px 12px; font-size: 14px; color: #999; width: 24px;">${rank}.</td>
         <td style="padding: 4px 12px; font-size: 14px;">${escapeHtml(p.flavor)}</td>
-        <td style="padding: 4px 12px; width: 120px;">
-          <div style="background: #e3f2fd; border-radius: 4px; overflow: hidden;">
-            <div style="background: #005696; height: 16px; width: ${barWidth}%; border-radius: 4px; min-width: 4px;"></div>
-          </div>
+        <td style="padding: 4px 8px; font-size: 12px; color: #999;">
+          <span style="background: #e3f2fd; color: #005696; padding: 2px 6px; border-radius: 3px; font-size: 11px;">Estimated</span>
         </td>
-        <td style="padding: 4px 8px; font-size: 13px; color: #666;">${pct}%</td>
       </tr>`;
     }).join('\n');
 
@@ -232,7 +229,8 @@ export async function sendWeeklyDigestEmail({ email, storeName, storeAddress, ma
 
     forecastBlock = `
     <div style="background: #f8f9fa; border-radius: 8px; padding: 16px; margin: 16px 0;">
-      <h3 style="color: #005696; margin: 0 0 8px 0; font-size: 15px;">Tomorrow's Forecast</h3>
+      <h3 style="color: #005696; margin: 0 0 4px 0; font-size: 15px;">Tomorrow's Estimated Outlook</h3>
+      <p style="margin: 0 0 8px 0; font-size: 12px; color: #888;">Based on historical patterns -- not confirmed by the store.</p>
       <table style="width: 100%; border-collapse: collapse;">
         ${predRows}
       </table>

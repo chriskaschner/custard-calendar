@@ -1,8 +1,9 @@
 """Natural language flavor forecast generation — weather-style prose from predictions.
 
-Uses prediction probabilities + store context to generate forecasts like:
-"Tomorrow's outlook for Mt. Horeb: strong chance of Caramel Cashew (12%) or
-Turtle (10%). Chocolate Covered Strawberry is overdue — last served 45 days ago."
+Uses prediction probabilities + store context to generate estimated outlooks like:
+"Estimated outlook: Caramel Cashew or Turtle. Chocolate Covered Strawberry is
+overdue -- last served 45 days ago." All predictions carry the Estimated certainty
+tier -- only confirmed schedule data is Confirmed.
 """
 
 from datetime import datetime
@@ -70,26 +71,16 @@ def format_forecast_template(context: dict) -> str:
         top = preds[0]
         lines = [f"**{dow}'s Flavor Forecast for {store}** ({date})", ""]
 
-        top_prob = top["probability"]
-        if top_prob > 0.10:
-            confidence = "Strong chance"
-        elif top_prob > 0.05:
-            confidence = "Moderate chance"
-        else:
-            confidence = "Slight lean toward"
-
-        top_str = f"{top['flavor']} ({top_prob:.0%})"
+        top_str = top["flavor"]
         if len(preds) > 1:
             runner_up = preds[1]
-            top_str += f" or {runner_up['flavor']} ({runner_up['probability']:.0%})"
+            top_str += f" or {runner_up['flavor']}"
 
-        lines.append(f"{confidence} of {top_str}.")
+        lines.append(f"Estimated outlook: {top_str}.")
 
         if len(preds) > 2:
-            others = ", ".join(
-                f"{p['flavor']} ({p['probability']:.0%})" for p in preds[2:]
-            )
-            lines.append(f"Also in the mix: {others}.")
+            others = ", ".join(p["flavor"] for p in preds[2:])
+            lines.append(f"Also possible: {others}.")
     else:
         lines = [f"**Flavor Forecast for {store}** ({date})", "", "Insufficient data for prediction."]
 
@@ -205,13 +196,7 @@ def generate_multiday_forecast_json(
         single = generate_forecast_json(model, df, store_slug, date, n_predictions)
 
         for p in single["predictions"]:
-            prob = p["probability"]
-            if prob > 0.10:
-                p["confidence"] = "high"
-            elif prob >= 0.05:
-                p["confidence"] = "medium"
-            else:
-                p["confidence"] = "low"
+            p["certainty_tier"] = "estimated"
 
         days.append({
             "date": single["date"],

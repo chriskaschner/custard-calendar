@@ -22,22 +22,22 @@ Build one shared recommendation engine used by Forecast/Map/Radar/Fronts/Quiz: "
 
 - [x] **Shared planner engine** -- `worker/src/planner.js`: haversine distance, certainty-weighted scoring (40% certainty, 30% distance, 20% rarity, 10% preference), `/api/v1/plan` endpoint. 32 tests. (2026-02-26)
 - [x] **Certainty tiers** -- `worker/src/certainty.js`: Confirmed/Watch/Estimated/None with score caps (1.0/0.7/0.5/0). 21 tests. (2026-02-26)
-- [ ] **Consistent action CTAs** -- every recommendation surfaces Directions, Alert, Calendar, Alternatives. Unified across Forecast, Map, Radar, Fronts, Quiz.
+- [x] **Consistent action CTAs** -- `CustardPlanner.actionCTAsHTML()` shared renderer for Directions/Set Alert/Subscribe. Wired into index.html today card. Confirmed recs show all three; estimated omit Directions. (2026-02-26)
 
 ## Now -- Weather Brand Reframe
 
 Keep weather-style branding (Forecast, Radar, Fronts) while clarifying product truth: mostly deterministic schedule planning.
 
-- [ ] **Certainty state on every recommendation** -- no ambiguous confidence language for deterministic results; certainty tier is always visible.
-- [ ] **Reframe forecast email confidence wording** -- "Moderate chance of X (5%)" is misleading for near-random probabilities. Replace with certainty tier language.
+- [x] **Certainty state on every recommendation** -- all surfaces (index, radar, planner-shared) use certainty tiers (Confirmed/Watch/Estimated) instead of probability-based confidence buckets. Prediction bars show "Estimated" label, not raw percentages. (2026-02-26)
+- [x] **Reframe forecast email confidence wording** -- replaced "Strong/Moderate chance (X%)" with "Estimated outlook" prose, dropped raw percentages from email predictions, added "Based on historical patterns" disclaimer. certainty_tier replaces confidence buckets. (2026-02-26)
 
 ## Now/Next -- Reliability Intelligence Layer (Watch)
 
 Per-store Calendar Reliability Index from day-over-day confirmed schedule behavior.
 
-- [ ] **Compute reliability index** -- inputs: forward change rate, late change rate, freshness lag, missing-window rate, recovery time. Persist to D1.
-- [ ] **Use reliability in ranking** -- planner engine ranks Watch-tier results below Confirmed-tier.
-- [ ] **Surface reliability status** -- user-facing "Watch" badge with reason text explaining why a schedule is less trustworthy.
+- [x] **Compute reliability index** -- `worker/src/reliability.js`: freshness lag, missing-window rate, recovery time. Persists to D1 `store_reliability`. 26 tests. (2026-02-26)
+- [x] **Use reliability in ranking** -- planner engine feeds `reliability_tier` into certainty determination; Watch-tier results cap at 0.7 score. (2026-02-26)
+- [x] **Surface reliability status** -- Watch banner on index + radar pages via `CustardPlanner.fetchReliability()` + `watchBannerHTML()`. Amber badge with reason text when store has watch/unreliable tier. (2026-02-26)
 
 ## Next -- Gap-Fill Strategy (Estimated)
 

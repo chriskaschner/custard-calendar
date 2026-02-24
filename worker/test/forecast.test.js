@@ -141,15 +141,15 @@ describe('handleForecast', () => {
         {
           date: '2026-02-23',
           predictions: [
-            { flavor: 'Turtle', probability: 0.0834, confidence: 'medium' },
-            { flavor: 'Caramel Cashew', probability: 0.0712, confidence: 'medium' },
+            { flavor: 'Turtle', probability: 0.0834, certainty_tier: 'estimated' },
+            { flavor: 'Caramel Cashew', probability: 0.0712, certainty_tier: 'estimated' },
           ],
           overdue_flavors: [{ flavor: 'Mint Explosion', days_since: 45, avg_gap: 38.5 }],
           prose: "Sunday's Flavor Forecast...",
         },
         {
           date: '2026-02-24',
-          predictions: [{ flavor: 'Butter Pecan', probability: 0.0901, confidence: 'medium' }],
+          predictions: [{ flavor: 'Butter Pecan', probability: 0.0901, certainty_tier: 'estimated' }],
           overdue_flavors: [],
           prose: "Monday's Flavor Forecast...",
         },
@@ -164,6 +164,6 @@ describe('handleForecast', () => {
     expect(resp.status).toBe(200);
     const body = await resp.json();
     expect(body.days).toHaveLength(2);
-    expect(body.days[0].predictions[0].confidence).toBe('medium');
+    expect(body.days[0].predictions[0].certainty_tier).toBe('estimated');
   });
 });

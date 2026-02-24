@@ -36,19 +36,13 @@ class TestMultidayForecast:
         assert dates[0] == "2026-02-23"
         assert dates[6] == "2026-03-01"
 
-    def test_confidence_buckets(self, model, df):
+    def test_certainty_tier(self, model, df):
         result = generate_multiday_forecast_json(
             model, df, "mt-horeb", pd.Timestamp("2026-02-23"), n_days=1
         )
         for pred in result["days"][0]["predictions"]:
-            assert "confidence" in pred
-            prob = pred["probability"]
-            if prob > 0.10:
-                assert pred["confidence"] == "high"
-            elif prob >= 0.05:
-                assert pred["confidence"] == "medium"
-            else:
-                assert pred["confidence"] == "low"
+            assert "certainty_tier" in pred
+            assert pred["certainty_tier"] == "estimated"
 
     def test_history_depth_correct(self, model, df):
         result = generate_multiday_forecast_json(
@@ -82,6 +76,6 @@ class TestMultidayForecast:
         assert len(result["predictions"]) <= 5
         # Single-day format should NOT have "days" key
         assert "days" not in result
-        # Should NOT have confidence (that's a multiday addition)
+        # Should NOT have certainty_tier (that's a multiday addition)
         for pred in result["predictions"]:
-            assert "confidence" not in pred
+            assert "certainty_tier" not in pred
