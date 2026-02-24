@@ -31,6 +31,7 @@ const els = {
   resultAlternates: document.getElementById('result-alternates'),
   resultMapLink: document.getElementById('result-map-link'),
   resultCone: document.getElementById('result-cone'),
+  resultNarrative: document.getElementById('result-narrative'),
   resultCtas: document.getElementById('result-ctas'),
   resultNearestOutside: document.getElementById('result-nearest-outside'),
   resultNearestAny: document.getElementById('result-nearest-any'),
@@ -143,12 +144,25 @@ function renderQuestions(quiz) {
       input.name = question.id;
       input.value = option.id;
 
+      // Render icon if present
+      const iconSvg = option.icon && window.QuizSprites
+        ? window.QuizSprites.resolve(option.icon, 3) : '';
+
+      label.appendChild(input);
+
+      if (iconSvg) {
+        label.classList.add('has-icon');
+        const iconEl = document.createElement('span');
+        iconEl.className = 'quiz-option-icon';
+        iconEl.innerHTML = iconSvg;
+        label.appendChild(iconEl);
+      }
+
       const copy = document.createElement('span');
       copy.className = 'quiz-option-copy';
       copy.textContent = option.label;
-
-      label.appendChild(input);
       label.appendChild(copy);
+
       grid.appendChild(label);
     });
 
@@ -164,6 +178,7 @@ function collectAnswers(quiz, formEl) {
   const data = new FormData(formEl);
   const traitScores = {};
   const selected = {};
+  const commentaries = [];
 
   for (const trait of state.traits) {
     traitScores[trait] = 0;
@@ -177,6 +192,9 @@ function collectAnswers(quiz, formEl) {
     selected[question.id] = String(selectedId);
     const selectedOption = question.options.find((opt) => opt.id === selectedId);
     if (!selectedOption) continue;
+    if (selectedOption.commentary) {
+      commentaries.push(selectedOption.commentary);
+    }
     const deltas = selectedOption.traits || {};
     for (const [trait, delta] of Object.entries(deltas)) {
       if (typeof traitScores[trait] !== 'number') traitScores[trait] = 0;
@@ -186,7 +204,7 @@ function collectAnswers(quiz, formEl) {
     }
   }
 
-  return { traitScores, selected };
+  return { traitScores, selected, commentaries };
 }
 
 function chooseArchetype(traitScores) {
@@ -335,7 +353,7 @@ async function runQuiz(evt) {
   els.resultSection.hidden = true;
 
   try {
-    const { traitScores } = collectAnswers(state.activeQuiz, els.form);
+    const { traitScores, commentaries } = collectAnswers(state.activeQuiz, els.form);
     const archetype = chooseArchetype(traitScores);
     if (!archetype) {
       throw new Error('Could not determine an archetype from the selected answers.');
@@ -487,6 +505,21 @@ async function runQuiz(evt) {
         els.resultCone.innerHTML = window.renderMiniConeSVG(displayFlavor, 8);
       } else {
         els.resultCone.innerHTML = '';
+      }
+    }
+
+    // Build narrative "train of thought" from answer commentaries
+    if (els.resultNarrative) {
+      if (commentaries.length >= 2) {
+        // Pick 3 commentaries (first, middle, last) for variety
+        const picks = [commentaries[0]];
+        if (commentaries.length >= 3) picks.push(commentaries[Math.floor(commentaries.length / 2)]);
+        picks.push(commentaries[commentaries.length - 1]);
+        const narrative = picks.join('... ') + '... that all adds up to ' + (displayFlavor || 'something special') + '.';
+        els.resultNarrative.textContent = narrative;
+        els.resultNarrative.hidden = false;
+      } else {
+        els.resultNarrative.hidden = true;
       }
     }
 

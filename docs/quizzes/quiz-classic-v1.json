@@ -8,50 +8,50 @@
       "id": "mood-color",
       "prompt": "What color best describes your mood?",
       "options": [
-        { "id": "mint", "label": "Mint green", "traits": { "calm": 2, "analytical": 1 } },
-        { "id": "caramel", "label": "Caramel gold", "traits": { "classic": 2, "romantic": 1 } },
-        { "id": "berry", "label": "Berry red", "traits": { "romantic": 2, "social": 1 } },
-        { "id": "espresso", "label": "Dark espresso", "traits": { "bold": 2, "energetic": 1 } }
+        { "id": "mint", "label": "Mint green", "icon": "color:#7ecfa0", "commentary": "Mint green -- cool, fresh, a little zen", "traits": { "calm": 2, "analytical": 1 } },
+        { "id": "caramel", "label": "Caramel gold", "icon": "color:#d4a843", "commentary": "Caramel gold -- warm, reliable, classic through and through", "traits": { "classic": 2, "romantic": 1 } },
+        { "id": "berry", "label": "Berry red", "icon": "color:#c0394f", "commentary": "Berry red -- bold feelings, big heart energy", "traits": { "romantic": 2, "social": 1 } },
+        { "id": "espresso", "label": "Dark espresso", "icon": "color:#3e2723", "commentary": "Dark espresso -- intense, focused, no time for decaf", "traits": { "bold": 2, "energetic": 1 } }
       ]
     },
     {
       "id": "go-to-snack",
       "prompt": "What is your go-to snack?",
       "options": [
-        { "id": "nuts", "label": "Salted nuts", "traits": { "classic": 1, "analytical": 1 } },
-        { "id": "choco", "label": "Chocolate anything", "traits": { "bold": 2, "energetic": 1 } },
-        { "id": "fruit", "label": "Fresh fruit", "traits": { "adventurous": 1, "romantic": 1, "calm": 1 } },
-        { "id": "cookies", "label": "Cookies and cream", "traits": { "social": 2, "classic": 1 } }
+        { "id": "nuts", "label": "Salted nuts", "commentary": "Salted nuts -- practical, satisfying, no frills needed", "traits": { "classic": 1, "analytical": 1 } },
+        { "id": "choco", "label": "Chocolate anything", "commentary": "Chocolate anything says you go straight for the good stuff", "traits": { "bold": 2, "energetic": 1 } },
+        { "id": "fruit", "label": "Fresh fruit", "commentary": "Fresh fruit -- light, bright, keeping things interesting", "traits": { "adventurous": 1, "romantic": 1, "calm": 1 } },
+        { "id": "cookies", "label": "Cookies and cream", "commentary": "Cookies and cream -- you like sharing and everyone likes you", "traits": { "social": 2, "classic": 1 } }
       ]
     },
     {
       "id": "band-role",
       "prompt": "You joined your favorite band. What do you play?",
       "options": [
-        { "id": "drums", "label": "Drums", "traits": { "energetic": 2, "bold": 1 } },
-        { "id": "bass", "label": "Bass", "traits": { "calm": 1, "analytical": 2 } },
-        { "id": "guitar", "label": "Guitar", "traits": { "social": 1, "bold": 1, "adventurous": 1 } },
-        { "id": "keys", "label": "Keys", "traits": { "classic": 1, "romantic": 2 } }
+        { "id": "drums", "label": "Drums", "icon": "pixel:drums", "commentary": "Drums -- pure energy, you set the pace for everyone", "traits": { "energetic": 2, "bold": 1 } },
+        { "id": "bass", "label": "Bass", "icon": "pixel:bass", "commentary": "Bass -- the understated backbone, quietly essential", "traits": { "calm": 1, "analytical": 2 } },
+        { "id": "guitar", "label": "Guitar", "icon": "pixel:guitar", "commentary": "Guitar -- a little flash, a little soul, always in the mix", "traits": { "social": 1, "bold": 1, "adventurous": 1 } },
+        { "id": "bagpipes", "label": "Bagpipes", "icon": "pixel:bagpipes", "commentary": "Bagpipes?! Now THAT is a personality statement", "traits": { "classic": 1, "romantic": 2 } }
       ]
     },
     {
       "id": "animal-mode",
       "prompt": "If you could be an animal, what would you be?",
       "options": [
-        { "id": "owl", "label": "Owl", "traits": { "analytical": 2, "calm": 1 } },
-        { "id": "fox", "label": "Fox", "traits": { "adventurous": 2, "bold": 1 } },
-        { "id": "golden-retriever", "label": "Golden retriever", "traits": { "social": 2, "classic": 1 } },
-        { "id": "dolphin", "label": "Dolphin", "traits": { "romantic": 1, "social": 1, "energetic": 1 } }
+        { "id": "owl", "label": "Owl", "icon": "pixel:owl", "commentary": "Owl -- wise, watchful, sees what others miss", "traits": { "analytical": 2, "calm": 1 } },
+        { "id": "fox", "label": "Fox", "icon": "pixel:fox", "commentary": "Fox -- clever, quick, always finding the interesting path", "traits": { "adventurous": 2, "bold": 1 } },
+        { "id": "golden-retriever", "label": "Golden retriever", "icon": "pixel:golden-retriever", "commentary": "Golden retriever energy -- loyal, warm, everyone's favorite", "traits": { "social": 2, "classic": 1 } },
+        { "id": "dolphin", "label": "Dolphin", "icon": "pixel:dolphin", "commentary": "Dolphin -- playful, smart, riding the wave", "traits": { "romantic": 1, "social": 1, "energetic": 1 } }
       ]
     },
     {
       "id": "meal-moment",
       "prompt": "What is your favorite meal moment?",
       "options": [
-        { "id": "breakfast", "label": "Slow breakfast", "traits": { "classic": 2, "calm": 1 } },
-        { "id": "lunch-run", "label": "Fast lunch run", "traits": { "energetic": 2, "analytical": 1 } },
-        { "id": "dinner-out", "label": "Dinner out with friends", "traits": { "social": 2, "romantic": 1 } },
-        { "id": "late-night", "label": "Late-night snack quest", "traits": { "bold": 1, "adventurous": 2 } }
+        { "id": "breakfast", "label": "Slow breakfast", "commentary": "Slow breakfast tells me you savor every moment", "traits": { "classic": 2, "calm": 1 } },
+        { "id": "lunch-run", "label": "Fast lunch run", "commentary": "Fast lunch run -- efficiency is its own kind of art", "traits": { "energetic": 2, "analytical": 1 } },
+        { "id": "dinner-out", "label": "Dinner out with friends", "commentary": "Dinner with friends -- the meal is just an excuse to gather", "traits": { "social": 2, "romantic": 1 } },
+        { "id": "late-night", "label": "Late-night snack quest", "commentary": "Late-night snack quest -- you live for the adventure", "traits": { "bold": 1, "adventurous": 2 } }
       ]
     }
   ]

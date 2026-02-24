@@ -231,40 +231,73 @@
     .quiz-status-success { color: var(--quiz-success); font-weight: 700; }
     .quiz-status-error { color: var(--quiz-danger); font-weight: 700; }
 
+    /* -- Quiz option icons -- */
+    .quiz-option-icon {
+      display: block;
+      margin: 0 auto 0.3rem;
+    }
+
+    .quiz-option.has-icon .quiz-option-copy {
+      display: block;
+      text-align: center;
+      font-size: 0.82rem;
+    }
+
+    /* -- Result card -- */
     .quiz-result {
       border: 1px solid #cde5f6;
       border-radius: 16px;
       background: linear-gradient(180deg, #fcfeff 0%, #f4fbff 100%);
-      padding: 1rem;
+      padding: 1.2rem;
       box-shadow: 0 10px 18px rgba(8, 52, 94, 0.08);
     }
 
-    .quiz-result h3 {
-      margin: 0;
-      color: #0f385f;
-      font-size: 1.1rem;
+    .result-hero {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .result-cone { flex-shrink: 0; }
+
+    .result-archetype {
+      color: #3a6590;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 0.15rem;
     }
 
     .result-flavor {
-      margin-top: 0.45rem;
-      font-size: 1.6rem;
+      font-size: 1.5rem;
       font-weight: 800;
       color: #083f74;
-      letter-spacing: 0.01em;
+      line-height: 1.15;
+    }
+
+    .result-narrative {
+      font-size: 0.9rem;
+      color: #3a5a7a;
+      line-height: 1.55;
+      font-style: italic;
+      margin-bottom: 0.75rem;
+      padding: 0.6rem 0.75rem;
+      background: #f8fbff;
+      border-radius: 8px;
+      border: 1px solid #e4eef7;
     }
 
     .result-blurb {
-      margin: 0.6rem 0;
+      margin: 0 0 0.75rem;
       color: #31557a;
-      font-size: 0.92rem;
+      font-size: 0.88rem;
       line-height: 1.45;
     }
 
     .result-traits {
-      margin: 0.3rem 0 0.7rem;
-      color: #27506f;
-      font-size: 0.84rem;
-      font-weight: 700;
+      margin: 0.4rem 0 0;
+      color: #6a8aa6;
+      font-size: 0.78rem;
     }
 
     .result-availability {
@@ -273,43 +306,11 @@
       padding: 0.56rem 0.7rem;
       border-radius: 8px;
       color: #6c4d00;
-      font-size: 0.88rem;
-      line-height: 1.4;
-    }
-
-    .result-list-wrap {
-      margin-top: 0.85rem;
-    }
-
-    .result-list-wrap h4 {
-      margin: 0 0 0.35rem;
-      color: #173d64;
-      font-size: 0.88rem;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-
-    .result-list-wrap ul {
-      margin: 0;
-      padding-left: 1.1rem;
-      color: #2d5379;
       font-size: 0.86rem;
       line-height: 1.4;
     }
 
-    .result-ctas {
-      margin-top: 0.7rem;
-    }
-
-    .result-flavor-row {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-    }
-
-    .result-cone {
-      flex-shrink: 0;
-    }
+    .result-ctas { margin-top: 0.6rem; }
 
     .result-nearest-outside {
       border-left: 4px solid #b0c4de;
@@ -317,9 +318,9 @@
       padding: 0.56rem 0.7rem;
       border-radius: 8px;
       color: #49607a;
-      font-size: 0.86rem;
+      font-size: 0.84rem;
       line-height: 1.4;
-      margin-top: 0.7rem;
+      margin-top: 0.5rem;
     }
 
     .result-nearest-any {
@@ -328,9 +329,9 @@
       padding: 0.56rem 0.7rem;
       border-radius: 8px;
       color: #1a5c52;
-      font-size: 0.86rem;
+      font-size: 0.84rem;
       line-height: 1.4;
-      margin-top: 0.7rem;
+      margin-top: 0.5rem;
     }
 
     .result-nearest-any .nearest-any-cone {
@@ -339,9 +340,28 @@
       margin-right: 0.25rem;
     }
 
+    .result-details {
+      margin-top: 0.6rem;
+      font-size: 0.84rem;
+      color: #3a6590;
+    }
+
+    .result-details summary {
+      cursor: pointer;
+      font-weight: 600;
+      padding: 0.3rem 0;
+    }
+
+    .result-details ul {
+      margin: 0.3rem 0;
+      padding-left: 1.1rem;
+      color: #2d5379;
+      line-height: 1.4;
+    }
+
     .result-map-link {
       display: inline-block;
-      margin-top: 0.8rem;
+      margin-top: 0.6rem;
       border-radius: 999px;
       border: 1px solid #8bb9dd;
       background: #eff7ff;
@@ -352,9 +372,7 @@
       font-size: 0.8rem;
     }
 
-    .result-map-link:hover {
-      background: #e3f1ff;
-    }
+    .result-map-link:hover { background: #e3f1ff; }
 
     @media (max-width: 840px) {
       .quiz-controls {
@@ -430,23 +448,28 @@
     </section>
 
     <section id="quiz-result" class="quiz-result" hidden>
-      <h3 id="result-title"></h3>
-      <div class="result-flavor-row">
+      <div class="result-hero">
         <div id="result-cone" class="result-cone"></div>
-        <div id="result-flavor" class="result-flavor"></div>
+        <div class="result-hero-text">
+          <div id="result-title" class="result-archetype"></div>
+          <div id="result-flavor" class="result-flavor"></div>
+        </div>
       </div>
+
+      <div id="result-narrative" class="result-narrative"></div>
+
       <p id="result-blurb" class="result-blurb"></p>
-      <p id="result-traits" class="result-traits"></p>
+
       <div id="result-availability" class="result-availability"></div>
       <div id="result-ctas" class="result-ctas"></div>
       <div id="result-nearest-outside" class="result-nearest-outside" hidden></div>
-
       <div id="result-nearest-any" class="result-nearest-any" hidden></div>
 
-      <div class="result-list-wrap">
-        <h4>Alternates In Radius</h4>
+      <details class="result-details">
+        <summary>More options nearby</summary>
         <ul id="result-alternates"></ul>
-      </div>
+        <p id="result-traits" class="result-traits"></p>
+      </details>
 
       <a id="result-map-link" class="result-map-link" href="map.html">Open in Map</a>
     </section>
@@ -458,6 +481,7 @@
 
   <script src="cone-renderer.js"></script>
   <script src="planner-shared.js"></script>
+  <script src="quizzes/sprites.js"></script>
   <script type="module" src="quizzes/engine.js"></script>
 </body>
 </html>
