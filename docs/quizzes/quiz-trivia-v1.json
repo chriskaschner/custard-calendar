@@ -1,0 +1,110 @@
+{
+  "id": "trivia-v1",
+  "name": "Flavor Trivia Challenge",
+  "title": "Flavor Trivia Challenge",
+  "description": "Trivia-style prompts with personality scoring, then a live nearby availability match.",
+  "dynamic_source": "/api/v1/trivia",
+  "question_count": 5,
+  "questions": [
+    {
+      "id": "rarity-guess",
+      "prompt": "Which category sounds most fun to hunt?",
+      "options": [
+        { "id": "ultra-rare", "label": "Ultra rare flavors", "traits": { "adventurous": 2, "bold": 1 } },
+        { "id": "seasonal", "label": "Seasonal sleepers", "traits": { "analytical": 2, "romantic": 1 } },
+        { "id": "reliable", "label": "Reliable staples", "traits": { "classic": 2, "calm": 1 } },
+        { "id": "crowd-favorites", "label": "Crowd favorites", "traits": { "social": 2, "energetic": 1 } }
+      ]
+    },
+    {
+      "id": "signal-type",
+      "prompt": "Which signal would you trust first?",
+      "options": [
+        { "id": "streak", "label": "Active streak signal", "traits": { "energetic": 2, "bold": 1 } },
+        { "id": "dow", "label": "Day-of-week pattern", "traits": { "analytical": 2, "classic": 1 } },
+        { "id": "season", "label": "Seasonal concentration", "traits": { "romantic": 2, "calm": 1 } },
+        { "id": "nearby-now", "label": "Nearby now", "traits": { "social": 2, "adventurous": 1 } }
+      ]
+    },
+    {
+      "id": "map-strategy",
+      "prompt": "On the map, what do you check first?",
+      "options": [
+        { "id": "distance-first", "label": "Closest confirmed store", "traits": { "classic": 2, "calm": 1 } },
+        { "id": "flavor-first", "label": "Exact flavor match", "traits": { "analytical": 2, "bold": 1 } },
+        { "id": "story-first", "label": "Most interesting signal story", "traits": { "romantic": 1, "adventurous": 1, "social": 1 } },
+        { "id": "volume-first", "label": "Most active area", "traits": { "energetic": 2, "social": 1 } }
+      ]
+    },
+    {
+      "id": "tie-breaker",
+      "prompt": "Two stores tie. How do you break it?",
+      "options": [
+        { "id": "data-depth", "label": "Pick the one with deeper history", "traits": { "analytical": 2, "classic": 1 } },
+        { "id": "vibe-check", "label": "Pick the best vibe", "traits": { "romantic": 2, "social": 1 } },
+        { "id": "risk-it", "label": "Take the riskier option", "traits": { "bold": 2, "adventurous": 1 } },
+        { "id": "group-vote", "label": "Vote with friends", "traits": { "social": 2, "calm": 1 } }
+      ]
+    },
+    {
+      "id": "forecast-attitude",
+      "prompt": "Your forecast attitude?",
+      "options": [
+        { "id": "confirmed-only", "label": "Confirmed only", "traits": { "classic": 2, "analytical": 1 } },
+        { "id": "watch-mode", "label": "Watch tier is still useful", "traits": { "calm": 2, "social": 1 } },
+        { "id": "estimated-ok", "label": "Estimated is enough to explore", "traits": { "adventurous": 2, "romantic": 1 } },
+        { "id": "any-signal", "label": "Any signal is a clue", "traits": { "bold": 1, "energetic": 1, "adventurous": 1 } }
+      ]
+    },
+    {
+      "id": "leaderboard-style",
+      "prompt": "Favorite leaderboard type?",
+      "options": [
+        { "id": "state-vs-state", "label": "State vs state rankings", "traits": { "social": 2, "energetic": 1 } },
+        { "id": "store-personality", "label": "Store personality profiles", "traits": { "romantic": 2, "calm": 1 } },
+        { "id": "rarity-index", "label": "Rarity index", "traits": { "analytical": 2, "adventurous": 1 } },
+        { "id": "consistency-index", "label": "Consistency index", "traits": { "classic": 2, "calm": 1 } }
+      ]
+    },
+    {
+      "id": "social-share",
+      "prompt": "What would you share first?",
+      "options": [
+        { "id": "rare-find", "label": "A rare find nearby", "traits": { "adventurous": 2, "bold": 1 } },
+        { "id": "perfect-match", "label": "Perfect personality match", "traits": { "romantic": 2, "social": 1 } },
+        { "id": "data-chart", "label": "A chart with evidence", "traits": { "analytical": 2, "classic": 1 } },
+        { "id": "group-win", "label": "A group custard run", "traits": { "social": 2, "energetic": 1 } }
+      ]
+    },
+    {
+      "id": "decision-window",
+      "prompt": "How quickly do you decide?",
+      "options": [
+        { "id": "instant", "label": "Instantly", "traits": { "energetic": 2, "bold": 1 } },
+        { "id": "few-minutes", "label": "A few minutes of scanning", "traits": { "analytical": 2, "calm": 1 } },
+        { "id": "friend-input", "label": "After friend input", "traits": { "social": 2, "romantic": 1 } },
+        { "id": "explore-first", "label": "After exploring options", "traits": { "adventurous": 2, "classic": 1 } }
+      ]
+    },
+    {
+      "id": "winning-stat",
+      "prompt": "Most satisfying stat?",
+      "options": [
+        { "id": "high-confidence", "label": "High confidence confirmed", "traits": { "classic": 2, "analytical": 1 } },
+        { "id": "rare-streak", "label": "Rare streak streak", "traits": { "bold": 2, "adventurous": 1 } },
+        { "id": "group-consensus", "label": "Consensus favorite", "traits": { "social": 2, "calm": 1 } },
+        { "id": "seasonal-window", "label": "Seasonal window peak", "traits": { "romantic": 2, "analytical": 1 } }
+      ]
+    },
+    {
+      "id": "challenge-level",
+      "prompt": "Challenge level tonight?",
+      "options": [
+        { "id": "safe-win", "label": "Safe win", "traits": { "classic": 2, "calm": 1 } },
+        { "id": "balanced-risk", "label": "Balanced risk", "traits": { "analytical": 2, "adventurous": 1 } },
+        { "id": "high-risk-high-reward", "label": "High risk, high reward", "traits": { "bold": 2, "energetic": 1 } },
+        { "id": "chaos-mode", "label": "Chaos mode", "traits": { "adventurous": 2, "social": 1 } }
+      ]
+    }
+  ]
+}

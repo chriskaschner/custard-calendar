@@ -1,0 +1,109 @@
+{
+  "id": "build-scoop-v1",
+  "name": "Build Your Perfect Scoop",
+  "title": "Build Your Perfect Scoop",
+  "description": "Design your ideal scoop profile, then match it to what is actually scooping near you.",
+  "question_count": 5,
+  "questions": [
+    {
+      "id": "base-custard",
+      "prompt": "Pick a base profile.",
+      "options": [
+        { "id": "classic-vanilla", "label": "Classic vanilla base", "traits": { "classic": 2, "calm": 1 } },
+        { "id": "dark-cocoa", "label": "Dark cocoa base", "traits": { "bold": 2, "analytical": 1 } },
+        { "id": "mint-fresh", "label": "Minty fresh base", "traits": { "calm": 2, "adventurous": 1 } },
+        { "id": "fruit-swirl", "label": "Fruit-forward base", "traits": { "romantic": 2, "social": 1 } }
+      ]
+    },
+    {
+      "id": "mix-in-density",
+      "prompt": "How loaded should your scoop be?",
+      "options": [
+        { "id": "minimal", "label": "Minimal, clean flavor", "traits": { "analytical": 2, "calm": 1 } },
+        { "id": "balanced", "label": "Balanced mix-ins", "traits": { "classic": 2, "romantic": 1 } },
+        { "id": "chunky", "label": "Heavy chunk energy", "traits": { "energetic": 2, "bold": 1 } },
+        { "id": "surprise", "label": "Surprise me", "traits": { "adventurous": 2, "social": 1 } }
+      ]
+    },
+    {
+      "id": "texture-priority",
+      "prompt": "Top texture priority?",
+      "options": [
+        { "id": "silky", "label": "Silky smooth", "traits": { "calm": 2, "classic": 1 } },
+        { "id": "crunchy", "label": "Crunchy bits", "traits": { "bold": 1, "adventurous": 1, "energetic": 1 } },
+        { "id": "swirly", "label": "Ribbon swirls", "traits": { "romantic": 2, "analytical": 1 } },
+        { "id": "varied", "label": "Different every bite", "traits": { "social": 1, "adventurous": 2 } }
+      ]
+    },
+    {
+      "id": "sweetness-band",
+      "prompt": "Sweetness level?",
+      "options": [
+        { "id": "subtle", "label": "Subtle and refined", "traits": { "analytical": 2, "classic": 1 } },
+        { "id": "comfort", "label": "Comfort sweet", "traits": { "classic": 2, "calm": 1 } },
+        { "id": "dessert-forward", "label": "Dessert-forward", "traits": { "romantic": 2, "social": 1 } },
+        { "id": "max-sweet", "label": "Maximum sweet", "traits": { "bold": 2, "energetic": 1 } }
+      ]
+    },
+    {
+      "id": "topping-style",
+      "prompt": "Pick a topping style.",
+      "options": [
+        { "id": "nuts", "label": "Nutty crunch", "traits": { "classic": 2, "analytical": 1 } },
+        { "id": "cookie", "label": "Cookie crumble", "traits": { "social": 2, "energetic": 1 } },
+        { "id": "fruit", "label": "Fruit accents", "traits": { "romantic": 2, "calm": 1 } },
+        { "id": "candy", "label": "Candy bits", "traits": { "bold": 2, "adventurous": 1 } }
+      ]
+    },
+    {
+      "id": "cone-or-cup",
+      "prompt": "Serving format?",
+      "options": [
+        { "id": "cup", "label": "Cup, practical and focused", "traits": { "analytical": 2, "calm": 1 } },
+        { "id": "cake-cone", "label": "Cake cone classic", "traits": { "classic": 2, "romantic": 1 } },
+        { "id": "waffle-cone", "label": "Waffle cone statement", "traits": { "bold": 2, "social": 1 } },
+        { "id": "sundae", "label": "Full sundae build", "traits": { "energetic": 2, "adventurous": 1 } }
+      ]
+    },
+    {
+      "id": "mood-target",
+      "prompt": "What mood are you building for?",
+      "options": [
+        { "id": "reset", "label": "Quiet reset", "traits": { "calm": 2, "analytical": 1 } },
+        { "id": "comfort-night", "label": "Comfort night", "traits": { "classic": 2, "romantic": 1 } },
+        { "id": "celebration", "label": "Celebration mode", "traits": { "social": 2, "energetic": 1 } },
+        { "id": "adventure", "label": "Try-something-new", "traits": { "adventurous": 2, "bold": 1 } }
+      ]
+    },
+    {
+      "id": "temperature",
+      "prompt": "Outside temp right now?",
+      "options": [
+        { "id": "cold", "label": "Cold but still craving custard", "traits": { "bold": 1, "classic": 1, "calm": 1 } },
+        { "id": "mild", "label": "Mild and perfect", "traits": { "classic": 2, "social": 1 } },
+        { "id": "warm", "label": "Warm and bright", "traits": { "romantic": 2, "energetic": 1 } },
+        { "id": "hot", "label": "Hot and intense", "traits": { "energetic": 2, "bold": 1 } }
+      ]
+    },
+    {
+      "id": "share-factor",
+      "prompt": "Sharing plan?",
+      "options": [
+        { "id": "solo", "label": "Solo scoop", "traits": { "calm": 2, "analytical": 1 } },
+        { "id": "split-two", "label": "Split with one person", "traits": { "romantic": 2, "classic": 1 } },
+        { "id": "group-run", "label": "Group order run", "traits": { "social": 2, "energetic": 1 } },
+        { "id": "let-them-choose", "label": "Let someone else choose", "traits": { "adventurous": 2, "calm": 1 } }
+      ]
+    },
+    {
+      "id": "finish-note",
+      "prompt": "Choose your finish note.",
+      "options": [
+        { "id": "clean-finish", "label": "Clean finish", "traits": { "analytical": 2, "classic": 1 } },
+        { "id": "caramel-finish", "label": "Warm caramel finish", "traits": { "classic": 2, "romantic": 1 } },
+        { "id": "chocolate-finish", "label": "Rich chocolate finish", "traits": { "bold": 2, "energetic": 1 } },
+        { "id": "bright-finish", "label": "Bright fruit finish", "traits": { "adventurous": 2, "social": 1 } }
+      ]
+    }
+  ]
+}

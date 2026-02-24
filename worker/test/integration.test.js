@@ -771,6 +771,10 @@ describe('normalizePath', () => {
     expect(normalizePath('/api/v1/flavors/catalog')).toEqual({ canonical: '/api/flavors/catalog', isVersioned: true });
   });
 
+  it('maps /api/v1/flavor-config to /api/flavor-config', () => {
+    expect(normalizePath('/api/v1/flavor-config')).toEqual({ canonical: '/api/flavor-config', isVersioned: true });
+  });
+
   it('maps /api/v1/alerts/subscribe to /api/alerts/subscribe', () => {
     expect(normalizePath('/api/v1/alerts/subscribe')).toEqual({ canonical: '/api/alerts/subscribe', isVersioned: true });
   });
@@ -781,6 +785,22 @@ describe('normalizePath', () => {
 
   it('maps /api/v1/quiz/personality-index to /api/quiz/personality-index', () => {
     expect(normalizePath('/api/v1/quiz/personality-index')).toEqual({ canonical: '/api/quiz/personality-index', isVersioned: true });
+  });
+
+  it('maps /api/v1/events to /api/events', () => {
+    expect(normalizePath('/api/v1/events')).toEqual({ canonical: '/api/events', isVersioned: true });
+  });
+
+  it('maps /api/v1/events/summary to /api/events/summary', () => {
+    expect(normalizePath('/api/v1/events/summary')).toEqual({ canonical: '/api/events/summary', isVersioned: true });
+  });
+
+  it('maps /api/v1/metrics/intelligence to /api/metrics/intelligence', () => {
+    expect(normalizePath('/api/v1/metrics/intelligence')).toEqual({ canonical: '/api/metrics/intelligence', isVersioned: true });
+  });
+
+  it('maps /api/v1/trivia to /api/trivia', () => {
+    expect(normalizePath('/api/v1/trivia')).toEqual({ canonical: '/api/trivia', isVersioned: true });
   });
 
   it('maps /v1/calendar.ics to /calendar.ics', () => {
@@ -859,6 +879,30 @@ describe('API v1 versioned endpoints', () => {
     expect(res.headers.get('API-Version')).toBe('1');
   });
 
+  it('55b: /api/v1/flavor-config returns data with API-Version header', async () => {
+    const req = makeRequest('/api/v1/flavor-config');
+    const res = await handleRequest(req, env, mockFetchFlavors);
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get('API-Version')).toBe('1');
+    const body = await res.json();
+    expect(body.brand_colors?.culvers).toBeTruthy();
+    expect(body.similarity_groups?.mint?.length).toBeGreaterThan(0);
+    expect(body.flavor_families?.mint?.members?.length).toBeGreaterThan(0);
+  });
+
+  it('55c: /api/v1/metrics/intelligence returns data with API-Version header', async () => {
+    const req = makeRequest('/api/v1/metrics/intelligence');
+    const res = await handleRequest(req, env, mockFetchFlavors);
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get('API-Version')).toBe('1');
+    const body = await res.json();
+    expect(body.contract_version).toBe(1);
+    expect(body.source).toBe('trivia_metrics_seed');
+    expect(body.coverage?.overall_covered).toBeGreaterThan(0);
+  });
+
   it('56: /health has no API-Version header (unversioned)', async () => {
     const req = makeRequest('/health');
     const res = await handleRequest(req, env, mockFetchFlavors);
@@ -899,6 +943,88 @@ describe('/api/v1/quiz endpoints', () => {
     expect(res.headers.get('API-Version')).toBe('1');
     const body = await res.json();
     expect(body.ok).toBe(true);
+  });
+});
+
+describe('/api/v1/events endpoints', () => {
+  function createEventsMockDB() {
+    return {
+      prepare: vi.fn((sql) => ({
+        bind: vi.fn((...args) => ({
+          run: vi.fn(async () => ({ success: true, sql, args })),
+          first: vi.fn(async () => ({ events: 1, cta_clicks: 1, signal_views: 0, popup_opens: 0 })),
+          all: vi.fn(async () => ({ results: [] })),
+        })),
+      })),
+    };
+  }
+
+  it('routes /api/v1/events and adds API-Version header', async () => {
+    const env = { FLAVOR_CACHE: createMockKV(), DB: createEventsMockDB(), _validSlugsOverride: TEST_VALID_SLUGS };
+    const req = new Request('https://example.com/api/v1/events', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        event_type: 'cta_click',
+        page: 'index',
+        action: 'directions',
+      }),
+    });
+
+    const res = await handleRequest(req, env, createMockFetchFlavors());
+    expect(res.status).toBe(202);
+    expect(res.headers.get('API-Version')).toBe('1');
+    const body = await res.json();
+    expect(body.ok).toBe(true);
+  });
+
+  it('routes /api/v1/events/summary and adds API-Version header', async () => {
+    const env = { FLAVOR_CACHE: createMockKV(), DB: createEventsMockDB(), _validSlugsOverride: TEST_VALID_SLUGS };
+    const req = new Request('https://example.com/api/v1/events/summary?days=7', { method: 'GET' });
+
+    const res = await handleRequest(req, env, createMockFetchFlavors());
+    expect(res.status).toBe(200);
+    expect(res.headers.get('API-Version')).toBe('1');
+    const body = await res.json();
+    expect(body.window_days).toBe(7);
+    expect(body.totals.events).toBe(1);
+  });
+});
+
+describe('/api/v1/trivia endpoint', () => {
+  function createTriviaMockDB() {
+    return {
+      prepare: vi.fn(() => ({
+        bind: vi.fn(() => ({
+          all: vi.fn(async () => ({
+            results: [
+              { slug: 'mt-horeb', normalized_flavor: 'vanilla', flavor: 'Vanilla', count: 20 },
+              { slug: 'mt-horeb', normalized_flavor: 'chocolate', flavor: 'Chocolate', count: 18 },
+              { slug: 'madison-todd-drive', normalized_flavor: 'vanilla', flavor: 'Vanilla', count: 17 },
+              { slug: 'madison-todd-drive', normalized_flavor: 'strawberry', flavor: 'Strawberry', count: 11 },
+            ],
+          })),
+        })),
+      })),
+    };
+  }
+
+  it('routes /api/v1/trivia and adds API-Version header', async () => {
+    const env = {
+      FLAVOR_CACHE: createMockKV(),
+      DB: createTriviaMockDB(),
+      _validSlugsOverride: TEST_VALID_SLUGS,
+      _storeIndexOverride: TEST_STORE_INDEX,
+    };
+    const req = new Request('https://example.com/api/v1/trivia?days=180&limit=5', { method: 'GET' });
+
+    const res = await handleRequest(req, env, createMockFetchFlavors());
+    expect(res.status).toBe(200);
+    expect(res.headers.get('API-Version')).toBe('1');
+    const body = await res.json();
+    expect(body.id).toBe('trivia-v1');
+    expect(Array.isArray(body.questions)).toBe(true);
+    expect(body.questions.length).toBeGreaterThan(0);
   });
 });
 

@@ -16,6 +16,18 @@ Analytics data has two strong non-prediction uses: **(1) flavor rarity as sharea
 
 **Guardrails:** preflight before each agent task, isolate work by worktree+branch, maintain one shipping lane + one delight lane.
 
+## Now -- Historical Metrics Activation Strategy
+
+Revisit the expanded historical corpus (330,490 clean rows across 998 stores, 2015-08-02 to 2026-03-31) and systematically use it across product surfaces.
+
+- [x] **Canonical metrics contract + refresh cadence** -- `scripts/generate_intelligence_metrics.py` now emits the canonical seed module (`worker/src/trivia-metrics-seed.js`) and Worker tests enforce seed contract/version plus freshness (<=45 days). README now documents weekly/pre-release refresh cadence. (2026-02-24)
+- [x] **Worker metrics API surface** -- added `GET /api/v1/metrics/intelligence` (versioned and cacheable) exposing dataset summary, coverage counts/state coverage, top flavors, top stores, seasonal spotlights, and HNBC month/year snapshots from the generated metrics seed. (2026-02-24)
+- [x] **Planner ranking enrichment** -- planner now derives bounded historical tie-breakers (max +0.35 input into rarity channel, +0.07 effective score cap) from metrics seed lookups: store observation depth, flavor store_count rarity, and peak-month seasonal concentration. Certainty/distance remain dominant. (2026-02-24)
+- [ ] **Forecast/Radar/Map context modules** -- add reusable "historical context" UI snippets: frequency rank, in-season month, and store specialty flavor derived from metrics pack.
+- [ ] **Alerts + weekly digest intelligence blocks** -- include one high-signal historical callout per send (seasonal spotlight, rare-find cadence, or state leaderboard delta) with evidence counts and source window.
+- [ ] **Quiz + social expansion** -- extend trivia beyond multiple-choice into ranking/fill-in formats backed by metrics seed; feed the same facts into OG trivia cards for shareability.
+- [ ] **Measurement plan** -- instrument and review uplift from metrics-informed surfaces (quiz completion, CTA clickthrough, social share rate, email open-to-click), with before/after baselines and rollback thresholds.
+
 ## Now -- Planner Core
 
 Build one shared recommendation engine used by Forecast/Map/Radar/Fronts/Quiz: "Where should I go, within my radius and time window, for flavors I care about?"
@@ -58,8 +70,8 @@ Quiz/Mad Lib maps personality/archetype to flavor preferences, then calls planne
 
 Expand beyond the single "what flavor are you" quiz into a rotating pool of quiz modes with location-aware question weighting.
 
-- [ ] **Rotating question pool** -- instead of one fixed 5-question set, build a pool of 15-20 questions per quiz mode. Engine randomly selects 5 per session. Bonus: weight question selection toward archetypes matching currently-available FOTD in the user's area (e.g., if mint flavors are scooping nearby, favor questions whose trait mapping skews toward mint archetypes).
-- [ ] **Multiple quiz modes** -- "What Flavor Are You?" (current), "Flavor Trivia Challenge" (data-driven), "Build Your Perfect Scoop" (ingredient picker), "Custard Compatibility" (pair with a friend). Each mode is a separate JSON file loaded by engine.js.
+- [x] **Rotating question pool** -- each shipped quiz mode now has a 15-question pool (`question_count: 5`), engine samples a fresh 5-question session each run, and sampling weights toward trait profiles implied by currently-available nearby flavors. Location changes re-mix the pool. (2026-02-24)
+- [x] **Multiple quiz modes** -- shipped six selectable modes loaded from separate JSON files in `engine.js`: Weather, Flavor Personality, Date Night, Flavor Trivia Challenge, Build Your Perfect Scoop, Custard Compatibility. Trivia mode is currently static-scored; data-driven trivia API integration remains tracked in the Data-Driven Trivia section below. (2026-02-24)
 - [x] **Fallback flavor encouragement** -- when no archetype match is nearby, shows encouraging nudge pointing to nearest available flavor with Directions/Alert/Subscribe CTAs. Rotates 4 template phrases. Covers both no-match and outside-radius cases. (2026-02-28)
 - [ ] **Pixel art / branding alignment** -- establish consistent art direction for all pixel sprites. Target aesthetic sits between Superbrothers: Sword & Sworcery EP (moody, minimal, atmospheric) and Dave the Diver (colorful, charming, detail-rich). Current sprites are functional but need a coherent palette and style guide. Apply across quiz icons, cone renderer, and any future illustration surfaces.
 - [ ] **Cross-page visual language alignment** -- quiz.html has its own gradients, color palette (--quiz-ink, --quiz-sky, etc.), border radii, and card styles that diverge from the rest of the site. Audit all 9 pages and extract a shared design language: common CSS variables, card/panel patterns, background treatment, typography scale. Either pull quiz.html into the existing style.css conventions or promote the best of both into a unified system. Goal: every page feels like the same product.
@@ -71,8 +83,9 @@ Expand beyond the single "what flavor are you" quiz into a rotating pool of quiz
 
 Flavor and store errata powered by real D1 snapshot data. Questions generated from analytics, not hand-written. Shareable social content doubles as quiz questions.
 
-- [ ] **Trivia question API** -- `GET /api/v1/trivia` returns generated questions from D1 snapshots. Question types: "Which store has the most FOTDs of {flavor} in the past year?", "Which FOTD is the most common in {state}?", "Rank these 3 flavors by likelihood at {store}." Query patterns: `GROUP BY store_slug WHERE title = X`, `GROUP BY title WHERE state = X ORDER BY COUNT DESC`, per-store frequency rankings.
-- [ ] **Quiz content integration** -- new quiz mode in engine.js: data trivia alongside personality archetypes. Pull questions from trivia API, validate answers client-side against returned data. Mix of multiple-choice, ranking, and fill-in-the-blank.
+- [x] **Metrics-pack powered trivia prompts** -- `scripts/generate_intelligence_metrics.py` now emits `worker/src/trivia-metrics-seed.js`, and `/api/v1/trivia` augments (or falls back to) this seed for top flavor frequency, top store, seasonal spotlight, HNBC month, and coverage questions when D1 windows are sparse or unavailable. (2026-02-24)
+- [x] **Trivia question API** -- `GET /api/v1/trivia` now generates multiple-choice questions from D1 snapshot aggregates (state/store flavor leaders, rarity, spread, volume), includes `correct_option_id`, and is cached for 15 minutes. Route is wired through versioned API with unit + integration tests. (2026-02-24)
+- [ ] **Quiz content integration** -- trivia mode now hydrates from `/api/v1/trivia` (with static fallback) and validates multiple-choice answers client-side using `correct_option_id`; ranking and fill-in-the-blank formats remain to be added.
 - [ ] **Social sharing cards** -- trivia answers as shareable OG images. "Did you know? Mint Explosion was served 47 times at the Mt. Horeb store last year -- more than any other location." SVG card at `/v1/og/trivia/{question_id}.svg`.
 - [ ] **State and regional leaderboards** -- "Most common FOTD in WI vs IL vs MN." Per-state flavor rankings from snapshots. Surface on quiz results and as standalone shareable content.
 
@@ -89,7 +102,7 @@ Turn high-specificity seasonal/store insights into explainable content with evid
 PCA/category overlays + improved weather-motion aesthetics, tied directly to decisions.
 
 - [x] **Decision-driven visuals** -- Map + Fronts popups now show Confirmed badges and Directions/Alert/Calendar CTAs via `CustardPlanner.actionCTAsHTML()`. Map result cards also have CTAs. Forecast-mode and confirmed-mode popups both enhanced. (2026-02-27)
-- [ ] **Interaction-to-action metrics** -- D1 `interaction_events` table, `POST /api/v1/events` (sendBeacon), `GET /api/v1/events/summary`. Track CTA clicks (directions/alert/subscribe), signal card views (IntersectionObserver), map popup opens. Anonymous (page_load_id + CF geo, no cookies). See WORKLOG.md for full schema and implementation plan.
+- [x] **Interaction-to-action metrics** -- D1 `interaction_events` table, `POST /api/v1/events` (sendBeacon), `GET /api/v1/events/summary`. Tracks CTA clicks (directions/alert/subscribe), signal card views (IntersectionObserver), and map/fronts popup opens. Anonymous (page_load_id + CF geo, no cookies). (2026-02-24)
 
 ## Later -- Refactor / Re-Architecture
 
@@ -99,9 +112,9 @@ PCA/category overlays + improved weather-motion aesthetics, tied directly to dec
 - [x] **WORKER_BASE consolidation** -- single source of truth in planner-shared.js, replaced 9 hardcoded constants across 10 files. Fixed URL mismatch (5 pages used workers.dev instead of canonical custard.chriskaschner.com). Browser test mocks updated. (2026-02-28)
 - [x] **escapeHtml consolidation** -- 7 inline definitions removed, all pages alias CustardPlanner.escapeHtml. (2026-02-28)
 - [x] **haversine consolidation** -- inline definition in calendar.html removed, uses CustardPlanner.haversineMiles. (2026-02-28)
-- [ ] **Flavor config API** -- `GET /api/v1/flavor-config` returns similarity groups + flavor families + brand colors from single server source (flavor-matcher.js). Eliminates manual sync between server and client. Option A over build-time sync.
+- [x] **Flavor config API** -- `GET /api/v1/flavor-config` returns similarity groups + flavor families + brand colors from single server source (`flavor-matcher.js`). `planner-shared.js` bootstraps from this endpoint with local fallback constants, eliminating manual sync drift. (2026-02-24)
 - [x] **Shared decision/certainty modules** -- Fixed critical threshold divergence: planner-shared.js now matches worker/src/certainty.js (MIN_PROBABILITY=0.02, MIN_HISTORY_DEPTH=14, MAX_FORECAST_AGE_HOURS=168). Added escapeHtml export. (2026-02-27)
-- [ ] **Decompose index.js** -- extract route-today.js (~160 lines), route-calendar.js (~100), route-nearby.js (~120), kv-cache.js (~100), brand-registry.js (~30). index.js drops from 1,072 to ~550 lines.
+- [x] **Decompose index.js** -- extracted `route-today.js`, `route-calendar.js`, `route-nearby.js`, `kv-cache.js`, and `brand-registry.js`; index.js now 489 lines. Named exports (`getFetcherForSlug`, `getBrandForSlug`, `getFlavorsCached`) preserved via re-export for test compatibility. (2026-02-24)
 - [ ] **Canonical render spec** -- palette + geometry + toppings with adapters per surface.
 - [ ] **Greenfield target architecture** -- three-layer model: Presentation (docs), Decision (planner/certainty/signals/reliability as pure functions), Data (KV/D1 access). Incremental migration, not rewrite.
 - [ ] **CLAUDE.md + Codex rules: rate limit awareness** -- add explicit rule: always assume external endpoints have rate limits, document known limits before bulk requests. Applies especially to Wayback Machine, upstream brand sites, and OSM/Nominatim. Sync rules between CLAUDE.md (this repo) and any codex task definitions.
@@ -122,6 +135,7 @@ Not active. Only promote if they clearly improve core decision KPIs.
 
 The analytics pipeline's best output isn't predictions -- it's **flavor intelligence**: rarity scores, streak tracking, frequency stats, similarity clusters. All grounded in what actually happened, surfaced as shareable content and discovery tools.
 
+- [x] **Refresh local dataset metrics snapshot** -- recomputed scale/coverage across `backfill`, `backfill-national`, and `backfill-wayback`; combined cleaned corpus now 330,490 rows across 998 stores (2015-08-02 to 2026-03-31). Added pause-point + resume command to WORKLOG. (2026-02-24)
 - [ ] **Add DoW + seasonality features** -- 38 flavors show significant day-of-week bias. Add to FrequencyRecency and MarkovRecency models. Expected +5-8% top-1 accuracy.
 - [ ] **Implement ensemble predictor** -- combine FR (40%), Markov (40%), PCA-collaborative (20%). Current 3.2% top-1 -> maybe 5-6%.
 - [x] **Expand overdue watch-list** -- n_overdue default raised from 3 to 5 in forecast_writer.py. (2026-02-27)

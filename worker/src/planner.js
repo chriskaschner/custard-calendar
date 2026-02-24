@@ -15,10 +15,133 @@ import { determineCertaintyTier, certaintyCap, TIERS, tierLabel } from './certai
 import { getReliability } from './reliability.js';
 import { getForecastData } from './forecast.js';
 import { normalize, matchesFlavor } from './flavor-matcher.js';
+import { TRIVIA_METRICS_SEED } from './trivia-metrics-seed.js';
 
 // --- Geo utilities ---
 
 const EARTH_RADIUS_MILES = 3958.8;
+
+function normalizeFlavorKey(flavor) {
+  return normalize(flavor || '');
+}
+
+function buildHistoricalMetricsIndex(seed) {
+  const datasetStores = Number(seed?.dataset_summary?.stores || 0);
+  const plannerFeatures = seed?.planner_features || {};
+
+  const rawFlavorLookup = plannerFeatures.flavor_lookup || {};
+  const rawStoreLookup = plannerFeatures.store_lookup || {};
+
+  const flavorLookup = new Map();
+  for (const [key, value] of Object.entries(rawFlavorLookup)) {
+    if (!key || !value || typeof value !== 'object') continue;
+    flavorLookup.set(String(key), {
+      title: String(value.title || ''),
+      appearances: Number(value.appearances || 0),
+      store_count: Number(value.store_count || 0),
+      peak_month: Number(value.peak_month || 0),
+      seasonal_concentration: Number(value.seasonal_concentration || 0),
+    });
+  }
+
+  // Backward-compatible fallback when only top_flavors is present.
+  if (flavorLookup.size === 0 && Array.isArray(seed?.top_flavors)) {
+    for (const row of seed.top_flavors) {
+      const key = normalizeFlavorKey(row?.title);
+      if (!key) continue;
+      flavorLookup.set(key, {
+        title: String(row?.title || ''),
+        appearances: Number(row?.appearances || 0),
+        store_count: Number(row?.store_count || 0),
+        peak_month: Number(row?.peak_month || 0),
+        seasonal_concentration: Number(row?.seasonal_concentration || 0),
+      });
+    }
+  }
+
+  const storeLookup = new Map();
+  for (const [slug, value] of Object.entries(rawStoreLookup)) {
+    if (!slug || !value || typeof value !== 'object') continue;
+    storeLookup.set(String(slug), {
+      observations: Number(value.observations || 0),
+      distinct_flavors: Number(value.distinct_flavors || 0),
+      state: String(value.state || ''),
+      city: String(value.city || ''),
+      top_flavor: String(value.top_flavor || ''),
+      top_flavor_count: Number(value.top_flavor_count || 0),
+    });
+  }
+
+  // Backward-compatible fallback when only top_stores is present.
+  if (storeLookup.size === 0 && Array.isArray(seed?.top_stores)) {
+    for (const row of seed.top_stores) {
+      const slug = String(row?.store_slug || '').trim();
+      if (!slug) continue;
+      storeLookup.set(slug, {
+        observations: Number(row?.observations || 0),
+        distinct_flavors: Number(row?.distinct_flavors || 0),
+        state: String(row?.state || ''),
+        city: String(row?.city || ''),
+        top_flavor: String(row?.top_flavor || ''),
+        top_flavor_count: Number(row?.top_flavor_count || 0),
+      });
+    }
+  }
+
+  const maxStoreObservations = Number(plannerFeatures.max_store_observations || 0) || Math.max(
+    ...[...storeLookup.values()].map((row) => Number(row.observations || 0)),
+    0,
+  );
+
+  return {
+    datasetStores,
+    flavorLookup,
+    storeLookup,
+    maxStoreObservations,
+  };
+}
+
+const DEFAULT_HISTORICAL_METRICS = buildHistoricalMetricsIndex(TRIVIA_METRICS_SEED);
+
+/**
+ * Historical tie-breaker score, intentionally bounded so certainty/distance dominate.
+ * Returns 0-0.35 and is fed through the existing rarity score channel.
+ */
+export function historicalTieBreakerScore({
+  flavor,
+  slug,
+  month = new Date().getUTCMonth() + 1,
+  historicalMetrics = DEFAULT_HISTORICAL_METRICS,
+}) {
+  if (!historicalMetrics) return 0;
+
+  const flavorKey = normalizeFlavorKey(flavor);
+  const flavorMeta = historicalMetrics.flavorLookup.get(flavorKey);
+  const storeMeta = historicalMetrics.storeLookup.get(String(slug || ''));
+
+  const datasetStores = Math.max(Number(historicalMetrics.datasetStores || 0), 1);
+  const maxObs = Math.max(Number(historicalMetrics.maxStoreObservations || 0), 1);
+
+  // Rarer flavors (served at fewer stores) get a higher score.
+  const rarity = flavorMeta
+    ? Math.max(0, Math.min(1, 1 - (Number(flavorMeta.store_count || 0) / datasetStores)))
+    : 0;
+
+  // Seasonal concentration is strongest when in peak month; small residual value otherwise.
+  let seasonal = 0;
+  if (flavorMeta) {
+    const concentration = Math.max(0, Math.min(1, Number(flavorMeta.seasonal_concentration || 0)));
+    seasonal = Number(flavorMeta.peak_month) === Number(month) ? concentration : concentration * 0.25;
+  }
+
+  // High-observation stores are slightly favored as tie-breakers.
+  const depth = storeMeta
+    ? Math.max(0, Math.min(1, Number(storeMeta.observations || 0) / maxObs))
+    : 0;
+
+  const composite = rarity * 0.5 + seasonal * 0.3 + depth * 0.2;
+  return Math.max(0, Math.min(0.35, composite));
+}
 
 /**
  * Haversine distance between two lat/lon points.
@@ -81,6 +204,8 @@ export function scoreRecommendation({
  * @param {Map<string,Object>} opts.reliabilityMap - slug -> reliability record
  * @param {Map<string,Object>} opts.forecastMap - slug -> forecast data
  * @param {string[]} opts.preferredFlavors - User's flavor preferences (optional)
+ * @param {Object} opts.historicalMetrics - Historical seed index (optional)
+ * @param {number} opts.referenceMonth - 1-12 override for deterministic tests (optional)
  * @returns {Object} { recommendations, alternatives }
  */
 export function buildRecommendations({
@@ -91,9 +216,14 @@ export function buildRecommendations({
   reliabilityMap = new Map(),
   forecastMap = new Map(),
   preferredFlavors = [],
+  historicalMetrics = DEFAULT_HISTORICAL_METRICS,
+  referenceMonth,
 }) {
   const prefNorms = preferredFlavors.map((f) => normalize(f));
   const recommendations = [];
+  const scoringMonth = Number(referenceMonth) >= 1 && Number(referenceMonth) <= 12
+    ? Number(referenceMonth)
+    : new Date().getUTCMonth() + 1;
 
   for (const store of stores) {
     const dist = haversine(userLat, userLon, store.lat, store.lon);
@@ -112,12 +242,18 @@ export function buildRecommendations({
       const prefMatch =
         prefNorms.length > 0 &&
         prefNorms.some((p) => matchesFlavor(store.flavor, p, store.description));
+      const historicalScore = historicalTieBreakerScore({
+        flavor: store.flavor,
+        slug: store.slug,
+        month: scoringMonth,
+        historicalMetrics,
+      });
 
       const score = scoreRecommendation({
         certaintyScore,
         distanceMiles: dist,
         maxRadius,
-        rarityPercentile: 0, // enriched later if stats available
+        rarityPercentile: historicalScore,
         preferenceMatch: prefMatch,
       });
 
@@ -134,6 +270,7 @@ export function buildRecommendations({
         certainty_score: certaintyScore,
         reliability_tier: reliabilityTier,
         preference_match: prefMatch,
+        historical_tie_breaker: Math.round(historicalScore * 1000) / 1000,
         score: Math.round(score * 1000) / 1000,
         source: 'confirmed',
         actions: ['directions', 'alert', 'calendar'],
@@ -159,12 +296,18 @@ export function buildRecommendations({
         const prefMatch =
           prefNorms.length > 0 &&
           prefNorms.some((p) => matchesFlavor(pred.flavor, p));
+        const historicalScore = historicalTieBreakerScore({
+          flavor: pred.flavor,
+          slug: store.slug,
+          month: scoringMonth,
+          historicalMetrics,
+        });
 
         const score = scoreRecommendation({
           certaintyScore,
           distanceMiles: dist,
           maxRadius,
-          rarityPercentile: 0,
+          rarityPercentile: historicalScore,
           preferenceMatch: prefMatch,
         });
 
@@ -181,6 +324,7 @@ export function buildRecommendations({
           certainty_score: certaintyScore,
           reliability_tier: reliabilityTier,
           preference_match: prefMatch,
+          historical_tie_breaker: Math.round(historicalScore * 1000) / 1000,
           probability: pred.probability,
           score: Math.round(score * 1000) / 1000,
           source: 'forecast',

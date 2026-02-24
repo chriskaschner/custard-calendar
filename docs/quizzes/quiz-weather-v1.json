@@ -3,6 +3,7 @@
   "name": "Custard Forecast",
   "title": "What Custard System Is Moving Through You?",
   "description": "Answer five quick prompts, then match your flavor personality to what is available near you now.",
+  "question_count": 5,
   "questions": [
     {
       "id": "sky-pattern",
@@ -52,6 +53,106 @@
         { "id": "friends-night", "label": "Friends, games, and loud laughter", "commentary": "Friends and games -- the weekend is for the people you love", "traits": { "social": 2, "energetic": 1 } },
         { "id": "long-brunch", "label": "Long brunch with good conversation", "commentary": "Long brunch -- slow mornings with the right company", "traits": { "romantic": 1, "classic": 1, "social": 1 } },
         { "id": "solo-reset", "label": "Solo recharge and deep focus", "commentary": "Solo recharge -- quiet hours are how you refuel", "traits": { "calm": 1, "analytical": 2 } }
+      ]
+    },
+    {
+      "id": "forecast-window",
+      "prompt": "Which forecast window feels most like you?",
+      "options": [
+        { "id": "sunrise", "label": "Sunrise reset", "commentary": "Sunrise reset -- you start early and steady", "traits": { "calm": 1, "classic": 1, "analytical": 1 } },
+        { "id": "afternoon-push", "label": "Afternoon momentum", "commentary": "Afternoon momentum -- you build speed through the day", "traits": { "energetic": 2, "bold": 1 } },
+        { "id": "golden-hour", "label": "Golden hour social", "commentary": "Golden hour social -- connection matters most", "traits": { "social": 2, "romantic": 1 } },
+        { "id": "midnight-lab", "label": "Midnight experiment", "commentary": "Midnight experiment -- you do your best work off-script", "traits": { "adventurous": 2, "analytical": 1 } }
+      ]
+    },
+    {
+      "id": "storm-role",
+      "prompt": "During a storm warning, your role is...",
+      "options": [
+        { "id": "radar-reader", "label": "Read the radar and call it early", "commentary": "Radar reader -- your plans are precise", "traits": { "analytical": 2, "calm": 1 } },
+        { "id": "supply-runner", "label": "Grab supplies and keep moving", "commentary": "Supply runner -- you prefer action", "traits": { "energetic": 2, "bold": 1 } },
+        { "id": "group-checkin", "label": "Check in on everyone", "commentary": "Group check-in -- people first, always", "traits": { "social": 2, "romantic": 1 } },
+        { "id": "route-finder", "label": "Find a new route and pivot", "commentary": "Route finder -- uncertainty is your playground", "traits": { "adventurous": 2, "bold": 1 } }
+      ]
+    },
+    {
+      "id": "pressure-gradient",
+      "prompt": "Choose your pressure gradient.",
+      "options": [
+        { "id": "flat-stable", "label": "Flat and stable", "commentary": "Flat and stable -- consistency wins", "traits": { "classic": 2, "calm": 1 } },
+        { "id": "slow-rise", "label": "Slow rise, steady focus", "commentary": "Slow rise -- intentional progress", "traits": { "analytical": 2, "classic": 1 } },
+        { "id": "quick-drop", "label": "Quick drop, big energy", "commentary": "Quick drop -- you thrive in high pressure", "traits": { "bold": 2, "energetic": 1 } },
+        { "id": "swingy", "label": "Swingy and unpredictable", "commentary": "Swingy and unpredictable -- the fun starts in chaos", "traits": { "adventurous": 2, "social": 1 } }
+      ]
+    },
+    {
+      "id": "rain-plan",
+      "prompt": "It starts raining hard. You...",
+      "options": [
+        { "id": "book-and-window", "label": "Find coffee and a window seat", "commentary": "Window seat -- introspective and warm", "traits": { "calm": 2, "romantic": 1 } },
+        { "id": "keep-running", "label": "Keep running, no excuses", "commentary": "Keep running -- momentum over comfort", "traits": { "energetic": 2, "bold": 1 } },
+        { "id": "invite-friends", "label": "Text friends to make it fun", "commentary": "Invite friends -- weather is better together", "traits": { "social": 2, "classic": 1 } },
+        { "id": "detour-discovery", "label": "Take a detour and discover something new", "commentary": "Detour discovery -- surprises feed you", "traits": { "adventurous": 2, "analytical": 1 } }
+      ]
+    },
+    {
+      "id": "season-shift",
+      "prompt": "Favorite season shift?",
+      "options": [
+        { "id": "winter-spring", "label": "Winter into spring", "commentary": "Winter into spring -- patient optimism", "traits": { "calm": 1, "romantic": 1, "classic": 1 } },
+        { "id": "spring-summer", "label": "Spring into summer", "commentary": "Spring into summer -- full-throttle energy", "traits": { "energetic": 2, "social": 1 } },
+        { "id": "summer-fall", "label": "Summer into fall", "commentary": "Summer into fall -- warm depth and balance", "traits": { "classic": 1, "analytical": 1, "romantic": 1 } },
+        { "id": "fall-winter", "label": "Fall into winter", "commentary": "Fall into winter -- sharp air, sharp focus", "traits": { "bold": 1, "calm": 1, "analytical": 1 } }
+      ]
+    },
+    {
+      "id": "wind-profile",
+      "prompt": "Pick your wind profile.",
+      "options": [
+        { "id": "light-breeze", "label": "Light breeze", "traits": { "calm": 2, "romantic": 1 } },
+        { "id": "steady-wind", "label": "Steady wind", "traits": { "classic": 2, "analytical": 1 } },
+        { "id": "gusty-front", "label": "Gusty front", "traits": { "bold": 2, "energetic": 1 } },
+        { "id": "shifting-gusts", "label": "Shifting gusts", "traits": { "adventurous": 2, "social": 1 } }
+      ]
+    },
+    {
+      "id": "cloud-ceiling",
+      "prompt": "Which cloud ceiling fits your vibe?",
+      "options": [
+        { "id": "high-clear", "label": "High and clear", "traits": { "analytical": 2, "calm": 1 } },
+        { "id": "layered-overcast", "label": "Layered overcast", "traits": { "classic": 1, "romantic": 1, "calm": 1 } },
+        { "id": "towering-clouds", "label": "Towering dramatic clouds", "traits": { "bold": 2, "adventurous": 1 } },
+        { "id": "broken-clouds", "label": "Broken clouds with sun breaks", "traits": { "social": 1, "energetic": 1, "adventurous": 1 } }
+      ]
+    },
+    {
+      "id": "alert-tone",
+      "prompt": "How do you handle weather alerts?",
+      "options": [
+        { "id": "quiet-prep", "label": "Quiet prep and checklist", "traits": { "analytical": 2, "classic": 1 } },
+        { "id": "act-fast", "label": "Act fast and mobilize", "traits": { "energetic": 2, "bold": 1 } },
+        { "id": "check-everyone", "label": "Check everyone is good", "traits": { "social": 2, "romantic": 1 } },
+        { "id": "adapt-route", "label": "Adapt the route on the fly", "traits": { "adventurous": 2, "calm": 1 } }
+      ]
+    },
+    {
+      "id": "travel-forecast",
+      "prompt": "Pick your travel forecast.",
+      "options": [
+        { "id": "mapped-ahead", "label": "Mapped and timed ahead", "traits": { "analytical": 2, "classic": 1 } },
+        { "id": "go-now", "label": "Go now and figure it out", "traits": { "bold": 2, "energetic": 1 } },
+        { "id": "group-roadtrip", "label": "Group road trip", "traits": { "social": 2, "adventurous": 1 } },
+        { "id": "slow-scenic", "label": "Slow scenic route", "traits": { "romantic": 2, "calm": 1 } }
+      ]
+    },
+    {
+      "id": "microclimate",
+      "prompt": "Choose your microclimate.",
+      "options": [
+        { "id": "lake-cool", "label": "Cool lakeshore air", "traits": { "calm": 2, "classic": 1 } },
+        { "id": "city-heat", "label": "City heat pocket", "traits": { "bold": 1, "energetic": 2 } },
+        { "id": "forest-edge", "label": "Forest edge and shade", "traits": { "adventurous": 2, "calm": 1 } },
+        { "id": "rooftop-sun", "label": "Rooftop sun + skyline", "traits": { "social": 1, "romantic": 1, "bold": 1 } }
       ]
     }
   ]

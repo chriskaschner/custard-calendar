@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
   haversine,
   scoreRecommendation,
+  historicalTieBreakerScore,
   buildRecommendations,
   fetchReliabilityMap,
   fetchForecastMap,
@@ -102,6 +103,76 @@ describe('scoreRecommendation', () => {
     });
     // maxRadius clamps to 1, so distanceNorm = min(5, 1) = 1
     expect(score).toBeCloseTo(0.4, 5);
+  });
+});
+
+// --- historicalTieBreakerScore ---
+
+describe('historicalTieBreakerScore', () => {
+  const historicalMetrics = {
+    datasetStores: 1000,
+    maxStoreObservations: 2000,
+    flavorLookup: new Map([
+      ['rare flavor', { store_count: 50, peak_month: 8, seasonal_concentration: 0.9 }],
+      ['common flavor', { store_count: 980, peak_month: 1, seasonal_concentration: 0.2 }],
+    ]),
+    storeLookup: new Map([
+      ['deep-store', { observations: 1900 }],
+      ['thin-store', { observations: 100 }],
+    ]),
+  };
+
+  it('returns bounded score (0 to 0.35)', () => {
+    const score = historicalTieBreakerScore({
+      flavor: 'Rare Flavor',
+      slug: 'deep-store',
+      month: 8,
+      historicalMetrics,
+    });
+    expect(score).toBeGreaterThanOrEqual(0);
+    expect(score).toBeLessThanOrEqual(0.35);
+  });
+
+  it('favors rare flavor + high-depth store over common + low-depth', () => {
+    const high = historicalTieBreakerScore({
+      flavor: 'Rare Flavor',
+      slug: 'deep-store',
+      month: 8,
+      historicalMetrics,
+    });
+    const low = historicalTieBreakerScore({
+      flavor: 'Common Flavor',
+      slug: 'thin-store',
+      month: 8,
+      historicalMetrics,
+    });
+    expect(high).toBeGreaterThan(low);
+  });
+
+  it('applies peak-month seasonal bonus', () => {
+    const seasonalMetrics = {
+      datasetStores: 1000,
+      maxStoreObservations: 2000,
+      flavorLookup: new Map([
+        ['rare flavor', { store_count: 900, peak_month: 8, seasonal_concentration: 0.8 }],
+      ]),
+      storeLookup: new Map([
+        ['deep-store', { observations: 1000 }],
+      ]),
+    };
+    const inSeason = historicalTieBreakerScore({
+      flavor: 'Rare Flavor',
+      slug: 'deep-store',
+      month: 8,
+      historicalMetrics: seasonalMetrics,
+    });
+    const offSeason = historicalTieBreakerScore({
+      flavor: 'Rare Flavor',
+      slug: 'deep-store',
+      month: 2,
+      historicalMetrics: seasonalMetrics,
+    });
+    expect(inSeason).toBeGreaterThan(offSeason);
   });
 });
 
@@ -225,6 +296,38 @@ describe('buildRecommendations', () => {
     expect(result.recommendations[0].slug).toBe('pref');
     expect(result.recommendations[0].preference_match).toBe(true);
     expect(result.recommendations[1].preference_match).toBe(false);
+  });
+
+  it('uses bounded historical tie-breakers when certainty/distance are equal', () => {
+    const rare = makeStore({ slug: 'deep-store', flavor: 'Rare Flavor', lat: 43.001, lon: -89.701 });
+    const common = makeStore({ slug: 'thin-store', flavor: 'Common Flavor', lat: 43.001, lon: -89.701 });
+    const historicalMetrics = {
+      datasetStores: 1000,
+      maxStoreObservations: 2000,
+      flavorLookup: new Map([
+        ['rare flavor', { store_count: 50, peak_month: 8, seasonal_concentration: 0.9 }],
+        ['common flavor', { store_count: 980, peak_month: 1, seasonal_concentration: 0.2 }],
+      ]),
+      storeLookup: new Map([
+        ['deep-store', { observations: 1900 }],
+        ['thin-store', { observations: 100 }],
+      ]),
+    };
+
+    const result = buildRecommendations({
+      stores: [common, rare],
+      userLat: 43.0,
+      userLon: -89.7,
+      maxRadius: 25,
+      historicalMetrics,
+      referenceMonth: 8,
+    });
+
+    expect(result.recommendations[0].slug).toBe('deep-store');
+    expect(result.recommendations[0].historical_tie_breaker).toBeGreaterThan(
+      result.recommendations[1].historical_tie_breaker
+    );
+    expect(result.recommendations[0].historical_tie_breaker).toBeLessThanOrEqual(0.35);
   });
 
   it('includes forecast predictions when no confirmed flavor', () => {

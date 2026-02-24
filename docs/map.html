@@ -399,6 +399,15 @@
         allBounds.extend([store._lat, store._lon]);
         const icon = buildConeMarkerIcon(store, hasFlavorFilter);
         const marker = L.marker([store._lat, store._lon], { icon }).bindPopup(storePopup(store, store._match));
+        marker.on('popupopen', () => {
+          CustardPlanner.emitInteractionEvent({
+            event_type: 'popup_open',
+            action: 'store_popup',
+            store_slug: store.slug || null,
+            flavor: store.flavor || null,
+            certainty_tier: store.flavor ? 'confirmed' : 'none',
+          });
+        });
         markers.addLayer(marker);
         window._allMarkers.push({ store: store, marker: marker });
       }
