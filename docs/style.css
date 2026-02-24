@@ -1800,6 +1800,74 @@ footer a {
    Flavor Fronts page
    ======================================== */
 
+/* View mode toggle (Confirmed / Forecast) */
+.view-mode-toggle {
+  display: flex;
+  gap: 0;
+  margin-bottom: 0.75rem;
+  border: 1.5px solid #ddd;
+  border-radius: 8px;
+  overflow: hidden;
+  width: fit-content;
+}
+
+.view-mode-btn {
+  padding: 0.4rem 1rem;
+  border: none;
+  background: white;
+  color: #666;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.view-mode-btn:first-child {
+  border-right: 1.5px solid #ddd;
+}
+
+.view-mode-btn.active {
+  background: #005696;
+  color: white;
+}
+
+.view-mode-btn:hover:not(.active) {
+  background: #f0f4f8;
+}
+
+/* Hotspot row for confirmed-mode family groupings */
+.hotspot-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 0.65rem;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 0.78rem;
+  color: #334155;
+}
+
+.hotspot-row:last-child {
+  border-bottom: none;
+}
+
+.hotspot-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.hotspot-name {
+  flex: 1;
+  text-transform: capitalize;
+  font-weight: 600;
+}
+
+.hotspot-score {
+  font-weight: 700;
+  color: #0f172a;
+}
+
 .fronts-controls {
   margin-bottom: 1rem;
 }

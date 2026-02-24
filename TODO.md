@@ -26,8 +26,8 @@ Things that are broken or misleading today.
 Features that lean into what works.
 
 - [x] **"Near me now" entry point** -- auto-geolocates on first visit, shows 5 closest stores with cone icon, flavor, distance. Click to select. (2026-02-25)
-- [ ] **Flavor fronts on confirmed data** -- rework `forecast-map.html` to show today's confirmed flavors as weather-front clusters by default. Group stores by flavor family (PCA clusters), show category-colored regions. Prediction toggle available but off by default.
-- [ ] **Weather-map animation on confirmed data** -- animate through confirmed days of the week (Mon-Sun confirmed schedule) rather than predicted future days. Apple Weather-style soft blobs and crossfades, but over real data.
+- [x] **Flavor fronts on confirmed data** -- defaults to "Confirmed Today" mode with family-colored markers, toggle to "Forecast" for predictions. 9 flavor families with hotspot sidebar. (2026-02-25)
+- [x] **Weather-map animation on confirmed data** -- smooth 400ms crossfade between days (200ms ease-in fade-out + 200ms ease-out fade-in). Softer heatmap blobs (radius 45, blur 40). Bold today tick on timeline. (2026-02-25)
 - [x] **Map category chips** -- 9 flavor family filter chips on map page. Non-matching markers fade to 15% opacity. Resets on new search. (2026-02-25)
 - [x] **Calendar subscription visibility** -- CTA card appears after today's flavor loads with one-click .ics URL copy. Supplements existing preview at page bottom. (2026-02-25)
 - [x] **Flavor quiz -> nearby match** -- quiz matches archetype to confirmed nearby flavors with similarity fallback. (2026-02-25)

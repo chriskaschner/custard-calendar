@@ -35,6 +35,10 @@
 
   <main>
     <section class="panel fronts-controls">
+      <div class="view-mode-toggle">
+        <button class="view-mode-btn active" data-mode="confirmed" id="mode-confirmed">Confirmed Today</button>
+        <button class="view-mode-btn" data-mode="forecast" id="mode-forecast">Forecast</button>
+      </div>
       <div class="fronts-control-grid">
         <div class="fronts-control-block">
           <label for="fronts-location">Location</label>
@@ -136,7 +140,7 @@
   </main>
 
   <footer>
-    <div class="footer-brands">Flavor forecast coverage with 7-day model outlook.</div>
+    <div class="footer-brands">Confirmed flavor coverage with optional 7-day forecast overlay.</div>
     <p style="margin-top:0.5rem;">Not affiliated with any restaurant. Forecasts are probabilistic and can change.</p>
   </footer>
 
@@ -170,15 +174,15 @@
     const baseLayer = L.layerGroup().addTo(map);
     const signalLayer = L.layerGroup().addTo(map);
     const heatLayer = L.heatLayer([], {
-      radius: 32,
-      blur: 26,
+      radius: 45,
+      blur: 40,
       maxZoom: 10,
-      minOpacity: 0.2,
+      minOpacity: 0.15,
       gradient: {
-        0.2: '#51d8ff',
-        0.45: '#1f6bff',
-        0.62: '#8c3dff',
-        0.78: '#e83e8c',
+        0.15: '#51d8ff',
+        0.35: '#1f6bff',
+        0.55: '#8c3dff',
+        0.75: '#e83e8c',
         1.0: '#fff59d',
       },
     }).addTo(map);
@@ -190,6 +194,39 @@
     let pulseAnimationFrame = null;
     let pulseMarkers = [];
     let isAutoPlaying = false;
+    let viewMode = 'confirmed'; // 'confirmed' or 'forecast'
+    let isTransitioning = false;
+
+    const FLAVOR_FAMILIES = {
+      mint: { color: '#2ECC71', members: ['andes mint avalanche', 'mint cookie', 'mint explosion'] },
+      chocolate: { color: '#6F4E37', members: ['chocolate caramel twist', 'chocolate heath crunch', 'chocolate volcano', 'dark chocolate decadence', 'dark chocolate pb crunch', 'chocolate oreo volcano'] },
+      caramel: { color: '#D4A056', members: ['caramel cashew', 'caramel fudge cookie dough', 'caramel pecan', 'caramel turtle', 'salted caramel pecan pie', 'chocolate caramel twist'] },
+      cheesecake: { color: '#FFF8DC', members: ['oreo cheesecake', 'oreo cookie cheesecake', 'raspberry cheesecake', 'strawberry cheesecake', 'turtle cheesecake'] },
+      turtle: { color: '#8B6914', members: ['turtle', 'turtle dove', 'turtle cheesecake', 'caramel turtle'] },
+      cookie: { color: '#C4A882', members: ['crazy for cookie dough', 'caramel fudge cookie dough', 'mint cookie', 'oreo cookie cheesecake', 'oreo cookies and cream'] },
+      peanutButter: { color: '#C8A96E', members: ['dark chocolate pb crunch', 'peanut butter cup', 'reeses peanut butter cup'] },
+      berry: { color: '#E91E63', members: ['blackberry cobbler', 'raspberry cheesecake', 'strawberry cheesecake', 'lemon berry layer cake', 'double strawberry', 'chocolate covered strawberry', 'georgia peach'] },
+      pecan: { color: '#A67B5B', members: ['butter pecan', 'caramel pecan', 'salted caramel pecan pie', 'georgia peach pecan'] }
+    };
+
+    // Build reverse lookup: flavor name -> family key
+    const flavorFamilyLookup = {};
+    for (const [family, data] of Object.entries(FLAVOR_FAMILIES)) {
+      for (const member of data.members) {
+        if (!flavorFamilyLookup[member]) flavorFamilyLookup[member] = family;
+      }
+    }
+
+    function getFamilyForFlavor(flavorName) {
+      if (!flavorName) return null;
+      var normalized = flavorName.toLowerCase().replace(/[\u00ae\u2122\u00a9]/g, '').replace(/\s+/g, ' ').trim();
+      return flavorFamilyLookup[normalized] || null;
+    }
+
+    function getFamilyColor(flavorName) {
+      var family = getFamilyForFlavor(flavorName);
+      return family ? FLAVOR_FAMILIES[family].color : '#005696';
+    }
 
     function toISODate(dateObj) {
       return dateObj.toISOString().slice(0, 10);
@@ -255,6 +292,17 @@
       if (tone === 'error') frontsStatus.classList.add('fronts-status-error');
       if (tone === 'loading') frontsStatus.classList.add('fronts-status-loading');
       if (tone === 'success') frontsStatus.classList.add('fronts-status-success');
+    }
+
+    function updateTimelineTicks() {
+      var ticks = document.querySelectorAll('.fronts-tick-row span');
+      if (!ticks.length) return;
+      ticks.forEach(function(tick, i) {
+        // Only today (i === 0) has confirmed data from nearby-flavors
+        var hasConfirmed = (i === 0);
+        tick.style.fontWeight = hasConfirmed ? '700' : '400';
+        tick.style.color = hasConfirmed ? '#005696' : '#9fb1d1';
+      });
     }
 
     function flavorMapForDay(dayIso, dayOffset) {
@@ -410,11 +458,60 @@
       if (!nearbyStores.length) return;
       stopAutoPlay();
       setAutoPlayState(true);
-      autoPlayTimer = setInterval(() => {
-        const next = (Number(frontsDayInput.value || 0) + 1) % 7;
-        frontsDayInput.value = String(next);
-        frontsDayInput.dispatchEvent(new Event('input', { bubbles: true }));
-      }, 1500);
+      autoPlayTimer = setInterval(function() {
+        var slider = document.getElementById('fronts-day');
+        var next = (parseInt(slider.value) + 1) % 7;
+        smoothTransition(next);
+      }, 2500);
+    }
+
+    function smoothTransition(targetDay) {
+      if (isTransitioning) return;
+      isTransitioning = true;
+
+      var fadeOutStart = performance.now();
+      var fadeOutDuration = 200;
+
+      function animateFadeOut(ts) {
+        var progress = Math.min(1, (ts - fadeOutStart) / fadeOutDuration);
+        var ease = progress * progress; // ease-in
+
+        signalLayer.eachLayer(function(layer) {
+          if (layer.setStyle) layer.setStyle({ fillOpacity: 0.7 * (1 - ease), opacity: 0.9 * (1 - ease) });
+        });
+
+        if (progress < 1) {
+          requestAnimationFrame(animateFadeOut);
+        } else {
+          // Switch day
+          var slider = document.getElementById('fronts-day');
+          slider.value = targetDay;
+          updateDayLabel();
+          populateFlavorSelect();
+          renderMapSignals();
+
+          // Fade in
+          var fadeInStart = performance.now();
+          var fadeInDuration = 200;
+
+          function animateFadeIn(ts2) {
+            var p2 = Math.min(1, (ts2 - fadeInStart) / fadeInDuration);
+            var ease2 = 1 - (1 - p2) * (1 - p2); // ease-out
+
+            signalLayer.eachLayer(function(layer) {
+              if (layer.setStyle) layer.setStyle({ fillOpacity: 0.7 * ease2, opacity: 0.9 * ease2 });
+            });
+
+            if (p2 < 1) {
+              requestAnimationFrame(animateFadeIn);
+            } else {
+              isTransitioning = false;
+            }
+          }
+          requestAnimationFrame(animateFadeIn);
+        }
+      }
+      requestAnimationFrame(animateFadeOut);
     }
 
     function toggleAutoPlay() {
@@ -427,6 +524,11 @@
       signalLayer.clearLayers();
       heatLayer.setLatLngs([]);
       pulseMarkers = [];
+
+      if (viewMode === 'confirmed') {
+        renderConfirmedFronts();
+        return;
+      }
 
       const dayOffset = Number(frontsDayInput.value || 0);
       const dayIso = toISODate(activeDateFromSlider());
@@ -523,6 +625,100 @@
         li.innerHTML = '<span>' + escapeHtml(entry.store.name || entry.store.slug) + '</span>'
           + '<span class="fronts-hotspot-score">' + pct + '%</span>';
         frontsHotspots.appendChild(li);
+      }
+    }
+
+    function renderConfirmedFronts() {
+      var heatPoints = [];
+      var familyStores = {};
+
+      for (var i = 0; i < nearbyStores.length; i++) {
+        var store = nearbyStores[i];
+        if (!store.lat || !store.lon) continue;
+
+        // Base dot for all stores
+        L.circleMarker([store.lat, store.lon], {
+          radius: 3, fillColor: '#888', fillOpacity: 0.3, stroke: false
+        }).addTo(baseLayer);
+
+        if (!store.flavor) continue;
+
+        var family = getFamilyForFlavor(store.flavor);
+        var familyColor = getFamilyColor(store.flavor);
+        var familyKey = family || 'other';
+
+        // Colored marker by family
+        var marker = L.circleMarker([store.lat, store.lon], {
+          radius: 10,
+          fillColor: familyColor,
+          fillOpacity: 0.7,
+          color: familyColor,
+          weight: 2,
+          opacity: 0.9
+        }).addTo(signalLayer);
+
+        marker.bindPopup(
+          '<strong>' + escapeHtml(store.name) + '</strong><br>' +
+          escapeHtml(store.address || '') + '<br>' +
+          '<em>' + escapeHtml(store.flavor) + '</em>' +
+          (family ? '<br><span style="color:' + familyColor + ';">' + family + ' family</span>' : '')
+        );
+
+        // Group by family
+        if (!familyStores[familyKey]) familyStores[familyKey] = [];
+        familyStores[familyKey].push({ lat: store.lat, lon: store.lon, store: store, color: familyColor });
+
+        // Heat point
+        heatPoints.push([store.lat, store.lon, 0.8]);
+
+        pulseMarkers.push({
+          marker: marker,
+          baseRadius: 10,
+          bump: 3,
+          baseOpacity: 0.7
+        });
+      }
+
+      heatLayer.setLatLngs(heatPoints);
+
+      // Count stores with confirmed flavors
+      var confirmedCount = 0;
+      for (var j = 0; j < nearbyStores.length; j++) {
+        if (nearbyStores[j].flavor) confirmedCount++;
+      }
+
+      // Update metrics
+      metricStores.textContent = String(nearbyStores.length);
+      metricActive.textContent = String(confirmedCount);
+      metricPeak.textContent = Object.keys(familyStores).length + ' families';
+
+      // Render hotspots grouped by family
+      renderConfirmedHotspots(familyStores);
+
+      startPulseAnimation();
+    }
+
+    function renderConfirmedHotspots(familyStores) {
+      frontsHotspots.innerHTML = '';
+
+      // Sort families by store count
+      var familyEntries = Object.entries(familyStores).sort(function(a, b) { return b[1].length - a[1].length; });
+
+      if (!familyEntries.length) {
+        frontsHotspots.innerHTML = '<li>No confirmed flavors for nearby stores today.</li>';
+        return;
+      }
+
+      for (var i = 0; i < Math.min(familyEntries.length, 8); i++) {
+        var familyName = familyEntries[i][0];
+        var stores = familyEntries[i][1];
+        var color = stores[0] ? stores[0].color : '#666';
+        var div = document.createElement('div');
+        div.className = 'hotspot-row';
+        div.innerHTML = '<span class="hotspot-dot" style="background:' + color + '"></span>' +
+          '<span class="hotspot-name">' + escapeHtml(familyName) + '</span>' +
+          '<span class="hotspot-score">' + stores.length + ' stores</span>';
+        frontsHotspots.appendChild(div);
       }
     }
 
@@ -653,6 +849,7 @@
         await warmForecasts(nearbyStores);
 
         updateDayLabel();
+        updateTimelineTicks();
         populateFlavorSelect();
         renderMapSignals();
 
@@ -674,11 +871,35 @@
     frontsGeoBtn.addEventListener('click', useDetectedLocation);
     frontsPlayBtn.addEventListener('click', toggleAutoPlay);
 
-    frontsDayInput.addEventListener('input', (evt) => {
-      if (evt.isTrusted && isAutoPlaying) stopAutoPlay();
-      updateDayLabel();
+    document.getElementById('mode-confirmed').addEventListener('click', function() {
+      viewMode = 'confirmed';
+      this.classList.add('active');
+      document.getElementById('mode-forecast').classList.remove('active');
+      // Hide forecast-only controls in confirmed mode
+      var timelineCard = document.querySelector('.fronts-timeline-card');
+      var flavorBlock = frontsFlavorSelect.closest('.fronts-control-block');
+      if (timelineCard) timelineCard.style.display = 'none';
+      if (flavorBlock) flavorBlock.style.display = 'none';
+      stopAutoPlay();
+      renderMapSignals();
+    });
+
+    document.getElementById('mode-forecast').addEventListener('click', function() {
+      viewMode = 'forecast';
+      this.classList.add('active');
+      document.getElementById('mode-confirmed').classList.remove('active');
+      // Show forecast controls
+      var timelineCard = document.querySelector('.fronts-timeline-card');
+      var flavorBlock = frontsFlavorSelect.closest('.fronts-control-block');
+      if (timelineCard) timelineCard.style.display = '';
+      if (flavorBlock) flavorBlock.style.display = '';
       populateFlavorSelect();
       renderMapSignals();
+    });
+
+    frontsDayInput.addEventListener('input', function(evt) {
+      if (evt.isTrusted && isAutoPlaying) stopAutoPlay();
+      smoothTransition(parseInt(this.value));
     });
 
     frontsFlavorSelect.addEventListener('change', () => {
@@ -687,8 +908,21 @@
       renderMapSignals();
     });
 
+    function applyViewModeVisibility() {
+      var timelineCard = document.querySelector('.fronts-timeline-card');
+      var flavorBlock = frontsFlavorSelect.closest('.fronts-control-block');
+      if (viewMode === 'confirmed') {
+        if (timelineCard) timelineCard.style.display = 'none';
+        if (flavorBlock) flavorBlock.style.display = 'none';
+      } else {
+        if (timelineCard) timelineCard.style.display = '';
+        if (flavorBlock) flavorBlock.style.display = '';
+      }
+    }
+
     async function init() {
       updateDayLabel();
+      applyViewModeVisibility();
 
       try {
         const resp = await fetch(WORKER_BASE + '/api/v1/geolocate');
