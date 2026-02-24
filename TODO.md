@@ -104,6 +104,7 @@ PCA/category overlays + improved weather-motion aesthetics, tied directly to dec
 - [ ] **Greenfield target architecture** -- three-layer model: Presentation (docs), Decision (planner/certainty/signals/reliability as pure functions), Data (KV/D1 access). Incremental migration, not rewrite.
 - [ ] **CLAUDE.md + Codex rules: rate limit awareness** -- add explicit rule: always assume external endpoints have rate limits, document known limits before bulk requests. Applies especially to Wayback Machine, upstream brand sites, and OSM/Nominatim. Sync rules between CLAUDE.md (this repo) and any codex task definitions.
 - [ ] **CLAUDE.md / Codex consistency** -- audit CLAUDE.md and codex task instructions for drift. Ensure both reflect same commands, architecture, constraints, and conventions. Single source of truth where possible.
+- [ ] **Multi-agent coordination** -- prevent agents from stepping on each other's branches or squashing work. Options to evaluate: (1) content-hash IDs on TODO items so agents can reference specific tasks unambiguously, (2) branch-per-task convention with merge-only-forward rule (no force push, no rebase onto shared branches), (3) lock file or claim mechanism in TODO.md (agent writes its name next to a task before starting), (4) worktree isolation as default for Codex tasks so each agent gets its own branch from HEAD. Document the chosen protocol in CLAUDE.md so both Claude Code and Codex sessions follow it.
 
 ## Someday/Maybe
 
