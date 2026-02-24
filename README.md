@@ -123,6 +123,8 @@ uv run python main.py
 uv run python main.py --fetch-only       # Fetch via Worker API, write cache
 uv run python main.py --calendar-only    # Sync cache to Google Calendar
 uv run python main.py --tidbyt-only      # Render + push to Tidbyt
+uv run python main.py --tidbyt-only --tidbyt-dry-run  # Render only (no device push)
+uv run python main.py --tidbyt-only --refresh-stale-cache --max-cache-age-hours 12
 uv run python main.py --skip-calendar    # Fetch + tidbyt
 uv run python main.py --skip-tidbyt      # Fetch + calendar
 ```

@@ -41,7 +41,7 @@ jobs:
               brand: "culvers"
               name: "Madison Todd Dr"
               role: "secondary"
-          worker_base: "https://custard-calendar.chris-kaschner.workers.dev"
+          worker_base: "https://custard.chriskaschner.com"
           tidbyt:
             device_id: "repeatedly-enduring-fetching-bowerbird-761"
             installation_id: "culvers"

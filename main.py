@@ -14,7 +14,7 @@ import argparse
 import subprocess
 import yaml
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict
 from pathlib import Path
 
@@ -28,6 +28,38 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 STAR_FILE = Path(__file__).parent / 'tidbyt' / 'culvers_fotd.star'
+
+
+def _parse_iso_timestamp(raw_value: str):
+    """Parse an ISO timestamp into timezone-aware UTC datetime."""
+    if not raw_value:
+        return None
+    try:
+        parsed = datetime.fromisoformat(str(raw_value))
+    except (TypeError, ValueError):
+        return None
+    if parsed.tzinfo is None:
+        # Historical cache files are naive local timestamps.
+        local_tz = datetime.now().astimezone().tzinfo
+        parsed = parsed.replace(tzinfo=local_tz)
+    return parsed.astimezone(timezone.utc)
+
+
+def cache_age_hours(cache_data: Dict):
+    """Return cache age in hours, or None if timestamp is missing/invalid."""
+    ts = _parse_iso_timestamp(cache_data.get('timestamp'))
+    if ts is None:
+        return None
+    now = datetime.now(timezone.utc)
+    return max(0.0, (now - ts).total_seconds() / 3600.0)
+
+
+def cache_is_stale(cache_data: Dict, max_age_hours: float) -> bool:
+    """Treat missing/invalid timestamps as stale."""
+    age = cache_age_hours(cache_data)
+    if age is None:
+        return True
+    return age > float(max_age_hours)
 
 
 def load_config(config_path: str = 'config.yaml') -> Dict:
@@ -73,7 +105,7 @@ def step_calendar_sync(cache_data: Dict, calendar_id: str, color_id: str = '') -
     return stats
 
 
-def step_tidbyt_render_push(cache_data: Dict, config: Dict) -> bool:
+def step_tidbyt_render_push(cache_data: Dict, config: Dict, dry_run: bool = False) -> bool:
     """Step 3: Render Tidbyt app with cache data and push to device."""
     logger.info("Step 3: Rendering and pushing to Tidbyt...")
 
@@ -84,11 +116,11 @@ def step_tidbyt_render_push(cache_data: Dict, config: Dict) -> bool:
     brand = tidbyt_config.get('brand', 'culvers')
     api_token = os.environ.get('TIDBYT_API_TOKEN', '')
 
-    if not device_id:
+    if not dry_run and not device_id:
         logger.error("  No tidbyt.device_id configured in config.yaml")
         return False
 
-    if not api_token:
+    if not dry_run and not api_token:
         logger.error("  TIDBYT_API_TOKEN not found in environment. Source .env first.")
         return False
 
@@ -102,7 +134,11 @@ def step_tidbyt_render_push(cache_data: Dict, config: Dict) -> bool:
 
     # Filter to today and future
     today_str = datetime.now().strftime('%Y-%m-%d')
-    future_flavors = [f for f in flavors if f['date'] >= today_str]
+    # Keep ordering deterministic in case upstream payload is unsorted.
+    future_flavors = sorted(
+        [f for f in flavors if f.get('date', '') >= today_str],
+        key=lambda row: row.get('date', ''),
+    )
 
     if not future_flavors:
         logger.warning("  No current/future flavors in cache")
@@ -118,7 +154,12 @@ def step_tidbyt_render_push(cache_data: Dict, config: Dict) -> bool:
     ]
 
     num_flavors = 3 if view_mode == 'three_day' else 1
-    for i, flavor in enumerate(future_flavors[:num_flavors]):
+    selected_flavors = future_flavors[:num_flavors]
+    logger.info(
+        "  Selected flavors: %s",
+        " | ".join(f'{f["date"]} {f["name"]}' for f in selected_flavors),
+    )
+    for i, flavor in enumerate(selected_flavors):
         cmd.append(f'flavor_{i}={flavor["name"]}')
         cmd.append(f'flavor_date_{i}={flavor["date"]}')
 
@@ -134,6 +175,10 @@ def step_tidbyt_render_push(cache_data: Dict, config: Dict) -> bool:
     except FileNotFoundError:
         logger.error("  pixlet not found. Install: brew install tidbyt/tidbyt/pixlet")
         return False
+
+    if dry_run:
+        logger.info(f"  Tidbyt dry-run complete (render only): {output_file}")
+        return True
 
     # Push to device
     push_cmd = [
@@ -165,6 +210,12 @@ def main():
                         help='Only sync calendar from existing cache')
     parser.add_argument('--tidbyt-only', action='store_true',
                         help='Only render and push to Tidbyt from existing cache')
+    parser.add_argument('--tidbyt-dry-run', action='store_true',
+                        help='Render Tidbyt image only (skip push)')
+    parser.add_argument('--refresh-stale-cache', action='store_true',
+                        help='When skipping fetch, refresh cache first if stale')
+    parser.add_argument('--max-cache-age-hours', type=float, default=24.0,
+                        help='Cache age threshold for --refresh-stale-cache (default: 24h)')
     parser.add_argument('--skip-calendar', action='store_true',
                         help='Skip calendar sync')
     parser.add_argument('--skip-tidbyt', action='store_true',
@@ -209,7 +260,31 @@ def main():
 
     # Load from cache if we skipped fetching
     if cache_data is None:
-        cache_data = load_cache()
+        try:
+            cache_data = load_cache()
+        except FileNotFoundError:
+            if run_tidbyt and args.refresh_stale_cache:
+                logger.warning("Cache file missing. Fetching fresh data before Tidbyt render...")
+                cache_data = step_fetch(config)
+            else:
+                raise
+        age = cache_age_hours(cache_data)
+        if age is None:
+            logger.warning("Loaded cache has no valid timestamp metadata.")
+        else:
+            logger.info(f"Loaded cache age: {age:.1f}h")
+
+        if run_tidbyt and args.refresh_stale_cache and cache_is_stale(cache_data, args.max_cache_age_hours):
+            logger.warning(
+                "Cache is stale (threshold %.1fh). Refreshing before Tidbyt render...",
+                args.max_cache_age_hours,
+            )
+            cache_data = step_fetch(config)
+        elif run_tidbyt and cache_is_stale(cache_data, args.max_cache_age_hours):
+            logger.warning(
+                "Cache appears stale. Consider --refresh-stale-cache (threshold %.1fh).",
+                args.max_cache_age_hours,
+            )
 
     # Step 2: Calendar sync
     if run_calendar:
@@ -220,7 +295,7 @@ def main():
 
     # Step 3: Tidbyt render + push
     if run_tidbyt:
-        step_tidbyt_render_push(cache_data, config)
+        step_tidbyt_render_push(cache_data, config, dry_run=args.tidbyt_dry_run)
 
     logger.info("=" * 60)
     logger.info("Done!")
