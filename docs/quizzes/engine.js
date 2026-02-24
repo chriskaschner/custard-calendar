@@ -1,8 +1,8 @@
 const WORKER_BASE = 'https://custard.chriskaschner.com';
 
 const QUIZ_CONFIG_PATHS = [
-  'quizzes/quiz-classic-v1.json',
   'quizzes/quiz-weather-v1.json',
+  'quizzes/quiz-classic-v1.json',
   'quizzes/quiz-date-night-v1.json',
 ];
 
@@ -144,25 +144,29 @@ function renderQuestions(quiz) {
       input.name = question.id;
       input.value = option.id;
 
-      // Render icon if present
       const iconSvg = option.icon && window.QuizSprites
-        ? window.QuizSprites.resolve(option.icon, 3) : '';
+        ? window.QuizSprites.resolve(option.icon, 4) : '';
 
       label.appendChild(input);
+
+      const copy = document.createElement('span');
+      copy.className = 'quiz-option-copy';
 
       if (iconSvg) {
         label.classList.add('has-icon');
         const iconEl = document.createElement('span');
         iconEl.className = 'quiz-option-icon';
+        iconEl.setAttribute('aria-hidden', 'true');
         iconEl.innerHTML = iconSvg;
-        label.appendChild(iconEl);
+        copy.appendChild(iconEl);
       }
 
-      const copy = document.createElement('span');
-      copy.className = 'quiz-option-copy';
-      copy.textContent = option.label;
-      label.appendChild(copy);
+      const textEl = document.createElement('span');
+      textEl.className = 'quiz-option-label';
+      textEl.textContent = option.label;
+      copy.appendChild(textEl);
 
+      label.appendChild(copy);
       grid.appendChild(label);
     });
 

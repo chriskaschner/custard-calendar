@@ -8,50 +8,50 @@
       "id": "sky-pattern",
       "prompt": "Pick a sky pattern.",
       "options": [
-        { "id": "clear-morning", "label": "Clear morning blue", "traits": { "calm": 2, "classic": 1, "analytical": 1 } },
-        { "id": "storm-band", "label": "Fast-moving storm bands", "traits": { "bold": 2, "energetic": 2, "adventurous": 1 } },
-        { "id": "golden-haze", "label": "Golden sunset haze", "traits": { "romantic": 2, "social": 1, "classic": 1 } },
-        { "id": "electric-night", "label": "Electric night clouds", "traits": { "bold": 1, "adventurous": 2, "energetic": 1 } }
+        { "id": "clear-morning", "label": "Clear morning blue", "icon": "color:#64B5F6", "commentary": "Clear morning blue -- calm and collected, no storm in sight", "traits": { "calm": 2, "classic": 1, "analytical": 1 } },
+        { "id": "storm-band", "label": "Fast-moving storm bands", "icon": "color:#455A64", "commentary": "Fast-moving storm bands -- you thrive in high-energy systems", "traits": { "bold": 2, "energetic": 2, "adventurous": 1 } },
+        { "id": "golden-haze", "label": "Golden sunset haze", "icon": "color:#FFB74D", "commentary": "Golden sunset haze -- warm, nostalgic, a little romantic", "traits": { "romantic": 2, "social": 1, "classic": 1 } },
+        { "id": "electric-night", "label": "Electric night clouds", "icon": "color:#7E57C2", "commentary": "Electric night clouds -- restless energy looking for somewhere to go", "traits": { "bold": 1, "adventurous": 2, "energetic": 1 } }
       ]
     },
     {
       "id": "temperature-band",
       "prompt": "Pick your comfort temperature band.",
       "options": [
-        { "id": "cold-crisp", "label": "20 to 35 F, crisp and focused", "traits": { "calm": 2, "analytical": 1 } },
-        { "id": "cool-breathable", "label": "36 to 55 F, cool and breathable", "traits": { "calm": 1, "classic": 1, "adventurous": 1 } },
-        { "id": "balanced-sunny", "label": "56 to 75 F, balanced and sunny", "traits": { "social": 1, "classic": 1, "romantic": 1 } },
-        { "id": "heat-high", "label": "76+ F, hot and high energy", "traits": { "energetic": 2, "bold": 1, "social": 1 } }
+        { "id": "cold-crisp", "label": "20-35F, crisp and focused", "icon": "color:#90CAF9", "commentary": "Crisp and focused -- you think clearest when it's cold out", "traits": { "calm": 2, "analytical": 1 } },
+        { "id": "cool-breathable", "label": "36-55F, cool and breathable", "icon": "color:#4DB6AC", "commentary": "Cool and breathable -- the sweet spot where you feel most alive", "traits": { "calm": 1, "classic": 1, "adventurous": 1 } },
+        { "id": "balanced-sunny", "label": "56-75F, balanced and sunny", "icon": "color:#FFD54F", "commentary": "Balanced and sunny -- you like things easy and warm", "traits": { "social": 1, "classic": 1, "romantic": 1 } },
+        { "id": "heat-high", "label": "76+F, hot and high energy", "icon": "color:#FF7043", "commentary": "Hot and high energy -- you run at full blast", "traits": { "energetic": 2, "bold": 1, "social": 1 } }
       ]
     },
     {
       "id": "texture-signal",
       "prompt": "Which texture pattern sounds best right now?",
       "options": [
-        { "id": "crunch", "label": "Crunch and snap", "traits": { "adventurous": 1, "analytical": 1, "bold": 1 } },
-        { "id": "swirl", "label": "Ribbon swirl and layers", "traits": { "romantic": 1, "classic": 1, "analytical": 1 } },
-        { "id": "smooth", "label": "Smooth and creamy", "traits": { "calm": 2, "classic": 1 } },
-        { "id": "chunks", "label": "Loaded with mix-ins", "traits": { "energetic": 1, "social": 1, "adventurous": 1 } }
+        { "id": "crunch", "label": "Crunch and snap", "commentary": "Crunch and snap -- you want something with an edge to it", "traits": { "adventurous": 1, "analytical": 1, "bold": 1 } },
+        { "id": "swirl", "label": "Ribbon swirl and layers", "commentary": "Ribbon swirl and layers -- you appreciate complexity done right", "traits": { "romantic": 1, "classic": 1, "analytical": 1 } },
+        { "id": "smooth", "label": "Smooth and creamy", "commentary": "Smooth and creamy -- no distractions, just the pure thing", "traits": { "calm": 2, "classic": 1 } },
+        { "id": "chunks", "label": "Loaded with mix-ins", "commentary": "Loaded with mix-ins -- why pick one thing when you can have everything", "traits": { "energetic": 1, "social": 1, "adventurous": 1 } }
       ]
     },
     {
       "id": "chaos-mode",
       "prompt": "When plans break, you usually...",
       "options": [
-        { "id": "triage", "label": "Breathe, triage, and stabilize", "traits": { "calm": 2, "analytical": 2 } },
-        { "id": "rally", "label": "Rally the group and move fast", "traits": { "social": 2, "energetic": 1, "bold": 1 } },
-        { "id": "experiment", "label": "Improvise and test options", "traits": { "adventurous": 2, "bold": 1 } },
-        { "id": "playbook", "label": "Return to trusted playbooks", "traits": { "classic": 2, "calm": 1 } }
+        { "id": "triage", "label": "Breathe, triage, and stabilize", "commentary": "Breathe, triage, stabilize -- the methodical type under pressure", "traits": { "calm": 2, "analytical": 2 } },
+        { "id": "rally", "label": "Rally the group and move fast", "commentary": "Rally the group -- you turn chaos into a team sport", "traits": { "social": 2, "energetic": 1, "bold": 1 } },
+        { "id": "experiment", "label": "Improvise and test options", "commentary": "Improvise and test -- broken plans are just new experiments", "traits": { "adventurous": 2, "bold": 1 } },
+        { "id": "playbook", "label": "Return to trusted playbooks", "commentary": "Return to playbooks -- comfort in what has worked before", "traits": { "classic": 2, "calm": 1 } }
       ]
     },
     {
       "id": "weekend-pattern",
       "prompt": "Pick your ideal weekend weather plan.",
       "options": [
-        { "id": "trail-day", "label": "Trail day and fresh air", "traits": { "adventurous": 2, "calm": 1 } },
-        { "id": "friends-night", "label": "Friends, games, and loud laughter", "traits": { "social": 2, "energetic": 1 } },
-        { "id": "long-brunch", "label": "Long brunch with good conversation", "traits": { "romantic": 1, "classic": 1, "social": 1 } },
-        { "id": "solo-reset", "label": "Solo recharge and deep focus", "traits": { "calm": 1, "analytical": 2 } }
+        { "id": "trail-day", "label": "Trail day and fresh air", "commentary": "Trail day -- you need to move to think clearly", "traits": { "adventurous": 2, "calm": 1 } },
+        { "id": "friends-night", "label": "Friends, games, and loud laughter", "commentary": "Friends and games -- the weekend is for the people you love", "traits": { "social": 2, "energetic": 1 } },
+        { "id": "long-brunch", "label": "Long brunch with good conversation", "commentary": "Long brunch -- slow mornings with the right company", "traits": { "romantic": 1, "classic": 1, "social": 1 } },
+        { "id": "solo-reset", "label": "Solo recharge and deep focus", "commentary": "Solo recharge -- quiet hours are how you refuel", "traits": { "calm": 1, "analytical": 2 } }
       ]
     }
   ]

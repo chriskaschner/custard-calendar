@@ -194,11 +194,12 @@ function renderColorSwatch(hex, size) {
  */
 function resolveQuizIcon(iconStr, scale) {
   if (!iconStr) return '';
+  scale = scale || 4;
   if (iconStr.startsWith('color:')) {
-    return renderColorSwatch(iconStr.slice(6), 28);
+    return renderColorSwatch(iconStr.slice(6), scale * 9);
   }
   if (iconStr.startsWith('pixel:')) {
-    return renderPixelSprite(iconStr.slice(6), scale || 3);
+    return renderPixelSprite(iconStr.slice(6), scale);
   }
   return '';
 }
