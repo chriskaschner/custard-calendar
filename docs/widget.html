@@ -52,82 +52,120 @@
       margin-right: 0.5rem;
       vertical-align: middle;
     }
-    .slug-box {
-      display: flex;
-      gap: 0.5rem;
-      margin-top: 0.75rem;
-    }
-    .slug-box input {
-      flex: 1;
-      padding: 0.5rem;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      font-family: monospace;
-      font-size: 0.875rem;
-      background: #f9f9f9;
-    }
-    .slug-box button {
-      padding: 0.5rem 1rem;
-      background: #005696;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 0.8125rem;
-      white-space: nowrap;
-    }
-    .slug-box button:hover { background: #003366; }
+    /* Widget preview -- follows Apple HIG sizing ratios.
+       Small ~155x155pt (1:1), Medium ~329x155pt (~2.13:1).
+       16pt content margin, 11pt for graphical layouts.
+       No app name on widget (redundant per HIG). */
     .widget-sizes {
       display: flex;
-      gap: 1rem;
+      gap: 0.75rem;
       margin-top: 1rem;
+      align-items: start;
     }
+    /* -- Shared card shell -- */
     .size-card {
-      flex: 1;
-      background: #005696;
-      border-radius: 16px;
-      padding: 1rem;
+      background: #1a1a1a;
+      border-radius: 22px;
+      overflow: hidden;
       color: white;
-      min-height: 100px;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
     }
-    .size-card h4 {
-      font-size: 0.6875rem;
-      opacity: 0.7;
-      margin-bottom: 0.25rem;
+    /* Small: 1:1 ratio, max 170px */
+    .size-card.small { width: 170px; height: 170px; display: flex; flex-direction: column; }
+    /* Medium: ~2.13:1 ratio */
+    .size-card.medium { width: 340px; height: 170px; display: flex; flex-direction: column; }
+
+    /* Branded header bar (Tidbyt-style) */
+    .size-card .card-header {
+      padding: 6px 16px;
+      font-size: 11px;
+      font-weight: 600;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .size-card .card-header .date-label {
+      font-weight: 400;
+      opacity: 0.8;
+      font-size: 10px;
+    }
+    /* Content area -- 16px HIG margin */
+    .size-card .card-body {
+      padding: 8px 16px 12px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+    /* -- Small card: Fill style, single focus -- */
+    .size-card.small .flavor-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex: 1;
+    }
+    .size-card .flavor-row .cone-icon svg { display: block; }
+    .size-card .flavor-text-col {
+      flex: 1;
+      min-width: 0;
     }
     .size-card .flavor-name {
-      font-size: 1.125rem;
+      font-size: 15px;
       font-weight: 700;
-      margin-bottom: 0.25rem;
+      line-height: 1.2;
     }
-    .size-card .date-label {
-      font-size: 0.6875rem;
-      opacity: 0.7;
+    .size-card .flavor-desc {
+      font-size: 11px;
+      opacity: 0.6;
+      line-height: 1.3;
+      margin-top: 2px;
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
     }
     .size-card .rarity-badge {
-      font-size: 0.5625rem;
+      font-size: 9px;
       font-weight: 700;
       letter-spacing: 0.05em;
       color: #90CAF9;
-      margin-top: 0.5rem;
+      flex-shrink: 0;
     }
-    .size-card.medium {
-      min-height: 80px;
-    }
-    .size-card.medium .row {
+    /* -- Medium card: Cell style, 3 rows -- */
+    .size-card.medium .card-body { padding: 6px 16px 10px; }
+    .size-card.medium .flavor-card {
       display: flex;
-      gap: 0.5rem;
-      align-items: baseline;
-      margin-bottom: 0.125rem;
+      align-items: center;
+      gap: 8px;
+      flex: 1;
+      min-height: 0;
     }
-    .size-card.medium .row .day {
-      font-size: 0.6875rem;
-      opacity: 0.6;
-      min-width: 3.5rem;
+    .size-card.medium .flavor-card + .flavor-card {
+      border-top: 1px solid rgba(255,255,255,0.08);
+      padding-top: 4px;
     }
-    .size-card.medium .row .fname {
-      font-size: 0.875rem;
+    .size-card.medium .flavor-card .cone-icon svg { display: block; }
+    .size-card.medium .flavor-card .card-text {
+      flex: 1;
+      min-width: 0;
+    }
+    .size-card.medium .flavor-card .day {
+      font-size: 10px;
+      opacity: 0.5;
+    }
+    .size-card.medium .flavor-card .fname {
+      font-size: 13px;
       font-weight: 700;
+      line-height: 1.2;
+    }
+    .size-card.medium .flavor-card .fdesc {
+      font-size: 10px;
+      opacity: 0.55;
+      line-height: 1.25;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     .store-filter {
       display: flex;
@@ -202,22 +240,35 @@
       <h2>Widget Preview</h2>
       <p style="color:#666;font-size:0.875rem;margin-bottom:0.75rem;">What you'll see on your home screen.</p>
       <div class="widget-sizes">
-        <div class="size-card" id="preview-small">
-          <h4>Culver's</h4>
-          <div class="flavor-name" id="preview-flavor">Loading...</div>
-          <div class="date-label" id="preview-date"></div>
-          <div class="rarity-badge" id="preview-rarity"></div>
+        <div class="size-card small" id="preview-small">
+          <div class="card-header" id="small-header">
+            <span id="preview-location">Mt. Horeb</span>
+            <span class="date-label" id="preview-date"></span>
+          </div>
+          <div class="card-body">
+            <div class="flavor-row">
+              <span class="cone-icon" id="preview-cone"></span>
+              <div class="flavor-text-col">
+                <div class="flavor-name" id="preview-flavor">Loading...</div>
+                <div class="flavor-desc" id="preview-desc"></div>
+              </div>
+            </div>
+            <div class="rarity-badge" id="preview-rarity"></div>
+          </div>
         </div>
         <div class="size-card medium" id="preview-medium">
-          <h4 id="preview-brand-3day">Culver's -- 3-Day Forecast</h4>
-          <div id="preview-rows"></div>
+          <div class="card-header" id="medium-header">
+            <span id="preview-location-med">Mt. Horeb</span>
+            <span class="date-label">This Week</span>
+          </div>
+          <div class="card-body" id="preview-rows"></div>
         </div>
       </div>
     </section>
 
     <section style="margin-top:1.5rem;">
-      <h2>Find Your Store Slug</h2>
-      <p style="color:#666;font-size:0.875rem;margin-bottom:0.75rem;">The slug is a short ID for your store. Pick your store below, then use its slug in the widget parameter.</p>
+      <h2>Pick Your Store</h2>
+      <p style="color:#666;font-size:0.875rem;margin-bottom:0.75rem;">Choose your store and the preview above updates live. The script we copy in the next step is pre-configured for this store.</p>
 
       <div class="store-filter">
         <select id="state-filter">
@@ -226,11 +277,6 @@
         <input type="text" id="city-search" placeholder="Search city or store...">
       </div>
       <div id="store-list"></div>
-
-      <div class="slug-box">
-        <input type="text" id="slug-display" readonly value="mt-horeb" placeholder="Select a store above">
-        <button id="copy-slug">Copy Slug</button>
-      </div>
     </section>
 
     <section style="margin-top:1.5rem;">
@@ -242,11 +288,13 @@
       </div>
 
       <div class="step-card">
-        <h3><span class="step-number">2</span> Add the Script</h3>
-        <p>Open Scriptable, tap <strong>+</strong> to create a new script, and paste the code below.</p>
+        <h3><span class="step-number">2</span> Copy the Script</h3>
+        <p>This copies a script pre-configured for <strong id="script-store-label">your store</strong>. Open Scriptable, tap <strong>+</strong>, and paste.</p>
         <div class="script-actions">
-          <button id="copy-script">Copy Script to Clipboard</button>
+          <button id="copy-script">Copy Script for My Store</button>
+          <a href="https://raw.githubusercontent.com/chriskaschner/custard-calendar/main/widgets/custard-today.js" target="_blank" rel="noopener">View Script</a>
         </div>
+        <p style="font-size:0.75rem;color:#888;margin-top:0.5rem;">On iOS, if copy doesn't work, tap "View Script" and manually change the slug on line 16.</p>
       </div>
 
       <div class="step-card">
@@ -256,13 +304,13 @@
           <li>Search for <strong>Scriptable</strong>, choose Small or Medium size.</li>
           <li>Long-press the new widget, tap <strong>Edit Widget</strong>.</li>
           <li>Set <strong>Script</strong> to the script you just created.</li>
-          <li>Set <strong>Parameter</strong> to your store slug: <code id="param-slug">mt-horeb</code></li>
         </ol>
+        <p style="font-size:0.75rem;color:#888;margin-top:0.5rem;">No need to set a parameter -- the store is already baked into the script.</p>
       </div>
 
       <div class="step-card">
         <h3><span class="step-number">4</span> Done</h3>
-        <p>The widget refreshes automatically throughout the day. Small shows today's flavor; medium shows a 3-day forecast.</p>
+        <p>The widget refreshes automatically throughout the day. Small shows today's flavor with cone icon and description; medium shows a 3-day schedule with cone icons, flavor names, and descriptions.</p>
       </div>
     </section>
   </main>
@@ -271,30 +319,46 @@
     <p>Not affiliated with any restaurant. Flavor data sourced from restaurant websites.</p>
   </footer>
 
+  <script>var WORKER_BASE = 'https://custard-calendar.chris-kaschner.workers.dev';</script>
+  <script src="cone-renderer.js"></script>
   <script>
-    var WORKER_BASE = 'https://custard-calendar.chris-kaschner.workers.dev';
     var SCRIPT_URL = 'https://raw.githubusercontent.com/chriskaschner/custard-calendar/main/widgets/custard-today.js';
     var allStores = [];
-    var selectedSlug = 'mt-horeb';
+    var selectedSlug = null; // set to random store after load
 
     var stateFilter = document.getElementById('state-filter');
     var citySearch = document.getElementById('city-search');
     var storeList = document.getElementById('store-list');
-    var slugDisplay = document.getElementById('slug-display');
-    var copySlugBtn = document.getElementById('copy-slug');
     var copyScriptBtn = document.getElementById('copy-script');
-    var paramSlug = document.getElementById('param-slug');
+    var scriptStoreLabel = document.getElementById('script-store-label');
 
-    // Load stores
+    // Load stores, pick a random WI store to start
     async function loadStores() {
       try {
         var resp = await fetch('stores.json?v=' + new Date().toISOString().slice(0, 10));
         var data = await resp.json();
         allStores = data.stores || [];
         populateStates();
+
+        // Pick a random WI store as the initial selection
+        var wiStores = allStores.filter(function(s) { return s.state === 'WI'; });
+        var pool = wiStores.length > 0 ? wiStores : allStores;
+        var randomStore = pool[Math.floor(Math.random() * pool.length)];
+        if (randomStore) {
+          selectedSlug = randomStore.slug;
+        } else {
+          selectedSlug = 'mt-horeb';
+        }
+
         renderStores();
+        loadPreview(selectedSlug);
+        updateScriptLabel();
+        prefetchScript();
       } catch (err) {
         storeList.innerHTML = '<div style="padding:0.5rem;color:#c00">Failed to load stores</div>';
+        selectedSlug = 'mt-horeb';
+        loadPreview(selectedSlug);
+        prefetchScript();
       }
     }
 
@@ -344,10 +408,20 @@
       }
     }
 
+    function updateScriptLabel() {
+      var store = allStores.find(function(s) { return s.slug === selectedSlug; });
+      if (store) {
+        var brand = store.brand ? (BRAND_DISPLAY[store.brand] || store.brand) : '';
+        var label = brand ? (brand + ' -- ' + store.city) : (store.city + ', ' + store.state);
+        scriptStoreLabel.textContent = label;
+      } else {
+        scriptStoreLabel.textContent = selectedSlug;
+      }
+    }
+
     function selectStore(slug) {
       selectedSlug = slug;
-      slugDisplay.value = slug;
-      paramSlug.textContent = slug;
+      updateScriptLabel();
       renderStores();
       loadPreview(slug);
     }
@@ -355,54 +429,129 @@
     stateFilter.addEventListener('change', renderStores);
     citySearch.addEventListener('input', renderStores);
 
-    copySlugBtn.addEventListener('click', async function() {
-      try {
-        await navigator.clipboard.writeText(slugDisplay.value);
-        copySlugBtn.textContent = 'Copied!';
-        setTimeout(function() { copySlugBtn.textContent = 'Copy Slug'; }, 2000);
-      } catch (e) {
-        slugDisplay.select();
-        document.execCommand('copy');
-      }
-    });
+    // --- Script copy with slug injection ---
 
-    copyScriptBtn.addEventListener('click', async function() {
-      try {
-        var resp = await fetch(SCRIPT_URL);
-        if (!resp.ok) throw new Error('fetch failed');
-        var text = await resp.text();
-        await navigator.clipboard.writeText(text);
+    function copyToClipboardFallback(text) {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.left = '-9999px';
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      try { document.execCommand('copy'); } catch (e) { /* ignore */ }
+      document.body.removeChild(ta);
+    }
+
+    var cachedScript = null;
+
+    function prefetchScript() {
+      fetch(SCRIPT_URL).then(function(r) { return r.ok ? r.text() : null; }).then(function(t) {
+        cachedScript = t;
+      }).catch(function() {});
+    }
+
+    // Replace the default slug in the script with the user's selected store
+    function personalizeScript(scriptText, slug) {
+      return scriptText.replace(
+        /var slug = \(args\.widgetParameter \|\| ".*?"\)\.trim\(\);/,
+        'var slug = (args.widgetParameter || "' + slug + '").trim();'
+      );
+    }
+
+    function doCopy(text) {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function() {
+          copyScriptBtn.textContent = 'Copied!';
+          setTimeout(function() { copyScriptBtn.textContent = 'Copy Script for My Store'; }, 2000);
+        }).catch(function() {
+          copyToClipboardFallback(text);
+          copyScriptBtn.textContent = 'Copied!';
+          setTimeout(function() { copyScriptBtn.textContent = 'Copy Script for My Store'; }, 2000);
+        });
+      } else {
+        copyToClipboardFallback(text);
         copyScriptBtn.textContent = 'Copied!';
-        setTimeout(function() { copyScriptBtn.textContent = 'Copy Script to Clipboard'; }, 2000);
-      } catch (e) {
-        // Fallback: direct user to raw file
-        window.open(SCRIPT_URL, '_blank');
+        setTimeout(function() { copyScriptBtn.textContent = 'Copy Script for My Store'; }, 2000);
       }
+    }
+
+    copyScriptBtn.addEventListener('click', function() {
+      if (!cachedScript) {
+        window.open(SCRIPT_URL, '_blank');
+        return;
+      }
+      var personalized = personalizeScript(cachedScript, selectedSlug || 'mt-horeb');
+      doCopy(personalized);
     });
 
-    // Live preview
+    // --- Preview ---
+
+    function truncateDesc(desc, maxLen) {
+      if (!desc) return '';
+      if (desc.length <= maxLen) return desc;
+      return desc.substring(0, maxLen - 1).trim() + '\u2026';
+    }
+
     async function loadPreview(slug) {
+      if (typeof loadFlavorColors === 'function') {
+        try { await loadFlavorColors(); } catch (e) { /* best effort */ }
+      }
+
       try {
         var todayResp = await fetch(WORKER_BASE + '/api/v1/today?slug=' + encodeURIComponent(slug));
         if (todayResp.ok) {
           var today = await todayResp.json();
           document.getElementById('preview-flavor').textContent = today.flavor || 'No flavor';
           document.getElementById('preview-date').textContent = formatDateLabel(today.date);
+
+          var descEl = document.getElementById('preview-desc');
+          descEl.textContent = truncateDesc(today.description, 80);
+
+          var coneEl = document.getElementById('preview-cone');
+          if (typeof renderMiniConeSVG === 'function' && today.flavor) {
+            coneEl.innerHTML = renderMiniConeSVG(today.flavor, 6);
+          }
+
           var rarityEl = document.getElementById('preview-rarity');
           if (today.rarity && today.rarity.label) {
             rarityEl.textContent = today.rarity.label.toUpperCase();
           } else {
             rarityEl.textContent = '';
           }
-          // Update brand color
+
           var brandKey = today.brand || "Culver's";
           var brandColors = {
-            "Culver's": '#005696', "Kopp's": '#1a1a1a', "Gille's": '#EBCC35',
-            "Hefner's": '#93BE46', "Kraverz": '#CE742D', "Oscar's": '#BC272C'
+            "Culver's": { bg: '#005696', text: '#fff' },
+            "Kopp's":   { bg: '#1a1a1a', text: '#fff' },
+            "Gille's":  { bg: '#EBCC35', text: '#1a1a1a' },
+            "Hefner's": { bg: '#93BE46', text: '#1a1a1a' },
+            "Kraverz":  { bg: '#CE742D', text: '#fff' },
+            "Oscar's":  { bg: '#BC272C', text: '#fff' }
           };
-          var bg = brandColors[brandKey] || '#005696';
-          document.getElementById('preview-small').style.background = bg;
-          document.querySelector('#preview-small h4').textContent = brandKey;
+          var bc = brandColors[brandKey] || brandColors["Culver's"];
+
+          // Extract city from store name (e.g. "Culver's of Mt. Horeb, WI" -> "Mt. Horeb")
+          var city = '';
+          var storeName = today.store || '';
+          var ofMatch = storeName.match(/of\s+(.+?)(?:,|\s*-)/);
+          if (ofMatch) { city = ofMatch[1].trim(); }
+          else {
+            var commaMatch = storeName.match(/^(.+?),/);
+            if (commaMatch) city = commaMatch[1].trim();
+          }
+          if (!city) city = selectedSlug;
+
+          // Set header bars
+          var smallHeader = document.getElementById('small-header');
+          smallHeader.style.background = bc.bg;
+          smallHeader.style.color = bc.text;
+          document.getElementById('preview-location').textContent = city;
+
+          var medHeader = document.getElementById('medium-header');
+          medHeader.style.background = bc.bg;
+          medHeader.style.color = bc.text;
+          document.getElementById('preview-location-med').textContent = city;
         }
 
         var flavorsResp = await fetch(WORKER_BASE + '/api/v1/flavors?slug=' + encodeURIComponent(slug));
@@ -413,10 +562,22 @@
           var rowsEl = document.getElementById('preview-rows');
           rowsEl.innerHTML = '';
           for (var i = 0; i < upcoming.length; i++) {
-            var row = document.createElement('div');
-            row.className = 'row';
-            row.innerHTML = '<span class="day">' + formatDateLabel(upcoming[i].date) + '</span><span class="fname">' + escapeHtml(upcoming[i].title) + '</span>';
-            rowsEl.appendChild(row);
+            var card = document.createElement('div');
+            card.className = 'flavor-card';
+            var coneSvg = '';
+            if (typeof renderMiniConeSVG === 'function') {
+              coneSvg = renderMiniConeSVG(upcoming[i].title, 4);
+            }
+            var descHtml = upcoming[i].description
+              ? '<div class="fdesc">' + escapeHtml(truncateDesc(upcoming[i].description, 70)) + '</div>'
+              : '';
+            card.innerHTML = '<span class="cone-icon">' + coneSvg + '</span>'
+              + '<div class="card-text">'
+              + '<div class="day">' + formatDateLabel(upcoming[i].date) + '</div>'
+              + '<div class="fname">' + escapeHtml(upcoming[i].title) + '</div>'
+              + descHtml
+              + '</div>';
+            rowsEl.appendChild(card);
           }
         }
       } catch (err) {
@@ -439,7 +600,6 @@
     }
 
     loadStores();
-    loadPreview(selectedSlug);
 
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('sw.js').catch(function() {});

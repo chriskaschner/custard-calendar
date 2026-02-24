@@ -301,7 +301,13 @@ export async function getFlavorsCached(slug, kv, fetchFlavorsFn, isOverride = fa
  */
 export async function handleRequest(request, env, fetchFlavorsFn = defaultFetchFlavors) {
   const url = new URL(request.url);
-  const allowedOrigin = env.ALLOWED_ORIGIN || '*';
+  const requestOrigin = request.headers.get('Origin') || '';
+  const configuredOrigin = env.ALLOWED_ORIGIN || '*';
+  // Allow configured origin + localhost for development
+  let allowedOrigin = configuredOrigin;
+  if (configuredOrigin !== '*' && /^https?:\/\/localhost(:\d+)?$/.test(requestOrigin)) {
+    allowedOrigin = requestOrigin;
+  }
   const corsHeaders = {
     'Access-Control-Allow-Origin': allowedOrigin,
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
