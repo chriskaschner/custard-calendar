@@ -168,7 +168,7 @@ describe('buildRecommendations', () => {
     const confirmedStore = makeStore({ slug: 'a', flavor: 'Chocolate Fudge' });
     const estimatedStore = makeStore({ slug: 'b', flavor: '', lat: 43.001, lon: -89.701 });
     const forecastMap = new Map([
-      ['b', { predictions: [{ flavor: 'Vanilla', probability: 0.3 }] }],
+      ['b', { history_depth: 30, predictions: [{ flavor: 'Vanilla', probability: 0.3 }] }],
     ]);
 
     const result = buildRecommendations({
@@ -230,7 +230,7 @@ describe('buildRecommendations', () => {
   it('includes forecast predictions when no confirmed flavor', () => {
     const store = makeStore({ flavor: '' });
     const forecastMap = new Map([
-      ['mt-horeb', { predictions: [{ flavor: 'Caramel Cashew', probability: 0.25 }] }],
+      ['mt-horeb', { history_depth: 30, predictions: [{ flavor: 'Caramel Cashew', probability: 0.25 }] }],
     ]);
     const result = buildRecommendations({
       stores: [store],
@@ -249,7 +249,7 @@ describe('buildRecommendations', () => {
       flavor: `Flavor ${i}`,
       probability: 0.1,
     }));
-    const forecastMap = new Map([['mt-horeb', { predictions }]]);
+    const forecastMap = new Map([['mt-horeb', { history_depth: 30, predictions }]]);
     const result = buildRecommendations({
       stores: [store],
       userLat: 43.0,
@@ -277,11 +277,45 @@ describe('buildRecommendations', () => {
     expect(result.alternatives.length).toBeLessThanOrEqual(10);
   });
 
+  it('filters out forecast predictions below quality thresholds', () => {
+    const store = makeStore({ flavor: '' });
+    const forecastMap = new Map([
+      ['mt-horeb', {
+        history_depth: 5, // below MIN_HISTORY_DEPTH
+        predictions: [{ flavor: 'Caramel Cashew', probability: 0.25 }],
+      }],
+    ]);
+    const result = buildRecommendations({
+      stores: [store],
+      userLat: 43.0,
+      userLon: -89.7,
+      forecastMap,
+    });
+    expect(result.recommendations).toHaveLength(0);
+  });
+
+  it('filters out forecast predictions with low probability', () => {
+    const store = makeStore({ flavor: '' });
+    const forecastMap = new Map([
+      ['mt-horeb', {
+        history_depth: 30,
+        predictions: [{ flavor: 'Caramel Cashew', probability: 0.01 }],
+      }],
+    ]);
+    const result = buildRecommendations({
+      stores: [store],
+      userLat: 43.0,
+      userLon: -89.7,
+      forecastMap,
+    });
+    expect(result.recommendations).toHaveLength(0);
+  });
+
   it('actions include directions for confirmed, not for forecast', () => {
     const confirmedStore = makeStore({ slug: 'c' });
     const estimatedStore = makeStore({ slug: 'e', flavor: '', lat: 43.001 });
     const forecastMap = new Map([
-      ['e', { predictions: [{ flavor: 'X', probability: 0.5 }] }],
+      ['e', { history_depth: 30, predictions: [{ flavor: 'X', probability: 0.5 }] }],
     ]);
     const result = buildRecommendations({
       stores: [confirmedStore, estimatedStore],

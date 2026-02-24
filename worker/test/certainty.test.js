@@ -1,6 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import {
   TIERS,
+  MIN_PROBABILITY,
+  MIN_HISTORY_DEPTH,
+  MAX_FORECAST_AGE_HOURS,
   determineCertaintyTier,
   certaintyCap,
   tierLabel,
@@ -13,6 +16,14 @@ describe('TIERS constants', () => {
     expect(TIERS.WATCH).toBe('watch');
     expect(TIERS.ESTIMATED).toBe('estimated');
     expect(TIERS.NONE).toBe('none');
+  });
+});
+
+describe('threshold constants', () => {
+  it('exports sensible defaults', () => {
+    expect(MIN_PROBABILITY).toBe(0.02);
+    expect(MIN_HISTORY_DEPTH).toBe(14);
+    expect(MAX_FORECAST_AGE_HOURS).toBe(168);
   });
 });
 
@@ -52,24 +63,71 @@ describe('determineCertaintyTier', () => {
     ).toBe('estimated');
   });
 
-  it('returns ESTIMATED for forecast with low probability', () => {
+  it('returns NONE for forecast with insufficient history depth', () => {
     expect(
       determineCertaintyTier({
         hasConfirmed: false,
         hasForecast: true,
-        probability: 0.02,
-        historyDepth: 10,
+        probability: 0.1,
+        historyDepth: 13, // below MIN_HISTORY_DEPTH (14)
+      })
+    ).toBe('none');
+  });
+
+  it('returns NONE for forecast with probability below threshold', () => {
+    expect(
+      determineCertaintyTier({
+        hasConfirmed: false,
+        hasForecast: true,
+        probability: 0.019, // below MIN_PROBABILITY (0.02)
+        historyDepth: 30,
+      })
+    ).toBe('none');
+  });
+
+  it('returns ESTIMATED at exact threshold boundaries', () => {
+    expect(
+      determineCertaintyTier({
+        hasConfirmed: false,
+        hasForecast: true,
+        probability: MIN_PROBABILITY, // exactly 0.02
+        historyDepth: MIN_HISTORY_DEPTH, // exactly 14
       })
     ).toBe('estimated');
   });
 
-  it('returns ESTIMATED for forecast with shallow history', () => {
+  it('returns NONE for stale forecast', () => {
     expect(
       determineCertaintyTier({
         hasConfirmed: false,
         hasForecast: true,
-        probability: 0.5,
-        historyDepth: 5,
+        probability: 0.3,
+        historyDepth: 50,
+        forecastAgeHours: 169, // > MAX_FORECAST_AGE_HOURS (168)
+      })
+    ).toBe('none');
+  });
+
+  it('returns ESTIMATED for non-stale forecast', () => {
+    expect(
+      determineCertaintyTier({
+        hasConfirmed: false,
+        hasForecast: true,
+        probability: 0.3,
+        historyDepth: 50,
+        forecastAgeHours: 168, // exactly at threshold = not stale (> check)
+      })
+    ).toBe('estimated');
+  });
+
+  it('ignores forecastAgeHours when not a number', () => {
+    expect(
+      determineCertaintyTier({
+        hasConfirmed: false,
+        hasForecast: true,
+        probability: 0.3,
+        historyDepth: 50,
+        forecastAgeHours: undefined,
       })
     ).toBe('estimated');
   });

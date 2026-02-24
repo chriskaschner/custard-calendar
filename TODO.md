@@ -43,9 +43,9 @@ Per-store Calendar Reliability Index from day-over-day confirmed schedule behavi
 
 Use probabilistic fill only when schedule data is missing, incomplete, or beyond known horizon.
 
-- [ ] **Explicit trigger rules** -- define when Estimated fill activates vs. showing "No data."
-- [ ] **UX separation** -- Estimated always labeled, always ranked below Confirmed/Watch. Clear visual distinction.
-- [ ] **Test coverage** -- trigger rules covered by tests to prevent accidental promotion of Estimated to Confirmed.
+- [x] **Explicit trigger rules** -- `worker/src/certainty.js`: MIN_PROBABILITY (0.02, ~3x random), MIN_HISTORY_DEPTH (14 days), MAX_FORECAST_AGE_HOURS (168). Below thresholds = NONE, not misleading Estimated. Planner passes `history_depth` + `forecastAgeHours`. (2026-02-27)
+- [x] **Test coverage** -- 26 certainty tests + 34 planner tests cover all threshold boundaries, staleness, and quality filtering. 452 total tests. (2026-02-27)
+- [x] **UX separation** -- Estimated labeled everywhere (badges, prediction bars, accent bars). Gray accent bar (#bdbdbd) vs brand-colored for Confirmed. 0.85 opacity, dashed borders, no Directions CTA, no description for Estimated cards. Ranked below Confirmed/Watch by certainty score weights (1.0/0.7/0.5). (2026-02-27)
 
 ## Next -- Personality Mad Lib -> Nearby Match
 

@@ -143,11 +143,14 @@ export function buildRecommendations({
     // Forecast predictions (future days)
     const forecast = forecastMap.get(store.slug);
     if (forecast?.predictions) {
+      const forecastAgeHours = forecastAgeInHours(forecast.generated_at);
       for (const pred of forecast.predictions.slice(0, 5)) {
         const tier = determineCertaintyTier({
           hasConfirmed: false,
           hasForecast: true,
           probability: pred.probability || 0,
+          historyDepth: forecast.history_depth || 0,
+          forecastAgeHours,
           reliabilityTier,
         });
         if (tier === TIERS.NONE) continue;
@@ -361,6 +364,17 @@ export async function handlePlan(url, env, corsHeaders) {
 
 function todayStr() {
   return new Date().toISOString().slice(0, 10);
+}
+
+/**
+ * Calculate hours since a forecast was generated.
+ * @param {string|undefined} generatedAt - ISO timestamp
+ * @returns {number|undefined} Hours elapsed, or undefined if no timestamp
+ */
+function forecastAgeInHours(generatedAt) {
+  if (!generatedAt) return undefined;
+  const ms = Date.now() - new Date(generatedAt).getTime();
+  return ms / (1000 * 60 * 60);
 }
 
 /**

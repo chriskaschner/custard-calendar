@@ -709,9 +709,9 @@
       const store = allStores.find(s => s.slug === slug);
       const brand = brandFromSlug(slug);
       const color = BRAND_COLORS[brand] || '#005696';
-      todayAccent.style.background = color;
 
       if (day.type === 'confirmed') {
+        todayAccent.style.background = color;
         todayBadge.textContent = 'Confirmed';
         todayBadge.className = 'day-card-badge day-card-badge-confirmed';
         todayCone.innerHTML = renderMiniConeHDSVG(day.flavor, 5);
@@ -723,6 +723,7 @@
         todayPredictions.innerHTML = '';
         renderRarity(todayData && todayData.rarity);
       } else if (day.type === 'predicted') {
+        todayAccent.style.background = '#bdbdbd';
         todayBadge.textContent = 'Estimated';
         todayBadge.className = 'day-card-badge day-card-badge-estimated';
         todayCone.innerHTML = renderMiniConeHDSVG(day.flavor, 5);
@@ -750,6 +751,7 @@
         }
         renderRarity(null);
       } else {
+        todayAccent.style.background = '#e0e0e0';
         todayBadge.textContent = '';
         todayBadge.className = 'day-card-badge';
         todayCone.innerHTML = '';
