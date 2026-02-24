@@ -122,6 +122,22 @@ uv run python main.py --skip-calendar    # Fetch + tidbyt
 uv run python main.py --skip-tidbyt      # Fetch + calendar
 ```
 
+### Agent Preflight (Parallel Work Safety)
+
+Run this before starting any agent/process in a worktree:
+
+```bash
+./scripts/preflight.sh
+```
+
+For a stricter check across all linked worktrees for this repo:
+
+```bash
+./scripts/preflight.sh --all-worktrees
+```
+
+The preflight ignores `.gitignore`d files and fails if any tracked or untracked non-ignored files are dirty.
+
 ### Worker Development
 
 ```bash

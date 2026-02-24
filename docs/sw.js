@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'custard-v4';
+const CACHE_VERSION = 'custard-v5';
 const STATIC_ASSETS = [
   './',
   './index.html',
@@ -11,6 +11,7 @@ const STATIC_ASSETS = [
   './quizzes/quiz-classic-v1.json',
   './quizzes/quiz-weather-v1.json',
   './quizzes/quiz-date-night-v1.json',
+  './planner-shared.js',
   './cone-renderer.js',
   './style.css',
   './manifest.json',
