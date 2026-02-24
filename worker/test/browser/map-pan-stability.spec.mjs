@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 const COORD_LOCATION = "43.0679,-89.3937";
 
 test("map retains markers when map-move search falls back to coordinate location", async ({ page }) => {
-  await page.route("https://custard-calendar.chris-kaschner.workers.dev/api/v1/geolocate", async (route) => {
+  await page.route("https://custard.chriskaschner.com/api/v1/geolocate", async (route) => {
     await route.fulfill({
       status: 200,
       contentType: "application/json",
@@ -11,7 +11,7 @@ test("map retains markers when map-move search falls back to coordinate location
     });
   });
 
-  await page.route(/https:\/\/custard-calendar\.chris-kaschner\.workers\.dev\/api\/v1\/nearby-flavors\?.*/, async (route) => {
+  await page.route(/https:\/\/custard\.chriskaschner\.com\/api\/v1\/nearby-flavors\?.*/, async (route) => {
     const url = new URL(route.request().url());
     const location = (url.searchParams.get("location") || "").trim();
     const isCoordinateQuery = /^-?\d+(\.\d+)?\s*,\s*-?\d+(\.\d+)?$/.test(location);

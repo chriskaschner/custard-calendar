@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 
 test("index store search supports arrow-key navigation", async ({ page }) => {
   await page.route(
-    "https://custard-calendar.chris-kaschner.workers.dev/api/v1/flavor-colors",
+    "https://custard.chriskaschner.com/api/v1/flavor-colors",
     async (route) => {
       await route.fulfill({
         status: 200,

@@ -320,7 +320,8 @@
     <p>Not affiliated with any restaurant. Flavor data sourced from restaurant websites.</p>
   </footer>
 
-  <script>var WORKER_BASE = 'https://custard-calendar.chris-kaschner.workers.dev';</script>
+  <script src="planner-shared.js"></script>
+  <script>var WORKER_BASE = CustardPlanner.WORKER_BASE;</script>
   <script src="cone-renderer.js"></script>
   <script>
     var SCRIPT_URL = 'https://raw.githubusercontent.com/chriskaschner/custard-calendar/main/widgets/custard-today.js';
@@ -596,9 +597,7 @@
       return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
     }
 
-    function escapeHtml(s) {
-      return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    }
+    var escapeHtml = CustardPlanner.escapeHtml;
 
     loadStores();
 

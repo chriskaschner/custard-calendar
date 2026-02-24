@@ -1,4 +1,4 @@
-const WORKER_BASE = 'https://custard.chriskaschner.com';
+const WORKER_BASE = window.CustardPlanner.WORKER_BASE;
 
 const QUIZ_CONFIG_PATHS = [
   'quizzes/quiz-weather-v1.json',
@@ -311,6 +311,30 @@ function formatMiles(value) {
   return `${value.toFixed(1)} mi`;
 }
 
+/**
+ * Build an encouraging fallback nudge when the archetype flavor isn't nearby.
+ * Points the user toward whatever IS actually available at the nearest store.
+ */
+function buildFallbackEncouragement(nearestStore, nearestDistance) {
+  if (!nearestStore) return null;
+  const flavor = nearestStore.flavor;
+  const storeName = nearestStore.name;
+  const dist = formatMiles(nearestDistance);
+  const distLabel = dist ? ` (${dist})` : '';
+
+  const nudges = [
+    `Or just go grab some ${flavor} at ${storeName}${distLabel} -- no quiz can hold you down!`,
+    `Meanwhile, ${storeName}${distLabel} is scooping ${flavor} right now. Custard waits for no one.`,
+    `Good news: ${storeName}${distLabel} has ${flavor} ready to go. Your taste buds won't know the difference.`,
+    `Plot twist: ${flavor} at ${storeName}${distLabel} is calling your name. Go get it.`,
+  ];
+
+  // Deterministic-ish pick based on flavor + store name length so the same
+  // query yields the same nudge, but different stores rotate the message.
+  const seed = (flavor.length + storeName.length) % nudges.length;
+  return nudges[seed];
+}
+
 function renderAlternates(rows, locationText, radiusMiles) {
   els.resultAlternates.innerHTML = '';
   if (!rows || rows.length === 0) {
@@ -566,14 +590,14 @@ async function runQuiz(evt) {
       els.resultAvailability.textContent =
         `${resultFlavor} is scooping today, but not within ${radiusMiles} miles of your location.${lateNote}`.trim();
 
-      // Show nearest outside-radius store
+      // Show nearest outside-radius store serving the archetype flavor
       if (nearestOutside) {
         const outsideDist = formatMiles(nearestOutsideDistance);
         els.resultNearestOutside.textContent =
           `Nearest: ${nearestOutside.name} (${outsideDist}).`;
         els.resultNearestOutside.hidden = false;
 
-        // Offer alert + calendar CTAs even for outside-radius (no directions)
+        // Offer alert + calendar CTAs for the outside-radius store
         els.resultCtas.innerHTML = CustardPlanner.actionCTAsHTML({
           slug: nearestOutside.slug,
           storeName: nearestOutside.name,
@@ -584,22 +608,60 @@ async function runQuiz(evt) {
         });
       }
 
+      // Encourage the user toward whatever IS within radius
+      const outsideNudge = buildFallbackEncouragement(nearestAnyStore, nearestAnyDistance);
+      if (nearestAnyStore && outsideNudge) {
+        const coneSvg = typeof window.renderMiniConeSVG === 'function'
+          ? `<span class="nearest-any-cone">${window.renderMiniConeSVG(nearestAnyStore.flavor, 4)}</span>` : '';
+        // Append the encouragement after any existing CTAs
+        els.resultCtas.innerHTML +=
+          `<div class="fallback-encouragement">${coneSvg}<span>${outsideNudge}</span></div>` +
+          CustardPlanner.actionCTAsHTML({
+            slug: nearestAnyStore.slug,
+            storeName: nearestAnyStore.name,
+            lat: Number(nearestAnyStore.lat),
+            lon: Number(nearestAnyStore.lon),
+            workerBase: WORKER_BASE,
+            actions: ['directions'],
+          });
+      }
+
       setStatus('Your flavor is available today, just outside your drive radius.', 'neutral');
     } else {
       const tomorrow = lateNight ? ' Check back tomorrow morning for fresh forecasts.' : ' Check back tomorrow.';
       els.resultAvailability.textContent =
         `Your archetype flavor ${fallbackFlavor} is not scooping nearby today.${tomorrow}`.trim();
 
-      // Offer alert link to the general alerts page
-      els.resultCtas.innerHTML = '<div class="cta-row"><a href="alerts.html" class="cta-link cta-alert">Set Flavor Alert</a></div>';
-
-      setStatus('No live matches today; showing your archetype flavor for reference.', 'neutral');
+      // Instead of a dead-end, nudge toward whatever IS available at the nearest store
+      const fallbackNudge = buildFallbackEncouragement(nearestAnyStore, nearestAnyDistance);
+      if (nearestAnyStore && fallbackNudge) {
+        const coneSvg = typeof window.renderMiniConeSVG === 'function'
+          ? `<span class="nearest-any-cone">${window.renderMiniConeSVG(nearestAnyStore.flavor, 4)}</span>` : '';
+        els.resultCtas.innerHTML =
+          `<div class="fallback-encouragement">${coneSvg}<span>${fallbackNudge}</span></div>` +
+          CustardPlanner.actionCTAsHTML({
+            slug: nearestAnyStore.slug,
+            storeName: nearestAnyStore.name,
+            lat: Number(nearestAnyStore.lat),
+            lon: Number(nearestAnyStore.lon),
+            workerBase: WORKER_BASE,
+            actions: ['directions', 'alert', 'calendar'],
+          });
+        setStatus('No archetype match today, but there is custard nearby worth the trip.', 'neutral');
+      } else {
+        // Truly nothing within radius -- offer general alert link
+        els.resultCtas.innerHTML = '<div class="cta-row"><a href="alerts.html" class="cta-link cta-alert">Set Flavor Alert</a></div>';
+        setStatus('No live matches today; showing your archetype flavor for reference.', 'neutral');
+      }
     }
 
-    // Render nearest store within radius serving any flavor
+    // Render nearest store within radius serving any flavor.
+    // Skip when a fallback encouragement already features this store (no-match
+    // and outside-radius branches) to avoid duplicating the same info.
+    const fallbackAlreadyShown = !resultFlavor || (resultFlavor && !bestStore);
     if (els.resultNearestAny) {
       els.resultNearestAny.hidden = true;
-      if (nearestAnyStore) {
+      if (nearestAnyStore && !fallbackAlreadyShown) {
         const dist = formatMiles(nearestAnyDistance);
         const coneSvg = typeof window.renderMiniConeSVG === 'function'
           ? `<span class="nearest-any-cone">${window.renderMiniConeSVG(nearestAnyStore.flavor, 4)}</span>` : '';
@@ -628,6 +690,10 @@ async function runQuiz(evt) {
       radius_miles: radiusMiles,
       has_radius_match: Boolean(bestStore),
       alternates_count: alternateRows.length,
+      fallback_encouragement_shown: Boolean(
+        (!resultFlavor || (resultFlavor && !bestStore)) && nearestAnyStore
+      ),
+      fallback_store_slug: (!resultFlavor || (resultFlavor && !bestStore)) ? (nearestAnyStore?.slug || null) : null,
       trait_scores: traitScores,
     });
 

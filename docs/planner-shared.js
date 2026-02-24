@@ -10,6 +10,12 @@ var CustardPlanner = (function () {
   'use strict';
 
   // ---------------------------------------------------------------------------
+  // Worker base URL (canonical origin for all API calls)
+  // ---------------------------------------------------------------------------
+
+  var WORKER_BASE = 'https://custard.chriskaschner.com';
+
+  // ---------------------------------------------------------------------------
   // Utilities
   // ---------------------------------------------------------------------------
 
@@ -485,6 +491,9 @@ var CustardPlanner = (function () {
   // ---------------------------------------------------------------------------
 
   return {
+    // Worker base URL
+    WORKER_BASE: WORKER_BASE,
+
     // Brand
     BRAND_COLORS: BRAND_COLORS,
     BRAND_DISPLAY: BRAND_DISPLAY,

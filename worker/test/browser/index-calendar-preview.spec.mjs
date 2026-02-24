@@ -4,7 +4,7 @@ test("index calendar preview renders and updates with selected store context", a
   const todayIso = new Date().toISOString().slice(0, 10);
 
   await page.route(
-    "https://custard-calendar.chris-kaschner.workers.dev/api/v1/flavor-colors",
+    "https://custard.chriskaschner.com/api/v1/flavor-colors",
     async (route) => {
       await route.fulfill({
         status: 200,

@@ -245,8 +245,9 @@
     }
   </style>
 
+  <script src="planner-shared.js"></script>
   <script>
-    const WORKER_BASE = 'https://custard-calendar.chris-kaschner.workers.dev';
+    const WORKER_BASE = CustardPlanner.WORKER_BASE;
 
     const BRAND_DISPLAY = {
       kopps: "Kopp's",
@@ -463,9 +464,7 @@
       subscribeStatus.hidden = false;
     }
 
-    function escapeHtml(str) {
-      return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    }
+    var escapeHtml = CustardPlanner.escapeHtml;
 
     // Event handlers
     stateFilter.addEventListener('change', renderStoreList);

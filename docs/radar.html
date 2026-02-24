@@ -398,9 +398,9 @@
     }
   </style>
 
-  <script>var WORKER_BASE = 'https://custard-calendar.chris-kaschner.workers.dev';</script>
-  <script src="cone-renderer.js"></script>
   <script src="planner-shared.js"></script>
+  <script>var WORKER_BASE = CustardPlanner.WORKER_BASE;</script>
+  <script src="cone-renderer.js"></script>
   <script>
     const STORAGE_KEY = 'custard-radar';
     const MAX_FAVORITES = 3;
@@ -479,9 +479,7 @@
       return label;
     }
 
-    function escapeHtml(str) {
-      return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    }
+    var escapeHtml = CustardPlanner.escapeHtml;
 
     var normalize = CustardPlanner.normalize;
 

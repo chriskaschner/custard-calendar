@@ -4,7 +4,7 @@ test("forecast fronts page loads with mocked nearby + forecast data", async ({ p
   const today = new Date().toISOString().slice(0, 10);
   const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
-  await page.route("https://custard-calendar.chris-kaschner.workers.dev/api/v1/geolocate", async (route) => {
+  await page.route("https://custard.chriskaschner.com/api/v1/geolocate", async (route) => {
     await route.fulfill({
       status: 200,
       contentType: "application/json",
@@ -12,7 +12,7 @@ test("forecast fronts page loads with mocked nearby + forecast data", async ({ p
     });
   });
 
-  await page.route(/https:\/\/custard-calendar\.chris-kaschner\.workers\.dev\/api\/v1\/nearby-flavors\?.*/, async (route) => {
+  await page.route(/https:\/\/custard\.chriskaschner\.com\/api\/v1\/nearby-flavors\?.*/, async (route) => {
     await route.fulfill({
       status: 200,
       contentType: "application/json",
@@ -47,7 +47,7 @@ test("forecast fronts page loads with mocked nearby + forecast data", async ({ p
     });
   });
 
-  await page.route(/https:\/\/custard-calendar\.chris-kaschner\.workers\.dev\/api\/v1\/forecast\/.*/, async (route) => {
+  await page.route(/https:\/\/custard\.chriskaschner\.com\/api\/v1\/forecast\/.*/, async (route) => {
     await route.fulfill({
       status: 200,
       contentType: "application/json",

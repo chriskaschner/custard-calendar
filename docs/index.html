@@ -213,9 +213,9 @@
     <p style="margin-top:0.5rem;">Not affiliated with any restaurant. Flavor data sourced from restaurant websites.</p>
   </footer>
 
-  <script>var WORKER_BASE = 'https://custard-calendar.chris-kaschner.workers.dev';</script>
-  <script src="cone-renderer.js"></script>
   <script src="planner-shared.js"></script>
+  <script>var WORKER_BASE = CustardPlanner.WORKER_BASE;</script>
+  <script src="cone-renderer.js"></script>
   <script>
     var BRAND_COLORS = CustardPlanner.BRAND_COLORS;
     var BRAND_DISPLAY = CustardPlanner.BRAND_DISPLAY;
@@ -267,10 +267,7 @@
     const sampleAppleLocation = document.getElementById('sample-apple-location');
 
     // --- Utility ---
-    function escapeHtml(str) {
-      if (!str) return '';
-      return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    }
+    var escapeHtml = CustardPlanner.escapeHtml;
 
     function toISODate(d) {
       return d.toISOString().slice(0, 10);

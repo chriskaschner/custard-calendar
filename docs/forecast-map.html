@@ -147,7 +147,7 @@
 
   <script src="planner-shared.js"></script>
   <script>
-    const WORKER_BASE = 'https://custard-calendar.chris-kaschner.workers.dev';
+    const WORKER_BASE = CustardPlanner.WORKER_BASE;
 
     const frontsLocationInput = document.getElementById('fronts-location');
     const frontsGeoBtn = document.getElementById('fronts-geo');
@@ -215,15 +215,7 @@
 
     var normalizeFlavor = CustardPlanner.normalize;
 
-    function escapeHtml(text) {
-      if (!text) return '';
-      return String(text)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
-    }
+    var escapeHtml = CustardPlanner.escapeHtml;
 
     function currentDateAtNoon() {
       const now = new Date();
