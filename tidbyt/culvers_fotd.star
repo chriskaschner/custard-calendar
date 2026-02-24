@@ -7,15 +7,16 @@ Data is fetched by the Python orchestrator and passed via pixlet render argument
 load("render.star", "render")
 load("schema.star", "schema")
 
-# Brand theming — drives header color and title text
+# Brand theming — drives header color, text contrast, and title text.
+# text_color provides contrast-safe readability on light brand backgrounds.
 BRAND_CONFIG = {
-    "culvers":  {"color": "#003366", "label": "Culver's FOTD"},
-    "kopps":    {"color": "#000000", "label": "Kopp's FOTD"},
-    "gilles":   {"color": "#EBCC35", "label": "Gille's FOTD"},
-    "hefners":  {"color": "#93BE46", "label": "Hefner's FOTD"},
-    "kraverz":  {"color": "#CE742D", "label": "Kraverz FOTD"},
-    "oscars":   {"color": "#BC272C", "label": "Oscar's FOTD"},
-    "generic":  {"color": "#6B4226", "label": "Custard FOTD"},
+    "culvers":  {"color": "#003366", "text": "#FFFFFF", "label": "Culver's FOTD"},
+    "kopps":    {"color": "#000000", "text": "#FFFFFF", "label": "Kopp's FOTD"},
+    "gilles":   {"color": "#EBCC35", "text": "#000000", "label": "Gille's FOTD"},
+    "hefners":  {"color": "#93BE46", "text": "#000000", "label": "Hefner's FOTD"},
+    "kraverz":  {"color": "#CE742D", "text": "#FFFFFF", "label": "Kraverz FOTD"},
+    "oscars":   {"color": "#BC272C", "text": "#FFFFFF", "label": "Oscar's FOTD"},
+    "generic":  {"color": "#6B4226", "text": "#FFFFFF", "label": "Custard FOTD"},
 }
 
 # Base scoop colors
@@ -457,15 +458,20 @@ def create_mini_cone(profile):
             # Scoop base fill + cone + tip
             render.Column(
                 children = [
-                    # Scoop row 1: 5px centered (no outline)
+                    # Scoop row 0: 3px crown (rounder top)
+                    render.Padding(
+                        pad = (3, 0, 0, 0),
+                        child = render.Box(width = 3, height = 1, color = base),
+                    ),
+                    # Scoop row 1: 5px taper
                     render.Padding(
                         pad = (2, 0, 0, 0),
                         child = render.Box(width = 5, height = 1, color = base),
                     ),
-                    # Scoop rows 2-6: 7px centered
+                    # Scoop rows 2-5: 7px full width
                     render.Padding(
                         pad = (1, 0, 0, 0),
-                        child = render.Box(width = 7, height = 5, color = base),
+                        child = render.Box(width = 7, height = 4, color = base),
                     ),
                     # Cone row 1: CWCWC at x=2
                     render.Padding(
@@ -673,7 +679,7 @@ def format_flavor_for_display(name, max_chars = 5):
     else:
         return [name[:max_chars]]
 
-def create_three_day_view(flavors, location_name, brand_color = "#003366"):
+def create_three_day_view(flavors, location_name, brand_color = "#003366", text_color = "#FFFFFF"):
     """Create 3-day forecast with mini cones and flavor names.
 
     Pixel budget (32px):
@@ -754,10 +760,13 @@ def create_three_day_view(flavors, location_name, brand_color = "#003366"):
                             render.Box(
                                 width = 64,
                                 height = 6,
-                                child = render.Text(
-                                    content = location_name,
-                                    font = "tom-thumb",
-                                    color = "#FFFFFF",
+                                child = render.Marquee(
+                                    width = 64,
+                                    child = render.Text(
+                                        content = location_name,
+                                        font = "tom-thumb",
+                                        color = text_color,
+                                    ),
                                 ),
                             ),
                         ],
@@ -805,14 +814,19 @@ def main(config):
 
     # Choose view based on config
     if view_mode == "three_day":
-        return render.Root(child = create_three_day_view(flavors, location_name, brand_cfg["color"]))
+        return render.Root(
+            delay = 75,
+            child = create_three_day_view(flavors, location_name, brand_cfg["color"], brand_cfg.get("text", "#FFFFFF")),
+        )
     else:
         # Single day view
         flavor_name = flavors[0]["name"]
         profile = get_flavor_profile(flavor_name)
         icon = create_ice_cream_icon(profile)
 
+        text_color = brand_cfg.get("text", "#FFFFFF")
         return render.Root(
+            delay = 75,
             child = render.Column(
                 main_align = "space_between",
                 cross_align = "center",
@@ -827,7 +841,7 @@ def main(config):
                             child = render.Text(
                                 content = brand_cfg["label"] + " - " + location_name,
                                 font = "tom-thumb",
-                                color = "#FFFFFF",
+                                color = text_color,
                             ),
                         ),
                     ),

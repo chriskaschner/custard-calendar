@@ -163,9 +163,9 @@ export function renderConeSVG(flavorName, scale = 1) {
 
   // Scoop (rows 0-5, rounded top and bottom)
   const scoopRows = [
-    [2, 6],   // row 0: cols 2-6 (rounded top)
-    [1, 7],   // row 1: cols 1-7
-    [1, 7],   // row 2
+    [3, 5],   // row 0: cols 3-5 (narrow crown)
+    [2, 6],   // row 1: cols 2-6 (taper)
+    [1, 7],   // row 2: cols 1-7 (full width)
     [1, 7],   // row 3
     [1, 7],   // row 4
     [2, 6],   // row 5: cols 2-6 (rounded bottom)

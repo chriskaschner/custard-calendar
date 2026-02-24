@@ -468,13 +468,14 @@ details ol {
   width: 36px;
   height: 44px;
   image-rendering: pixelated;
+  overflow: visible;
   filter:
-    /* Strong edge contrast so cones stay visible on light and dark map tiles */
-    drop-shadow(1px 0 0 rgba(0, 0, 0, 0.94))
-    drop-shadow(-1px 0 0 rgba(0, 0, 0, 0.94))
-    drop-shadow(0 1px 0 rgba(0, 0, 0, 0.94))
-    drop-shadow(0 -1px 0 rgba(0, 0, 0, 0.94))
-    drop-shadow(0 0 1px rgba(255, 255, 255, 0.9))
+    /* Softer edge outline avoids visible bounding-box artifact on transparent pixels */
+    drop-shadow(1px 0 0 rgba(0, 0, 0, 0.65))
+    drop-shadow(-1px 0 0 rgba(0, 0, 0, 0.65))
+    drop-shadow(0 1px 0 rgba(0, 0, 0, 0.65))
+    drop-shadow(0 -1px 0 rgba(0, 0, 0, 0.65))
+    drop-shadow(0 0 1px rgba(255, 255, 255, 0.7))
     drop-shadow(0 2px 0 var(--marker-ring, #003366))
     drop-shadow(0 7px 7px rgba(0, 0, 0, 0.4))
     drop-shadow(0 0 7px var(--marker-state-glow, transparent));
