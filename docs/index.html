@@ -48,6 +48,7 @@
       <a href="radar.html">Radar</a>
       <a href="alerts.html">Alerts</a>
       <a href="siri.html">Siri</a>
+      <a href="forecast-map.html">Fronts</a>
     </nav>
   </header>
 
@@ -131,41 +132,43 @@
       <div class="week-strip" id="week-strip"></div>
     </section>
 
-    <!-- Quick actions -->
-    <section id="actions-section">
-      <div class="quick-actions">
-        <a href="calendar.html" class="action-card">
-          <span class="action-icon">&#x1F4C5;</span>
-          <span class="action-label">Calendar</span>
-          <span class="action-hint">Subscribe to daily flavors</span>
-        </a>
-        <a href="map.html" class="action-card">
-          <span class="action-icon">&#x1F5FA;</span>
-          <span class="action-label">Map</span>
-          <span class="action-hint">Find shops nearby</span>
-        </a>
-        <a href="alerts.html" class="action-card">
-          <span class="action-icon">&#x1F514;</span>
-          <span class="action-label">Alerts</span>
-          <span class="action-hint">Email when favorites hit</span>
-        </a>
-        <a href="siri.html" class="action-card">
-          <span class="action-icon">&#x1F3A4;</span>
-          <span class="action-label">Siri</span>
-          <span class="action-hint">Ask Siri for today's flavor</span>
-        </a>
-        <a href="radar.html" class="action-card">
-          <span class="action-icon">&#x1F4CA;</span>
-          <span class="action-label">Radar</span>
-          <span class="action-hint">7-day deep forecast</span>
-        </a>
-        <a href="forecast-map.html" class="action-card">
-          <span class="action-icon">&#x1F30E;</span>
-          <span class="action-label">Fronts</span>
-          <span class="action-hint">Weather-map flavor view</span>
-        </a>
+    <section id="calendar-preview-section" class="calendar-preview-section">
+      <div class="calendar-preview-head">
+        <div>
+          <h2>Calendar Preview</h2>
+          <p>How your flavor subscription appears in calendar apps.</p>
+        </div>
+        <a href="calendar.html" class="calendar-preview-link">Set up subscription</a>
+      </div>
+      <div class="calendar-preview-grid">
+        <article class="calendar-preview-surface">
+          <h3 class="calendar-preview-app">Google Calendar style</h3>
+          <div class="cal-event calendar-preview-event">
+            <div id="sample-google-color" class="cal-event-color"></div>
+            <div class="cal-event-body">
+              <div id="sample-google-title" class="cal-event-title">🍦 Flavor Preview</div>
+              <div id="sample-google-date" class="cal-event-date"></div>
+              <div id="sample-google-location" class="cal-event-location"></div>
+              <div id="sample-google-desc" class="cal-event-desc"></div>
+            </div>
+          </div>
+        </article>
+        <article class="calendar-preview-surface">
+          <h3 class="calendar-preview-app">Apple Calendar style</h3>
+          <div class="apple-cal-card">
+            <div class="apple-cal-row">
+              <span id="sample-apple-dot" class="apple-cal-dot"></span>
+              <div class="apple-cal-main">
+                <div id="sample-apple-title" class="apple-cal-title">Flavor Preview</div>
+                <div id="sample-apple-meta" class="apple-cal-meta"></div>
+                <div id="sample-apple-location" class="apple-cal-location"></div>
+              </div>
+            </div>
+          </div>
+        </article>
       </div>
     </section>
+
   </main>
 
   <footer>
@@ -406,6 +409,8 @@
     let currentSlug = null;
     let userLat = null;
     let userLng = null;
+    let dropdownStores = [];
+    let dropdownActiveIndex = -1;
 
     // DOM refs
     const storeSearch = document.getElementById('store-search');
@@ -435,6 +440,15 @@
     const weekFreshness = document.getElementById('week-freshness');
     const quickStartWrap = document.getElementById('quick-start-wrap');
     const quickStartStores = document.getElementById('quick-start-stores');
+    const sampleGoogleColor = document.getElementById('sample-google-color');
+    const sampleGoogleTitle = document.getElementById('sample-google-title');
+    const sampleGoogleDate = document.getElementById('sample-google-date');
+    const sampleGoogleLocation = document.getElementById('sample-google-location');
+    const sampleGoogleDesc = document.getElementById('sample-google-desc');
+    const sampleAppleDot = document.getElementById('sample-apple-dot');
+    const sampleAppleTitle = document.getElementById('sample-apple-title');
+    const sampleAppleMeta = document.getElementById('sample-apple-meta');
+    const sampleAppleLocation = document.getElementById('sample-apple-location');
 
     // --- Utility ---
     function escapeHtml(str) {
@@ -462,6 +476,49 @@
       if (hrs < 24) return hrs + ' hr ago';
       const days = Math.floor(hrs / 24);
       return days + 'd ago';
+    }
+
+    function formatLongDateFromISO(dateStr) {
+      const d = dateStr ? new Date(dateStr + 'T12:00:00') : new Date();
+      return d.toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      });
+    }
+
+    function updateCalendarPreview(day, store, accentColor) {
+      if (!sampleGoogleTitle || !sampleAppleTitle) return;
+
+      const dayDate = day && day.date ? day.date : toISODate(new Date());
+      const flavor = day && day.flavor ? day.flavor : 'Flavor Preview';
+      let status = 'Forecast';
+      if (day && day.type === 'confirmed') status = 'Confirmed';
+      if (day && day.type === 'predicted') status = 'Predicted';
+
+      const location = store
+        ? (store.address ? store.address + ', ' : '') + store.city + ', ' + store.state
+        : 'Select a store to personalize this preview.';
+
+      let detail = 'Daily flavor events sync automatically when you subscribe.';
+      if (day && day.type === 'confirmed' && day.description) {
+        detail = day.description;
+      } else if (day && day.type === 'predicted') {
+        detail = 'Likely flavor forecast based on recent schedule patterns.';
+      }
+
+      const color = accentColor || '#005696';
+      sampleGoogleColor.style.background = color;
+      sampleGoogleTitle.textContent = '\u{1F366} ' + flavor;
+      sampleGoogleDate.textContent = formatLongDateFromISO(dayDate) + ' · All-day';
+      sampleGoogleLocation.textContent = '\u{1F4CD} ' + location;
+      sampleGoogleDesc.textContent = detail + ' Status: ' + status + '.';
+
+      sampleAppleDot.style.background = color;
+      sampleAppleTitle.textContent = flavor;
+      sampleAppleMeta.textContent = formatLongDateFromISO(dayDate) + ' · ' + status;
+      sampleAppleLocation.textContent = location;
     }
 
     function haversine(lat1, lng1, lat2, lng2) {
@@ -575,24 +632,78 @@
       return filtered.slice(0, 8);
     }
 
+    function hideStoreDropdown() {
+      storeDropdown.hidden = true;
+      dropdownStores = [];
+      dropdownActiveIndex = -1;
+      storeSearch.setAttribute('aria-expanded', 'false');
+      storeSearch.removeAttribute('aria-activedescendant');
+    }
+
+    function setActiveDropdownIndex(nextIndex) {
+      if (dropdownStores.length === 0) return;
+      const clamped = Math.max(0, Math.min(nextIndex, dropdownStores.length - 1));
+      dropdownActiveIndex = clamped;
+      const items = storeDropdown.querySelectorAll('.store-dropdown-item');
+      items.forEach((item, idx) => {
+        const isActive = idx === dropdownActiveIndex;
+        item.classList.toggle('is-active', isActive);
+        item.setAttribute('aria-selected', isActive ? 'true' : 'false');
+        if (isActive) {
+          storeSearch.setAttribute('aria-activedescendant', item.id);
+          item.scrollIntoView({ block: 'nearest' });
+        }
+      });
+    }
+
+    function moveDropdownSelection(delta) {
+      if (storeDropdown.hidden || dropdownStores.length === 0) return;
+      if (dropdownActiveIndex === -1) {
+        setActiveDropdownIndex(delta > 0 ? 0 : dropdownStores.length - 1);
+        return;
+      }
+      setActiveDropdownIndex(dropdownActiveIndex + delta);
+    }
+
+    function selectActiveDropdownStore() {
+      if (dropdownStores.length === 0) return false;
+      const activeIndex = dropdownActiveIndex >= 0 ? dropdownActiveIndex : 0;
+      const store = dropdownStores[activeIndex];
+      if (!store) return false;
+      selectStore(store.slug);
+      return true;
+    }
+
     function renderDropdown(stores) {
-      if (stores.length === 0) {
-        storeDropdown.hidden = true;
+      dropdownStores = stores.slice();
+      dropdownActiveIndex = -1;
+      storeSearch.removeAttribute('aria-activedescendant');
+      if (dropdownStores.length === 0) {
+        hideStoreDropdown();
         return;
       }
       storeDropdown.innerHTML = '';
-      for (const store of stores) {
+      storeDropdown.setAttribute('role', 'listbox');
+      for (let i = 0; i < dropdownStores.length; i++) {
+        const store = dropdownStores[i];
         const item = document.createElement('div');
         item.className = 'store-dropdown-item';
+        item.id = 'store-dropdown-item-' + i;
+        item.setAttribute('role', 'option');
+        item.setAttribute('aria-selected', 'false');
+        item.dataset.index = String(i);
         const brand = store.brand ? (BRAND_DISPLAY[store.brand] || store.brand) : '';
         const prefix = brand ? brand + ' \u2014 ' : '';
         const dist = (store._dist != null && store._dist !== Infinity) ? ' (' + store._dist.toFixed(1) + ' mi)' : '';
         item.innerHTML = '<div class="store-dropdown-name">' + escapeHtml(prefix + store.name) + '</div>'
           + '<div class="store-dropdown-detail">' + escapeHtml(store.city + ', ' + store.state + ' \u2014 ' + (store.address || '')) + escapeHtml(dist) + '</div>';
+        item.addEventListener('mouseenter', () => setActiveDropdownIndex(i));
+        item.addEventListener('mousedown', (event) => event.preventDefault());
         item.addEventListener('click', () => selectStore(store.slug));
         storeDropdown.appendChild(item);
       }
       storeDropdown.hidden = false;
+      storeSearch.setAttribute('aria-expanded', 'true');
     }
 
     function selectStore(slug) {
@@ -608,8 +719,11 @@
       currentStoreName.textContent = brand + store.city + ', ' + store.state + ' \u2014 ' + (store.address || '');
       currentStoreEl.hidden = false;
       storeSearch.value = '';
-      storeDropdown.hidden = true;
+      hideStoreDropdown();
       emptyState.hidden = true;
+
+      const brandKey = store.brand || brandFromSlug(slug);
+      updateCalendarPreview(null, store, BRAND_COLORS[brandKey] || '#005696');
 
       loadForecast(slug);
     }
@@ -617,6 +731,7 @@
     function showStorePicker() {
       currentStoreEl.hidden = true;
       storeSearch.value = '';
+      hideStoreDropdown();
       storeSearch.focus();
     }
 
@@ -833,6 +948,7 @@
       todayFreshness.textContent = freshness;
 
       todaySection.hidden = false;
+      updateCalendarPreview(day, store, color);
     }
 
     function confidenceStripClass(day) {
@@ -917,7 +1033,7 @@
     storeSearch.addEventListener('input', () => {
       const q = storeSearch.value.trim();
       if (q.length < 2) {
-        storeDropdown.hidden = true;
+        hideStoreDropdown();
         return;
       }
       const results = filterStores(q);
@@ -932,10 +1048,44 @@
       }
     });
 
+    storeSearch.addEventListener('keydown', (event) => {
+      if (event.key === 'ArrowDown') {
+        if (storeDropdown.hidden) {
+          const q = storeSearch.value.trim();
+          if (q.length >= 2) renderDropdown(filterStores(q));
+        }
+        if (!storeDropdown.hidden) {
+          event.preventDefault();
+          moveDropdownSelection(1);
+        }
+        return;
+      }
+
+      if (event.key === 'ArrowUp') {
+        if (!storeDropdown.hidden) {
+          event.preventDefault();
+          moveDropdownSelection(-1);
+        }
+        return;
+      }
+
+      if (event.key === 'Enter') {
+        if (!storeDropdown.hidden && dropdownStores.length > 0) {
+          event.preventDefault();
+          selectActiveDropdownStore();
+        }
+        return;
+      }
+
+      if (event.key === 'Escape') {
+        hideStoreDropdown();
+      }
+    });
+
     // Close dropdown when clicking outside
     document.addEventListener('click', (e) => {
       if (!e.target.closest('.location-bar-inner')) {
-        storeDropdown.hidden = true;
+        hideStoreDropdown();
       }
     });
 
@@ -959,6 +1109,7 @@
     async function init() {
       await Promise.all([loadStores(), loadFlavorColors()]);
       renderQuickStartStores();
+      updateCalendarPreview(null, null, '#005696');
 
       // Check localStorage for a saved store
       let savedSlug = null;
