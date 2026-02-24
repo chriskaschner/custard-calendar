@@ -775,6 +775,14 @@ describe('normalizePath', () => {
     expect(normalizePath('/api/v1/alerts/subscribe')).toEqual({ canonical: '/api/alerts/subscribe', isVersioned: true });
   });
 
+  it('maps /api/v1/quiz/events to /api/quiz/events', () => {
+    expect(normalizePath('/api/v1/quiz/events')).toEqual({ canonical: '/api/quiz/events', isVersioned: true });
+  });
+
+  it('maps /api/v1/quiz/personality-index to /api/quiz/personality-index', () => {
+    expect(normalizePath('/api/v1/quiz/personality-index')).toEqual({ canonical: '/api/quiz/personality-index', isVersioned: true });
+  });
+
   it('maps /v1/calendar.ics to /calendar.ics', () => {
     expect(normalizePath('/v1/calendar.ics')).toEqual({ canonical: '/calendar.ics', isVersioned: true });
   });
@@ -857,6 +865,40 @@ describe('API v1 versioned endpoints', () => {
 
     expect(res.status).toBe(200);
     expect(res.headers.get('API-Version')).toBeNull();
+  });
+});
+
+describe('/api/v1/quiz endpoints', () => {
+  function createQuizMockDB() {
+    return {
+      prepare: vi.fn((sql) => ({
+        bind: vi.fn((...args) => ({
+          run: vi.fn(async () => ({ success: true, sql, args })),
+          first: vi.fn(async () => ({ events: 1, matched_events: 1 })),
+          all: vi.fn(async () => ({ results: [] })),
+        })),
+      })),
+    };
+  }
+
+  it('routes /api/v1/quiz/events and adds API-Version header', async () => {
+    const env = { FLAVOR_CACHE: createMockKV(), DB: createQuizMockDB(), _validSlugsOverride: TEST_VALID_SLUGS };
+    const req = new Request('https://example.com/api/v1/quiz/events', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        quiz_id: 'weather-v1',
+        event_type: 'quiz_result',
+        archetype: 'cool-front',
+        result_flavor: 'Mint Explosion',
+      }),
+    });
+
+    const res = await handleRequest(req, env, createMockFetchFlavors());
+    expect(res.status).toBe(202);
+    expect(res.headers.get('API-Version')).toBe('1');
+    const body = await res.json();
+    expect(body.ok).toBe(true);
   });
 });
 

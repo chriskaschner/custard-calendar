@@ -1,0 +1,58 @@
+{
+  "id": "classic-v1",
+  "name": "Flavor Personality",
+  "title": "What Flavor of the Day Are You?",
+  "description": "Classic personality quiz with custard-trait scoring and local availability matching.",
+  "questions": [
+    {
+      "id": "mood-color",
+      "prompt": "What color best describes your mood?",
+      "options": [
+        { "id": "mint", "label": "Mint green", "traits": { "calm": 2, "analytical": 1 } },
+        { "id": "caramel", "label": "Caramel gold", "traits": { "classic": 2, "romantic": 1 } },
+        { "id": "berry", "label": "Berry red", "traits": { "romantic": 2, "social": 1 } },
+        { "id": "espresso", "label": "Dark espresso", "traits": { "bold": 2, "energetic": 1 } }
+      ]
+    },
+    {
+      "id": "go-to-snack",
+      "prompt": "What is your go-to snack?",
+      "options": [
+        { "id": "nuts", "label": "Salted nuts", "traits": { "classic": 1, "analytical": 1 } },
+        { "id": "choco", "label": "Chocolate anything", "traits": { "bold": 2, "energetic": 1 } },
+        { "id": "fruit", "label": "Fresh fruit", "traits": { "adventurous": 1, "romantic": 1, "calm": 1 } },
+        { "id": "cookies", "label": "Cookies and cream", "traits": { "social": 2, "classic": 1 } }
+      ]
+    },
+    {
+      "id": "band-role",
+      "prompt": "You joined your favorite band. What do you play?",
+      "options": [
+        { "id": "drums", "label": "Drums", "traits": { "energetic": 2, "bold": 1 } },
+        { "id": "bass", "label": "Bass", "traits": { "calm": 1, "analytical": 2 } },
+        { "id": "guitar", "label": "Guitar", "traits": { "social": 1, "bold": 1, "adventurous": 1 } },
+        { "id": "keys", "label": "Keys", "traits": { "classic": 1, "romantic": 2 } }
+      ]
+    },
+    {
+      "id": "animal-mode",
+      "prompt": "If you could be an animal, what would you be?",
+      "options": [
+        { "id": "owl", "label": "Owl", "traits": { "analytical": 2, "calm": 1 } },
+        { "id": "fox", "label": "Fox", "traits": { "adventurous": 2, "bold": 1 } },
+        { "id": "golden-retriever", "label": "Golden retriever", "traits": { "social": 2, "classic": 1 } },
+        { "id": "dolphin", "label": "Dolphin", "traits": { "romantic": 1, "social": 1, "energetic": 1 } }
+      ]
+    },
+    {
+      "id": "meal-moment",
+      "prompt": "What is your favorite meal moment?",
+      "options": [
+        { "id": "breakfast", "label": "Slow breakfast", "traits": { "classic": 2, "calm": 1 } },
+        { "id": "lunch-run", "label": "Fast lunch run", "traits": { "energetic": 2, "analytical": 1 } },
+        { "id": "dinner-out", "label": "Dinner out with friends", "traits": { "social": 2, "romantic": 1 } },
+        { "id": "late-night", "label": "Late-night snack quest", "traits": { "bold": 1, "adventurous": 2 } }
+      ]
+    }
+  ]
+}

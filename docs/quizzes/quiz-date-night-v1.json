@@ -1,0 +1,58 @@
+{
+  "id": "date-night-v1",
+  "name": "Date Night",
+  "title": "What Is Your Date-Night Flavor?",
+  "description": "Match your date-night vibe to a custard archetype, then find an available flavor nearby.",
+  "questions": [
+    {
+      "id": "setting",
+      "prompt": "Pick the date setting.",
+      "options": [
+        { "id": "rooftop", "label": "Rooftop city lights", "traits": { "romantic": 2, "bold": 1 } },
+        { "id": "cozy-cafe", "label": "Cozy cafe corner", "traits": { "classic": 2, "calm": 1 } },
+        { "id": "arcade", "label": "Arcade and laughs", "traits": { "social": 2, "energetic": 1 } },
+        { "id": "roadtrip", "label": "Late-night roadtrip", "traits": { "adventurous": 2, "bold": 1 } }
+      ]
+    },
+    {
+      "id": "love-language",
+      "prompt": "Pick your love language style.",
+      "options": [
+        { "id": "acts", "label": "Acts of service", "traits": { "classic": 1, "analytical": 2 } },
+        { "id": "words", "label": "Words and storytelling", "traits": { "romantic": 2, "social": 1 } },
+        { "id": "time", "label": "Uninterrupted time", "traits": { "calm": 2, "romantic": 1 } },
+        { "id": "adventure", "label": "Shared adventure", "traits": { "adventurous": 2, "energetic": 1 } }
+      ]
+    },
+    {
+      "id": "music-vibe",
+      "prompt": "Choose the soundtrack.",
+      "options": [
+        { "id": "jazz", "label": "Warm jazz", "traits": { "classic": 2, "romantic": 1 } },
+        { "id": "indie", "label": "Indie mix", "traits": { "adventurous": 1, "social": 1, "calm": 1 } },
+        { "id": "dance", "label": "Dance floor set", "traits": { "energetic": 2, "social": 1 } },
+        { "id": "cinematic", "label": "Cinematic instrumentals", "traits": { "analytical": 2, "romantic": 1 } }
+      ]
+    },
+    {
+      "id": "shared-dessert",
+      "prompt": "Pick the dessert to share.",
+      "options": [
+        { "id": "cheesecake", "label": "Cheesecake slice", "traits": { "romantic": 2, "classic": 1 } },
+        { "id": "dark-chocolate", "label": "Dark chocolate torte", "traits": { "bold": 2, "analytical": 1 } },
+        { "id": "fruity", "label": "Fresh berry tart", "traits": { "romantic": 1, "adventurous": 1, "calm": 1 } },
+        { "id": "sundae", "label": "Loaded sundae", "traits": { "social": 2, "energetic": 1 } }
+      ]
+    },
+    {
+      "id": "night-ending",
+      "prompt": "How does the night end?",
+      "options": [
+        { "id": "walk-talk", "label": "Long walk and real talk", "traits": { "calm": 2, "romantic": 1 } },
+        { "id": "spontaneous-stop", "label": "One more spontaneous stop", "traits": { "adventurous": 2, "bold": 1 } },
+        { "id": "group-afterparty", "label": "Friends join for an afterparty", "traits": { "social": 2, "energetic": 1 } },
+        { "id": "plan-next", "label": "Plan the next date immediately", "traits": { "analytical": 1, "classic": 1, "romantic": 1 } }
+      ]
+    }
+  ]
+}

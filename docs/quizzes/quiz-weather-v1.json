@@ -1,0 +1,58 @@
+{
+  "id": "weather-v1",
+  "name": "Custard Forecast",
+  "title": "What Custard System Is Moving Through You?",
+  "description": "Answer five quick prompts, then match your flavor personality to what is available near you now.",
+  "questions": [
+    {
+      "id": "sky-pattern",
+      "prompt": "Pick a sky pattern.",
+      "options": [
+        { "id": "clear-morning", "label": "Clear morning blue", "traits": { "calm": 2, "classic": 1, "analytical": 1 } },
+        { "id": "storm-band", "label": "Fast-moving storm bands", "traits": { "bold": 2, "energetic": 2, "adventurous": 1 } },
+        { "id": "golden-haze", "label": "Golden sunset haze", "traits": { "romantic": 2, "social": 1, "classic": 1 } },
+        { "id": "electric-night", "label": "Electric night clouds", "traits": { "bold": 1, "adventurous": 2, "energetic": 1 } }
+      ]
+    },
+    {
+      "id": "temperature-band",
+      "prompt": "Pick your comfort temperature band.",
+      "options": [
+        { "id": "cold-crisp", "label": "20 to 35 F, crisp and focused", "traits": { "calm": 2, "analytical": 1 } },
+        { "id": "cool-breathable", "label": "36 to 55 F, cool and breathable", "traits": { "calm": 1, "classic": 1, "adventurous": 1 } },
+        { "id": "balanced-sunny", "label": "56 to 75 F, balanced and sunny", "traits": { "social": 1, "classic": 1, "romantic": 1 } },
+        { "id": "heat-high", "label": "76+ F, hot and high energy", "traits": { "energetic": 2, "bold": 1, "social": 1 } }
+      ]
+    },
+    {
+      "id": "texture-signal",
+      "prompt": "Which texture pattern sounds best right now?",
+      "options": [
+        { "id": "crunch", "label": "Crunch and snap", "traits": { "adventurous": 1, "analytical": 1, "bold": 1 } },
+        { "id": "swirl", "label": "Ribbon swirl and layers", "traits": { "romantic": 1, "classic": 1, "analytical": 1 } },
+        { "id": "smooth", "label": "Smooth and creamy", "traits": { "calm": 2, "classic": 1 } },
+        { "id": "chunks", "label": "Loaded with mix-ins", "traits": { "energetic": 1, "social": 1, "adventurous": 1 } }
+      ]
+    },
+    {
+      "id": "chaos-mode",
+      "prompt": "When plans break, you usually...",
+      "options": [
+        { "id": "triage", "label": "Breathe, triage, and stabilize", "traits": { "calm": 2, "analytical": 2 } },
+        { "id": "rally", "label": "Rally the group and move fast", "traits": { "social": 2, "energetic": 1, "bold": 1 } },
+        { "id": "experiment", "label": "Improvise and test options", "traits": { "adventurous": 2, "bold": 1 } },
+        { "id": "playbook", "label": "Return to trusted playbooks", "traits": { "classic": 2, "calm": 1 } }
+      ]
+    },
+    {
+      "id": "weekend-pattern",
+      "prompt": "Pick your ideal weekend weather plan.",
+      "options": [
+        { "id": "trail-day", "label": "Trail day and fresh air", "traits": { "adventurous": 2, "calm": 1 } },
+        { "id": "friends-night", "label": "Friends, games, and loud laughter", "traits": { "social": 2, "energetic": 1 } },
+        { "id": "long-brunch", "label": "Long brunch with good conversation", "traits": { "romantic": 1, "classic": 1, "social": 1 } },
+        { "id": "solo-reset", "label": "Solo recharge and deep focus", "traits": { "calm": 1, "analytical": 2 } }
+      ]
+    }
+  ]
+}

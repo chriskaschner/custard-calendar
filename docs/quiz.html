@@ -1,0 +1,411 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Custard Personality Engine</title>
+  <meta name="description" content="Take a custard personality quiz and find your matching flavor available within your drive radius.">
+  <meta property="og:title" content="Custard Personality Engine">
+  <meta property="og:description" content="Quiz + live local flavor matching by radius.">
+  <meta property="og:image" content="https://custard.chriskaschner.com/og-calendar.png">
+  <meta property="og:url" content="https://custard.chriskaschner.com/quiz.html">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    :root {
+      --quiz-ink: #0c2747;
+      --quiz-ink-soft: #294d72;
+      --quiz-sky: #e8f6ff;
+      --quiz-cloud: #f8fcff;
+      --quiz-accent: #1373c2;
+      --quiz-accent-2: #13a48f;
+      --quiz-sun: #f4c25b;
+      --quiz-danger: #b42318;
+      --quiz-success: #0f8a5f;
+    }
+
+    body.quiz-page {
+      background:
+        radial-gradient(circle at 12% 14%, rgba(244, 194, 91, 0.25), transparent 35%),
+        radial-gradient(circle at 84% 16%, rgba(19, 164, 143, 0.2), transparent 35%),
+        linear-gradient(160deg, #eef8ff 0%, #f8fdff 52%, #edf7ff 100%);
+      color: var(--quiz-ink);
+      font-family: "Trebuchet MS", "Gill Sans", "Lucida Grande", sans-serif;
+      min-height: 100vh;
+      animation: pageFade 420ms ease-out;
+    }
+
+    @keyframes pageFade {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .quiz-page main {
+      max-width: 980px;
+    }
+
+    .quiz-hero {
+      border: 1px solid #cfe4f6;
+      border-radius: 18px;
+      background: linear-gradient(140deg, #fafdff 0%, #eaf6ff 100%);
+      padding: 1.2rem 1.25rem;
+      box-shadow: 0 10px 24px rgba(21, 68, 109, 0.08);
+      margin-bottom: 1rem;
+    }
+
+    .quiz-hero h2 {
+      margin: 0;
+      font-size: 1.3rem;
+      color: var(--quiz-ink);
+      letter-spacing: 0.01em;
+    }
+
+    .quiz-hero p {
+      margin: 0.45rem 0 0;
+      color: var(--quiz-ink-soft);
+      line-height: 1.45;
+      font-size: 0.95rem;
+    }
+
+    .quiz-panel {
+      border: 1px solid #d5e6f4;
+      border-radius: 16px;
+      padding: 1rem;
+      background: var(--quiz-cloud);
+      box-shadow: 0 10px 18px rgba(12, 39, 71, 0.06);
+      margin-bottom: 1rem;
+    }
+
+    .quiz-controls {
+      display: grid;
+      grid-template-columns: 1.5fr 0.7fr 1fr auto;
+      gap: 0.7rem;
+      align-items: end;
+      margin-bottom: 1rem;
+    }
+
+    .quiz-control label {
+      display: block;
+      font-size: 0.77rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #496586;
+      margin-bottom: 0.35rem;
+      font-weight: 700;
+    }
+
+    .quiz-control input,
+    .quiz-control select {
+      width: 100%;
+      border: 1px solid #b7d0e5;
+      border-radius: 10px;
+      padding: 0.62rem 0.7rem;
+      font-size: 0.94rem;
+      background: #fff;
+      color: var(--quiz-ink);
+    }
+
+    .quiz-control input:focus,
+    .quiz-control select:focus {
+      outline: none;
+      border-color: #6fa9d7;
+      box-shadow: 0 0 0 3px rgba(19, 115, 194, 0.16);
+    }
+
+    .quiz-geo-btn {
+      border: 1px solid #9fc2df;
+      border-radius: 10px;
+      background: #edf7ff;
+      color: #0b4677;
+      padding: 0.62rem 0.75rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .quiz-geo-btn:hover {
+      background: #e1f1fe;
+    }
+
+    .quiz-head {
+      margin-bottom: 0.85rem;
+    }
+
+    .quiz-head h3 {
+      margin: 0;
+      font-size: 1.12rem;
+      color: var(--quiz-ink);
+    }
+
+    .quiz-head p {
+      margin: 0.35rem 0 0;
+      color: #486485;
+      font-size: 0.9rem;
+    }
+
+    .quiz-question {
+      border: 1px solid #d3e4f3;
+      border-radius: 12px;
+      padding: 0.7rem 0.75rem 0.8rem;
+      margin-bottom: 0.75rem;
+      background: #ffffff;
+    }
+
+    .quiz-question legend {
+      font-weight: 700;
+      color: #14385f;
+      margin-bottom: 0.5rem;
+      font-size: 0.93rem;
+      padding: 0 0.2rem;
+    }
+
+    .quiz-options-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem;
+    }
+
+    .quiz-option {
+      display: block;
+      position: relative;
+      cursor: pointer;
+    }
+
+    .quiz-option input {
+      position: absolute;
+      opacity: 0;
+      inset: 0;
+    }
+
+    .quiz-option-copy {
+      display: block;
+      border: 1px solid #c9dfef;
+      border-radius: 10px;
+      padding: 0.56rem 0.62rem;
+      background: #f8fcff;
+      color: #23496f;
+      font-size: 0.88rem;
+      min-height: 2.7rem;
+      line-height: 1.3;
+      transition: border-color 140ms ease, transform 140ms ease, background 140ms ease;
+    }
+
+    .quiz-option:hover .quiz-option-copy {
+      border-color: #8fb8dc;
+      transform: translateY(-1px);
+    }
+
+    .quiz-option input:checked + .quiz-option-copy {
+      background: linear-gradient(140deg, #ecf7ff 0%, #e8fbf7 100%);
+      border-color: #4994d0;
+      box-shadow: 0 0 0 2px rgba(19, 115, 194, 0.14);
+      color: #163e67;
+      font-weight: 700;
+    }
+
+    .quiz-submit {
+      width: 100%;
+      margin-top: 0.3rem;
+      border: none;
+      border-radius: 11px;
+      background: linear-gradient(130deg, var(--quiz-accent) 0%, #0a5eac 52%, var(--quiz-accent-2) 100%);
+      color: #fff;
+      font-weight: 700;
+      font-size: 0.95rem;
+      padding: 0.78rem 0.85rem;
+      cursor: pointer;
+    }
+
+    .quiz-submit:disabled {
+      opacity: 0.7;
+      cursor: progress;
+    }
+
+    .quiz-status {
+      margin: 0.65rem 0 0;
+      font-size: 0.86rem;
+      min-height: 1.2rem;
+      color: #31577f;
+    }
+
+    .quiz-status-loading { color: #1d4e80; }
+    .quiz-status-success { color: var(--quiz-success); font-weight: 700; }
+    .quiz-status-error { color: var(--quiz-danger); font-weight: 700; }
+
+    .quiz-result {
+      border: 1px solid #cde5f6;
+      border-radius: 16px;
+      background: linear-gradient(180deg, #fcfeff 0%, #f4fbff 100%);
+      padding: 1rem;
+      box-shadow: 0 10px 18px rgba(8, 52, 94, 0.08);
+    }
+
+    .quiz-result h3 {
+      margin: 0;
+      color: #0f385f;
+      font-size: 1.1rem;
+    }
+
+    .result-flavor {
+      margin-top: 0.45rem;
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: #083f74;
+      letter-spacing: 0.01em;
+    }
+
+    .result-blurb {
+      margin: 0.6rem 0;
+      color: #31557a;
+      font-size: 0.92rem;
+      line-height: 1.45;
+    }
+
+    .result-traits {
+      margin: 0.3rem 0 0.7rem;
+      color: #27506f;
+      font-size: 0.84rem;
+      font-weight: 700;
+    }
+
+    .result-availability {
+      border-left: 4px solid var(--quiz-sun);
+      background: #fff8e9;
+      padding: 0.56rem 0.7rem;
+      border-radius: 8px;
+      color: #6c4d00;
+      font-size: 0.88rem;
+      line-height: 1.4;
+    }
+
+    .result-list-wrap {
+      margin-top: 0.85rem;
+    }
+
+    .result-list-wrap h4 {
+      margin: 0 0 0.35rem;
+      color: #173d64;
+      font-size: 0.88rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .result-list-wrap ul {
+      margin: 0;
+      padding-left: 1.1rem;
+      color: #2d5379;
+      font-size: 0.86rem;
+      line-height: 1.4;
+    }
+
+    .result-map-link {
+      display: inline-block;
+      margin-top: 0.8rem;
+      border-radius: 999px;
+      border: 1px solid #8bb9dd;
+      background: #eff7ff;
+      color: #0f4a7a;
+      text-decoration: none;
+      font-weight: 700;
+      padding: 0.42rem 0.8rem;
+      font-size: 0.8rem;
+    }
+
+    .result-map-link:hover {
+      background: #e3f1ff;
+    }
+
+    @media (max-width: 840px) {
+      .quiz-controls {
+        grid-template-columns: 1fr 1fr;
+      }
+      .quiz-options-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body class="quiz-page">
+  <header>
+    <h1 style="color:#003366;font-size:1.5rem;">Custard Personality Engine</h1>
+    <p>Take a flavor-personality quiz and match it to what is available near you now.</p>
+    <nav class="nav-links">
+      <a href="index.html">Forecast</a>
+      <a href="calendar.html">Calendar</a>
+      <a href="map.html">Map</a>
+      <a href="radar.html">Radar</a>
+      <a href="alerts.html">Alerts</a>
+      <a href="siri.html">Siri</a>
+      <a href="forecast-map.html">Fronts</a>
+      <a href="quiz.html" class="nav-active">Quiz</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="quiz-hero">
+      <h2>Quiz + Radius Match</h2>
+      <p>Pick your quiz mode, answer five prompts, and the engine will suggest a flavor archetype plus live flavor matches near your location within your drive radius.</p>
+    </section>
+
+    <section class="quiz-panel">
+      <form id="quiz-form">
+        <div class="quiz-controls">
+          <div class="quiz-control">
+            <label for="quiz-location">Location</label>
+            <input id="quiz-location" type="text" placeholder="Madison, WI or 43.0731,-89.4012">
+          </div>
+          <div class="quiz-control">
+            <label for="quiz-radius">Drive Radius</label>
+            <select id="quiz-radius">
+              <option value="10">10 miles</option>
+              <option value="20" selected>20 miles</option>
+              <option value="30">30 miles</option>
+              <option value="50">50 miles</option>
+            </select>
+          </div>
+          <div class="quiz-control">
+            <label for="quiz-variant">Quiz Mode</label>
+            <select id="quiz-variant"></select>
+          </div>
+          <div class="quiz-control">
+            <label for="quiz-geo">Fast Set</label>
+            <button id="quiz-geo" class="quiz-geo-btn" type="button">Use my location</button>
+          </div>
+        </div>
+
+        <template id="quiz-header-template">
+          <div class="quiz-head">
+            <h3 data-quiz-title></h3>
+            <p data-quiz-description></p>
+          </div>
+        </template>
+
+        <div id="quiz-questions"></div>
+
+        <button id="quiz-submit" class="quiz-submit" type="submit">Find My Flavor Nearby</button>
+        <p id="quiz-status" class="quiz-status quiz-status-neutral"></p>
+      </form>
+    </section>
+
+    <section id="quiz-result" class="quiz-result" hidden>
+      <h3 id="result-title"></h3>
+      <div id="result-flavor" class="result-flavor"></div>
+      <p id="result-blurb" class="result-blurb"></p>
+      <p id="result-traits" class="result-traits"></p>
+      <div id="result-availability" class="result-availability"></div>
+
+      <div class="result-list-wrap">
+        <h4>Alternates In Radius</h4>
+        <ul id="result-alternates"></ul>
+      </div>
+
+      <a id="result-map-link" class="result-map-link" href="map.html">Open in Map</a>
+    </section>
+  </main>
+
+  <footer>
+    <small>Custard Personality Engine beta. Results are for fun and based on current flavor availability.</small>
+  </footer>
+
+  <script type="module" src="quizzes/engine.js"></script>
+</body>
+</html>

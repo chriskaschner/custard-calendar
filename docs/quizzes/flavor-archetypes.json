@@ -1,0 +1,198 @@
+{
+  "traits": [
+    "calm",
+    "bold",
+    "classic",
+    "adventurous",
+    "social",
+    "romantic",
+    "energetic",
+    "analytical"
+  ],
+  "archetypes": [
+    {
+      "id": "cool-front",
+      "name": "Cool Front",
+      "headline": "A cool mint front is rolling through.",
+      "blurb": "You stay composed under pressure and keep everyone steady when the room gets loud.",
+      "profile": {
+        "calm": 4,
+        "analytical": 3,
+        "classic": 1,
+        "adventurous": 1,
+        "social": 1,
+        "romantic": 1,
+        "energetic": 1,
+        "bold": 1
+      },
+      "flavors": [
+        "Andes Mint Avalanche",
+        "Mint Cookie",
+        "Mint Explosion",
+        "Lemon Dash Cookie",
+        "Lemon Berry Layer Cake"
+      ]
+    },
+    {
+      "id": "bold-storm",
+      "name": "Bold Storm",
+      "headline": "A high-energy chocolate storm is active.",
+      "blurb": "You run hot, move fast, and usually become the spark that gets everyone going.",
+      "profile": {
+        "bold": 4,
+        "energetic": 3,
+        "adventurous": 2,
+        "social": 2,
+        "calm": 1,
+        "classic": 1,
+        "romantic": 1,
+        "analytical": 1
+      },
+      "flavors": [
+        "Brownie Thunder",
+        "Chocolate Volcano",
+        "Chocolate Oreo Volcano",
+        "Dark Chocolate Decadence",
+        "Devil's Food Cake"
+      ]
+    },
+    {
+      "id": "steady-classic",
+      "name": "Steady Classic",
+      "headline": "Stable conditions with reliable sweetness.",
+      "blurb": "You are dependable, consistent, and everyone knows they can count on your judgment.",
+      "profile": {
+        "classic": 4,
+        "calm": 2,
+        "analytical": 2,
+        "social": 1,
+        "romantic": 1,
+        "adventurous": 1,
+        "bold": 1,
+        "energetic": 1
+      },
+      "flavors": [
+        "Vanilla",
+        "Butter Pecan",
+        "Caramel Pecan",
+        "OREO Cookies and Cream",
+        "Turtle"
+      ]
+    },
+    {
+      "id": "candy-burst",
+      "name": "Candy Burst",
+      "headline": "High-pressure fun system with candy cores.",
+      "blurb": "You are playful and magnetic, and your plans usually turn into stories people repeat later.",
+      "profile": {
+        "social": 4,
+        "energetic": 3,
+        "bold": 2,
+        "adventurous": 2,
+        "romantic": 1,
+        "calm": 1,
+        "classic": 1,
+        "analytical": 1
+      },
+      "flavors": [
+        "Peanut Butter Cup",
+        "Really Reese's",
+        "Snickers Swirl",
+        "Crazy for Cookie Dough",
+        "Caramel Peanut Buttercup"
+      ]
+    },
+    {
+      "id": "berry-sunrise",
+      "name": "Berry Sunrise",
+      "headline": "A bright fruit band is moving in.",
+      "blurb": "You bring warmth and optimism; your energy makes people feel included and seen.",
+      "profile": {
+        "romantic": 4,
+        "social": 2,
+        "adventurous": 2,
+        "energetic": 2,
+        "calm": 1,
+        "classic": 1,
+        "bold": 1,
+        "analytical": 1
+      },
+      "flavors": [
+        "Double Strawberry",
+        "Chocolate Covered Strawberry",
+        "Raspberry Cheesecake",
+        "Strawberry Cheesecake",
+        "Georgia Peach"
+      ]
+    },
+    {
+      "id": "caramel-architect",
+      "name": "Caramel Architect",
+      "headline": "Structured caramel layers with strategic depth.",
+      "blurb": "You like systems, planning, and thoughtful execution. You move with intent, not noise.",
+      "profile": {
+        "analytical": 4,
+        "classic": 2,
+        "calm": 2,
+        "bold": 2,
+        "adventurous": 1,
+        "social": 1,
+        "romantic": 1,
+        "energetic": 1
+      },
+      "flavors": [
+        "Caramel Cashew",
+        "Caramel Turtle",
+        "Caramel Chocolate Pecan",
+        "Salted Caramel Pecan Pie",
+        "Salted Double Caramel Pecan"
+      ]
+    },
+    {
+      "id": "cheesecake-signal",
+      "name": "Cheesecake Signal",
+      "headline": "Smooth, rich system with layered finish.",
+      "blurb": "You have range: polished at first read, then increasingly complex once people know you.",
+      "profile": {
+        "romantic": 3,
+        "classic": 2,
+        "social": 2,
+        "calm": 2,
+        "analytical": 2,
+        "bold": 1,
+        "adventurous": 1,
+        "energetic": 1
+      },
+      "flavors": [
+        "OREO Cheesecake",
+        "OREO Cookie Cheesecake",
+        "Turtle Cheesecake",
+        "Turtle Dove",
+        "Chocolate Heath Crunch"
+      ]
+    },
+    {
+      "id": "explorer-jetstream",
+      "name": "Explorer Jetstream",
+      "headline": "Variable but exciting pattern with smart pivots.",
+      "blurb": "You chase new ideas, test quickly, and thrive when you can discover the unexpected.",
+      "profile": {
+        "adventurous": 4,
+        "bold": 2,
+        "energetic": 2,
+        "analytical": 2,
+        "social": 1,
+        "romantic": 1,
+        "classic": 1,
+        "calm": 1
+      },
+      "flavors": [
+        "Blackberry Cobbler",
+        "Georgia Peach Pecan",
+        "Chocolate Caramel Twist",
+        "Caramel Fudge Cookie Dough",
+        "Dark Chocolate PB Crunch"
+      ]
+    }
+  ]
+}

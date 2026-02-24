@@ -18,6 +18,7 @@ import { handleAlertRoute } from './alert-routes.js';
 import { handleFlavorCatalog } from './flavor-catalog.js';
 import { handleMetricsRoute } from './metrics.js';
 import { handleForecast } from './forecast.js';
+import { handleQuizRoute } from './quiz-routes.js';
 import { handleSocialCard } from './social-card.js';
 import { BASE_COLORS, RIBBON_COLORS, TOPPING_COLORS, CONE_COLORS, FLAVOR_PROFILES, getFlavorProfile, renderConeSVG } from './flavor-colors.js';
 import { checkAlerts, checkWeeklyDigests } from './alert-checker.js';
@@ -300,7 +301,13 @@ export async function getFlavorsCached(slug, kv, fetchFlavorsFn, isOverride = fa
  */
 export async function handleRequest(request, env, fetchFlavorsFn = defaultFetchFlavors) {
   const url = new URL(request.url);
-  const allowedOrigin = env.ALLOWED_ORIGIN || '*';
+  const requestOrigin = request.headers.get('Origin') || '';
+  const configuredOrigin = env.ALLOWED_ORIGIN || '*';
+  // Allow configured origin + localhost for development
+  let allowedOrigin = configuredOrigin;
+  if (configuredOrigin !== '*' && /^https?:\/\/localhost(:\d+)?$/.test(requestOrigin)) {
+    allowedOrigin = requestOrigin;
+  }
   const corsHeaders = {
     'Access-Control-Allow-Origin': allowedOrigin,
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
@@ -384,6 +391,11 @@ export async function handleRequest(request, env, fetchFlavorsFn = defaultFetchF
     response = await handleApiGeolocate(request, corsHeaders);
   } else if (canonical === '/api/nearby-flavors') {
     response = await handleApiNearbyFlavors(url, env, corsHeaders);
+  } else if (canonical.startsWith('/api/quiz/')) {
+    const quizResponse = await handleQuizRoute(canonical, url, request, env, corsHeaders);
+    if (quizResponse) {
+      response = quizResponse;
+    }
   } else if (canonical.match(/^\/api\/forecast\/[a-z0-9][a-z0-9_-]+$/)) {
     const forecastSlug = canonical.replace('/api/forecast/', '');
     response = await handleForecast(forecastSlug, env, corsHeaders);
@@ -412,7 +424,7 @@ export async function handleRequest(request, env, fetchFlavorsFn = defaultFetchF
   }
 
   return Response.json(
-    { error: 'Not found. Use /api/v1/today, /api/v1/flavors, /api/v1/stores, /api/v1/geolocate, /api/v1/nearby-flavors, /api/v1/flavors/catalog, /api/v1/flavor-colors, /api/v1/forecast/{slug}, /api/v1/alerts/*, /v1/calendar.ics, /v1/og/{slug}/{date}.svg, or /health' },
+    { error: 'Not found. Use /api/v1/today, /api/v1/flavors, /api/v1/stores, /api/v1/geolocate, /api/v1/nearby-flavors, /api/v1/flavors/catalog, /api/v1/flavor-colors, /api/v1/forecast/{slug}, /api/v1/quiz/events, /api/v1/quiz/personality-index, /api/v1/alerts/*, /v1/calendar.ics, /v1/og/{slug}/{date}.svg, or /health' },
     { status: 404, headers: corsHeaders }
   );
 }

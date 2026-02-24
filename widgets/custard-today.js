@@ -9,8 +9,8 @@
 //   5. Set Parameter to your store slug (e.g. "mt-horeb")
 //      Find your slug at custard.chriskaschner.com/widget.html
 //
-// Small widget:  Today's flavor + store + rarity badge
-// Medium widget: 3-day forecast with flavor names and dates
+// Small widget:  Cone icon, flavor name, description, rarity badge
+// Medium widget: 3-day cards with cone icons, flavor names, and descriptions
 
 var API_BASE = "https://custard-calendar.chris-kaschner.workers.dev/api/v1";
 var slug = (args.widgetParameter || "mt-horeb").trim();
@@ -30,6 +30,93 @@ var RARITY_COLORS = {
   "Uncommon":   "#1565C0",
   "Common":     "#757575"
 };
+
+// Base flavor colors for cone scoop -- matches the Forecast page palette
+var FLAVOR_SCOOP_COLORS = {
+  "vanilla":    "#F5DEB3",
+  "chocolate":  "#6F4E37",
+  "mint":       "#2ECC71",
+  "strawberry": "#FF6B9D",
+  "caramel":    "#D4A056",
+  "peanut":     "#C8A96E",
+  "cookie":     "#C4A882",
+  "lemon":      "#FFE066",
+  "raspberry":  "#E91E63",
+  "turtle":     "#8B6914",
+  "pecan":      "#A67B5B",
+  "oreo":       "#3E3E3E",
+  "cheesecake": "#FFF8DC",
+  "peach":      "#FFAB76",
+  "butter":     "#E8C872"
+};
+
+// Guess scoop color from flavor name keywords
+function scoopColor(flavorName) {
+  if (!flavorName) return "#F5DEB3";
+  var lower = flavorName.toLowerCase();
+  var keys = Object.keys(FLAVOR_SCOOP_COLORS);
+  for (var i = 0; i < keys.length; i++) {
+    if (lower.indexOf(keys[i]) !== -1) return FLAVOR_SCOOP_COLORS[keys[i]];
+  }
+  // Broad category fallbacks
+  if (lower.indexOf("choc") !== -1 || lower.indexOf("fudge") !== -1) return "#6F4E37";
+  if (lower.indexOf("cream") !== -1) return "#FFF8DC";
+  return "#F5DEB3";
+}
+
+// Draw a mini cone icon using DrawContext and return as Image
+function drawConeIcon(flavorName, size) {
+  var s = size || 28;
+  var ctx = new DrawContext();
+  ctx.size = new Size(s, s);
+  ctx.opaque = false;
+  ctx.respectScreenScale = true;
+
+  var scoopR = s * 0.32;
+  var scoopCx = s / 2;
+  var scoopCy = s * 0.30;
+  var sc = new Color(scoopColor(flavorName));
+
+  // Cone body (waffle triangle)
+  var conePath = new Path();
+  conePath.move(new Point(scoopCx - scoopR * 0.85, scoopCy + scoopR * 0.4));
+  conePath.addLine(new Point(scoopCx, s * 0.92));
+  conePath.addLine(new Point(scoopCx + scoopR * 0.85, scoopCy + scoopR * 0.4));
+  conePath.closeSubpath();
+  ctx.addPath(conePath);
+  ctx.setFillColor(new Color("#D2691E"));
+  ctx.fillPath();
+
+  // Waffle crosshatch lines
+  ctx.setStrokeColor(new Color("#B8860B"));
+  ctx.setLineWidth(0.5);
+  var coneTop = scoopCy + scoopR * 0.4;
+  var coneBot = s * 0.92;
+  var coneH = coneBot - coneTop;
+  for (var li = 1; li <= 3; li++) {
+    var yLine = coneTop + (coneH * li / 4);
+    var frac = (yLine - coneTop) / coneH;
+    var halfW = scoopR * 0.85 * (1 - frac);
+    var linePath = new Path();
+    linePath.move(new Point(scoopCx - halfW, yLine));
+    linePath.addLine(new Point(scoopCx + halfW, yLine));
+    ctx.addPath(linePath);
+    ctx.strokePath();
+  }
+
+  // Scoop (filled circle)
+  var scoopRect = new Rect(scoopCx - scoopR, scoopCy - scoopR, scoopR * 2, scoopR * 2);
+  ctx.setFillColor(sc);
+  ctx.fillEllipse(scoopRect);
+
+  // Scoop highlight (lighter circle in upper-left)
+  var hlR = scoopR * 0.3;
+  var hlRect = new Rect(scoopCx - scoopR * 0.4, scoopCy - scoopR * 0.5, hlR * 2, hlR * 2);
+  ctx.setFillColor(new Color("#FFFFFF", 0.3));
+  ctx.fillEllipse(hlRect);
+
+  return ctx.getImage();
+}
 
 // Fetch today's flavor
 async function fetchToday() {
@@ -66,47 +153,85 @@ function brandStyle(brandName) {
   return BRAND_COLORS[brandName] || BRAND_COLORS["Culver's"];
 }
 
-// --- Small Widget: Today's flavor ---
+function truncateDesc(desc, maxLen) {
+  if (!desc) return "";
+  if (desc.length <= maxLen) return desc;
+  return desc.substring(0, maxLen - 1).trim() + "\u2026";
+}
+
+// Extract city from store name (e.g. "Culver's of Mt. Horeb, WI" -> "Mt. Horeb")
+function cityFromStore(storeName) {
+  if (!storeName) return slug;
+  var m = storeName.match(/of\s+(.+?)(?:,|\s*-)/);
+  if (m) return m[1].trim();
+  var c = storeName.match(/^(.+?),/);
+  if (c) return c[1].trim();
+  return slug;
+}
+
+// --- Small Widget: Branded header bar + cone + flavor ---
 
 async function buildSmall() {
   var data = await fetchToday();
   var style = brandStyle(data.brand);
+  var city = cityFromStore(data.store);
   var w = new ListWidget();
+  w.backgroundColor = new Color("#1a1a1a");
+  w.setPadding(0, 0, 0, 0);
 
-  var gradient = new LinearGradient();
-  gradient.locations = [0, 1];
-  gradient.colors = [new Color(style.bg), new Color(style.bg, 0.85)];
-  w.backgroundGradient = gradient;
+  // Branded header bar
+  var header = w.addStack();
+  header.backgroundColor = new Color(style.bg);
+  header.setPadding(6, 16, 6, 16);
+  header.layoutHorizontally();
+  header.centerAlignContent();
 
-  w.setPadding(12, 14, 12, 14);
+  var cityText = header.addText(city);
+  cityText.font = Font.semiboldSystemFont(11);
+  cityText.textColor = new Color(style.text);
+  header.addSpacer(null);
+  var dateText = header.addText(formatDate(data.date));
+  dateText.font = Font.systemFont(10);
+  dateText.textColor = new Color(style.text, 0.8);
 
-  // Store name (short form)
-  var storeText = w.addText(data.brand || "Custard");
-  storeText.font = Font.boldSystemFont(11);
-  storeText.textColor = new Color(style.text, 0.7);
+  // Content area
+  var body = w.addStack();
+  body.setPadding(8, 16, 12, 16);
+  body.layoutVertically();
 
-  w.addSpacer(4);
+  // Cone icon + flavor name row
+  var mainRow = body.addStack();
+  mainRow.layoutHorizontally();
+  mainRow.centerAlignContent();
+  mainRow.spacing = 10;
 
-  // Flavor name
-  var flavorText = w.addText(data.flavor || "No flavor listed");
-  flavorText.font = Font.boldSystemFont(18);
-  flavorText.textColor = new Color(style.text);
+  var coneImg = drawConeIcon(data.flavor, 36);
+  var coneEl = mainRow.addImage(coneImg);
+  coneEl.imageSize = new Size(36, 36);
+
+  var textCol = mainRow.addStack();
+  textCol.layoutVertically();
+
+  var flavorText = textCol.addText(data.flavor || "No flavor listed");
+  flavorText.font = Font.boldSystemFont(15);
+  flavorText.textColor = Color.white();
   flavorText.minimumScaleFactor = 0.6;
   flavorText.lineLimit = 2;
 
-  w.addSpacer(4);
+  // Description
+  if (data.description) {
+    textCol.addSpacer(2);
+    var descText = textCol.addText(truncateDesc(data.description, 60));
+    descText.font = Font.systemFont(11);
+    descText.textColor = new Color("#ffffff", 0.6);
+    descText.lineLimit = 2;
+  }
 
-  // Date
-  var dateLabel = formatDate(data.date);
-  var dateText = w.addText(dateLabel);
-  dateText.font = Font.mediumSystemFont(11);
-  dateText.textColor = new Color(style.text, 0.7);
-
-  w.addSpacer(null);
+  body.addSpacer(null);
 
   // Rarity badge
   if (data.rarity && data.rarity.label) {
-    var badge = w.addText(data.rarity.label.toUpperCase());
+    var badge = body.addText(data.rarity.label.toUpperCase());
     badge.font = Font.boldMonospacedSystemFont(9);
     var rarityColor = RARITY_COLORS[data.rarity.label] || RARITY_COLORS["Common"];
     badge.textColor = new Color(rarityColor);
@@ -115,76 +240,98 @@ async function buildSmall() {
   return w;
 }
 
-// --- Medium Widget: 3-day forecast ---
+// --- Medium Widget: Branded header + 3-day cell rows ---
 
 async function buildMedium() {
   var data = await fetchFlavors();
   var flavors = (data.flavors || []);
 
-  // Filter to today and future
   var todayStr = new Date().toISOString().slice(0, 10);
   var upcoming = flavors.filter(function(f) { return f.date >= todayStr; }).slice(0, 3);
 
-  // Determine brand from store name
-  var brandName = "Culver's";
-  var storeName = data.name || "";
-  var brandKeys = Object.keys(BRAND_COLORS);
-  for (var bi = 0; bi < brandKeys.length; bi++) {
-    if (storeName.indexOf(brandKeys[bi]) !== -1) {
-      brandName = brandKeys[bi];
-      break;
+  var todayData = null;
+  try { todayData = await fetchToday(); } catch (e) { /* best effort */ }
+
+  var brandName = todayData ? (todayData.brand || "Culver's") : "Culver's";
+  if (!todayData) {
+    var storeName = data.name || "";
+    var brandKeys = Object.keys(BRAND_COLORS);
+    for (var bi = 0; bi < brandKeys.length; bi++) {
+      if (storeName.indexOf(brandKeys[bi]) !== -1) {
+        brandName = brandKeys[bi];
+        break;
+      }
     }
   }
   var style = brandStyle(brandName);
+  var city = cityFromStore(todayData ? todayData.store : data.name);
 
   var w = new ListWidget();
-  var gradient = new LinearGradient();
-  gradient.locations = [0, 1];
-  gradient.colors = [new Color(style.bg), new Color(style.bg, 0.85)];
-  w.backgroundGradient = gradient;
-  w.setPadding(12, 14, 12, 14);
+  w.backgroundColor = new Color("#1a1a1a");
+  w.setPadding(0, 0, 0, 0);
 
-  // Header
-  var header = w.addText(brandName + " -- 3-Day Forecast");
-  header.font = Font.boldSystemFont(11);
-  header.textColor = new Color(style.text, 0.7);
+  // Branded header bar
+  var header = w.addStack();
+  header.backgroundColor = new Color(style.bg);
+  header.setPadding(6, 16, 6, 16);
+  header.layoutHorizontally();
+  header.centerAlignContent();
 
-  w.addSpacer(6);
+  var cityText = header.addText(city);
+  cityText.font = Font.semiboldSystemFont(11);
+  cityText.textColor = new Color(style.text);
+  header.addSpacer(null);
+  var weekLabel = header.addText("This Week");
+  weekLabel.font = Font.systemFont(10);
+  weekLabel.textColor = new Color(style.text, 0.8);
+
+  // Content area
+  var body = w.addStack();
+  body.setPadding(6, 16, 10, 16);
+  body.layoutVertically();
 
   if (upcoming.length === 0) {
-    var noData = w.addText("No upcoming flavors listed");
-    noData.font = Font.systemFont(14);
-    noData.textColor = new Color(style.text, 0.6);
+    var noData = body.addText("No upcoming flavors listed");
+    noData.font = Font.systemFont(13);
+    noData.textColor = new Color("#ffffff", 0.6);
   } else {
     for (var i = 0; i < upcoming.length; i++) {
       var f = upcoming[i];
-      var row = w.addStack();
-      row.layoutHorizontally();
-      row.centerAlignContent();
 
-      var dateCol = row.addText(formatDate(f.date));
-      dateCol.font = Font.mediumSystemFont(11);
-      dateCol.textColor = new Color(style.text, 0.6);
+      var card = body.addStack();
+      card.layoutHorizontally();
+      card.centerAlignContent();
+      card.spacing = 8;
+
+      var coneImg = drawConeIcon(f.title, 28);
+      var coneEl = card.addImage(coneImg);
+      coneEl.imageSize = new Size(28, 28);
+
+      var textCol = card.addStack();
+      textCol.layoutVertically();
+      textCol.spacing = 1;
+
+      var dateCol = textCol.addText(formatDate(f.date));
+      dateCol.font = Font.mediumSystemFont(10);
+      dateCol.textColor = new Color("#ffffff", 0.5);
       dateCol.lineLimit = 1;
-      row.addSpacer(8);
 
-      var flavorCol = row.addText(f.title || "TBD");
-      flavorCol.font = Font.boldSystemFont(14);
-      flavorCol.textColor = new Color(style.text);
+      var flavorCol = textCol.addText(f.title || "TBD");
+      flavorCol.font = Font.boldSystemFont(13);
+      flavorCol.textColor = Color.white();
       flavorCol.lineLimit = 1;
       flavorCol.minimumScaleFactor = 0.7;
 
-      if (i < upcoming.length - 1) w.addSpacer(4);
+      if (f.description) {
+        var desc = textCol.addText(truncateDesc(f.description, 65));
+        desc.font = Font.systemFont(10);
+        desc.textColor = new Color("#ffffff", 0.55);
+        desc.lineLimit = 1;
+      }
+
+      if (i < upcoming.length - 1) body.addSpacer(4);
     }
   }
-
-  w.addSpacer(null);
-
-  // Store location
-  var loc = w.addText(data.address || slug);
-  loc.font = Font.systemFont(9);
-  loc.textColor = new Color(style.text, 0.5);
-  loc.lineLimit = 1;
 
   return w;
 }

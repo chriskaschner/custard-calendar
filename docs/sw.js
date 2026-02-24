@@ -40,8 +40,12 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // Never cache Worker API requests or .ics data
-  if (url.hostname.includes('workers.dev') || url.pathname.endsWith('.ics')) {
+  // Never cache non-GET requests, Worker API requests, or .ics data
+  if (event.request.method !== 'GET'
+    || url.hostname.includes('workers.dev')
+    || url.pathname.startsWith('/api/')
+    || url.pathname.startsWith('/v1/')
+    || url.pathname.endsWith('.ics')) {
     event.respondWith(fetch(event.request));
     return;
   }
