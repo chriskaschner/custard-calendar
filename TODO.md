@@ -8,35 +8,80 @@ Core value: **confirmed flavor data, discovery, and notifications.** The weather
 
 Analytics data has two strong non-prediction uses: **(1) flavor rarity as shareable content** -- "this flavor appears 3.7% of the time" is interesting trivia grounded in real observation, good for social posts, email digests, and flavor cards; **(2) quiz-to-location matching** -- a personality quiz maps you to a flavor archetype, then confirmed schedule data answers "is your flavor scooping near you today?" The quiz is the fun hook; the confirmed schedule is the utility.
 
-## Now -- Fixes and Gaps
+## KPIs and Guardrails
 
-Things that are broken or misleading today.
+**Primary KPIs:** session-to-action rate, recommendation acceptance rate, share of Confirmed recommendations, freshness SLA, reliability calibration.
 
-- [x] **Fix quiz 404** -- quiz.html shipped with personality engine; homepage CTA works. (2026-02-25)
-- [x] **Fix map subtitle** -- updated map.html, forecast-map.html to multi-brand copy. (2026-02-25)
-- [x] **Verify Tidbyt daily workflow** -- fixed pixlet download URL (asset naming changed); triggered manual run. (2026-02-25)
-- [x] **Enrich widget cards** -- update `widgets/custard-today.js` so medium widget shows flavor icon (cone), name, and description -- closer to the Forecast page cards and the Tidbyt 3-day view. Small widget should also show description if space allows. (2026-02-25)
-- [x] **Fix widget.html "Copy Script" on iOS** -- pre-fetch script on page load so click handler is synchronous (preserves user gesture), textarea fallback for older browsers, added "View Script" link as iOS escape hatch. (2026-02-25)
-- [x] **Revise rarity classification** -- added Common (50-75th) and Staple (>75th) tiers; every flavor now gets a label. Updated worker, radar, widget, CSS. (2026-02-25)
-- [x] **Reframe Radar for confirmed data** -- confirmed days get blue tint + solid border; predicted days recede with gray tones + reduced opacity. Added hint text. (2026-02-25)
-- [x] **Reframe homepage copy** -- meta/title/hero/onboarding reframed from "forecast" to "confirmed schedule." Weather voice preserved. (2026-02-25)
+**Secondary KPIs:** flavor-signal engagement, quiz-to-action conversion.
 
-## Next -- Confirmed-Data UX
+**Guardrails:** preflight before each agent task, isolate work by worktree+branch, maintain one shipping lane + one delight lane.
 
-Features that lean into what works.
+## Now -- Planner Core
 
-- [x] **"Near me now" entry point** -- auto-geolocates on first visit, shows 5 closest stores with cone icon, flavor, distance. Click to select. (2026-02-25)
-- [x] **Flavor fronts on confirmed data** -- defaults to "Confirmed Today" mode with family-colored markers, toggle to "Forecast" for predictions. 9 flavor families with hotspot sidebar. (2026-02-25)
-- [x] **Weather-map animation on confirmed data** -- smooth 400ms crossfade between days (200ms ease-in fade-out + 200ms ease-out fade-in). Softer heatmap blobs (radius 45, blur 40). Bold today tick on timeline. (2026-02-25)
-- [x] **Map category chips** -- 9 flavor family filter chips on map page. Non-matching markers fade to 15% opacity. Resets on new search. (2026-02-25)
-- [x] **Calendar subscription visibility** -- CTA card appears after today's flavor loads with one-click .ics URL copy. Supplements existing preview at page bottom. (2026-02-25)
-- [x] **Flavor quiz -> nearby match** -- quiz matches archetype to confirmed nearby flavors with similarity fallback. (2026-02-25)
-- [x] **Quiz: only return actually-available flavors** -- rewrote engine to intersect archetype candidates with `all_flavors_today` from nearby-flavors API; similarity groups as fallback. Never shows unavailable flavors. (2026-02-25)
-- [x] **Quiz: "today" means until 10pm local** -- added 10pm cutover detection with late-night messaging. (2026-02-25)
-- [x] **Flavor rarity as shareable content** -- `/api/v1/flavor-stats/{slug}?flavor=X` returns appearances, avg gap, annual frequency, seasonality, DoW bias, streaks, cross-store rarity. (2026-02-25)
-- [x] **Flavor intelligence metrics** -- new `/api/v1/flavor-stats/{slug}` endpoint with 14 tests. Store overview returns personality (top flavor families) and overdue list. Single-flavor mode returns all metrics from D1 history. (2026-02-25)
+Build one shared recommendation engine used by Forecast/Map/Radar/Fronts/Quiz: "Where should I go, within my radius and time window, for flavors I care about?"
 
-## Later -- Polish and Expansion
+- [ ] **Shared planner engine** -- score components are explicit and consistent: distance, certainty tier, rarity, wait-until-next-chance, preference match. Same inputs produce same top recommendation across surfaces.
+- [ ] **Consistent action CTAs** -- every recommendation surfaces Directions, Alert, Calendar, Alternatives. Unified across Forecast, Map, Radar, Fronts, Quiz.
+- [ ] **Certainty tiers** -- three explicit tiers: **Confirmed** (from schedule), **Watch** (confirmed but store has reliability issues), **Estimated** (probabilistic fill). Every recommendation line shows certainty state and meaning.
+
+## Now -- Weather Brand Reframe
+
+Keep weather-style branding (Forecast, Radar, Fronts) while clarifying product truth: mostly deterministic schedule planning.
+
+- [ ] **Certainty state on every recommendation** -- no ambiguous confidence language for deterministic results; certainty tier is always visible.
+- [ ] **Reframe forecast email confidence wording** -- "Moderate chance of X (5%)" is misleading for near-random probabilities. Replace with certainty tier language.
+
+## Now/Next -- Reliability Intelligence Layer (Watch)
+
+Per-store Calendar Reliability Index from day-over-day confirmed schedule behavior.
+
+- [ ] **Compute reliability index** -- inputs: forward change rate, late change rate, freshness lag, missing-window rate, recovery time. Persist to D1.
+- [ ] **Use reliability in ranking** -- planner engine ranks Watch-tier results below Confirmed-tier.
+- [ ] **Surface reliability status** -- user-facing "Watch" badge with reason text explaining why a schedule is less trustworthy.
+
+## Next -- Gap-Fill Strategy (Estimated)
+
+Use probabilistic fill only when schedule data is missing, incomplete, or beyond known horizon.
+
+- [ ] **Explicit trigger rules** -- define when Estimated fill activates vs. showing "No data."
+- [ ] **UX separation** -- Estimated always labeled, always ranked below Confirmed/Watch. Clear visual distinction.
+- [ ] **Test coverage** -- trigger rules covered by tests to prevent accidental promotion of Estimated to Confirmed.
+
+## Next -- Personality Mad Lib -> Nearby Match
+
+Quiz/Mad Lib maps personality/archetype to flavor preferences, then calls planner engine with location/radius.
+
+- [ ] **Planner integration** -- quiz output drives real trip planning actions via shared planner engine, not just a personality card.
+- [ ] **Actionable results** -- always return in-radius match, nearest outside radius, and alternatives with CTAs.
+
+## Next -- Flavor Signals and Stories
+
+Turn high-specificity seasonal/store insights into explainable content with evidence thresholds.
+
+- [ ] **Signal detection** -- statistically gated pattern recognition (e.g., How Now Brown Cow over-index signatures). Plain-language explanation with evidence.
+- [ ] **Surface across pages** -- Forecast signal card, Radar "why this," Map store signature line, weekly email "Wild Find."
+- [ ] **Action linkage** -- every signal links to an action (Alert, Calendar, Directions).
+
+## Next/Later -- Map/Fronts Visual v2
+
+PCA/category overlays + improved weather-motion aesthetics, tied directly to decisions.
+
+- [ ] **Decision-driven visuals** -- visuals clarify where/when to go, not just look better.
+- [ ] **Interaction-to-action metrics** -- measure and improve. No usability/performance regressions.
+
+## Later -- Refactor / Re-Architecture
+
+"Are we DRY?", "Can rendering be standardized?", "If built today, what architecture wins do we capture?"
+
+- [ ] **DRY audit** -- duplicated logic across Worker, docs, widget, OG tooling, Tidbyt (especially flavor/cone image generation).
+- [ ] **Canonical render spec** -- palette + geometry + toppings with adapters per surface.
+- [ ] **Shared decision/certainty modules** -- extract to reduce cross-page divergence, enforce contracts by tests.
+- [ ] **Decompose large modules** -- formalize API/data contracts to prevent drift.
+- [ ] **Greenfield target architecture** -- define data layer, decision layer, presentation layer. Migrate incrementally, not rewrite. Staged cutovers with rollback safety.
+
+## Someday/Maybe
+
+Not active. Only promote if they clearly improve core decision KPIs.
 
 - [ ] **Alexa skill** -- custom skill using `/api/v1/today` (requires Amazon dev account + certification)
 - [ ] **Android widget** -- parity with iOS Scriptable widget using `/api/v1` data
@@ -50,7 +95,6 @@ The analytics pipeline's best output isn't predictions -- it's **flavor intellig
 
 - [ ] **Add DoW + seasonality features** -- 38 flavors show significant day-of-week bias. Add to FrequencyRecency and MarkovRecency models. Expected +5-8% top-1 accuracy.
 - [ ] **Implement ensemble predictor** -- combine FR (40%), Markov (40%), PCA-collaborative (20%). Current 3.2% top-1 -> maybe 5-6%.
-- [ ] **Reframe forecast email confidence wording** -- "Moderate chance of X (5%)" is misleading for near-random probabilities.
 - [ ] **Expand overdue watch-list** -- show top 5 overdue flavors in emails (currently 3).
 - [ ] **Confidence intervals in forecast output** -- P95 uncertainty bands.
 - [ ] **Fix NMF convergence** -- increase max_iter to 1000, test n_components=5.
@@ -64,6 +108,10 @@ The analytics pipeline's best output isn't predictions -- it's **flavor intellig
 <summary>Shipped features and fixes (click to expand)</summary>
 
 ### Product Features
+- [x] Confirmed flavor fronts -- default "Confirmed Today" mode with family-colored markers + smooth 400ms day crossfade (2026-02-25)
+- [x] Near-me-now -- auto-geolocate on first visit, 5 nearest stores with cone icon and distance (2026-02-25)
+- [x] Map category chips -- 9 flavor family filters, non-matching markers fade to 15% opacity (2026-02-25)
+- [x] Calendar subscription CTA -- one-click .ics copy after today card loads (2026-02-25)
 - [x] Flavor intelligence API -- `/api/v1/flavor-stats/{slug}` with overdue, seasonality, DoW bias, streaks, store personality, cross-store rarity (2026-02-25)
 - [x] Quiz availability rewrite -- only returns actually-available flavors via archetype + similarity group intersection (2026-02-25)
 - [x] Quiz 10pm cutover -- late-night messaging when stores are closing (2026-02-25)
