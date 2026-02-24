@@ -69,6 +69,19 @@
         <button class="brand-chip" data-brand="kraverz">Kraverz</button>
         <button class="brand-chip" data-brand="oscars">Oscar's</button>
       </div>
+      <div class="flavor-family-chips" id="flavor-family-chips" hidden>
+        <span class="chips-label">Flavor family:</span>
+        <button class="flavor-chip active" data-family="all">All</button>
+        <button class="flavor-chip" data-family="mint">Mint</button>
+        <button class="flavor-chip" data-family="chocolate">Chocolate</button>
+        <button class="flavor-chip" data-family="caramel">Caramel</button>
+        <button class="flavor-chip" data-family="cheesecake">Cheesecake</button>
+        <button class="flavor-chip" data-family="turtle">Turtle</button>
+        <button class="flavor-chip" data-family="cookie">Cookie</button>
+        <button class="flavor-chip" data-family="peanut-butter">Peanut Butter</button>
+        <button class="flavor-chip" data-family="berry">Berry</button>
+        <button class="flavor-chip" data-family="pecan">Pecan</button>
+      </div>
     </section>
 
     <section id="suggestions-panel" hidden>
@@ -156,6 +169,31 @@
     const activeBrands = new Set(['culvers']);
 
     const ALL_BRANDS = ['culvers', 'kopps', 'gilles', 'hefners', 'kraverz', 'oscars'];
+
+    // Flavor family filter data
+    const FLAVOR_FAMILIES = {
+      mint: ['andes mint avalanche', 'mint cookie', 'mint explosion'],
+      chocolate: ['chocolate caramel twist', 'chocolate heath crunch', 'chocolate volcano', 'dark chocolate decadence', 'dark chocolate pb crunch', 'chocolate oreo volcano'],
+      caramel: ['caramel cashew', 'caramel fudge cookie dough', 'caramel pecan', 'caramel turtle', 'salted caramel pecan pie', 'chocolate caramel twist'],
+      cheesecake: ['oreo cheesecake', 'oreo cookie cheesecake', 'raspberry cheesecake', 'strawberry cheesecake', 'turtle cheesecake'],
+      turtle: ['turtle', 'turtle dove', 'turtle cheesecake', 'caramel turtle'],
+      cookie: ['crazy for cookie dough', 'caramel fudge cookie dough', 'mint cookie', 'oreo cookie cheesecake', 'oreo cookies and cream'],
+      'peanut-butter': ['dark chocolate pb crunch', 'peanut butter cup', 'reeses peanut butter cup'],
+      berry: ['blackberry cobbler', 'raspberry cheesecake', 'strawberry cheesecake', 'lemon berry layer cake'],
+      pecan: ['butter pecan', 'caramel pecan', 'salted caramel pecan pie', 'georgia peach pecan']
+    };
+
+    // Build reverse lookup: normalized flavor -> set of families
+    const flavorToFamilies = {};
+    for (const [family, members] of Object.entries(FLAVOR_FAMILIES)) {
+      for (const member of members) {
+        if (!flavorToFamilies[member]) flavorToFamilies[member] = [];
+        flavorToFamilies[member].push(family);
+      }
+    }
+
+    let activeFamily = 'all';
+    const familyChipsContainer = document.getElementById('flavor-family-chips');
 
     // Haversine distance in miles between two coordinate pairs
     function haversine(lat1, lon1, lat2, lon2) {
@@ -258,11 +296,57 @@
       });
     });
 
+    // Wire up flavor family chips
+    document.querySelectorAll('.flavor-chip').forEach(function(chip) {
+      chip.addEventListener('click', function() {
+        activeFamily = this.dataset.family;
+        document.querySelectorAll('.flavor-chip').forEach(function(c) {
+          c.classList.toggle('active', c.dataset.family === activeFamily);
+        });
+        applyFamilyFilter();
+      });
+    });
+
+    function storeMatchesFamily(store) {
+      if (activeFamily === 'all') return true;
+      if (!store.flavor) return false;
+      var normalized = store.flavor.toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, ' ').trim();
+      var families = flavorToFamilies[normalized];
+      return families && families.includes(activeFamily);
+    }
+
+    function applyFamilyFilter() {
+      if (!window._allMarkers) return;
+
+      var visibleCount = 0;
+      for (var i = 0; i < window._allMarkers.length; i++) {
+        var entry = window._allMarkers[i];
+        var matches = storeMatchesFamily(entry.store);
+        if (matches) {
+          entry.marker.setOpacity(1);
+          visibleCount++;
+        } else {
+          entry.marker.setOpacity(0.15);
+        }
+      }
+
+      var countEl = document.getElementById('results-count');
+      if (countEl && activeFamily !== 'all') {
+        countEl.textContent = visibleCount + ' ' + activeFamily + ' stores';
+      }
+    }
+
     let cachedSecondaryResults = []; // cached so map moves don't re-fetch
     let cachedSecondaryKey = '';    // tracks which brands are cached
 
     async function refreshResults(skipFitBounds = false) {
       await flavorColorsReady;
+
+      // Reset flavor family filter on each refresh
+      activeFamily = 'all';
+      document.querySelectorAll('.flavor-chip').forEach(function(c) {
+        c.classList.toggle('active', c.dataset.family === 'all');
+      });
 
       const hasPrimary = activeBrands.has('culvers');
       const secondaryBrands = [...activeBrands].filter(b => b !== 'culvers');
@@ -330,6 +414,7 @@
 
       // Markers + bounds
       markers.clearLayers();
+      window._allMarkers = [];
       const allBounds = L.latLngBounds();
       const hasFlavorFilter = primaryData ? !!primaryData.query.flavor : !!flavorQuery;
 
@@ -338,6 +423,7 @@
         const icon = buildConeMarkerIcon(store, hasFlavorFilter);
         const marker = L.marker([store._lat, store._lon], { icon }).bindPopup(storePopup(store, store._match));
         markers.addLayer(marker);
+        window._allMarkers.push({ store: store, marker: marker });
       }
 
       // Suggestions
@@ -435,6 +521,11 @@
 
       resultsBody.innerHTML = html || '<div class="no-results">No results.</div>';
       resultsSection.hidden = false;
+
+      // Show flavor family chips once we have results
+      if (allStores.length > 0) {
+        familyChipsContainer.hidden = false;
+      }
     }
 
     // Fetch primary brand data via locator API (returns API response or null)
