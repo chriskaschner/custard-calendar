@@ -73,9 +73,9 @@ PCA/category overlays + improved weather-motion aesthetics, tied directly to dec
 
 "Are we DRY?", "Can rendering be standardized?", "If built today, what architecture wins do we capture?"
 
-- [ ] **DRY audit** -- duplicated logic across Worker, docs, widget, OG tooling, Tidbyt (especially flavor/cone image generation).
+- [x] **DRY audit** -- Identified 7 duplication hotspots: certainty thresholds (CRITICAL fix applied), escapeHtml (7 files), similarity groups (3 files), flavor families, haversine, WORKER_BASE, brand colors. (2026-02-27)
 - [ ] **Canonical render spec** -- palette + geometry + toppings with adapters per surface.
-- [ ] **Shared decision/certainty modules** -- extract to reduce cross-page divergence, enforce contracts by tests.
+- [x] **Shared decision/certainty modules** -- Fixed critical threshold divergence: planner-shared.js now matches worker/src/certainty.js (MIN_PROBABILITY=0.02, MIN_HISTORY_DEPTH=14, MAX_FORECAST_AGE_HOURS=168). Added escapeHtml export. (2026-02-27)
 - [ ] **Decompose large modules** -- formalize API/data contracts to prevent drift.
 - [ ] **Greenfield target architecture** -- define data layer, decision layer, presentation layer. Migrate incrementally, not rewrite. Staged cutovers with rollback safety.
 

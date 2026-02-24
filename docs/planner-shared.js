@@ -10,6 +10,15 @@ var CustardPlanner = (function () {
   'use strict';
 
   // ---------------------------------------------------------------------------
+  // Utilities
+  // ---------------------------------------------------------------------------
+
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  // ---------------------------------------------------------------------------
   // Brand constants
   // ---------------------------------------------------------------------------
 
@@ -247,12 +256,18 @@ var CustardPlanner = (function () {
     NONE: 'none',
   };
 
+  // Thresholds must match worker/src/certainty.js
+  var MIN_PROBABILITY = 0.02;
+  var MIN_HISTORY_DEPTH = 14;
+  var MAX_FORECAST_AGE_HOURS = 168;
+
   /** Determine certainty tier from available data signals. */
   function certaintyTier(opts) {
     var type = opts.type || 'none';
     var reliability = opts.reliability; // 'confirmed', 'watch', 'unreliable' or undefined
     var probability = opts.probability || 0;
     var historyDepth = opts.historyDepth || 0;
+    var forecastAgeHours = opts.forecastAgeHours;
 
     if (type === 'confirmed') {
       if (reliability === 'watch' || reliability === 'unreliable') {
@@ -261,12 +276,11 @@ var CustardPlanner = (function () {
       return CERTAINTY.CONFIRMED;
     }
 
-    if (type === 'predicted' && probability > 0.04 && historyDepth >= 30) {
-      return CERTAINTY.ESTIMATED;
-    }
-
     if (type === 'predicted') {
-      return CERTAINTY.ESTIMATED;
+      var stale = typeof forecastAgeHours === 'number' && forecastAgeHours > MAX_FORECAST_AGE_HOURS;
+      if (!stale && probability >= MIN_PROBABILITY && historyDepth >= MIN_HISTORY_DEPTH) {
+        return CERTAINTY.ESTIMATED;
+      }
     }
 
     return CERTAINTY.NONE;
@@ -492,6 +506,9 @@ var CustardPlanner = (function () {
     findSimilarFlavors: findSimilarFlavors,
     findSimilarToFavorites: findSimilarToFavorites,
 
+    // Utilities
+    escapeHtml: escapeHtml,
+
     // Certainty
     CERTAINTY: CERTAINTY,
     CERTAINTY_LABELS: CERTAINTY_LABELS,
@@ -533,12 +550,11 @@ var CustardPlanner = (function () {
     var actionLabel = sig.action === 'directions' ? 'Directions' : sig.action === 'calendar' ? 'Subscribe' : 'Set Alert';
     var actionClass = 'cta-link cta-' + sig.action;
     var actionHref = sig.action === 'alert' ? alertPageUrl(slug) : sig.action === 'calendar' ? calendarIcsUrl(workerBase, slug) : '#';
-    var esc = function(s) { return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); };
     return '<div class="signal-card">'
-      + '<div class="signal-card-accent signal-accent-' + esc(sig.type) + '"></div>'
+      + '<div class="signal-card-accent signal-accent-' + escapeHtml(sig.type) + '"></div>'
       + '<div class="signal-card-body">'
-      + '<div class="signal-headline">' + esc(sig.headline) + '</div>'
-      + '<div class="signal-explanation">' + esc(sig.explanation) + '</div>'
+      + '<div class="signal-headline">' + escapeHtml(sig.headline) + '</div>'
+      + '<div class="signal-explanation">' + escapeHtml(sig.explanation) + '</div>'
       + '<a href="' + actionHref + '" class="' + actionClass + '">' + actionLabel + '</a>'
       + '</div></div>';
   }
