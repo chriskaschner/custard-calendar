@@ -578,6 +578,45 @@ details ol {
   border-color: transparent;
 }
 
+/* Flavor family filter chips */
+.flavor-family-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  margin-bottom: 0.75rem;
+  align-items: center;
+}
+
+.chips-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #666;
+  margin-right: 0.25rem;
+}
+
+.flavor-chip {
+  padding: 0.3rem 0.75rem;
+  border: 1.5px solid #ddd;
+  border-radius: 999px;
+  background: white;
+  color: #555;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+
+.flavor-chip:hover {
+  border-color: #999;
+}
+
+.flavor-chip.active {
+  background: #005696;
+  color: white;
+  border-color: transparent;
+}
+
 /* Suggestions panel */
 #suggestions-panel {
   background: #fff8e1;
@@ -1181,6 +1220,70 @@ footer a {
   background: #eef6ff;
 }
 
+/* Near me now */
+.near-me-section {
+  margin-top: 1.5rem;
+}
+
+.near-me-section h3 {
+  font-size: 0.9375rem;
+  color: #666;
+  margin-bottom: 0.75rem;
+  font-weight: 600;
+}
+
+.near-me-cards {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.5rem;
+}
+
+.near-me-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.near-me-card:hover {
+  border-color: #005696;
+  box-shadow: 0 1px 4px rgba(0, 86, 150, 0.15);
+}
+
+.near-me-card-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.near-me-card-flavor {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.near-me-card-store {
+  font-size: 0.8125rem;
+  color: #666;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.near-me-card-dist {
+  font-size: 0.75rem;
+  color: #999;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
 @media (max-width: 600px) {
   .hero-empty {
     padding: 2rem 0.5rem 1.25rem;
@@ -1398,6 +1501,87 @@ footer a {
   font-size: 0.6875rem;
   color: #888;
   margin-top: 0.25rem;
+}
+
+/* Calendar subscription CTA */
+.calendar-cta {
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.calendar-cta-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: #f7fbff;
+  border: 1px solid #bfd3e8;
+  border-radius: 8px;
+}
+
+.calendar-cta-icon {
+  flex-shrink: 0;
+}
+
+.calendar-cta-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.calendar-cta-content strong {
+  font-size: 0.875rem;
+  color: #003366;
+  display: block;
+}
+
+.calendar-cta-content p {
+  font-size: 0.8125rem;
+  color: #666;
+  margin: 0.125rem 0 0;
+}
+
+.calendar-cta-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.calendar-cta-btn {
+  padding: 0.375rem 0.75rem;
+  background: #005696;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.calendar-cta-btn:hover {
+  background: #003366;
+}
+
+.calendar-cta-link {
+  font-size: 0.75rem;
+  color: #005696;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.calendar-cta-link:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 500px) {
+  .calendar-cta-card {
+    flex-wrap: wrap;
+  }
+  .calendar-cta-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
 }
 
 /* Calendar preview module (index page) */

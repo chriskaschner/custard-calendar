@@ -25,11 +25,11 @@ Things that are broken or misleading today.
 
 Features that lean into what works.
 
-- [ ] **"Near me now" entry point** -- fastest path on the site: geolocate, show 5 closest stores with today's confirmed flavor, cone icon, distance. No search required. Could be the default map view or a homepage module.
+- [x] **"Near me now" entry point** -- auto-geolocates on first visit, shows 5 closest stores with cone icon, flavor, distance. Click to select. (2026-02-25)
 - [ ] **Flavor fronts on confirmed data** -- rework `forecast-map.html` to show today's confirmed flavors as weather-front clusters by default. Group stores by flavor family (PCA clusters), show category-colored regions. Prediction toggle available but off by default.
 - [ ] **Weather-map animation on confirmed data** -- animate through confirmed days of the week (Mon-Sun confirmed schedule) rather than predicted future days. Apple Weather-style soft blobs and crossfades, but over real data.
-- [ ] **Map category chips** -- use the 5 PCA similarity groups (mint, chocolate, caramel, cheesecake, turtle) as filter chips on the map. "Show me all stores with a caramel flavor today." PCA baseline is done.
-- [ ] **Calendar subscription visibility** -- it's the stickiest feature but buried behind store selection. Surface it earlier in the UX flow.
+- [x] **Map category chips** -- 9 flavor family filter chips on map page. Non-matching markers fade to 15% opacity. Resets on new search. (2026-02-25)
+- [x] **Calendar subscription visibility** -- CTA card appears after today's flavor loads with one-click .ics URL copy. Supplements existing preview at page bottom. (2026-02-25)
 - [x] **Flavor quiz -> nearby match** -- quiz matches archetype to confirmed nearby flavors with similarity fallback. (2026-02-25)
 - [x] **Quiz: only return actually-available flavors** -- rewrote engine to intersect archetype candidates with `all_flavors_today` from nearby-flavors API; similarity groups as fallback. Never shows unavailable flavors. (2026-02-25)
 - [x] **Quiz: "today" means until 10pm local** -- added 10pm cutover detection with late-night messaging. (2026-02-25)
