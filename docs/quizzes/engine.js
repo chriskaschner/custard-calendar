@@ -4,13 +4,22 @@ const QUIZ_CONFIG_PATHS = [
   'quizzes/quiz-weather-v1.json',
   'quizzes/quiz-classic-v1.json',
   'quizzes/quiz-date-night-v1.json',
+  'quizzes/quiz-build-scoop-v1.json',
+  'quizzes/quiz-compatibility-v1.json',
+  'quizzes/quiz-trivia-v1.json',
 ];
+const QUESTION_COUNT = 5;
+const DYNAMIC_QUIZ_TTL_MS = 15 * 60 * 1000;
 
 const state = {
   traits: [],
   archetypes: [],
   quizzes: [],
   activeQuiz: null,
+  activeQuestionsByQuiz: {},
+  flavorToArchetypeIds: new Map(),
+  nearbyTraitCache: new Map(),
+  dynamicQuizCache: new Map(),
 };
 
 const els = {
@@ -88,6 +97,202 @@ async function loadJson(path) {
   return resp.json();
 }
 
+function resolveDynamicQuizUrl(sourcePath) {
+  if (typeof sourcePath !== 'string' || !sourcePath.trim()) return null;
+  if (/^https?:\/\//i.test(sourcePath)) return sourcePath;
+  if (sourcePath.startsWith('/')) return `${WORKER_BASE}${sourcePath}`;
+  return `${WORKER_BASE}/${sourcePath}`;
+}
+
+function applyDynamicQuizData(quiz, data) {
+  if (!quiz || !data) return;
+
+  const remotePool = Array.isArray(data.question_pool)
+    ? data.question_pool
+    : (Array.isArray(data.questions) ? data.questions : null);
+  if (remotePool && remotePool.length > 0) {
+    quiz.question_pool = remotePool;
+    quiz.questions = remotePool;
+  }
+
+  if (Number(data.question_count) > 0) {
+    quiz.question_count = Math.round(Number(data.question_count));
+  }
+  if (typeof data.name === 'string' && data.name.trim()) quiz.name = data.name;
+  if (typeof data.title === 'string' && data.title.trim()) quiz.title = data.title;
+  if (typeof data.description === 'string' && data.description.trim()) quiz.description = data.description;
+}
+
+async function hydrateDynamicQuiz(quiz) {
+  if (!quiz?.id || !quiz?.dynamic_source) return quiz;
+
+  const now = Date.now();
+  const cache = state.dynamicQuizCache.get(quiz.id);
+  if (cache && now - cache.fetchedAt < DYNAMIC_QUIZ_TTL_MS) {
+    applyDynamicQuizData(quiz, cache.data);
+    return quiz;
+  }
+
+  const sourceUrl = resolveDynamicQuizUrl(quiz.dynamic_source);
+  if (!sourceUrl) return quiz;
+
+  try {
+    const resp = await fetch(sourceUrl, { headers: { 'Accept': 'application/json' } });
+    if (!resp.ok) throw new Error(`Dynamic quiz fetch failed (${resp.status})`);
+    const data = await resp.json();
+    const pool = Array.isArray(data?.question_pool) ? data.question_pool : data?.questions;
+    if (!Array.isArray(pool) || pool.length === 0) throw new Error('Dynamic quiz returned no questions');
+
+    const normalized = {
+      ...data,
+      question_pool: pool,
+      question_count: Number(data?.question_count) > 0 ? Math.round(Number(data.question_count)) : quiz.question_count,
+    };
+
+    state.dynamicQuizCache.set(quiz.id, { fetchedAt: now, data: normalized });
+    applyDynamicQuizData(quiz, normalized);
+  } catch {
+    if (cache?.data) applyDynamicQuizData(quiz, cache.data);
+  }
+
+  return quiz;
+}
+
+function getQuestionPool(quiz) {
+  if (!quiz) return [];
+  if (Array.isArray(quiz.question_pool)) return quiz.question_pool;
+  if (Array.isArray(quiz.questions)) return quiz.questions;
+  return [];
+}
+
+function getActiveQuestions(quiz) {
+  if (!quiz) return [];
+  return state.activeQuestionsByQuiz[quiz.id] || getQuestionPool(quiz);
+}
+
+function randomValue() {
+  if (typeof crypto !== 'undefined' && crypto && typeof crypto.getRandomValues === 'function') {
+    const arr = new Uint32Array(1);
+    crypto.getRandomValues(arr);
+    return arr[0] / 4294967296;
+  }
+  return Math.random();
+}
+
+function computeQuestionTraitSignals(question) {
+  const out = {};
+  const options = Array.isArray(question?.options) ? question.options : [];
+  for (const option of options) {
+    const traits = option?.traits || {};
+    for (const [trait, raw] of Object.entries(traits)) {
+      const value = Math.abs(Number(raw));
+      if (!Number.isFinite(value) || value <= 0) continue;
+      out[trait] = (out[trait] || 0) + value;
+    }
+  }
+  return out;
+}
+
+function buildQuestionWeights(pool, favoredTraits) {
+  const hasFavoredTraits = favoredTraits && Object.keys(favoredTraits).length > 0;
+  return pool.map((question) => {
+    if (!hasFavoredTraits) return 1;
+    const signals = computeQuestionTraitSignals(question);
+    let overlap = 0;
+    for (const [trait, signal] of Object.entries(signals)) {
+      const favor = Number(favoredTraits[trait] || 0);
+      if (!Number.isFinite(favor) || favor <= 0) continue;
+      overlap += signal * favor;
+    }
+    return 1 + overlap;
+  });
+}
+
+function weightedSampleWithoutReplacement(pool, weights, count) {
+  const items = pool.slice();
+  const weightCopy = weights.slice();
+  const selected = [];
+  const picks = Math.min(Math.max(count, 0), items.length);
+
+  for (let i = 0; i < picks; i += 1) {
+    const total = weightCopy.reduce((sum, value) => sum + Math.max(0, Number(value) || 0), 0);
+    let idx = 0;
+
+    if (total <= 0) {
+      idx = Math.floor(randomValue() * items.length);
+    } else {
+      let needle = randomValue() * total;
+      for (let wi = 0; wi < weightCopy.length; wi += 1) {
+        needle -= Math.max(0, Number(weightCopy[wi]) || 0);
+        if (needle <= 0) {
+          idx = wi;
+          break;
+        }
+      }
+    }
+
+    selected.push(items[idx]);
+    items.splice(idx, 1);
+    weightCopy.splice(idx, 1);
+  }
+
+  return selected;
+}
+
+function buildFlavorToArchetypeIndex(archetypes) {
+  const index = new Map();
+  for (const archetype of archetypes) {
+    const flavors = Array.isArray(archetype?.flavors) ? archetype.flavors : [];
+    for (const flavor of flavors) {
+      const normalized = normalizeFlavor(flavor);
+      if (!normalized) continue;
+      if (!index.has(normalized)) index.set(normalized, []);
+      index.get(normalized).push(archetype.id);
+    }
+  }
+  return index;
+}
+
+function computeFavoredTraitsFromFlavors(allFlavorsToday) {
+  const favored = {};
+  for (const rawFlavor of allFlavorsToday || []) {
+    const key = normalizeFlavor(rawFlavor);
+    const archetypeIds = state.flavorToArchetypeIds.get(key) || [];
+    for (const archetypeId of archetypeIds) {
+      const archetype = state.archetypes.find((a) => a.id === archetypeId);
+      if (!archetype) continue;
+      for (const [trait, raw] of Object.entries(archetype.profile || {})) {
+        const value = Number(raw);
+        if (!Number.isFinite(value) || value <= 0) continue;
+        favored[trait] = (favored[trait] || 0) + value;
+      }
+    }
+  }
+  return favored;
+}
+
+async function fetchFavoredTraitsForLocation(locationText) {
+  const key = String(locationText || '').trim().toLowerCase();
+  if (!key) return null;
+  if (state.nearbyTraitCache.has(key)) return state.nearbyTraitCache.get(key);
+
+  try {
+    const nearbyData = await fetchNearby(locationText);
+    const favored = computeFavoredTraitsFromFlavors(nearbyData.all_flavors_today);
+    state.nearbyTraitCache.set(key, favored);
+    return favored;
+  } catch {
+    return null;
+  }
+}
+
+function pickSessionQuestions(pool, favoredTraits, questionCount = QUESTION_COUNT) {
+  if (!Array.isArray(pool) || pool.length === 0) return [];
+  const count = Math.min(Math.max(Number(questionCount) || QUESTION_COUNT, 1), pool.length);
+  const weights = buildQuestionWeights(pool, favoredTraits);
+  return weightedSampleWithoutReplacement(pool, weights, count);
+}
+
 async function loadConfigs() {
   const [archetypeData, ...quizConfigs] = await Promise.all([
     loadJson('quizzes/flavor-archetypes.json'),
@@ -95,7 +300,14 @@ async function loadConfigs() {
   ]);
   state.traits = Array.isArray(archetypeData?.traits) ? archetypeData.traits : [];
   state.archetypes = Array.isArray(archetypeData?.archetypes) ? archetypeData.archetypes : [];
-  state.quizzes = quizConfigs.filter((quiz) => quiz && quiz.id && Array.isArray(quiz.questions));
+  state.flavorToArchetypeIds = buildFlavorToArchetypeIndex(state.archetypes);
+  state.quizzes = quizConfigs
+    .filter((quiz) => quiz && quiz.id && Array.isArray(quiz.questions))
+    .map((quiz) => ({
+      ...quiz,
+      question_pool: Array.isArray(quiz.question_pool) && quiz.question_pool.length ? quiz.question_pool : quiz.questions,
+      question_count: Number(quiz.question_count) > 0 ? Math.round(Number(quiz.question_count)) : QUESTION_COUNT,
+    }));
 }
 
 function populateVariantSelect() {
@@ -112,17 +324,27 @@ function populateVariantSelect() {
   }
 }
 
-function renderQuestions(quiz) {
+async function renderQuestions(quiz) {
+  const hydratedQuiz = await hydrateDynamicQuiz(quiz);
+  const pool = getQuestionPool(hydratedQuiz);
+  const questionCount = Math.min(
+    Math.max(Number(hydratedQuiz?.question_count) || QUESTION_COUNT, 1),
+    Math.max(pool.length, 1),
+  );
+  const favoredTraits = await fetchFavoredTraitsForLocation(els.locationInput?.value || '');
+  const selectedQuestions = pickSessionQuestions(pool, favoredTraits, questionCount);
+  state.activeQuestionsByQuiz[hydratedQuiz.id] = selectedQuestions;
+
   els.questionsWrap.innerHTML = '';
   const template = document.getElementById('quiz-header-template');
   if (template) {
     const clone = template.content.cloneNode(true);
-    clone.querySelector('[data-quiz-title]').textContent = quiz.title;
-    clone.querySelector('[data-quiz-description]').textContent = quiz.description || '';
+    clone.querySelector('[data-quiz-title]').textContent = hydratedQuiz.title;
+    clone.querySelector('[data-quiz-description]').textContent = hydratedQuiz.description || '';
     els.questionsWrap.appendChild(clone);
   }
 
-  quiz.questions.forEach((question, idx) => {
+  selectedQuestions.forEach((question, idx) => {
     const fieldset = document.createElement('fieldset');
     fieldset.className = 'quiz-question';
     fieldset.dataset.questionId = question.id;
@@ -183,12 +405,14 @@ function collectAnswers(quiz, formEl) {
   const traitScores = {};
   const selected = {};
   const commentaries = [];
+  const trivia = { correct: 0, total: 0, accuracy: null };
+  const questions = getActiveQuestions(quiz);
 
   for (const trait of state.traits) {
     traitScores[trait] = 0;
   }
 
-  for (const question of quiz.questions) {
+  for (const question of questions) {
     const selectedId = data.get(question.id);
     if (!selectedId) {
       throw new Error('Please answer all questions before running your custard forecast.');
@@ -196,6 +420,12 @@ function collectAnswers(quiz, formEl) {
     selected[question.id] = String(selectedId);
     const selectedOption = question.options.find((opt) => opt.id === selectedId);
     if (!selectedOption) continue;
+    if (typeof question.correct_option_id === 'string' && question.correct_option_id) {
+      trivia.total += 1;
+      if (question.correct_option_id === String(selectedId)) {
+        trivia.correct += 1;
+      }
+    }
     if (selectedOption.commentary) {
       commentaries.push(selectedOption.commentary);
     }
@@ -208,7 +438,11 @@ function collectAnswers(quiz, formEl) {
     }
   }
 
-  return { traitScores, selected, commentaries };
+  if (trivia.total > 0) {
+    trivia.accuracy = trivia.correct / trivia.total;
+  }
+
+  return { traitScores, selected, commentaries, trivia };
 }
 
 function chooseArchetype(traitScores) {
@@ -381,7 +615,7 @@ async function runQuiz(evt) {
   els.resultSection.hidden = true;
 
   try {
-    const { traitScores, commentaries } = collectAnswers(state.activeQuiz, els.form);
+    const { traitScores, commentaries, trivia } = collectAnswers(state.activeQuiz, els.form);
     const archetype = chooseArchetype(traitScores);
     if (!archetype) {
       throw new Error('Could not determine an archetype from the selected answers.');
@@ -552,9 +786,10 @@ async function runQuiz(evt) {
     }
 
     const traits = topTraits(traitScores, 3);
+    const triviaLabel = trivia.total > 0 ? ` Trivia: ${trivia.correct}/${trivia.total} correct.` : '';
     els.resultTraits.textContent = traits.length
-      ? `Top traits: ${traits.map((t) => `${t.trait} (${t.score})`).join(', ')}`
-      : 'Top traits: balanced profile';
+      ? `Top traits: ${traits.map((t) => `${t.trait} (${t.score})`).join(', ')}.${triviaLabel}`
+      : `Top traits: balanced profile.${triviaLabel}`;
 
     const lateNote = lateNight ? ' Last chance tonight -- stores close around 10pm.' : '';
 
@@ -694,6 +929,8 @@ async function runQuiz(evt) {
         (!resultFlavor || (resultFlavor && !bestStore)) && nearestAnyStore
       ),
       fallback_store_slug: (!resultFlavor || (resultFlavor && !bestStore)) ? (nearestAnyStore?.slug || null) : null,
+      trivia_correct: trivia.total > 0 ? trivia.correct : null,
+      trivia_total: trivia.total > 0 ? trivia.total : null,
       trait_scores: traitScores,
     });
 
@@ -732,8 +969,10 @@ async function setLocationFromBrowser() {
         const lat = pos.coords.latitude.toFixed(4);
         const lon = pos.coords.longitude.toFixed(4);
         els.locationInput.value = `${lat},${lon}`;
-        setStatus('Location set from browser GPS. Radius filtering will use exact distance.', 'success');
-        resolve();
+        Promise.resolve(state.activeQuiz ? renderQuestions(state.activeQuiz) : null).finally(() => {
+          setStatus('Location set from browser GPS. Radius filtering will use exact distance.', 'success');
+          resolve();
+        });
       },
       () => {
         setStatus('Could not access browser location. Enter city, ZIP, or coordinates manually.', 'error');
@@ -745,11 +984,11 @@ async function setLocationFromBrowser() {
 }
 
 function bindEvents() {
-  els.variantSelect.addEventListener('change', () => {
+  els.variantSelect.addEventListener('change', async () => {
     const next = getQuizById(els.variantSelect.value);
     if (!next) return;
     state.activeQuiz = next;
-    renderQuestions(next);
+    await renderQuestions(next);
     setStatus(`Loaded quiz: ${next.name}.`, 'neutral');
   });
   els.form.addEventListener('submit', runQuiz);
@@ -757,6 +996,13 @@ function bindEvents() {
     evt.preventDefault();
     setLocationFromBrowser();
   });
+  if (els.locationInput) {
+    els.locationInput.addEventListener('change', async () => {
+      if (!state.activeQuiz) return;
+      await renderQuestions(state.activeQuiz);
+      setStatus('Question mix updated for this location.', 'neutral');
+    });
+  }
 }
 
 async function init() {
@@ -766,9 +1012,9 @@ async function init() {
       throw new Error('Quiz configuration is missing.');
     }
     populateVariantSelect();
-    renderQuestions(state.activeQuiz);
-    bindEvents();
     await setLocationFromCloudflare();
+    await renderQuestions(state.activeQuiz);
+    bindEvents();
     setStatus('Pick a quiz mode, answer five prompts, then get a live in-radius flavor match.', 'neutral');
   } catch (err) {
     setStatus(`Failed to initialize quiz engine: ${err.message}`, 'error');

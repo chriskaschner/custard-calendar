@@ -3,6 +3,7 @@
   "name": "Flavor Personality",
   "title": "What Flavor of the Day Are You?",
   "description": "Classic personality quiz with custard-trait scoring and local availability matching.",
+  "question_count": 5,
   "questions": [
     {
       "id": "mood-color",
@@ -52,6 +53,106 @@
         { "id": "lunch-run", "label": "Fast lunch run", "commentary": "Fast lunch run -- efficiency is its own kind of art", "traits": { "energetic": 2, "analytical": 1 } },
         { "id": "dinner-out", "label": "Dinner out with friends", "commentary": "Dinner with friends -- the meal is just an excuse to gather", "traits": { "social": 2, "romantic": 1 } },
         { "id": "late-night", "label": "Late-night snack quest", "commentary": "Late-night snack quest -- you live for the adventure", "traits": { "bold": 1, "adventurous": 2 } }
+      ]
+    },
+    {
+      "id": "road-trip-role",
+      "prompt": "On a road trip, your default role is...",
+      "options": [
+        { "id": "driver", "label": "Driver and navigator", "commentary": "Driver and navigator -- reliable and in control", "traits": { "classic": 2, "analytical": 1 } },
+        { "id": "dj", "label": "DJ with perfect playlists", "commentary": "DJ duty -- your vibe sets the pace", "traits": { "social": 2, "energetic": 1 } },
+        { "id": "detour", "label": "Detour finder", "commentary": "Detour finder -- the fun is off the main route", "traits": { "adventurous": 2, "bold": 1 } },
+        { "id": "snacks", "label": "Snack architect", "commentary": "Snack architect -- comfort and planning in one move", "traits": { "calm": 1, "classic": 1, "romantic": 1 } }
+      ]
+    },
+    {
+      "id": "work-rhythm",
+      "prompt": "Pick your ideal work rhythm.",
+      "options": [
+        { "id": "deep-focus", "label": "Long deep-focus blocks", "commentary": "Deep-focus blocks -- precision over noise", "traits": { "analytical": 2, "calm": 1 } },
+        { "id": "fast-sprints", "label": "Fast short sprints", "commentary": "Fast sprints -- momentum is everything", "traits": { "energetic": 2, "bold": 1 } },
+        { "id": "collab", "label": "Collaborative brainstorms", "commentary": "Collaborative sessions -- ideas get better together", "traits": { "social": 2, "adventurous": 1 } },
+        { "id": "steady-cadence", "label": "Steady daily cadence", "commentary": "Steady cadence -- consistency wins over drama", "traits": { "classic": 2, "calm": 1 } }
+      ]
+    },
+    {
+      "id": "dessert-style",
+      "prompt": "Choose your dessert strategy.",
+      "options": [
+        { "id": "known-favorite", "label": "Order your known favorite", "commentary": "Known favorite -- trusted classics never miss", "traits": { "classic": 2, "calm": 1 } },
+        { "id": "richest", "label": "Pick the richest option", "commentary": "Richest option -- all in, no half measures", "traits": { "bold": 2, "romantic": 1 } },
+        { "id": "split-two", "label": "Split two desserts", "commentary": "Split two -- sharing and variety over rules", "traits": { "social": 2, "adventurous": 1 } },
+        { "id": "seasonal", "label": "Try the seasonal special", "commentary": "Seasonal special -- curiosity beats routine", "traits": { "adventurous": 2, "analytical": 1 } }
+      ]
+    },
+    {
+      "id": "game-night-style",
+      "prompt": "At game night, you are...",
+      "options": [
+        { "id": "rulebook", "label": "Rulebook expert", "commentary": "Rulebook expert -- structure keeps it fun", "traits": { "analytical": 2, "classic": 1 } },
+        { "id": "hype", "label": "Hype captain", "commentary": "Hype captain -- your energy lifts the room", "traits": { "energetic": 2, "social": 1 } },
+        { "id": "bluffer", "label": "Risky bluffer", "commentary": "Risky bluffer -- no one can predict your next move", "traits": { "bold": 2, "adventurous": 1 } },
+        { "id": "host", "label": "Host and peacekeeper", "commentary": "Host and peacekeeper -- warm and grounded", "traits": { "calm": 1, "romantic": 1, "social": 1 } }
+      ]
+    },
+    {
+      "id": "weekend-reset",
+      "prompt": "Best weekend reset?",
+      "options": [
+        { "id": "journal-walk", "label": "Journal + long walk", "commentary": "Journal walk -- reflective and intentional", "traits": { "calm": 2, "analytical": 1 } },
+        { "id": "big-adventure", "label": "Big spontaneous adventure", "commentary": "Big adventure -- say yes first, plan second", "traits": { "adventurous": 2, "bold": 1 } },
+        { "id": "dinner-party", "label": "Dinner party with friends", "commentary": "Dinner party -- warmth and conversation", "traits": { "social": 2, "romantic": 1 } },
+        { "id": "project-day", "label": "Finish a personal project", "commentary": "Project day -- satisfying progress over chaos", "traits": { "classic": 1, "analytical": 1, "energetic": 1 } }
+      ]
+    },
+    {
+      "id": "playlist-tempo",
+      "prompt": "Pick your everyday playlist tempo.",
+      "options": [
+        { "id": "lofi", "label": "Lo-fi and instrumental", "traits": { "calm": 2, "analytical": 1 } },
+        { "id": "classic-pop", "label": "Classic pop anthems", "traits": { "classic": 2, "social": 1 } },
+        { "id": "high-bpm", "label": "High-BPM bangers", "traits": { "energetic": 2, "bold": 1 } },
+        { "id": "genre-hopping", "label": "Genre-hopping chaos", "traits": { "adventurous": 2, "romantic": 1 } }
+      ]
+    },
+    {
+      "id": "vacation-style",
+      "prompt": "Your vacation style?",
+      "options": [
+        { "id": "museum-city", "label": "Museum city weekend", "traits": { "analytical": 2, "classic": 1 } },
+        { "id": "beach-slow", "label": "Slow beach days", "traits": { "calm": 2, "romantic": 1 } },
+        { "id": "group-trip", "label": "Big group trip", "traits": { "social": 2, "energetic": 1 } },
+        { "id": "unknown-trail", "label": "Unknown trails and local spots", "traits": { "adventurous": 2, "bold": 1 } }
+      ]
+    },
+    {
+      "id": "kitchen-mode",
+      "prompt": "In the kitchen, you...",
+      "options": [
+        { "id": "follow-recipe", "label": "Follow the recipe exactly", "traits": { "classic": 2, "analytical": 1 } },
+        { "id": "taste-adjust", "label": "Taste and adjust as you go", "traits": { "adventurous": 1, "calm": 1, "analytical": 1 } },
+        { "id": "host-and-plate", "label": "Host, plate, and serve everyone", "traits": { "social": 2, "romantic": 1 } },
+        { "id": "heat-and-speed", "label": "High heat, fast moves", "traits": { "bold": 2, "energetic": 1 } }
+      ]
+    },
+    {
+      "id": "movie-choice",
+      "prompt": "Pick tonight's movie.",
+      "options": [
+        { "id": "comfort-rewatch", "label": "Comfort rewatch", "traits": { "classic": 2, "calm": 1 } },
+        { "id": "twisty-thriller", "label": "Twisty thriller", "traits": { "analytical": 2, "bold": 1 } },
+        { "id": "romcom", "label": "Rom-com with snacks", "traits": { "romantic": 2, "social": 1 } },
+        { "id": "cult-weird", "label": "Weird cult classic", "traits": { "adventurous": 2, "energetic": 1 } }
+      ]
+    },
+    {
+      "id": "decision-speed",
+      "prompt": "How do you make big decisions?",
+      "options": [
+        { "id": "spreadsheet", "label": "With a pros/cons sheet", "traits": { "analytical": 2, "classic": 1 } },
+        { "id": "gut-call", "label": "Gut call and commit", "traits": { "bold": 2, "adventurous": 1 } },
+        { "id": "ask-circle", "label": "Ask your circle first", "traits": { "social": 2, "romantic": 1 } },
+        { "id": "sleep-on-it", "label": "Sleep on it, then decide", "traits": { "calm": 2, "classic": 1 } }
       ]
     }
   ]

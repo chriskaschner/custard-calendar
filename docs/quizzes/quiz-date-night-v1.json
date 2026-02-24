@@ -3,6 +3,7 @@
   "name": "Date Night",
   "title": "What Is Your Date-Night Flavor?",
   "description": "Match your date-night vibe to a custard archetype, then find an available flavor nearby.",
+  "question_count": 5,
   "questions": [
     {
       "id": "setting",
@@ -52,6 +53,106 @@
         { "id": "spontaneous-stop", "label": "One more spontaneous stop", "traits": { "adventurous": 2, "bold": 1 } },
         { "id": "group-afterparty", "label": "Friends join for an afterparty", "traits": { "social": 2, "energetic": 1 } },
         { "id": "plan-next", "label": "Plan the next date immediately", "traits": { "analytical": 1, "classic": 1, "romantic": 1 } }
+      ]
+    },
+    {
+      "id": "first-impression",
+      "prompt": "Your first-date energy is...",
+      "options": [
+        { "id": "easy-listener", "label": "Warm listener", "traits": { "calm": 2, "romantic": 1 } },
+        { "id": "story-spark", "label": "Playful storyteller", "traits": { "social": 2, "energetic": 1 } },
+        { "id": "bold-charmer", "label": "Bold charmer", "traits": { "bold": 2, "romantic": 1 } },
+        { "id": "curious-explorer", "label": "Curious explorer", "traits": { "adventurous": 2, "analytical": 1 } }
+      ]
+    },
+    {
+      "id": "table-choice",
+      "prompt": "Pick the table location.",
+      "options": [
+        { "id": "window", "label": "Window table", "traits": { "romantic": 2, "calm": 1 } },
+        { "id": "bar", "label": "Bar seats with quick banter", "traits": { "social": 2, "bold": 1 } },
+        { "id": "patio", "label": "Patio under string lights", "traits": { "classic": 1, "romantic": 1, "social": 1 } },
+        { "id": "chef-counter", "label": "Chef counter for surprises", "traits": { "adventurous": 2, "energetic": 1 } }
+      ]
+    },
+    {
+      "id": "conversation-style",
+      "prompt": "Pick your conversation style.",
+      "options": [
+        { "id": "deep-questions", "label": "Deep questions and details", "traits": { "analytical": 2, "calm": 1 } },
+        { "id": "funny-stories", "label": "Funny stories and laughter", "traits": { "social": 2, "energetic": 1 } },
+        { "id": "flirty-bounce", "label": "Flirty playful bounce", "traits": { "bold": 1, "romantic": 2 } },
+        { "id": "dream-plans", "label": "Dream trips and future plans", "traits": { "classic": 1, "adventurous": 1, "romantic": 1 } }
+      ]
+    },
+    {
+      "id": "post-date-plan",
+      "prompt": "After dessert, you suggest...",
+      "options": [
+        { "id": "quiet-drive", "label": "A quiet drive and music", "traits": { "calm": 2, "romantic": 1 } },
+        { "id": "night-market", "label": "A walk through a night market", "traits": { "adventurous": 2, "social": 1 } },
+        { "id": "mini-golf", "label": "Mini golf challenge", "traits": { "energetic": 2, "bold": 1 } },
+        { "id": "coffee-recap", "label": "Coffee and recap the best moments", "traits": { "classic": 1, "analytical": 1, "romantic": 1 } }
+      ]
+    },
+    {
+      "id": "date-pace",
+      "prompt": "Ideal date pace?",
+      "options": [
+        { "id": "slow-and-meaningful", "label": "Slow and meaningful", "traits": { "calm": 2, "classic": 1 } },
+        { "id": "high-energy", "label": "Fast and high-energy", "traits": { "energetic": 2, "social": 1 } },
+        { "id": "mix-it-up", "label": "Mix it up as we go", "traits": { "adventurous": 2, "bold": 1 } },
+        { "id": "structured-night", "label": "Structured with thoughtful stops", "traits": { "analytical": 2, "romantic": 1 } }
+      ]
+    },
+    {
+      "id": "opening-line",
+      "prompt": "Your opening line style?",
+      "options": [
+        { "id": "sweet-simple", "label": "Sweet and simple", "traits": { "romantic": 2, "calm": 1 } },
+        { "id": "funny-icebreaker", "label": "Funny icebreaker", "traits": { "social": 2, "energetic": 1 } },
+        { "id": "confident-direct", "label": "Confident and direct", "traits": { "bold": 2, "classic": 1 } },
+        { "id": "curious-question", "label": "Curious question", "traits": { "analytical": 2, "adventurous": 1 } }
+      ]
+    },
+    {
+      "id": "reservation-style",
+      "prompt": "Reservation strategy?",
+      "options": [
+        { "id": "book-ahead", "label": "Book a week ahead", "traits": { "classic": 2, "analytical": 1 } },
+        { "id": "same-day-call", "label": "Same-day call and improvise", "traits": { "adventurous": 2, "bold": 1 } },
+        { "id": "friends-recommendation", "label": "Go where friends recommend", "traits": { "social": 2, "calm": 1 } },
+        { "id": "walk-in-charm", "label": "Walk in and charm your way in", "traits": { "bold": 2, "romantic": 1 } }
+      ]
+    },
+    {
+      "id": "shared-activity",
+      "prompt": "Pick a shared activity.",
+      "options": [
+        { "id": "bookstore-browse", "label": "Browse a bookstore", "traits": { "calm": 2, "analytical": 1 } },
+        { "id": "street-festival", "label": "Street festival", "traits": { "social": 2, "energetic": 1 } },
+        { "id": "dance-class", "label": "Drop-in dance class", "traits": { "bold": 1, "romantic": 1, "energetic": 1 } },
+        { "id": "scenic-detour", "label": "Scenic detour walk", "traits": { "adventurous": 2, "romantic": 1 } }
+      ]
+    },
+    {
+      "id": "follow-up-text",
+      "prompt": "Your follow-up text tone?",
+      "options": [
+        { "id": "heartfelt", "label": "Heartfelt and warm", "traits": { "romantic": 2, "calm": 1 } },
+        { "id": "playful", "label": "Playful and witty", "traits": { "social": 2, "bold": 1 } },
+        { "id": "plan-next-date", "label": "Plan the next date right away", "traits": { "classic": 1, "analytical": 1, "romantic": 1 } },
+        { "id": "spontaneous-idea", "label": "Send a spontaneous idea", "traits": { "adventurous": 2, "energetic": 1 } }
+      ]
+    },
+    {
+      "id": "celebration-style",
+      "prompt": "How do you celebrate a great night?",
+      "options": [
+        { "id": "quiet-toast", "label": "Quiet toast and gratitude", "traits": { "calm": 2, "classic": 1 } },
+        { "id": "late-night-drive", "label": "Late-night drive + playlist", "traits": { "romantic": 2, "adventurous": 1 } },
+        { "id": "invite-friends", "label": "Invite friends to join", "traits": { "social": 2, "energetic": 1 } },
+        { "id": "one-more-stop", "label": "One more surprising stop", "traits": { "bold": 2, "adventurous": 1 } }
       ]
     }
   ]

@@ -1,0 +1,109 @@
+{
+  "id": "compatibility-v1",
+  "name": "Custard Compatibility",
+  "title": "Which Flavor Fits Your Duo?",
+  "description": "Choose how your duo moves together, then find a flavor match you can both chase nearby.",
+  "question_count": 5,
+  "questions": [
+    {
+      "id": "duo-energy",
+      "prompt": "Your duo energy is...",
+      "options": [
+        { "id": "steady-pair", "label": "Steady and dependable", "traits": { "classic": 2, "calm": 1 } },
+        { "id": "power-pair", "label": "Loud and unstoppable", "traits": { "bold": 2, "energetic": 1 } },
+        { "id": "curious-pair", "label": "Curious and exploratory", "traits": { "adventurous": 2, "analytical": 1 } },
+        { "id": "warm-pair", "label": "Warm and social", "traits": { "social": 2, "romantic": 1 } }
+      ]
+    },
+    {
+      "id": "plan-style",
+      "prompt": "How do you make plans together?",
+      "options": [
+        { "id": "calendar-sync", "label": "Calendar invite and details", "traits": { "analytical": 2, "classic": 1 } },
+        { "id": "text-now", "label": "Text now, leave in 10", "traits": { "energetic": 2, "bold": 1 } },
+        { "id": "vote-options", "label": "Vote among options", "traits": { "social": 2, "calm": 1 } },
+        { "id": "randomizer", "label": "Random pick adventure", "traits": { "adventurous": 2, "romantic": 1 } }
+      ]
+    },
+    {
+      "id": "conflict-recovery",
+      "prompt": "When you disagree, you...",
+      "options": [
+        { "id": "slow-talk", "label": "Slow down and talk it out", "traits": { "calm": 2, "romantic": 1 } },
+        { "id": "split-test", "label": "Try both options quickly", "traits": { "adventurous": 2, "energetic": 1 } },
+        { "id": "pros-cons", "label": "Make a quick pros/cons call", "traits": { "analytical": 2, "classic": 1 } },
+        { "id": "laugh-pivot", "label": "Laugh, pivot, keep rolling", "traits": { "social": 2, "bold": 1 } }
+      ]
+    },
+    {
+      "id": "duo-night",
+      "prompt": "Ideal duo night?",
+      "options": [
+        { "id": "cozy-catchup", "label": "Cozy catch-up", "traits": { "calm": 2, "classic": 1 } },
+        { "id": "city-mission", "label": "City mission with multiple stops", "traits": { "energetic": 2, "adventurous": 1 } },
+        { "id": "crowd-event", "label": "Crowd event and stories", "traits": { "social": 2, "bold": 1 } },
+        { "id": "sunset-drive", "label": "Sunset drive and deep talks", "traits": { "romantic": 2, "analytical": 1 } }
+      ]
+    },
+    {
+      "id": "dessert-negotiation",
+      "prompt": "How do you choose one dessert?",
+      "options": [
+        { "id": "always-classic", "label": "Default to known favorite", "traits": { "classic": 2, "calm": 1 } },
+        { "id": "boldest-option", "label": "Choose the boldest option", "traits": { "bold": 2, "energetic": 1 } },
+        { "id": "share-two", "label": "Split two and compare", "traits": { "social": 2, "adventurous": 1 } },
+        { "id": "seasonal-pick", "label": "Pick seasonal and discuss", "traits": { "analytical": 1, "romantic": 1, "adventurous": 1 } }
+      ]
+    },
+    {
+      "id": "memory-style",
+      "prompt": "What memory do you value most?",
+      "options": [
+        { "id": "steady-tradition", "label": "Traditions that repeat", "traits": { "classic": 2, "romantic": 1 } },
+        { "id": "wild-story", "label": "A wild unexpected story", "traits": { "adventurous": 2, "bold": 1 } },
+        { "id": "group-laugh", "label": "Big group laughter", "traits": { "social": 2, "energetic": 1 } },
+        { "id": "quiet-moment", "label": "Quiet meaningful moment", "traits": { "calm": 2, "analytical": 1 } }
+      ]
+    },
+    {
+      "id": "duo-drive-radius",
+      "prompt": "Your duo drive radius is...",
+      "options": [
+        { "id": "close-only", "label": "Close and convenient", "traits": { "classic": 2, "calm": 1 } },
+        { "id": "mid-range", "label": "Moderate, if worth it", "traits": { "analytical": 2, "romantic": 1 } },
+        { "id": "long-haul", "label": "Long haul for the right scoop", "traits": { "adventurous": 2, "bold": 1 } },
+        { "id": "roadtrip-vibe", "label": "Roadtrip as the point", "traits": { "energetic": 1, "social": 1, "adventurous": 1 } }
+      ]
+    },
+    {
+      "id": "duo-communication",
+      "prompt": "Communication style in your duo?",
+      "options": [
+        { "id": "clear-brief", "label": "Clear and brief", "traits": { "analytical": 2, "classic": 1 } },
+        { "id": "hype-voice", "label": "Hype and emojis", "traits": { "social": 2, "energetic": 1 } },
+        { "id": "supportive-checkins", "label": "Supportive check-ins", "traits": { "romantic": 2, "calm": 1 } },
+        { "id": "chaotic-genius", "label": "Chaotic but effective", "traits": { "bold": 1, "adventurous": 2 } }
+      ]
+    },
+    {
+      "id": "fallback-strategy",
+      "prompt": "If your first choice is unavailable...",
+      "options": [
+        { "id": "backup-list", "label": "Use the backup list", "traits": { "analytical": 2, "classic": 1 } },
+        { "id": "nearest-now", "label": "Grab nearest available now", "traits": { "energetic": 2, "calm": 1 } },
+        { "id": "find-hidden-gem", "label": "Find a hidden gem", "traits": { "adventurous": 2, "bold": 1 } },
+        { "id": "poll-the-group", "label": "Poll everyone and decide", "traits": { "social": 2, "romantic": 1 } }
+      ]
+    },
+    {
+      "id": "duo-tagline",
+      "prompt": "Pick your duo tagline.",
+      "options": [
+        { "id": "calm-and-true", "label": "Calm and true", "traits": { "calm": 2, "classic": 1 } },
+        { "id": "loud-and-fast", "label": "Loud and fast", "traits": { "bold": 2, "energetic": 1 } },
+        { "id": "new-and-next", "label": "New and next", "traits": { "adventurous": 2, "analytical": 1 } },
+        { "id": "warm-and-fun", "label": "Warm and fun", "traits": { "social": 2, "romantic": 1 } }
+      ]
+    }
+  ]
+}

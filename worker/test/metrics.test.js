@@ -95,6 +95,25 @@ describe('handleMetricsRoute', () => {
     const res = await handleMetricsRoute('/api/metrics/unknown', { DB: db }, CORS);
     expect(res).toBeNull();
   });
+
+  it('returns historical intelligence metrics without requiring D1', async () => {
+    const res = await handleMetricsRoute('/api/metrics/intelligence', {}, CORS);
+    expect(res.status).toBe(200);
+    expect(res.headers.get('Cache-Control')).toBe('public, max-age=3600');
+
+    const body = await res.json();
+    expect(body.contract_version).toBe(1);
+    expect(body.source).toBe('trivia_metrics_seed');
+    expect(body.generated_at).toBeDefined();
+    expect(body.as_of).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(body.dataset_summary.rows).toBeGreaterThan(300000);
+    expect(body.coverage.overall_covered).toBeGreaterThan(900);
+    expect(Array.isArray(body.highlights.top_flavors)).toBe(true);
+    expect(body.highlights.top_flavors.length).toBeGreaterThan(0);
+    expect(Array.isArray(body.highlights.top_stores)).toBe(true);
+    expect(Array.isArray(body.highlights.seasonal_spotlights)).toBe(true);
+    expect(body.highlights.how_now_brown_cow.count).toBeGreaterThan(0);
+  });
 });
 
 describe('GET /api/metrics/flavor/{normalized}', () => {

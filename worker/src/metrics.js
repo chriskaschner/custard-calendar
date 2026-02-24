@@ -2,10 +2,13 @@
  * Metrics endpoints — queryable flavor intelligence from D1 snapshots.
  *
  * Three views:
+ *   GET /api/v1/metrics/intelligence      — historical metrics seed summary
  *   GET /api/v1/metrics/flavor/{normalized}  — frequency, recency, store count
  *   GET /api/v1/metrics/store/{slug}         — diversity, flavor history, streaks
  *   GET /api/v1/metrics/trending             — most/least common this week vs historical
  */
+
+import { TRIVIA_METRICS_SEED } from './trivia-metrics-seed.js';
 
 /**
  * Route a metrics request to the appropriate handler.
@@ -15,6 +18,12 @@
  * @returns {Promise<Response|null>}
  */
 export async function handleMetricsRoute(path, env, corsHeaders) {
+  // /api/metrics/intelligence
+  // Served from generated metrics seed; does not require D1.
+  if (path === '/api/metrics/intelligence') {
+    return handleIntelligenceMetrics(corsHeaders);
+  }
+
   const db = env.DB;
   if (!db) {
     return Response.json(
@@ -57,6 +66,56 @@ export async function handleMetricsRoute(path, env, corsHeaders) {
   }
 
   return null;
+}
+
+function trimList(list, limit) {
+  if (!Array.isArray(list)) return [];
+  return list.slice(0, limit);
+}
+
+function handleIntelligenceMetrics(corsHeaders) {
+  const seed = TRIVIA_METRICS_SEED || {};
+  const topFlavors = trimList(seed.top_flavors, 10);
+  const topStores = trimList(seed.top_stores, 10);
+  const seasonalSpotlights = trimList(seed.seasonal_spotlights, 10);
+  const topStates = trimList(seed?.coverage?.top_state_coverage, 12);
+  const hnbc = seed?.hnbc || {};
+  const hnbcByMonth = hnbc.by_month && typeof hnbc.by_month === 'object' ? hnbc.by_month : {};
+  const hnbcPeakMonth = Object.entries(hnbcByMonth)
+    .map(([month, count]) => ({ month: Number(month), count: Number(count) }))
+    .filter((row) => Number.isFinite(row.month) && row.month >= 1 && row.month <= 12 && Number.isFinite(row.count))
+    .sort((a, b) => b.count - a.count)[0] || null;
+
+  return Response.json({
+    contract_version: Number(seed.version || 1),
+    source: 'trivia_metrics_seed',
+    generated_at: seed.generated_at || null,
+    as_of: seed.as_of || null,
+    dataset_summary: seed.dataset_summary || null,
+    coverage: {
+      manifest_total: Number(seed?.coverage?.manifest_total || 0),
+      current_covered: Number(seed?.coverage?.current_covered || 0),
+      wayback_covered: Number(seed?.coverage?.wayback_covered || 0),
+      overall_covered: Number(seed?.coverage?.overall_covered || 0),
+      missing_overall_count: Number(seed?.coverage?.missing_overall_count || 0),
+      pending_non_wi_count: Number(seed?.coverage?.pending_non_wi_count || 0),
+      top_state_coverage: topStates,
+    },
+    highlights: {
+      top_flavors: topFlavors,
+      top_stores: topStores,
+      seasonal_spotlights: seasonalSpotlights,
+      how_now_brown_cow: {
+        count: Number(hnbc.count || 0),
+        peak_month: hnbcPeakMonth ? hnbcPeakMonth.month : null,
+        peak_month_count: hnbcPeakMonth ? hnbcPeakMonth.count : null,
+        by_month: hnbcByMonth,
+        by_year: hnbc.by_year && typeof hnbc.by_year === 'object' ? hnbc.by_year : {},
+      },
+    },
+  }, {
+    headers: { ...corsHeaders, 'Cache-Control': 'public, max-age=3600' },
+  });
 }
 
 /**

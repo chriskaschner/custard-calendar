@@ -8,18 +8,18 @@
  * cache headers so Cloudflare's edge cache absorbs repeated requests.
  */
 
-import { generateIcs } from './ics-generator.js';
 import { fetchFlavors as defaultFetchFlavors } from './flavor-fetcher.js';
 import { VALID_SLUGS as DEFAULT_VALID_SLUGS } from './valid-slugs.js';
 import { STORE_INDEX as DEFAULT_STORE_INDEX } from './store-index.js';
-import { normalize, matchesFlavor, findSimilarFlavors } from './flavor-matcher.js';
-import { recordSnapshots } from './snapshot-writer.js';
+import { BRAND_COLORS, SIMILARITY_GROUPS, FLAVOR_FAMILIES } from './flavor-matcher.js';
 import { handleAlertRoute } from './alert-routes.js';
 import { handleFlavorCatalog } from './flavor-catalog.js';
 import { handleMetricsRoute } from './metrics.js';
 import { handleFlavorStats } from './flavor-stats.js';
 import { handleForecast } from './forecast.js';
 import { handleQuizRoute } from './quiz-routes.js';
+import { handleEventsRoute } from './events.js';
+import { handleTriviaRoute } from './trivia.js';
 import { handleSocialCard } from './social-card.js';
 import { BASE_COLORS, RIBBON_COLORS, TOPPING_COLORS, CONE_COLORS, FLAVOR_PROFILES, getFlavorProfile, renderConeSVG } from './flavor-colors.js';
 import { checkAlerts, checkWeeklyDigests } from './alert-checker.js';
@@ -28,70 +28,13 @@ import { handleReliabilityRoute, getReliabilityBatch, refreshReliabilityBatch } 
 import { handlePlan } from './planner.js';
 import { handleSignals } from './signals.js';
 import { isValidSlug } from './slug-validation.js';
+import { getFetcherForSlug, getBrandForSlug } from './brand-registry.js';
+import { getFlavorsCached } from './kv-cache.js';
+import { handleCalendar } from './route-calendar.js';
+import { handleApiToday } from './route-today.js';
+import { handleApiNearbyFlavors } from './route-nearby.js';
 
-import { fetchKoppsFlavors } from './kopp-fetcher.js';
-import { fetchGillesFlavors } from './gilles-fetcher.js';
-import { fetchHefnersFlavors } from './hefners-fetcher.js';
-import { fetchKraverzFlavors } from './kraverz-fetcher.js';
-import { fetchOscarsFlavors } from './oscars-fetcher.js';
-
-const KV_TTL_SECONDS = 86400; // 24 hours
-const CACHE_MAX_AGE = 3600;   // 1 hour (browser + edge cache)
-const MAX_SECONDARY = 3;
-const FLAVOR_CACHE_RECORD_VERSION = 1;
-
-/**
- * Brand registry — maps slug patterns to fetcher functions + metadata.
- * MKE custard brands get explicit entries; Culver's is the default.
- */
-const BRAND_REGISTRY = [
-  { pattern: /^kopps-/, fetcher: fetchKoppsFlavors, url: 'https://www.kopps.com/flavor-forecast', brand: "Kopp's", kvPrefix: 'flavors:kopps-shared' },
-  { pattern: /^gilles$/, fetcher: fetchGillesFlavors, url: 'https://gillesfrozencustard.com/flavor-of-the-day', brand: "Gille's" },
-  { pattern: /^hefners$/, fetcher: fetchHefnersFlavors, url: 'https://www.hefnerscustard.com', brand: "Hefner's" },
-  { pattern: /^kraverz$/, fetcher: fetchKraverzFlavors, url: 'https://kraverzcustard.com/FlavorSchedule', brand: 'Kraverz' },
-  { pattern: /^oscars/, fetcher: fetchOscarsFlavors, url: 'https://www.oscarscustard.com/index.php/flavors/', brand: "Oscar's", kvPrefix: 'flavors:oscars-shared' },
-];
-
-/**
- * Get fetcher + brand metadata for a slug.
- * Returns default Culver's fetcher when no MKE brand matches.
- */
-export function getFetcherForSlug(slug, fallbackFetcher = defaultFetchFlavors) {
-  for (const entry of BRAND_REGISTRY) {
-    if (entry.pattern.test(slug)) {
-      return { fetcher: entry.fetcher, url: entry.url, brand: entry.brand, kvPrefix: entry.kvPrefix || null };
-    }
-  }
-  return { fetcher: fallbackFetcher, url: `https://www.culvers.com/restaurants/${slug}`, brand: "Culver's", kvPrefix: null };
-}
-
-/**
- * Get the brand name for a slug.
- */
-export function getBrandForSlug(slug) {
-  return getFetcherForSlug(slug).brand;
-}
-
-/**
- * Generate fallback flavor events when scraping fails for a store.
- * @param {string} slug
- * @param {string[]} [dates] - dates to cover (defaults to today)
- */
-function makeFallbackFlavors(slug, dates) {
-  const { url, brand } = getFetcherForSlug(slug);
-  if (!dates || dates.length === 0) {
-    dates = [new Date().toISOString().slice(0, 10)];
-  }
-  return {
-    name: slug,
-    address: '',
-    flavors: dates.map(date => ({
-      date,
-      title: `See ${brand} website for today's flavor`,
-      description: `Visit ${url}`,
-    })),
-  };
-}
+const CACHE_MAX_AGE = 3600; // 1 hour (browser + edge cache)
 
 /**
  * Check access token if one is configured.
@@ -153,146 +96,8 @@ function addVersionHeaders(response, isVersioned) {
 }
 
 export { isValidSlug } from './slug-validation.js';
-
-/**
- * KV writes should be best-effort only. Caller correctness cannot depend on put success.
- * @param {Object|null} kv - KV namespace binding
- * @param {string} key - KV key
- * @param {string} value - serialized payload
- * @param {Object} [options] - KV put options (expirationTtl, etc)
- * @returns {Promise<boolean>} true when write succeeded, false otherwise
- */
-async function safeKvPut(kv, key, value, options = {}) {
-  if (!kv) return false;
-  try {
-    await kv.put(key, value, options);
-    return true;
-  } catch (err) {
-    console.error(`KV write failed for ${key}: ${err.message}`);
-    return false;
-  }
-}
-
-/**
- * Serialize a flavor-cache record with metadata for integrity checking.
- * Shared cache keys (e.g., Kopp's) do not embed a slug because one key serves many slugs.
- * @param {Object} data - Flavor payload
- * @param {string} slug - Requested slug
- * @param {boolean} isShared - true when a shared KV cache key is used
- */
-function makeFlavorCacheRecord(data, slug, isShared) {
-  return JSON.stringify({
-    _meta: {
-      v: FLAVOR_CACHE_RECORD_VERSION,
-      shared: isShared,
-      slug: isShared ? null : slug,
-      cachedAt: new Date().toISOString(),
-    },
-    data,
-  });
-}
-
-/**
- * Parse and validate flavor cache records. Returns null on corruption/mismatch.
- * For non-shared keys, legacy records are rejected so stale/bad entries self-heal.
- * @param {string} raw
- * @param {Object} options
- * @param {string} options.slug
- * @param {string} options.cacheKey
- * @param {boolean} options.isShared
- * @returns {Object|null}
- */
-function parseFlavorCacheRecord(raw, { slug, cacheKey, isShared }) {
-  let parsed;
-  try {
-    parsed = JSON.parse(raw);
-  } catch (err) {
-    console.error(`Invalid JSON in cache key ${cacheKey}: ${err.message}`);
-    return null;
-  }
-
-  const meta = parsed?._meta;
-  if (meta && parsed.data && typeof meta === 'object') {
-    if (meta.v !== FLAVOR_CACHE_RECORD_VERSION) {
-      console.warn(`Ignoring unsupported cache record version for ${cacheKey}: ${meta.v}`);
-      return null;
-    }
-
-    if (isShared) {
-      if (!meta.shared) {
-        console.error(`Cache metadata mismatch for ${cacheKey}: expected shared record`);
-        return null;
-      }
-      return parsed.data;
-    }
-
-    if (meta.shared) {
-      console.error(`Cache metadata mismatch for ${cacheKey}: expected slug-scoped record`);
-      return null;
-    }
-    if (meta.slug !== slug) {
-      console.error(`Cache mismatch for ${cacheKey}: expected slug=${slug}, got slug=${meta.slug}`);
-      return null;
-    }
-    return parsed.data;
-  }
-
-  // Backward compatibility:
-  // - Shared keys: accept legacy payloads temporarily to avoid cold misses.
-  // - Slug-scoped keys: reject legacy payloads so old stale/corrupt values are refreshed.
-  if (parsed && typeof parsed === 'object' && Array.isArray(parsed.flavors)) {
-    if (isShared) return parsed;
-    console.warn(`Rejecting legacy slug-scoped cache record for ${cacheKey}; refreshing from upstream`);
-    return null;
-  }
-
-  return null;
-}
-
-/**
- * Get flavor data for a store, checking KV cache first.
- * Supports brand routing — MKE brands use their own fetchers and may share KV keys.
- * When fetchFlavorsFn is provided (tests), it overrides ALL brand fetchers.
- * @param {string} slug
- * @param {Object} kv - KV namespace binding
- * @param {Function} fetchFlavorsFn - override fetcher (when provided, overrides brand fetchers too)
- * @param {boolean} isOverride - true when fetchFlavorsFn should override brand routing
- * @param {Object} [env] - Full env for D1 access (optional)
- * @returns {Promise<{name: string, flavors: Array}>}
- */
-export async function getFlavorsCached(slug, kv, fetchFlavorsFn, isOverride = false, env = {}, { recordOnHit = false } = {}) {
-  const brandInfo = getFetcherForSlug(slug, fetchFlavorsFn);
-  const cacheKey = brandInfo.kvPrefix || `flavors:${slug}`;
-  const isShared = Boolean(brandInfo.kvPrefix);
-  // When isOverride is true, use the provided fetcher for all brands (testing)
-  const fetcher = isOverride ? fetchFlavorsFn : brandInfo.fetcher;
-
-  // Check KV cache
-  const cached = kv ? await kv.get(cacheKey) : null;
-  if (cached) {
-    const parsed = parseFlavorCacheRecord(cached, { slug, cacheKey, isShared });
-    if (parsed) {
-      if (recordOnHit && env.DB) {
-        await recordSnapshots(null, slug, parsed, { db: env.DB, brand: brandInfo.brand });
-      }
-      return parsed;
-    }
-  }
-
-  // Cache miss: fetch from upstream
-  const data = await fetcher(slug);
-
-  // Store in KV with TTL (best-effort)
-  const cacheRecord = makeFlavorCacheRecord(data, slug, isShared);
-  await safeKvPut(kv, cacheKey, cacheRecord, {
-    expirationTtl: KV_TTL_SECONDS,
-  });
-
-  // Persist flavor observations to D1 (durable historical source of truth)
-  await recordSnapshots(null, slug, data, { db: env.DB || null, brand: brandInfo.brand });
-
-  return data;
-}
+export { getFetcherForSlug, getBrandForSlug } from './brand-registry.js';
+export { getFlavorsCached } from './kv-cache.js';
 
 /**
  * Handle an incoming request.
@@ -383,6 +188,8 @@ export async function handleRequest(request, env, fetchFlavorsFn = defaultFetchF
   } else if (canonical === '/api/flavors/catalog') {
     // Must match before /api/flavors to avoid prefix collision
     response = await handleFlavorCatalog(env, corsHeaders);
+  } else if (canonical === '/api/flavor-config') {
+    response = handleFlavorConfig(corsHeaders);
   } else if (canonical === '/api/flavor-colors') {
     response = handleFlavorColors(corsHeaders);
   } else if (canonical === '/api/today') {
@@ -395,6 +202,16 @@ export async function handleRequest(request, env, fetchFlavorsFn = defaultFetchF
     response = await handleApiGeolocate(request, corsHeaders);
   } else if (canonical === '/api/nearby-flavors') {
     response = await handleApiNearbyFlavors(url, env, corsHeaders);
+  } else if (canonical.startsWith('/api/events')) {
+    const eventsResponse = await handleEventsRoute(canonical, url, request, env, corsHeaders);
+    if (eventsResponse) {
+      response = eventsResponse;
+    }
+  } else if (canonical.startsWith('/api/trivia')) {
+    const triviaResponse = await handleTriviaRoute(canonical, url, request, env, corsHeaders);
+    if (triviaResponse) {
+      response = triviaResponse;
+    }
   } else if (canonical.startsWith('/api/quiz/')) {
     const quizResponse = await handleQuizRoute(canonical, url, request, env, corsHeaders);
     if (quizResponse) {
@@ -440,107 +257,9 @@ export async function handleRequest(request, env, fetchFlavorsFn = defaultFetchF
   }
 
   return Response.json(
-    { error: 'Not found. Use /api/v1/today, /api/v1/flavors, /api/v1/stores, /api/v1/geolocate, /api/v1/nearby-flavors, /api/v1/flavors/catalog, /api/v1/flavor-colors, /api/v1/flavor-stats/{slug}, /api/v1/forecast/{slug}, /api/v1/reliability, /api/v1/reliability/{slug}, /api/v1/plan, /api/v1/signals/{slug}, /api/v1/quiz/events, /api/v1/quiz/personality-index, /api/v1/alerts/*, /v1/calendar.ics, /v1/og/{slug}/{date}.svg, or /health' },
+    { error: 'Not found. Use /api/v1/today, /api/v1/flavors, /api/v1/stores, /api/v1/geolocate, /api/v1/nearby-flavors, /api/v1/flavors/catalog, /api/v1/flavor-config, /api/v1/flavor-colors, /api/v1/flavor-stats/{slug}, /api/v1/forecast/{slug}, /api/v1/reliability, /api/v1/reliability/{slug}, /api/v1/plan, /api/v1/signals/{slug}, /api/v1/events, /api/v1/events/summary, /api/v1/trivia, /api/v1/metrics/intelligence, /api/v1/metrics/flavor/{name}, /api/v1/metrics/store/{slug}, /api/v1/metrics/trending, /api/v1/metrics/accuracy, /api/v1/metrics/accuracy/{slug}, /api/v1/metrics/coverage, /api/v1/quiz/events, /api/v1/quiz/personality-index, /api/v1/alerts/*, /v1/calendar.ics, /v1/og/{slug}/{date}.svg, or /health' },
     { status: 404, headers: corsHeaders }
   );
-}
-
-/**
- * Handle /calendar.ics requests.
- */
-async function handleCalendar(url, env, corsHeaders, fetchFlavorsFn) {
-  // When a custom fetcher is passed (testing), it overrides all brand routing
-  const isOverride = fetchFlavorsFn !== defaultFetchFlavors;
-  // Resolve the valid slugs set (allow test override)
-  const validSlugs = env._validSlugsOverride || DEFAULT_VALID_SLUGS;
-
-  // Parse and validate query params
-  const primarySlug = url.searchParams.get('primary');
-  if (!primarySlug) {
-    return Response.json(
-      { error: 'Missing required "primary" parameter. Usage: /calendar.ics?primary=<store-slug>' },
-      { status: 400, headers: corsHeaders }
-    );
-  }
-
-  // Validate primary slug
-  const primaryCheck = isValidSlug(primarySlug, validSlugs);
-  if (!primaryCheck.valid) {
-    return Response.json(
-      { error: `Invalid primary store: ${primaryCheck.reason}` },
-      { status: 400, headers: corsHeaders }
-    );
-  }
-
-  const secondarySlugs = url.searchParams.get('secondary')
-    ? url.searchParams.get('secondary').split(',').filter(Boolean)
-    : [];
-
-  if (secondarySlugs.length > MAX_SECONDARY) {
-    return Response.json(
-      { error: `Too many secondary stores. Maximum ${MAX_SECONDARY} allowed.` },
-      { status: 400, headers: corsHeaders }
-    );
-  }
-
-  // Validate all secondary slugs
-  for (const slug of secondarySlugs) {
-    const check = isValidSlug(slug, validSlugs);
-    if (!check.valid) {
-      return Response.json(
-        { error: `Invalid secondary store "${slug}": ${check.reason}` },
-        { status: 400, headers: corsHeaders }
-      );
-    }
-  }
-
-  // Fetch flavor data for all stores (with per-store fallback)
-  const stores = [];
-  const flavorsBySlug = {};
-
-  // Fetch primary — use fallback on failure
-  try {
-    const primaryData = await getFlavorsCached(primarySlug, env.FLAVOR_CACHE, fetchFlavorsFn, isOverride, env);
-    const brandUrl = getFetcherForSlug(primarySlug, fetchFlavorsFn).url;
-    stores.push({ slug: primarySlug, name: primaryData.name, address: primaryData.address || '', url: brandUrl, role: 'primary' });
-    flavorsBySlug[primarySlug] = primaryData.flavors;
-  } catch (err) {
-    const fallback = makeFallbackFlavors(primarySlug);
-    stores.push({ slug: primarySlug, name: fallback.name, address: '', url: getFetcherForSlug(primarySlug).url, role: 'primary' });
-    flavorsBySlug[primarySlug] = fallback.flavors;
-  }
-
-  // Collect primary dates for secondary fallback coverage
-  const primaryDates = (flavorsBySlug[primarySlug] || []).map(f => f.date);
-
-  // Fetch secondaries — use fallback on failure
-  for (const slug of secondarySlugs) {
-    try {
-      const data = await getFlavorsCached(slug, env.FLAVOR_CACHE, fetchFlavorsFn, isOverride, env);
-      const brandUrl = getFetcherForSlug(slug, fetchFlavorsFn).url;
-      stores.push({ slug, name: data.name, address: data.address || '', url: brandUrl, role: 'secondary' });
-      flavorsBySlug[slug] = data.flavors;
-    } catch (err) {
-      const fallback = makeFallbackFlavors(slug, primaryDates);
-      stores.push({ slug, name: fallback.name, address: '', url: getFetcherForSlug(slug).url, role: 'secondary' });
-      flavorsBySlug[slug] = fallback.flavors;
-    }
-  }
-
-  // Generate .ics with brand-aware calendar name
-  const primaryBrand = getBrandForSlug(primarySlug);
-  const calendarName = `${primaryBrand} FOTD - ${stores[0].name}`;
-  const ics = generateIcs({ calendarName, stores, flavorsBySlug });
-
-  return new Response(ics, {
-    status: 200,
-    headers: {
-      ...corsHeaders,
-      'Content-Type': 'text/calendar; charset=utf-8',
-      'Cache-Control': `public, max-age=${CACHE_MAX_AGE}`,
-      'Content-Disposition': 'inline; filename="custard-calendar.ics"',
-    },
-  });
 }
 
 /**
@@ -575,172 +294,6 @@ async function handleApiFlavors(url, env, corsHeaders, fetchFlavorsFn) {
         ...corsHeaders,
         'Cache-Control': `public, max-age=${CACHE_MAX_AGE}`,
       },
-    });
-  } catch (err) {
-    return Response.json(
-      { error: 'Failed to fetch flavor data. Please try again later.' },
-      { status: 502, headers: corsHeaders }
-    );
-  }
-}
-
-/**
- * Handle /api/today?slug=<slug> requests.
- * Returns today's single flavor for a store, with a pre-composed spoken sentence
- * for voice assistants (Siri Shortcuts, Alexa, etc.).
- */
-async function handleApiToday(url, env, corsHeaders, fetchFlavorsFn) {
-  const isOverride = fetchFlavorsFn !== defaultFetchFlavors;
-  const validSlugs = env._validSlugsOverride || DEFAULT_VALID_SLUGS;
-
-  const slug = url.searchParams.get('slug');
-  if (!slug) {
-    return Response.json(
-      { error: 'Missing required "slug" parameter. Usage: /api/today?slug=<store-slug>' },
-      { status: 400, headers: corsHeaders }
-    );
-  }
-
-  const check = isValidSlug(slug, validSlugs);
-  if (!check.valid) {
-    return Response.json(
-      { error: `Invalid store: ${check.reason}` },
-      { status: 400, headers: corsHeaders }
-    );
-  }
-
-  try {
-    const data = await getFlavorsCached(slug, env.FLAVOR_CACHE, fetchFlavorsFn, isOverride, env);
-    const brand = getBrandForSlug(slug);
-    const today = new Date().toISOString().slice(0, 10);
-    const formatSpeechDate = (isoDate) => {
-      const d = new Date((isoDate || today) + 'T12:00:00Z');
-      return d.toLocaleDateString('en-US', {
-        weekday: 'long',
-        month: 'long',
-        day: 'numeric',
-      });
-    };
-
-    // Find today's flavor (or fall back to the first available)
-    const todayFlavor = data.flavors.find(f => f.date === today) || data.flavors[0] || null;
-
-    if (!todayFlavor) {
-      const spokenMissing = `I couldn't find today's flavor of the day at ${data.name}. Check back later.`;
-      return Response.json({
-        store: data.name,
-        slug,
-        brand,
-        date: today,
-        flavor: null,
-        description: null,
-        spoken: spokenMissing,
-        spoken_verbose: `${spokenMissing} Try again later today for an updated flavor listing.`,
-      }, {
-        headers: { ...corsHeaders, 'Cache-Control': `public, max-age=${CACHE_MAX_AGE}` },
-      });
-    }
-
-    const flavorName = todayFlavor.title;
-    // Build a short spoken store name: "Culver's of Mt. Horeb" instead of the
-    // verbose upstream name ("Culver's of Mt. Horeb, WI - Springdale St").
-    const storeIndex = env._storeIndexOverride || DEFAULT_STORE_INDEX;
-    const storeEntry = storeIndex.find(s => s.slug === slug);
-    const spokenStore = storeEntry ? `${brand} of ${storeEntry.city}` : data.name;
-    let spoken = `Today the flavor of the day at ${spokenStore} is ${flavorName}`;
-    if (todayFlavor.description) {
-      const desc = todayFlavor.description.replace(/\.+$/, '');
-      spoken += ' - ' + desc;
-    }
-    spoken += '.';
-
-    const spokenDate = formatSpeechDate(todayFlavor.date);
-    const spokenLocation = storeEntry
-      ? `${storeEntry.city}, ${storeEntry.state}`
-      : data.name;
-    let spokenVerbose = `For ${spokenDate}, ${spokenStore} is serving ${flavorName}.`;
-    if (todayFlavor.description) {
-      const desc = todayFlavor.description.replace(/\.+$/, '');
-      spokenVerbose += ` ${desc}.`;
-    }
-    spokenVerbose += ` Location: ${spokenLocation}.`;
-
-    const nextFlavor = (data.flavors || [])
-      .filter((f) => f && f.date && f.date > todayFlavor.date && f.title)
-      .sort((a, b) => a.date.localeCompare(b.date))[0];
-    if (nextFlavor) {
-      spokenVerbose += ` Next listed flavor is ${nextFlavor.title} on ${formatSpeechDate(nextFlavor.date)}.`;
-    }
-
-    // Compute rarity from D1 snapshots (best-effort, never breaks response)
-    let rarity = null;
-    try {
-      if (env.DB) {
-        const normalizedFlavor = normalize(flavorName);
-
-        // Query 1: this flavor's appearance dates at this store
-        const flavorDates = await env.DB.prepare(
-          'SELECT date FROM snapshots WHERE slug = ? AND normalized_flavor = ? ORDER BY date ASC'
-        ).bind(slug, normalizedFlavor).all();
-
-        // Query 2: all flavor counts at this store (for percentile ranking)
-        const allCounts = await env.DB.prepare(
-          'SELECT normalized_flavor, COUNT(*) as cnt FROM snapshots WHERE slug = ? GROUP BY normalized_flavor'
-        ).bind(slug).all();
-
-        if (flavorDates.results && flavorDates.results.length > 0 && allCounts.results && allCounts.results.length > 0) {
-          const appearances = flavorDates.results.length;
-
-          // Compute average gap between consecutive appearances
-          let avgGapDays = null;
-          if (appearances >= 2) {
-            const dates = flavorDates.results.map(r => new Date(r.date + 'T00:00:00Z'));
-            let totalGap = 0;
-            for (let i = 1; i < dates.length; i++) {
-              totalGap += (dates[i] - dates[i - 1]) / (1000 * 60 * 60 * 24);
-            }
-            avgGapDays = Math.round(totalGap / (dates.length - 1));
-          }
-
-          // Percentile ranking: where does this flavor's count fall among all flavors?
-          const thisCnt = appearances;
-          const counts = allCounts.results.map(r => r.cnt).sort((a, b) => a - b);
-          const rank = counts.filter(c => c < thisCnt).length;
-          const percentile = rank / counts.length;
-
-          let label = null;
-          if (percentile < 0.10) label = 'Ultra Rare';
-          else if (percentile < 0.25) label = 'Rare';
-          else if (percentile < 0.50) label = 'Uncommon';
-          else if (percentile < 0.75) label = 'Common';
-          else label = 'Staple';
-
-          rarity = { appearances, avg_gap_days: avgGapDays, label };
-        }
-      }
-    } catch (_) {
-      // D1 failure is non-fatal; rarity stays null
-    }
-
-    // Append rarity info to spoken text for rare flavors
-    if (rarity && rarity.avg_gap_days && (rarity.label === 'Ultra Rare' || rarity.label === 'Rare')) {
-      spoken = spoken.replace(/\.$/, '');
-      spoken += `. This flavor averages ${rarity.avg_gap_days} days between appearances at your store.`;
-      spokenVerbose += ` This flavor averages ${rarity.avg_gap_days} days between appearances at your store.`;
-    }
-
-    return Response.json({
-      store: data.name,
-      slug,
-      brand,
-      date: todayFlavor.date,
-      flavor: flavorName,
-      description: todayFlavor.description || null,
-      rarity,
-      spoken,
-      spoken_verbose: spokenVerbose,
-    }, {
-      headers: { ...corsHeaders, 'Cache-Control': `public, max-age=${CACHE_MAX_AGE}` },
     });
   } catch (err) {
     return Response.json(
@@ -799,150 +352,20 @@ function handleApiGeolocate(request, corsHeaders) {
   });
 }
 
-const LOCATOR_CACHE_TTL = 3600; // 1 hour
-const NEARBY_CACHE_MAX_AGE = 3600; // 1 hour
-
 /**
- * Handle /api/nearby-flavors?location=<zip>&flavor=<name>&limit=<n> requests.
- * Proxies to Culver's locator API server-side (bypasses CORS), caches in KV,
- * and optionally filters/ranks by flavor match + similarity.
+ * Handle GET /api/flavor-config requests.
+ * Returns shared config constants to keep browser/server flavor logic in sync.
  */
-async function handleApiNearbyFlavors(url, env, corsHeaders) {
-  const location = url.searchParams.get('location');
-  if (!location || !location.trim()) {
-    return Response.json(
-      { error: 'Missing required "location" parameter. Usage: /api/nearby-flavors?location=<zip|city|lat,lon>' },
-      { status: 400, headers: corsHeaders }
-    );
-  }
-
-  const flavorQuery = url.searchParams.get('flavor') || '';
-  const limit = Math.min(Math.max(parseInt(url.searchParams.get('limit')) || 50, 1), 100);
-
-  // Check KV cache for this location+limit combo
-  const kv = env.FLAVOR_CACHE;
-  const cacheKey = `locator:${location.trim().toLowerCase()}:${limit}`;
-  let locatorData;
-
-  const cached = kv ? await kv.get(cacheKey) : null;
-  if (cached) {
-    locatorData = JSON.parse(cached);
-  } else {
-    // Fetch from Culver's locator API
-    const locatorUrl = `https://www.culvers.com/api/locator/getLocations?location=${encodeURIComponent(location.trim())}&limit=${limit}`;
-    let resp;
-    const fetchFn = env._fetchOverride || globalThis.fetch;
-    try {
-      resp = await fetchFn(locatorUrl);
-    } catch (err) {
-      return Response.json(
-        { error: 'Failed to reach upstream locator API. Please try again later.' },
-        { status: 502, headers: corsHeaders }
-      );
-    }
-
-    if (!resp.ok) {
-      return Response.json(
-        { error: `Culver's locator API returned ${resp.status}` },
-        { status: 502, headers: corsHeaders }
-      );
-    }
-
-    locatorData = await resp.json();
-
-    // Cache in KV (best-effort)
-    await safeKvPut(kv, cacheKey, JSON.stringify(locatorData), {
-      expirationTtl: LOCATOR_CACHE_TTL,
-    });
-  }
-
-  // Transform locator response into our format
-  const stores = transformLocatorData(locatorData);
-
-  // Build response
-  const allFlavorsToday = [...new Set(stores.map(s => s.flavor).filter(Boolean))].sort();
-  let matches = [];
-  let nearby = [];
-  let suggestions = [];
-
-  if (flavorQuery.trim()) {
-    for (const store of stores) {
-      if (matchesFlavor(store.flavor, flavorQuery, store.description)) {
-        matches.push(store);
-      } else {
-        nearby.push(store);
-      }
-    }
-
-    // Build suggestions from similarity groups
-    const similarNormalized = findSimilarFlavors(flavorQuery, allFlavorsToday);
-    const suggestionMap = new Map();
-
-    for (const normName of similarNormalized) {
-      // Find the original-cased name from stores
-      for (const store of nearby) {
-        if (normalize(store.flavor) === normName) {
-          if (!suggestionMap.has(normName)) {
-            suggestionMap.set(normName, { flavor: store.flavor, count: 0, closest_rank: Infinity });
-          }
-          const entry = suggestionMap.get(normName);
-          entry.count++;
-          entry.closest_rank = Math.min(entry.closest_rank, store.rank);
-          break; // only need one for the name
-        }
-      }
-      // Count additional stores
-      if (suggestionMap.has(normName)) {
-        const entry = suggestionMap.get(normName);
-        entry.count = nearby.filter(s => normalize(s.flavor) === normName).length;
-        entry.closest_rank = Math.min(...nearby.filter(s => normalize(s.flavor) === normName).map(s => s.rank));
-      }
-    }
-
-    suggestions = [...suggestionMap.values()].sort((a, b) => a.closest_rank - b.closest_rank);
-  } else {
-    // No flavor filter — all stores go in nearby
-    nearby = stores;
-  }
-
+function handleFlavorConfig(corsHeaders) {
   return Response.json({
-    query: { location: location.trim(), flavor: flavorQuery.trim() || null },
-    matches,
-    nearby,
-    suggestions,
-    all_flavors_today: allFlavorsToday,
+    brand_colors: BRAND_COLORS,
+    similarity_groups: SIMILARITY_GROUPS,
+    flavor_families: FLAVOR_FAMILIES,
   }, {
     headers: {
       ...corsHeaders,
-      'Cache-Control': `public, max-age=${NEARBY_CACHE_MAX_AGE}`,
+      'Cache-Control': 'public, max-age=86400', // 24h
     },
-  });
-}
-
-/**
- * Transform Culver's locator API response into our store format.
- * The locator API returns geofences with restaurant details.
- * @param {Object} data - Raw locator API response
- * @returns {Array<{slug: string, name: string, address: string, lat: number, lon: number, flavor: string, description: string, rank: number}>}
- */
-function transformLocatorData(data) {
-  const geofences = data?.data?.geofences || [];
-  return geofences.map((g, i) => {
-    const meta = g.metadata || {};
-    const slug = meta.slug || '';
-    const city = meta.city || '';
-    const state = meta.state || '';
-    const street = meta.street || '';
-    return {
-      slug,
-      name: city && state ? `${city}, ${state}` : city || slug,
-      address: street,
-      lat: g.geometryCenter?.coordinates?.[1] || 0,
-      lon: g.geometryCenter?.coordinates?.[0] || 0,
-      flavor: meta.flavorOfDayName || '',
-      description: meta.flavorOfTheDayDescription || '',
-      rank: i + 1,
-    };
   });
 }
 

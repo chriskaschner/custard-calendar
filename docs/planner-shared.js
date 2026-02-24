@@ -24,6 +24,140 @@ var CustardPlanner = (function () {
     return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
 
+  function inferPageKey() {
+    if (typeof document !== 'undefined' && document.body) {
+      var explicit = document.body.getAttribute('data-page');
+      if (explicit) return String(explicit).toLowerCase();
+    }
+    if (typeof window === 'undefined' || !window.location) return 'unknown';
+    var path = String(window.location.pathname || '').toLowerCase();
+    var file = path.substring(path.lastIndexOf('/') + 1);
+    if (!file || file === 'index.html') return 'index';
+    if (file.slice(-5) === '.html') return file.slice(0, -5);
+    return file || 'unknown';
+  }
+
+  function makePageLoadId() {
+    try {
+      if (typeof crypto !== 'undefined' && crypto && typeof crypto.randomUUID === 'function') {
+        return crypto.randomUUID().replace(/[^a-z0-9_-]/gi, '').slice(0, 64);
+      }
+    } catch (_) { /* ignore */ }
+    var rand = Math.random().toString(36).slice(2);
+    var ts = Date.now().toString(36);
+    return ('pl_' + ts + '_' + rand).slice(0, 64);
+  }
+
+  var _pageLoadId = makePageLoadId();
+  var _telemetryListenerBound = false;
+  var _ALLOWED_EVENT_TYPES = { cta_click: true, signal_view: true, popup_open: true };
+  var _ALLOWED_CERTAINTY = { confirmed: true, watch: true, estimated: true, none: true };
+
+  function cleanTelemetryText(value, maxLen) {
+    if (typeof value !== 'string') return null;
+    var trimmed = value.trim();
+    if (!trimmed) return null;
+    return trimmed.slice(0, maxLen || 96);
+  }
+
+  function cleanTelemetrySlug(value) {
+    if (typeof value !== 'string') return null;
+    var trimmed = value.trim().toLowerCase();
+    if (!/^[a-z0-9][a-z0-9_-]{0,80}$/.test(trimmed)) return null;
+    return trimmed;
+  }
+
+  function cleanTelemetryEventType(value) {
+    var t = cleanTelemetryText(value, 32);
+    if (!t) return null;
+    var lower = t.toLowerCase();
+    return _ALLOWED_EVENT_TYPES[lower] ? lower : null;
+  }
+
+  function cleanTelemetryAction(value) {
+    var a = cleanTelemetryText(value, 64);
+    if (!a) return null;
+    return a.toLowerCase().replace(/\s+/g, '_');
+  }
+
+  function cleanTelemetryCertainty(value) {
+    var c = cleanTelemetryText(value, 16);
+    if (!c) return null;
+    var lower = c.toLowerCase();
+    return _ALLOWED_CERTAINTY[lower] ? lower : null;
+  }
+
+  function emitInteractionEvent(raw) {
+    if (!raw || typeof raw !== 'object') return false;
+    var eventType = cleanTelemetryEventType(raw.event_type);
+    if (!eventType) return false;
+
+    var payload = {
+      event_type: eventType,
+      page: cleanTelemetryText(raw.page, 48) || inferPageKey(),
+      action: cleanTelemetryAction(raw.action),
+      store_slug: cleanTelemetrySlug(raw.store_slug),
+      flavor: cleanTelemetryText(raw.flavor, 96),
+      certainty_tier: cleanTelemetryCertainty(raw.certainty_tier),
+      page_load_id: cleanTelemetryText(raw.page_load_id, 80) || _pageLoadId,
+    };
+
+    var body = JSON.stringify(payload);
+    var url = WORKER_BASE + '/api/v1/events';
+
+    try {
+      if (typeof navigator !== 'undefined' && typeof navigator.sendBeacon === 'function') {
+        var ok = navigator.sendBeacon(url, new Blob([body], { type: 'application/json' }));
+        if (ok) return true;
+      }
+    } catch (_) { /* fall through to fetch */ }
+
+    try {
+      fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: body,
+        keepalive: true,
+      }).catch(function () { /* best effort */ });
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  function inferCtaAction(link) {
+    if (!link) return null;
+    var explicit = link.getAttribute('data-event-action');
+    if (explicit) return explicit;
+    var classes = link.className || '';
+    if (classes.indexOf('cta-directions') >= 0) return 'directions';
+    if (classes.indexOf('cta-alert') >= 0) return 'alert';
+    if (classes.indexOf('cta-calendar') >= 0) return 'subscribe';
+    return null;
+  }
+
+  function bindInteractionTelemetry() {
+    if (_telemetryListenerBound || typeof document === 'undefined') return;
+    _telemetryListenerBound = true;
+    document.addEventListener('click', function (evt) {
+      var target = evt.target;
+      if (!target || typeof target.closest !== 'function') return;
+      var link = target.closest('a.cta-link');
+      if (!link) return;
+      var action = inferCtaAction(link);
+      if (!action) return;
+      emitInteractionEvent({
+        event_type: 'cta_click',
+        action: action,
+        store_slug: link.getAttribute('data-store-slug'),
+        flavor: link.getAttribute('data-flavor'),
+        certainty_tier: link.getAttribute('data-certainty-tier'),
+      });
+    }, true);
+  }
+
+  bindInteractionTelemetry();
+
   // ---------------------------------------------------------------------------
   // Brand constants
   // ---------------------------------------------------------------------------
@@ -99,13 +233,11 @@ var CustardPlanner = (function () {
     chocolate: [
       'chocolate caramel twist', 'chocolate heath crunch',
       'dark chocolate decadence', 'dark chocolate pb crunch',
-      'brownie thunder', 'chocolate volcano', 'chocolate oreo volcano',
+      'chocolate volcano', 'chocolate oreo volcano',
     ],
     caramel: [
       'caramel cashew', 'caramel fudge cookie dough', 'caramel pecan',
-      'caramel turtle', 'salted caramel pecan pie',
-      'salted double caramel pecan', 'caramel peanut buttercup',
-      'caramel chocolate pecan',
+      'caramel turtle', 'salted caramel pecan pie', 'chocolate caramel twist',
     ],
     cheesecake: [
       'oreo cheesecake', 'oreo cookie cheesecake',
@@ -118,17 +250,15 @@ var CustardPlanner = (function () {
     ],
     peanutButter: [
       'dark chocolate pb crunch', 'peanut butter cup',
-      'really reeses', 'caramel peanut buttercup',
+      'reeses peanut butter cup',
     ],
     berry: [
       'blackberry cobbler', 'raspberry cheesecake',
-      'double strawberry', 'chocolate covered strawberry',
-      'strawberry cheesecake', 'georgia peach',
-      'lemon berry layer cake',
+      'strawberry cheesecake', 'lemon berry layer cake',
     ],
     pecan: [
       'butter pecan', 'caramel pecan', 'salted caramel pecan pie',
-      'georgia peach pecan', 'caramel chocolate pecan',
+      'georgia peach pecan',
     ],
   };
 
@@ -144,30 +274,124 @@ var CustardPlanner = (function () {
     turtle: { color: '#8B6914', members: ['turtle', 'turtle dove', 'turtle cheesecake', 'caramel turtle'] },
     cookie: { color: '#C4A882', members: ['crazy for cookie dough', 'caramel fudge cookie dough', 'mint cookie', 'oreo cookie cheesecake', 'oreo cookies and cream'] },
     peanutButter: { color: '#C8A96E', members: ['dark chocolate pb crunch', 'peanut butter cup', 'reeses peanut butter cup'] },
-    berry: { color: '#E91E63', members: ['blackberry cobbler', 'raspberry cheesecake', 'strawberry cheesecake', 'lemon berry layer cake', 'double strawberry', 'chocolate covered strawberry', 'georgia peach'] },
+    berry: { color: '#E91E63', members: ['blackberry cobbler', 'raspberry cheesecake', 'strawberry cheesecake', 'lemon berry layer cake'] },
     pecan: { color: '#A67B5B', members: ['butter pecan', 'caramel pecan', 'salted caramel pecan pie', 'georgia peach pecan'] },
   };
 
-  /** Simple array-only view of family members (for map.html chip filtering). */
-  var FLAVOR_FAMILY_MEMBERS = {};
-  for (var fam in FLAVOR_FAMILIES) {
-    if (FLAVOR_FAMILIES.hasOwnProperty(fam)) {
-      FLAVOR_FAMILY_MEMBERS[fam] = FLAVOR_FAMILIES[fam].members;
+  function syncMutableObject(target, source) {
+    for (var key in target) {
+      if (target.hasOwnProperty(key)) delete target[key];
+    }
+    for (var sourceKey in source) {
+      if (source.hasOwnProperty(sourceKey)) target[sourceKey] = source[sourceKey];
     }
   }
 
-  /** Reverse lookup: normalized flavor -> array of family keys. */
+  function normalizeGroupMembers(rawMembers) {
+    if (!Array.isArray(rawMembers)) return [];
+    var out = [];
+    var seen = {};
+    for (var i = 0; i < rawMembers.length; i++) {
+      var normalized = normalize(rawMembers[i]);
+      if (!normalized || seen[normalized]) continue;
+      seen[normalized] = true;
+      out.push(normalized);
+    }
+    return out;
+  }
+
+  function normalizeFamilyConfig(rawFamilies) {
+    if (!rawFamilies || typeof rawFamilies !== 'object') return {};
+    var result = {};
+    for (var key in rawFamilies) {
+      if (!rawFamilies.hasOwnProperty(key)) continue;
+      var entry = rawFamilies[key];
+      if (!entry || typeof entry !== 'object') continue;
+      var members = normalizeGroupMembers(entry.members);
+      if (members.length === 0) continue;
+      result[key] = {
+        color: typeof entry.color === 'string' ? entry.color : '#005696',
+        members: members,
+      };
+    }
+    return result;
+  }
+
+  function normalizeSimilarityConfig(rawGroups) {
+    if (!rawGroups || typeof rawGroups !== 'object') return {};
+    var result = {};
+    for (var key in rawGroups) {
+      if (!rawGroups.hasOwnProperty(key)) continue;
+      var members = normalizeGroupMembers(rawGroups[key]);
+      if (members.length === 0) continue;
+      result[key] = members;
+    }
+    return result;
+  }
+
+  /** Simple array-only view of family members (for map.html chip filtering). */
+  var FLAVOR_FAMILY_MEMBERS = {};
   var _flavorToFamilies = {};
-  for (var famKey in FLAVOR_FAMILIES) {
-    if (FLAVOR_FAMILIES.hasOwnProperty(famKey)) {
-      var members = FLAVOR_FAMILIES[famKey].members;
-      for (var mi = 0; mi < members.length; mi++) {
-        var member = members[mi];
+
+  function rebuildFlavorFamilyIndexes() {
+    syncMutableObject(FLAVOR_FAMILY_MEMBERS, {});
+    syncMutableObject(_flavorToFamilies, {});
+
+    for (var familyKey in FLAVOR_FAMILIES) {
+      if (!FLAVOR_FAMILIES.hasOwnProperty(familyKey)) continue;
+      var familyEntry = FLAVOR_FAMILIES[familyKey];
+      var members = normalizeGroupMembers(familyEntry.members || []);
+      familyEntry.members = members;
+      FLAVOR_FAMILY_MEMBERS[familyKey] = members;
+
+      for (var i = 0; i < members.length; i++) {
+        var member = members[i];
         if (!_flavorToFamilies[member]) _flavorToFamilies[member] = [];
-        _flavorToFamilies[member].push(famKey);
+        _flavorToFamilies[member].push(familyKey);
       }
     }
   }
+
+  function applyFlavorConfig(config) {
+    if (!config || typeof config !== 'object') return;
+
+    if (config.brand_colors && typeof config.brand_colors === 'object') {
+      var nextColors = {};
+      for (var colorKey in config.brand_colors) {
+        if (!config.brand_colors.hasOwnProperty(colorKey)) continue;
+        if (typeof config.brand_colors[colorKey] !== 'string') continue;
+        nextColors[colorKey] = config.brand_colors[colorKey];
+      }
+      if (Object.keys(nextColors).length > 0) {
+        syncMutableObject(BRAND_COLORS, nextColors);
+      }
+    }
+
+    var nextGroups = normalizeSimilarityConfig(config.similarity_groups);
+    if (Object.keys(nextGroups).length > 0) {
+      syncMutableObject(SIMILARITY_GROUPS, nextGroups);
+    }
+
+    var nextFamilies = normalizeFamilyConfig(config.flavor_families);
+    if (Object.keys(nextFamilies).length > 0) {
+      syncMutableObject(FLAVOR_FAMILIES, nextFamilies);
+      rebuildFlavorFamilyIndexes();
+    }
+  }
+
+  function bootstrapFlavorConfig() {
+    if (typeof fetch !== 'function') return;
+    fetch(WORKER_BASE + '/api/v1/flavor-config')
+      .then(function (resp) { return resp.ok ? resp.json() : null; })
+      .then(function (data) {
+        if (!data) return;
+        applyFlavorConfig(data);
+      })
+      .catch(function () { /* fallback constants remain active */ });
+  }
+
+  rebuildFlavorFamilyIndexes();
+  bootstrapFlavorConfig();
 
   function getFamilyForFlavor(flavorName) {
     if (!flavorName) return null;
@@ -419,6 +643,14 @@ var CustardPlanner = (function () {
     return 'calendar.html?store=' + encodeURIComponent(slug);
   }
 
+  function ctaDataAttrs(opts, actionName) {
+    var attrs = ' data-event-action="' + escapeHtml(actionName) + '"';
+    if (opts.slug) attrs += ' data-store-slug="' + escapeHtml(opts.slug) + '"';
+    if (opts.flavor) attrs += ' data-flavor="' + escapeHtml(opts.flavor) + '"';
+    if (opts.certaintyTier) attrs += ' data-certainty-tier="' + escapeHtml(opts.certaintyTier) + '"';
+    return attrs;
+  }
+
   /**
    * Render a consistent set of action CTAs for a recommendation.
    * @param {Object} opts
@@ -433,20 +665,21 @@ var CustardPlanner = (function () {
   function actionCTAsHTML(opts) {
     var actions = opts.actions || ['directions', 'alert', 'calendar'];
     var parts = [];
+    var hasCoords = Number.isFinite(Number(opts.lat)) && Number.isFinite(Number(opts.lon));
 
     for (var i = 0; i < actions.length; i++) {
       var action = actions[i];
-      if (action === 'directions' && opts.lat && opts.lon) {
+      if (action === 'directions' && hasCoords) {
         parts.push(
-          '<a href="' + directionsUrl(opts.lat, opts.lon, opts.storeName) + '" class="cta-link cta-directions" target="_blank" rel="noopener">Directions</a>'
+          '<a href="' + directionsUrl(opts.lat, opts.lon, opts.storeName) + '" class="cta-link cta-directions"' + ctaDataAttrs(opts, 'directions') + ' target="_blank" rel="noopener">Directions</a>'
         );
       } else if (action === 'alert') {
         parts.push(
-          '<a href="' + alertPageUrl(opts.slug) + '" class="cta-link cta-alert">Set Alert</a>'
+          '<a href="' + alertPageUrl(opts.slug) + '" class="cta-link cta-alert"' + ctaDataAttrs(opts, 'alert') + '>Set Alert</a>'
         );
       } else if (action === 'calendar') {
         parts.push(
-          '<a href="' + calendarIcsUrl(opts.workerBase, opts.slug) + '" class="cta-link cta-calendar">Subscribe</a>'
+          '<a href="' + calendarIcsUrl(opts.workerBase, opts.slug) + '" class="cta-link cta-calendar"' + ctaDataAttrs(opts, 'subscribe') + '>Subscribe</a>'
         );
       }
     }
@@ -538,6 +771,7 @@ var CustardPlanner = (function () {
     calendarIcsUrl: calendarIcsUrl,
     alertPageUrl: alertPageUrl,
     actionCTAsHTML: actionCTAsHTML,
+    emitInteractionEvent: emitInteractionEvent,
 
     // Signals
     signalCardHTML: signalCardHTML,
@@ -559,13 +793,68 @@ var CustardPlanner = (function () {
     var actionLabel = sig.action === 'directions' ? 'Directions' : sig.action === 'calendar' ? 'Subscribe' : 'Set Alert';
     var actionClass = 'cta-link cta-' + sig.action;
     var actionHref = sig.action === 'alert' ? alertPageUrl(slug) : sig.action === 'calendar' ? calendarIcsUrl(workerBase, slug) : '#';
-    return '<div class="signal-card">'
+    var flavor = sig.flavor || '';
+    var certainty = sig.certainty_tier || 'none';
+    var actionName = sig.action === 'calendar' ? 'subscribe' : sig.action;
+    return '<div class="signal-card"'
+      + ' data-signal-type="' + escapeHtml(sig.type || 'signal') + '"'
+      + ' data-store-slug="' + escapeHtml(slug || '') + '"'
+      + ' data-flavor="' + escapeHtml(flavor) + '"'
+      + ' data-certainty-tier="' + escapeHtml(certainty) + '">'
       + '<div class="signal-card-accent signal-accent-' + escapeHtml(sig.type) + '"></div>'
       + '<div class="signal-card-body">'
       + '<div class="signal-headline">' + escapeHtml(sig.headline) + '</div>'
       + '<div class="signal-explanation">' + escapeHtml(sig.explanation) + '</div>'
-      + '<a href="' + actionHref + '" class="' + actionClass + '">' + actionLabel + '</a>'
+      + '<a href="' + actionHref + '" class="' + actionClass + '" data-event-action="' + escapeHtml(actionName || 'alert') + '" data-store-slug="' + escapeHtml(slug || '') + '" data-flavor="' + escapeHtml(flavor) + '" data-certainty-tier="' + escapeHtml(certainty) + '">' + actionLabel + '</a>'
       + '</div></div>';
+  }
+
+  function trackSignalViews(list) {
+    if (!list || typeof list.querySelectorAll !== 'function') return;
+    var cards = list.querySelectorAll('.signal-card');
+    if (!cards || cards.length === 0) return;
+
+    var emitForCard = function (card) {
+      emitInteractionEvent({
+        event_type: 'signal_view',
+        action: card.getAttribute('data-signal-type') || 'signal',
+        store_slug: card.getAttribute('data-store-slug'),
+        flavor: card.getAttribute('data-flavor'),
+        certainty_tier: card.getAttribute('data-certainty-tier'),
+      });
+    };
+
+    if (typeof IntersectionObserver === 'undefined') {
+      for (var i = 0; i < cards.length; i++) emitForCard(cards[i]);
+      return;
+    }
+
+    if (list.__signalViewObserver && typeof list.__signalViewObserver.disconnect === 'function') {
+      list.__signalViewObserver.disconnect();
+    }
+
+    var seen = {};
+    var observer = new IntersectionObserver(function (entries, obs) {
+      for (var i = 0; i < entries.length; i++) {
+        var entry = entries[i];
+        if (!entry.isIntersecting) continue;
+        var card = entry.target;
+        var key = card.getAttribute('data-signal-key');
+        if (key && seen[key]) {
+          obs.unobserve(card);
+          continue;
+        }
+        if (key) seen[key] = true;
+        emitForCard(card);
+        obs.unobserve(card);
+      }
+    }, { threshold: 0.6 });
+
+    list.__signalViewObserver = observer;
+    for (var ci = 0; ci < cards.length; ci++) {
+      cards[ci].setAttribute('data-signal-key', cards[ci].getAttribute('data-signal-key') || String(ci));
+      observer.observe(cards[ci]);
+    }
   }
 
   /**
@@ -588,8 +877,8 @@ var CustardPlanner = (function () {
         }
         list.innerHTML = html;
         section.hidden = false;
+        trackSignalViews(list);
       })
       .catch(function () { /* enhancement-only */ });
   }
 })();
-

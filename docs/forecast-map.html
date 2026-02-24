@@ -545,6 +545,15 @@
           + '</div>';
 
         marker.bindPopup(popup);
+        marker.on('popupopen', function () {
+          CustardPlanner.emitInteractionEvent({
+            event_type: 'popup_open',
+            action: 'store_popup',
+            store_slug: store.slug || null,
+            flavor: store.flavor || null,
+            certainty_tier: store.flavor ? 'confirmed' : 'none',
+          });
+        });
         marker.addTo(signalLayer);
         pulseMarkers.push({
           marker,
@@ -645,6 +654,15 @@
           + (family ? '<br><span style="color:' + familyColor + ';">' + family + ' family</span>' : '')
           + confirmedCtas
         );
+        marker.on('popupopen', function () {
+          CustardPlanner.emitInteractionEvent({
+            event_type: 'popup_open',
+            action: 'store_popup',
+            store_slug: store.slug || null,
+            flavor: store.flavor || null,
+            certainty_tier: 'confirmed',
+          });
+        });
 
         // Group by family
         if (!familyStores[familyKey]) familyStores[familyKey] = [];

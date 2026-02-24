@@ -45,7 +45,31 @@ export function matchesFlavor(storeFlavor, query, storeDescription) {
  * that share a base ingredient or theme. A user looking for one flavor
  * in a group is likely interested in others from the same group.
  */
-const SIMILARITY_GROUPS = {
+export const BRAND_COLORS = {
+  culvers: '#005696',
+  kopps: '#000000',
+  gilles: '#EBCC35',
+  hefners: '#93BE46',
+  kraverz: '#CE742D',
+  oscars: '#BC272C',
+};
+
+/**
+ * Flavor families and canonical palette for grouping across surfaces.
+ */
+export const FLAVOR_FAMILIES = {
+  mint: { color: '#2ECC71', members: ['andes mint avalanche', 'mint cookie', 'mint explosion'] },
+  chocolate: { color: '#6F4E37', members: ['chocolate caramel twist', 'chocolate heath crunch', 'chocolate volcano', 'dark chocolate decadence', 'dark chocolate pb crunch', 'chocolate oreo volcano'] },
+  caramel: { color: '#D4A056', members: ['caramel cashew', 'caramel fudge cookie dough', 'caramel pecan', 'caramel turtle', 'salted caramel pecan pie', 'chocolate caramel twist'] },
+  cheesecake: { color: '#FFF8DC', members: ['oreo cheesecake', 'oreo cookie cheesecake', 'raspberry cheesecake', 'strawberry cheesecake', 'turtle cheesecake'] },
+  turtle: { color: '#8B6914', members: ['turtle', 'turtle dove', 'turtle cheesecake', 'caramel turtle'] },
+  cookie: { color: '#C4A882', members: ['crazy for cookie dough', 'caramel fudge cookie dough', 'mint cookie', 'oreo cookie cheesecake', 'oreo cookies and cream'] },
+  peanutButter: { color: '#C8A96E', members: ['dark chocolate pb crunch', 'peanut butter cup', 'reeses peanut butter cup'] },
+  berry: { color: '#E91E63', members: ['blackberry cobbler', 'raspberry cheesecake', 'strawberry cheesecake', 'lemon berry layer cake'] },
+  pecan: { color: '#A67B5B', members: ['butter pecan', 'caramel pecan', 'salted caramel pecan pie', 'georgia peach pecan'] },
+};
+
+export const SIMILARITY_GROUPS = {
   mint: [
     'andes mint avalanche',
     'mint cookie',

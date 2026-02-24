@@ -80,8 +80,13 @@ GET /api/v1/stores?q=madison
 GET /api/v1/nearby-flavors?location=53705&flavor=turtle
 GET /api/v1/geolocate
 GET /api/v1/flavors/catalog
+GET /api/v1/flavor-config
 GET /api/v1/alerts/subscribe          (POST)
+POST /api/v1/events
+GET /api/v1/events/summary?days=7
+GET /api/v1/trivia?days=365&limit=5
 GET /api/v1/flavor-colors
+GET /api/v1/metrics/intelligence
 GET /api/v1/metrics/flavor/{name}
 GET /api/v1/metrics/store/{slug}
 GET /api/v1/metrics/trending
@@ -190,6 +195,34 @@ uv run pytest tests/ -v
 # Store manifest + e2e (~25 tests)
 uv run pytest tools/
 ```
+
+## Flavor Intelligence Metrics Pack
+
+Generate a local metrics pack from the combined historical datasets
+(`backfill`, `backfill-national`, `backfill-wayback`) to support rarity content,
+seasonality spotlights, and store-level planning heuristics.
+
+```bash
+# Writes JSON + CSV artifacts under analytics/status/
+uv run python scripts/generate_intelligence_metrics.py
+
+# Optional: probe first 60 pending non-WI stores for CDX health
+uv run python scripts/generate_intelligence_metrics.py --probe-pending 60
+```
+
+Outputs:
+- `analytics/status/flavor_intelligence_summary_<date>.json`
+- `analytics/status/flavor_intelligence_flavors_<date>.csv`
+- `analytics/status/flavor_intelligence_stores_<date>.csv`
+- `analytics/status/flavor_intelligence_seasonal_spotlights_<date>.csv`
+- `analytics/status/backfill_wayback_pending_non_wi_<date>.csv`
+- `analytics/status/backfill_missing_overall_<date>.csv`
+- `analytics/status/backfill_wayback_pending_probe_<date>.csv` (when `--probe-pending` is used)
+- `worker/src/trivia-metrics-seed.js` (auto-generated seed used by `/api/v1/trivia` when D1 data is sparse/unavailable)
+
+Recommended cadence:
+- Regenerate before each release and at least weekly.
+- CI validates seed contract/version and freshness via Worker tests.
 
 ## Data Storage
 
