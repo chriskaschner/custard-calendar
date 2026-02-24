@@ -30,6 +30,8 @@ const els = {
   resultAvailability: document.getElementById('result-availability'),
   resultAlternates: document.getElementById('result-alternates'),
   resultMapLink: document.getElementById('result-map-link'),
+  resultCtas: document.getElementById('result-ctas'),
+  resultNearestOutside: document.getElementById('result-nearest-outside'),
 };
 
 function setStatus(message, tone = 'neutral') {
@@ -38,68 +40,8 @@ function setStatus(message, tone = 'neutral') {
   els.status.className = `quiz-status quiz-status-${tone}`;
 }
 
-function normalizeFlavor(value) {
-  return String(value || '')
-    .toLowerCase()
-    .replace(/\boreo(?:\u00ae)?\b/g, 'oreo')
-    .replace(/['’]/g, '')
-    .replace(/[^a-z0-9]+/g, ' ')
-    .trim();
-}
-
-const SIMILARITY_GROUPS = {
-  mint: ['andes mint avalanche', 'mint cookie', 'mint explosion'],
-  chocolate: [
-    'chocolate caramel twist', 'chocolate heath crunch',
-    'dark chocolate decadence', 'dark chocolate pb crunch',
-    'brownie thunder', 'chocolate volcano', 'chocolate oreo volcano',
-  ],
-  caramel: [
-    'caramel cashew', 'caramel fudge cookie dough', 'caramel pecan',
-    'caramel turtle', 'salted caramel pecan pie',
-    'salted double caramel pecan', 'caramel peanut buttercup',
-    'caramel chocolate pecan',
-  ],
-  cheesecake: [
-    'oreo cheesecake', 'oreo cookie cheesecake',
-    'raspberry cheesecake', 'strawberry cheesecake', 'turtle cheesecake',
-  ],
-  turtle: ['turtle', 'turtle dove', 'turtle cheesecake', 'caramel turtle'],
-  cookie: [
-    'crazy for cookie dough', 'caramel fudge cookie dough',
-    'oreo cookies and cream',
-  ],
-  peanutButter: [
-    'dark chocolate pb crunch', 'peanut butter cup',
-    'really reeses', 'caramel peanut buttercup',
-  ],
-  berry: [
-    'blackberry cobbler', 'raspberry cheesecake',
-    'double strawberry', 'chocolate covered strawberry',
-    'strawberry cheesecake', 'georgia peach',
-    'lemon berry layer cake',
-  ],
-  pecan: [
-    'butter pecan', 'caramel pecan', 'salted caramel pecan pie',
-    'georgia peach pecan', 'caramel chocolate pecan',
-  ],
-};
-
-function findSimilarFlavors(target, availableFlavors) {
-  const normalizedTarget = normalizeFlavor(target);
-  const normalizedAvailable = new Set(availableFlavors.map((f) => normalizeFlavor(f)));
-  const similar = new Set();
-  for (const members of Object.values(SIMILARITY_GROUPS)) {
-    if (members.includes(normalizedTarget)) {
-      for (const member of members) {
-        if (member !== normalizedTarget && normalizedAvailable.has(member)) {
-          similar.add(member);
-        }
-      }
-    }
-  }
-  return [...similar];
-}
+const normalizeFlavor = window.CustardPlanner.normalize;
+const findSimilarFlavors = window.CustardPlanner.findSimilarFlavors;
 
 // Culver's typical hours end around 10pm local. After that, today's flavors
 // are wrapping up. We note this in result messaging.
@@ -135,14 +77,7 @@ async function geocodeLocation(locationText) {
   return { lat, lon, source: 'geocoder' };
 }
 
-function haversineMiles(lat1, lon1, lat2, lon2) {
-  const toRad = (deg) => (deg * Math.PI) / 180;
-  const dLat = toRad(lat2 - lat1);
-  const dLon = toRad(lon2 - lon1);
-  const a = Math.sin(dLat / 2) ** 2
-    + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
-  return 3958.8 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
+const haversineMiles = window.CustardPlanner.haversineMiles;
 
 async function loadJson(path) {
   const resp = await fetch(path);
@@ -449,9 +384,11 @@ async function runQuiz(evt) {
     const resultFlavor = matchedFlavor || similarMatch;
     let bestStore = null;
     let bestDistance = null;
+    let nearestOutside = null;
+    let nearestOutsideDistance = null;
     if (resultFlavor && center) {
       const normalizedResult = normalizeFlavor(resultFlavor);
-      const matchingStores = stores
+      const allMatching = stores
         .filter((s) => normalizeFlavor(s.flavor) === normalizedResult)
         .map((s) => {
           const lat = Number(s.lat);
@@ -462,11 +399,17 @@ async function runQuiz(evt) {
           }
           return { ...s, _dist: dist };
         })
-        .filter((s) => s._dist != null && s._dist <= radiusMiles)
+        .filter((s) => s._dist != null)
         .sort((a, b) => a._dist - b._dist);
-      if (matchingStores.length > 0) {
-        bestStore = matchingStores[0];
-        bestDistance = matchingStores[0]._dist;
+      const withinRadius = allMatching.filter((s) => s._dist <= radiusMiles);
+      const outsideRadius = allMatching.filter((s) => s._dist > radiusMiles);
+      if (withinRadius.length > 0) {
+        bestStore = withinRadius[0];
+        bestDistance = withinRadius[0]._dist;
+      }
+      if (outsideRadius.length > 0) {
+        nearestOutside = outsideRadius[0];
+        nearestOutsideDistance = outsideRadius[0]._dist;
       }
     }
 
@@ -514,11 +457,26 @@ async function runQuiz(evt) {
 
     const lateNote = lateNight ? ' Last chance tonight -- stores close around 10pm.' : '';
 
+    // Reset CTAs and nearest-outside
+    els.resultCtas.innerHTML = '';
+    els.resultNearestOutside.hidden = true;
+
     if (resultFlavor && bestStore) {
       const dist = bestDistance != null ? ` (${formatMiles(bestDistance)})` : '';
       const addr = bestStore.address ? ` ${bestStore.address}` : '';
       els.resultAvailability.textContent =
         `Available now: ${resultFlavor} at ${bestStore.name}${dist}.${addr}${lateNote}`.trim();
+
+      // Action CTAs for the matched store
+      els.resultCtas.innerHTML = CustardPlanner.actionCTAsHTML({
+        slug: bestStore.slug,
+        storeName: bestStore.name,
+        lat: Number(bestStore.lat),
+        lon: Number(bestStore.lon),
+        workerBase: WORKER_BASE,
+        actions: ['directions', 'alert', 'calendar'],
+      });
+
       if (similarMatch && !matchedFlavor) {
         setStatus(
           `No exact archetype flavor today, but ${similarMatch} is a close match and available nearby.`,
@@ -530,11 +488,34 @@ async function runQuiz(evt) {
     } else if (resultFlavor && !bestStore) {
       els.resultAvailability.textContent =
         `${resultFlavor} is scooping today, but not within ${radiusMiles} miles of your location.${lateNote}`.trim();
+
+      // Show nearest outside-radius store
+      if (nearestOutside) {
+        const outsideDist = formatMiles(nearestOutsideDistance);
+        els.resultNearestOutside.textContent =
+          `Nearest: ${nearestOutside.name} (${outsideDist}).`;
+        els.resultNearestOutside.hidden = false;
+
+        // Offer alert + calendar CTAs even for outside-radius (no directions)
+        els.resultCtas.innerHTML = CustardPlanner.actionCTAsHTML({
+          slug: nearestOutside.slug,
+          storeName: nearestOutside.name,
+          lat: Number(nearestOutside.lat),
+          lon: Number(nearestOutside.lon),
+          workerBase: WORKER_BASE,
+          actions: ['alert', 'calendar'],
+        });
+      }
+
       setStatus('Your flavor is available today, just outside your drive radius.', 'neutral');
     } else {
       const tomorrow = lateNight ? ' Check back tomorrow morning for fresh forecasts.' : ' Check back tomorrow.';
       els.resultAvailability.textContent =
         `Your archetype flavor ${fallbackFlavor} is not scooping nearby today.${tomorrow}`.trim();
+
+      // Offer alert link to the general alerts page
+      els.resultCtas.innerHTML = '<div class="cta-row"><a href="alerts.html" class="cta-link cta-alert">Set Flavor Alert</a></div>';
+
       setStatus('No live matches today; showing your archetype flavor for reference.', 'neutral');
     }
 
@@ -551,8 +532,11 @@ async function runQuiz(evt) {
       similar_match: similarMatch ? true : false,
       matched_store_slug: bestStore?.slug || null,
       matched_distance_miles: bestDistance ?? null,
+      nearest_outside_slug: nearestOutside?.slug || null,
+      nearest_outside_miles: nearestOutsideDistance ?? null,
       radius_miles: radiusMiles,
       has_radius_match: Boolean(bestStore),
+      alternates_count: alternateRows.length,
       trait_scores: traitScores,
     });
 

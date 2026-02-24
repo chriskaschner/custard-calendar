@@ -51,8 +51,8 @@ Use probabilistic fill only when schedule data is missing, incomplete, or beyond
 
 Quiz/Mad Lib maps personality/archetype to flavor preferences, then calls planner engine with location/radius.
 
-- [ ] **Planner integration** -- quiz output drives real trip planning actions via shared planner engine, not just a personality card.
-- [ ] **Actionable results** -- always return in-radius match, nearest outside radius, and alternatives with CTAs.
+- [x] **Planner integration** -- quiz results use `CustardPlanner.actionCTAsHTML()` for Directions/Alert/Calendar CTAs. Matched stores get all three CTAs; outside-radius stores get Alert/Calendar; no-match gets general alert link. (2026-02-27)
+- [x] **Actionable results** -- always shows in-radius match, nearest outside radius (with distance), and alternates. Three result states: matched within radius (full CTAs), matched outside radius (nearest store shown with Alert/Calendar), no match (alert link + archetype reference). (2026-02-27)
 
 ## Next -- Flavor Signals and Stories
 
