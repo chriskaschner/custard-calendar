@@ -66,8 +66,8 @@ Turn high-specificity seasonal/store insights into explainable content with evid
 
 PCA/category overlays + improved weather-motion aesthetics, tied directly to decisions.
 
-- [ ] **Decision-driven visuals** -- visuals clarify where/when to go, not just look better.
-- [ ] **Interaction-to-action metrics** -- measure and improve. No usability/performance regressions.
+- [x] **Decision-driven visuals** -- Map + Fronts popups now show Confirmed badges and Directions/Alert/Calendar CTAs via `CustardPlanner.actionCTAsHTML()`. Map result cards also have CTAs. Forecast-mode and confirmed-mode popups both enhanced. (2026-02-27)
+- [ ] **Interaction-to-action metrics** -- measure CTA clicks, signal views, popup opens. No usability/performance regressions.
 
 ## Later -- Refactor / Re-Architecture
 

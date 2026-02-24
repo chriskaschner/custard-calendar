@@ -104,22 +104,10 @@
 
   <script>var WORKER_BASE = 'https://custard-calendar.chris-kaschner.workers.dev';</script>
   <script src="cone-renderer.js"></script>
+  <script src="planner-shared.js"></script>
   <script>
-    const BRAND_COLORS = {
-      kopps: '#000000',
-      gilles: '#EBCC35',
-      hefners: '#93BE46',
-      kraverz: '#CE742D',
-      oscars: '#BC272C',
-    };
-
-    const BRAND_DISPLAY = {
-      kopps: "Kopp's",
-      gilles: "Gille's",
-      hefners: "Hefner's",
-      kraverz: "Kraverz",
-      oscars: "Oscar's",
-    };
+    var BRAND_COLORS = CustardPlanner.BRAND_COLORS;
+    var BRAND_DISPLAY = CustardPlanner.BRAND_DISPLAY;
 
     // flavorColorData and FALLBACK_* constants provided by cone-renderer.js
     const flavorIconCache = new Map();
@@ -170,41 +158,29 @@
 
     const ALL_BRANDS = ['culvers', 'kopps', 'gilles', 'hefners', 'kraverz', 'oscars'];
 
-    // Flavor family filter data
-    const FLAVOR_FAMILIES = {
-      mint: ['andes mint avalanche', 'mint cookie', 'mint explosion'],
-      chocolate: ['chocolate caramel twist', 'chocolate heath crunch', 'chocolate volcano', 'dark chocolate decadence', 'dark chocolate pb crunch', 'chocolate oreo volcano'],
-      caramel: ['caramel cashew', 'caramel fudge cookie dough', 'caramel pecan', 'caramel turtle', 'salted caramel pecan pie', 'chocolate caramel twist'],
-      cheesecake: ['oreo cheesecake', 'oreo cookie cheesecake', 'raspberry cheesecake', 'strawberry cheesecake', 'turtle cheesecake'],
-      turtle: ['turtle', 'turtle dove', 'turtle cheesecake', 'caramel turtle'],
-      cookie: ['crazy for cookie dough', 'caramel fudge cookie dough', 'mint cookie', 'oreo cookie cheesecake', 'oreo cookies and cream'],
-      'peanut-butter': ['dark chocolate pb crunch', 'peanut butter cup', 'reeses peanut butter cup'],
-      berry: ['blackberry cobbler', 'raspberry cheesecake', 'strawberry cheesecake', 'lemon berry layer cake'],
-      pecan: ['butter pecan', 'caramel pecan', 'salted caramel pecan pie', 'georgia peach pecan']
-    };
+    // Flavor family filter data -- sourced from CustardPlanner.
+    // map.html uses 'peanut-butter' (kebab) as the chip data attribute; build
+    // a local lookup that maps both 'peanutButter' and 'peanut-butter' keys.
+    var FLAVOR_FAMILIES = CustardPlanner.FLAVOR_FAMILY_MEMBERS;
+    FLAVOR_FAMILIES['peanut-butter'] = FLAVOR_FAMILIES['peanut-butter'] || FLAVOR_FAMILIES.peanutButter;
 
     // Build reverse lookup: normalized flavor -> set of families
-    const flavorToFamilies = {};
-    for (const [family, members] of Object.entries(FLAVOR_FAMILIES)) {
-      for (const member of members) {
-        if (!flavorToFamilies[member]) flavorToFamilies[member] = [];
-        flavorToFamilies[member].push(family);
+    var flavorToFamilies = {};
+    for (var _famKey in FLAVOR_FAMILIES) {
+      if (!FLAVOR_FAMILIES.hasOwnProperty(_famKey)) continue;
+      var _members = FLAVOR_FAMILIES[_famKey];
+      if (!_members) continue;
+      for (var _mi = 0; _mi < _members.length; _mi++) {
+        var _member = _members[_mi];
+        if (!flavorToFamilies[_member]) flavorToFamilies[_member] = [];
+        flavorToFamilies[_member].push(_famKey);
       }
     }
 
     let activeFamily = 'all';
     const familyChipsContainer = document.getElementById('flavor-family-chips');
 
-    // Haversine distance in miles between two coordinate pairs
-    function haversine(lat1, lon1, lat2, lon2) {
-      const R = 3958.8; // Earth radius in miles
-      const toRad = d => d * Math.PI / 180;
-      const dLat = toRad(lat2 - lat1);
-      const dLon = toRad(lon2 - lon1);
-      const a = Math.sin(dLat / 2) ** 2 +
-                Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
-      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    }
+    var haversine = CustardPlanner.haversineMiles;
 
     // loadFlavorColors, normalizeFlavorKey, getFlavorProfileLocal, getFlavorBaseColor,
     // resolveToppingSlots, renderMiniConeSVG provided by cone-renderer.js
@@ -771,12 +747,24 @@
 
     function storePopup(store, isMatch) {
       const matchBadge = isMatch ? ' <span class="popup-match">MATCH</span>' : '';
+      const certBadge = store.flavor ? ' <span class="popup-confirmed">Confirmed</span>' : '';
       const desc = store.description ? `<br><small>${escapeHtml(store.description)}</small>` : '';
       const nameColor = store.brand && BRAND_COLORS[store.brand] ? ` style="color:${BRAND_COLORS[store.brand]}"` : '';
+      const lat = Number(store.lat);
+      const lon = Number(store.lon || store.lng);
+      const ctas = store.flavor ? CustardPlanner.actionCTAsHTML({
+        slug: store.slug,
+        storeName: store.name,
+        lat: Number.isFinite(lat) ? lat : null,
+        lon: Number.isFinite(lon) ? lon : null,
+        workerBase: WORKER_BASE,
+        actions: ['directions', 'alert', 'calendar'],
+      }) : '';
       return `<div class="store-popup">
-        <strong${nameColor}>${escapeHtml(store.name)}</strong>${matchBadge}<br>
+        <strong${nameColor}>${escapeHtml(store.name)}</strong>${matchBadge}${certBadge}<br>
         ${escapeHtml(store.address)}<br>
-        <em>${escapeHtml(store.flavor)}</em>${desc}
+        <em>${escapeHtml(store.flavor || 'No flavor data')}</em>${desc}
+        ${ctas}
       </div>`;
     }
 
@@ -788,10 +776,18 @@
     function storeCard(store, isMatch) {
       const matchClass = isMatch ? ' store-card-match' : (store.brand ? brandClass(store) : ' brand-culvers');
       const nameColor = store.brand && BRAND_COLORS[store.brand] ? ` style="color:${BRAND_COLORS[store.brand]}"` : '';
-      const culversUrl = store.slug ? (store.brand ? '#' : `https://www.culvers.com/restaurants/${encodeURIComponent(store.slug)}`) : '#';
-      const linkText = store.brand ? '' : `<a class="store-card-link" href="${culversUrl}" target="_blank" rel="noopener">View on culvers.com</a>`;
       const desc = store.description ? `<div class="store-card-description">${escapeHtml(store.description)}</div>` : '';
       const distHtml = store._dist != null ? `<span class="store-card-rank">${store._dist.toFixed(1)} mi</span>` : '';
+      const lat = Number(store.lat);
+      const lon = Number(store.lon || store.lng);
+      const ctas = store.flavor ? CustardPlanner.actionCTAsHTML({
+        slug: store.slug,
+        storeName: store.name,
+        lat: Number.isFinite(lat) ? lat : null,
+        lon: Number.isFinite(lon) ? lon : null,
+        workerBase: WORKER_BASE,
+        actions: ['directions', 'alert', 'calendar'],
+      }) : '';
       return `<div class="store-card${matchClass}">
         <div class="store-card-header">
           <span class="store-card-name"${nameColor}>${escapeHtml(store.name)}</span>
@@ -800,7 +796,7 @@
         <div class="store-card-address">${escapeHtml(store.address || '')}</div>
         <div class="store-card-flavor">${escapeHtml(store.flavor || 'Loading...')}</div>
         ${desc}
-        ${linkText}
+        ${ctas}
       </div>`;
     }
 

@@ -744,6 +744,21 @@ details ol {
   vertical-align: middle;
 }
 
+.popup-confirmed {
+  background: #e8f5e9;
+  color: #2e7d32;
+  font-size: 0.625rem;
+  padding: 0.125rem 0.375rem;
+  border-radius: 3px;
+  text-transform: uppercase;
+  font-weight: 700;
+  vertical-align: middle;
+}
+
+.store-popup .cta-row {
+  margin-top: 0.4rem;
+}
+
 .error-msg {
   color: #c00;
   padding: 1rem;

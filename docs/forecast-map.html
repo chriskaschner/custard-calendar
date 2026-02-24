@@ -134,7 +134,7 @@
 
         <h3>How to Read This</h3>
         <p class="fronts-note">Each marker is a nearby store. Bigger and warmer markers mean a stronger chance of the selected flavor on the selected day.</p>
-        <p class="fronts-note">Today uses confirmed flavor data. Future days use model forecast probabilities.</p>
+        <p class="fronts-note">Today uses confirmed flavor data. Future days show estimated flavors from historical patterns.</p>
       </aside>
     </section>
   </main>
@@ -144,6 +144,7 @@
     <p style="margin-top:0.5rem;">Not affiliated with any restaurant. Forecasts are probabilistic and can change.</p>
   </footer>
 
+  <script src="planner-shared.js"></script>
   <script>
     const WORKER_BASE = 'https://custard-calendar.chris-kaschner.workers.dev';
 
@@ -197,36 +198,9 @@
     let viewMode = 'confirmed'; // 'confirmed' or 'forecast'
     let isTransitioning = false;
 
-    const FLAVOR_FAMILIES = {
-      mint: { color: '#2ECC71', members: ['andes mint avalanche', 'mint cookie', 'mint explosion'] },
-      chocolate: { color: '#6F4E37', members: ['chocolate caramel twist', 'chocolate heath crunch', 'chocolate volcano', 'dark chocolate decadence', 'dark chocolate pb crunch', 'chocolate oreo volcano'] },
-      caramel: { color: '#D4A056', members: ['caramel cashew', 'caramel fudge cookie dough', 'caramel pecan', 'caramel turtle', 'salted caramel pecan pie', 'chocolate caramel twist'] },
-      cheesecake: { color: '#FFF8DC', members: ['oreo cheesecake', 'oreo cookie cheesecake', 'raspberry cheesecake', 'strawberry cheesecake', 'turtle cheesecake'] },
-      turtle: { color: '#8B6914', members: ['turtle', 'turtle dove', 'turtle cheesecake', 'caramel turtle'] },
-      cookie: { color: '#C4A882', members: ['crazy for cookie dough', 'caramel fudge cookie dough', 'mint cookie', 'oreo cookie cheesecake', 'oreo cookies and cream'] },
-      peanutButter: { color: '#C8A96E', members: ['dark chocolate pb crunch', 'peanut butter cup', 'reeses peanut butter cup'] },
-      berry: { color: '#E91E63', members: ['blackberry cobbler', 'raspberry cheesecake', 'strawberry cheesecake', 'lemon berry layer cake', 'double strawberry', 'chocolate covered strawberry', 'georgia peach'] },
-      pecan: { color: '#A67B5B', members: ['butter pecan', 'caramel pecan', 'salted caramel pecan pie', 'georgia peach pecan'] }
-    };
-
-    // Build reverse lookup: flavor name -> family key
-    const flavorFamilyLookup = {};
-    for (const [family, data] of Object.entries(FLAVOR_FAMILIES)) {
-      for (const member of data.members) {
-        if (!flavorFamilyLookup[member]) flavorFamilyLookup[member] = family;
-      }
-    }
-
-    function getFamilyForFlavor(flavorName) {
-      if (!flavorName) return null;
-      var normalized = flavorName.toLowerCase().replace(/[\u00ae\u2122\u00a9]/g, '').replace(/\s+/g, ' ').trim();
-      return flavorFamilyLookup[normalized] || null;
-    }
-
-    function getFamilyColor(flavorName) {
-      var family = getFamilyForFlavor(flavorName);
-      return family ? FLAVOR_FAMILIES[family].color : '#005696';
-    }
+    var FLAVOR_FAMILIES = CustardPlanner.FLAVOR_FAMILIES;
+    var getFamilyForFlavor = CustardPlanner.getFamilyForFlavor;
+    var getFamilyColor = CustardPlanner.getFamilyColor;
 
     function toISODate(dateObj) {
       return dateObj.toISOString().slice(0, 10);
@@ -238,15 +212,7 @@
       return out;
     }
 
-    function normalizeFlavor(name) {
-      if (!name) return '';
-      return String(name)
-        .toLowerCase()
-        .replace(/[\u00ae\u2122]/g, '')
-        .replace(/[\u2018\u2019]/g, "'")
-        .replace(/\s+/g, ' ')
-        .trim();
-    }
+    var normalizeFlavor = CustardPlanner.normalize;
 
     function escapeHtml(text) {
       if (!text) return '';
@@ -567,11 +533,22 @@
         });
 
         const todayFlavorLine = store.flavor ? '<div><strong>Today:</strong> ' + escapeHtml(store.flavor) + '</div>' : '';
+        const lat = Number(store.lat);
+        const lon = Number(store.lon || store.lng);
+        const popupCtas = CustardPlanner.actionCTAsHTML({
+          slug: store.slug,
+          storeName: store.name || store.slug,
+          lat: Number.isFinite(lat) ? lat : null,
+          lon: Number.isFinite(lon) ? lon : null,
+          workerBase: WORKER_BASE,
+          actions: store.flavor ? ['directions', 'alert', 'calendar'] : ['alert', 'calendar'],
+        });
         const popup = '<div class="fronts-popup">'
           + '<div><strong>' + escapeHtml(store.name || store.slug) + '</strong></div>'
           + '<div>' + escapeHtml(store.address || '') + '</div>'
           + todayFlavorLine
           + '<div><strong>Signal:</strong> ' + escapeHtml(signal.detail) + '</div>'
+          + popupCtas
           + '</div>';
 
         marker.bindPopup(popup);
@@ -657,11 +634,23 @@
           opacity: 0.9
         }).addTo(signalLayer);
 
+        var cLat = Number(store.lat);
+        var cLon = Number(store.lon || store.lng);
+        var confirmedCtas = CustardPlanner.actionCTAsHTML({
+          slug: store.slug,
+          storeName: store.name,
+          lat: Number.isFinite(cLat) ? cLat : null,
+          lon: Number.isFinite(cLon) ? cLon : null,
+          workerBase: WORKER_BASE,
+          actions: ['directions', 'alert', 'calendar'],
+        });
         marker.bindPopup(
-          '<strong>' + escapeHtml(store.name) + '</strong><br>' +
-          escapeHtml(store.address || '') + '<br>' +
-          '<em>' + escapeHtml(store.flavor) + '</em>' +
-          (family ? '<br><span style="color:' + familyColor + ';">' + family + ' family</span>' : '')
+          '<strong>' + escapeHtml(store.name) + '</strong>'
+          + ' <span class="popup-confirmed">Confirmed</span><br>'
+          + escapeHtml(store.address || '') + '<br>'
+          + '<em>' + escapeHtml(store.flavor) + '</em>'
+          + (family ? '<br><span style="color:' + familyColor + ';">' + family + ' family</span>' : '')
+          + confirmedCtas
         );
 
         // Group by family
