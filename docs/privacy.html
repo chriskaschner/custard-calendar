@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Privacy — Custard Calendar</title>
+  <meta name="description" content="How Custard Calendar collects and uses data.">
+  <meta name="theme-color" content="#005696">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>Privacy</h1>
+    <nav class="nav-links" style="margin-top:0.75rem;">
+      <a href="index.html">Forecast</a>
+      <a href="calendar.html">Calendar</a>
+      <a href="map.html">Map</a>
+      <a href="radar.html">Radar</a>
+      <a href="alerts.html">Alerts</a>
+      <a href="quiz.html">Quiz</a>
+    </nav>
+  </header>
+
+  <main>
+    <section style="max-width:640px;margin:2rem auto;">
+      <h2 style="font-size:1.25rem;margin-bottom:1rem;">What we collect</h2>
+
+      <p style="margin-bottom:1rem;">Custard Calendar is a free tool for checking frozen custard schedules. Here is what the site does and does not collect.</p>
+
+      <h3 style="font-size:1rem;margin-bottom:0.5rem;margin-top:1.5rem;">No accounts, no cookies</h3>
+      <p style="margin-bottom:1rem;">There is no login, no registration, and no persistent cookies. Each visit is independent. Nothing is stored in your browser except the store you selected (saved to <code>localStorage</code> on your device only, never sent to a server).</p>
+
+      <h3 style="font-size:1rem;margin-bottom:0.5rem;margin-top:1.5rem;">Anonymous usage telemetry</h3>
+      <p style="margin-bottom:1rem;">To understand which features are useful, the site sends anonymous interaction signals when you click certain buttons (Directions, Set Alert, Subscribe to Calendar) or complete a quiz. Each signal includes:</p>
+      <ul style="margin-left:1.5rem;margin-bottom:1rem;line-height:1.75;">
+        <li>A random session ID generated fresh each page load (not tied to you across sessions)</li>
+        <li>The action you took (e.g., "directions click")</li>
+        <li>Your approximate country/region (from Cloudflare's edge network, not GPS)</li>
+        <li>A timestamp</li>
+      </ul>
+      <p style="margin-bottom:1rem;">No IP address is stored. No name, email, or device identifier is collected. The session ID resets on every page load — there is no persistent user ID.</p>
+
+      <h3 style="font-size:1rem;margin-bottom:0.5rem;margin-top:1.5rem;">Alert email subscriptions</h3>
+      <p style="margin-bottom:1rem;">If you subscribe to flavor alerts on the Alerts page, your email address is stored to send you notifications. You can unsubscribe at any time using the link in any alert email. We do not share email addresses with third parties.</p>
+
+      <h3 style="font-size:1rem;margin-bottom:0.5rem;margin-top:1.5rem;">Flavor data</h3>
+      <p style="margin-bottom:1rem;">Flavor schedules are fetched from the public websites of participating restaurants (Culver's, Kopp's, Gille's, Hefner's, Kraverz, Oscar's). Custard Calendar is not affiliated with any of these restaurants.</p>
+
+      <h3 style="font-size:1rem;margin-bottom:0.5rem;margin-top:1.5rem;">Third-party services</h3>
+      <ul style="margin-left:1.5rem;margin-bottom:1rem;line-height:1.75;">
+        <li><strong>Cloudflare Workers</strong> — hosts the API and processes requests. Subject to Cloudflare's privacy policy.</li>
+        <li><strong>GitHub Pages</strong> — serves these HTML pages. Subject to GitHub's privacy policy.</li>
+        <li><strong>Google Calendar / Apple Calendar</strong> — optional integrations you initiate by clicking Subscribe. These services have their own privacy policies.</li>
+      </ul>
+
+      <h3 style="font-size:1rem;margin-bottom:0.5rem;margin-top:1.5rem;">Questions</h3>
+      <p>Questions or concerns? Open an issue on <a href="https://github.com/chriskaschner/custard-calendar">GitHub</a>.</p>
+
+      <p style="margin-top:2rem;font-size:0.8rem;color:#888;">Last updated: February 2026</p>
+    </section>
+  </main>
+
+  <footer>
+    <div class="footer-brands">Culver's / Kopp's / Gille's / Hefner's / Kraverz / Oscar's</div>
+    <div class="footer-links">
+      <a href="https://github.com/chriskaschner/custard-calendar">GitHub</a>
+      <a href="privacy.html" class="nav-active">Privacy</a>
+    </div>
+    <p style="margin-top:0.5rem;">Not affiliated with any restaurant. Flavor data sourced from restaurant websites.</p>
+  </footer>
+</body>
+</html>
