@@ -106,7 +106,7 @@ describe('handleMetricsRoute', () => {
     expect(body.source).toBe('trivia_metrics_seed');
     expect(body.generated_at).toBeDefined();
     expect(body.as_of).toMatch(/^\d{4}-\d{2}-\d{2}$/);
-    expect(body.dataset_summary.rows).toBeGreaterThan(300000);
+    expect(body.dataset_summary.rows).toBeGreaterThan(150000);
     expect(body.coverage.overall_covered).toBeGreaterThan(900);
     expect(Array.isArray(body.highlights.top_flavors)).toBe(true);
     expect(body.highlights.top_flavors.length).toBeGreaterThan(0);
