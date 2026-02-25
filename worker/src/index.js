@@ -20,6 +20,7 @@ import { handleForecast } from './forecast.js';
 import { handleQuizRoute } from './quiz-routes.js';
 import { handleEventsRoute } from './events.js';
 import { handleTriviaRoute } from './trivia.js';
+import { handleLeaderboardRoute } from './leaderboard.js';
 import { handleSocialCard } from './social-card.js';
 import { BASE_COLORS, RIBBON_COLORS, TOPPING_COLORS, CONE_COLORS, FLAVOR_PROFILES, getFlavorProfile, renderConeSVG } from './flavor-colors.js';
 import { checkAlerts, checkWeeklyDigests } from './alert-checker.js';
@@ -227,6 +228,11 @@ export async function handleRequest(request, env, fetchFlavorsFn = defaultFetchF
     const metricsResponse = await handleMetricsRoute(canonical, env, corsHeaders);
     if (metricsResponse) {
       response = metricsResponse;
+    }
+  } else if (canonical.startsWith('/api/leaderboard/')) {
+    const leaderboardResponse = await handleLeaderboardRoute(canonical, url, request, env, corsHeaders);
+    if (leaderboardResponse) {
+      response = leaderboardResponse;
     }
   } else if (canonical === '/api/plan') {
     response = await handlePlan(url, env, corsHeaders);

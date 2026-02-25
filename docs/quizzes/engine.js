@@ -20,6 +20,7 @@ const state = {
   flavorToArchetypeIds: new Map(),
   nearbyTraitCache: new Map(),
   dynamicQuizCache: new Map(),
+  cfState: null,
 };
 
 const els = {
@@ -696,6 +697,47 @@ function renderAlternates(rows, locationText, radiusMiles) {
   }
 }
 
+async function fetchStateLeaderboard(state) {
+  const statesParam = state ? `&states=${encodeURIComponent(state)}` : '';
+  const url = `${WORKER_BASE}/api/v1/leaderboard/state?days=90&limit=5${statesParam}`;
+  try {
+    const resp = await fetch(url, { headers: { 'Accept': 'application/json' } });
+    if (!resp.ok) return null;
+    return resp.json();
+  } catch {
+    return null;
+  }
+}
+
+function renderLeaderboardSection(data, locationText) {
+  if (!data?.state_leaders) return;
+  const entries = Object.entries(data.state_leaders);
+  if (entries.length === 0) return;
+
+  // Pick the first state's data (or 'national' fallback)
+  const [stateKey, flavors] = entries[0];
+  if (!Array.isArray(flavors) || flavors.length === 0) return;
+
+  const container = document.getElementById('quiz-result-leaderboard');
+  if (!container) return;
+
+  const label = stateKey === 'national' ? 'National' : stateKey;
+  const header = document.createElement('h4');
+  header.className = 'leaderboard-header';
+  header.textContent = `Community Favorites (${label}, last 90 days)`;
+  container.appendChild(header);
+
+  const list = document.createElement('ol');
+  list.className = 'leaderboard-list';
+  for (const entry of flavors.slice(0, 5)) {
+    const li = document.createElement('li');
+    li.textContent = entry.flavor;
+    list.appendChild(li);
+  }
+  container.appendChild(list);
+  container.hidden = false;
+}
+
 async function sendQuizEvent(payload) {
   try {
     await fetch(`${WORKER_BASE}/api/v1/quiz/events`, {
@@ -1050,6 +1092,11 @@ async function runQuiz(evt) {
 
     els.resultSection.hidden = false;
     els.resultSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    // Non-blocking: load community flavor leaderboard for user's state
+    fetchStateLeaderboard(state.cfState).then((data) => {
+      renderLeaderboardSection(data, locationText);
+    });
   } catch (err) {
     setStatus(`Unable to run quiz right now: ${err.message}`, 'error');
   } finally {
@@ -1065,6 +1112,7 @@ async function setLocationFromCloudflare() {
     const geo = await resp.json();
     if (geo?.city && geo?.state) {
       els.locationInput.value = `${geo.city}, ${geo.state}`;
+      state.cfState = geo.state;
     }
   } catch {
     // no-op
