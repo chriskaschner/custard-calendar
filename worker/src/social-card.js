@@ -29,15 +29,13 @@ export async function handleSocialCard(path, env, corsHeaders) {
 
   // Look up flavor from D1 snapshot.
   let flavor = null;
-  let description = '';
   if (db) {
     try {
       const snap = await db.prepare(
-        'SELECT flavor, description FROM snapshots WHERE slug = ? AND date = ? LIMIT 1'
+        'SELECT flavor FROM snapshots WHERE slug = ? AND date = ? LIMIT 1'
       ).bind(slug, date).first();
       if (snap) {
         flavor = snap.flavor || null;
-        description = snap.description || '';
       }
     } catch {
       // Snapshot lookup is best-effort; render fallback card on query failure.

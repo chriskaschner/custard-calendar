@@ -8,7 +8,7 @@ function createMockD1({ snapshot = null, appearances = 0, storeCount = 0, failSn
     prepare: vi.fn((sql) => ({
       bind: vi.fn(() => ({
         first: vi.fn(async () => {
-          if (sql.includes('SELECT flavor, description FROM snapshots')) {
+          if (sql.includes('SELECT flavor FROM snapshots')) {
             if (failSnapshot) throw new Error('snapshot query failed');
             return snapshot;
           }

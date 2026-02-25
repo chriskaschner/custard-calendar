@@ -113,8 +113,8 @@
     // flavorColorData and FALLBACK_* constants provided by cone-renderer.js
     const flavorIconCache = new Map();
 
-    // Known flavors for autocomplete
-    const KNOWN_FLAVORS = [
+    // Known flavors for autocomplete — seeded from catalog API, static list as fallback
+    const KNOWN_FLAVORS_FALLBACK = [
       'Andes Mint Avalanche', 'Blackberry Cobbler', 'Brownie Thunder',
       'Butter Pecan', 'Caramel Cashew', 'Caramel Fudge Cookie Dough',
       'Caramel Pecan', 'Caramel Turtle', 'Chocolate Caramel Twist',
@@ -128,6 +128,16 @@
       'Strawberry Cheesecake', 'Turtle', 'Turtle Cheesecake',
       'Turtle Dove', 'Vanilla',
     ];
+    let KNOWN_FLAVORS = KNOWN_FLAVORS_FALLBACK;
+
+    fetch(WORKER_BASE + '/api/flavors/catalog')
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data && Array.isArray(data.flavors) && data.flavors.length > 0) {
+          KNOWN_FLAVORS = data.flavors.map(f => f.title).filter(Boolean).sort();
+        }
+      })
+      .catch(() => { /* keep fallback */ });
 
     // DOM elements
     const flavorInput = document.getElementById('flavor-input');
@@ -289,7 +299,7 @@
     function storeMatchesFamily(store) {
       if (activeFamily === 'all') return true;
       if (!store.flavor) return false;
-      var normalized = store.flavor.toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, ' ').trim();
+      var normalized = CustardPlanner.normalize(store.flavor);
       var families = flavorToFamilies[normalized];
       return families && families.includes(activeFamily);
     }
