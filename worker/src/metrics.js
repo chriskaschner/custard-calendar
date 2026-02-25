@@ -10,6 +10,48 @@
 
 import { TRIVIA_METRICS_SEED } from './trivia-metrics-seed.js';
 
+const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July',
+  'August', 'September', 'October', 'November', 'December'];
+let cachedFlavorRank = null;
+
+function normalizeFlavorKey(value) {
+  return String(value || '')
+    .toLowerCase()
+    .replace(/[\u00ae\u2122\u00a9]/g, '')
+    .replace(/[\u2018\u2019']/g, '')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+}
+
+function getSourceWindow(seed) {
+  return {
+    start: seed?.dataset_summary?.min_date || null,
+    end: seed?.dataset_summary?.max_date || null,
+  };
+}
+
+function getFlavorRank(seed) {
+  const cacheKey = `${seed?.generated_at || 'na'}:${seed?.as_of || 'na'}`;
+  if (cachedFlavorRank && cachedFlavorRank.key === cacheKey) return cachedFlavorRank.value;
+
+  const flavorLookup = seed?.planner_features?.flavor_lookup && typeof seed.planner_features.flavor_lookup === 'object'
+    ? seed.planner_features.flavor_lookup
+    : {};
+  const rows = Object.entries(flavorLookup)
+    .map(([normalized, row]) => ({ normalized, appearances: Number(row?.appearances || 0) }))
+    .filter((row) => row.normalized && row.appearances > 0)
+    .sort((a, b) => b.appearances - a.appearances);
+
+  const byNormalized = {};
+  for (let i = 0; i < rows.length; i++) {
+    byNormalized[rows[i].normalized] = i + 1;
+  }
+
+  const value = { byNormalized, total: rows.length };
+  cachedFlavorRank = { key: cacheKey, value };
+  return value;
+}
+
 /**
  * Route a metrics request to the appropriate handler.
  * @param {string} path - Canonical path (already normalized)
@@ -22,6 +64,16 @@ export async function handleMetricsRoute(path, env, corsHeaders) {
   // Served from generated metrics seed; does not require D1.
   if (path === '/api/metrics/intelligence') {
     return handleIntelligenceMetrics(corsHeaders);
+  }
+
+  const contextFlavorMatch = path.match(/^\/api\/metrics\/context\/flavor\/(.+)$/);
+  if (contextFlavorMatch) {
+    return handleFlavorContextMetrics(decodeURIComponent(contextFlavorMatch[1]), corsHeaders);
+  }
+
+  const contextStoreMatch = path.match(/^\/api\/metrics\/context\/store\/(.+)$/);
+  if (contextStoreMatch) {
+    return handleStoreContextMetrics(decodeURIComponent(contextStoreMatch[1]), corsHeaders);
   }
 
   const db = env.DB;
@@ -113,6 +165,68 @@ function handleIntelligenceMetrics(corsHeaders) {
         by_year: hnbc.by_year && typeof hnbc.by_year === 'object' ? hnbc.by_year : {},
       },
     },
+  }, {
+    headers: { ...corsHeaders, 'Cache-Control': 'public, max-age=3600' },
+  });
+}
+
+function handleFlavorContextMetrics(inputFlavor, corsHeaders) {
+  const seed = TRIVIA_METRICS_SEED || {};
+  const normalized = normalizeFlavorKey(inputFlavor);
+  const lookup = seed?.planner_features?.flavor_lookup && typeof seed.planner_features.flavor_lookup === 'object'
+    ? seed.planner_features.flavor_lookup
+    : {};
+  const rank = getFlavorRank(seed);
+  const row = normalized ? lookup[normalized] : null;
+  const peakMonth = Number(row?.peak_month || 0);
+  const defaultMonthName = peakMonth >= 1 && peakMonth <= 12 ? MONTH_NAMES[peakMonth - 1] : null;
+
+  return Response.json({
+    source: 'trivia_metrics_seed',
+    as_of: seed?.as_of || null,
+    source_window: getSourceWindow(seed),
+    normalized_flavor: normalized || null,
+    found: !!row,
+    rank: row ? (rank.byNormalized[normalized] || null) : null,
+    total_ranked_flavors: rank.total,
+    flavor: row ? {
+      title: row.title || inputFlavor,
+      appearances: Number(row.appearances || 0),
+      store_count: Number(row.store_count || 0),
+      peak_month: peakMonth || null,
+      peak_month_name: row.peak_month_name || defaultMonthName,
+      seasonal_concentration: Number(row.seasonal_concentration || 0),
+    } : null,
+  }, {
+    headers: { ...corsHeaders, 'Cache-Control': 'public, max-age=3600' },
+  });
+}
+
+function handleStoreContextMetrics(inputSlug, corsHeaders) {
+  const seed = TRIVIA_METRICS_SEED || {};
+  const slug = String(inputSlug || '').trim().toLowerCase();
+  const lookup = seed?.planner_features?.store_lookup && typeof seed.planner_features.store_lookup === 'object'
+    ? seed.planner_features.store_lookup
+    : {};
+  const row = slug ? lookup[slug] : null;
+  const rank = getFlavorRank(seed);
+  const topFlavorKey = row?.top_flavor ? normalizeFlavorKey(row.top_flavor) : '';
+
+  return Response.json({
+    source: 'trivia_metrics_seed',
+    as_of: seed?.as_of || null,
+    source_window: getSourceWindow(seed),
+    slug: slug || null,
+    found: !!row,
+    store: row ? {
+      city: row.city || null,
+      state: row.state || null,
+      observations: Number(row.observations || 0),
+      distinct_flavors: Number(row.distinct_flavors || 0),
+      top_flavor: row.top_flavor || null,
+      top_flavor_count: Number(row.top_flavor_count || 0),
+      top_flavor_rank: topFlavorKey ? (rank.byNormalized[topFlavorKey] || null) : null,
+    } : null,
   }, {
     headers: { ...corsHeaders, 'Cache-Control': 'public, max-age=3600' },
   });

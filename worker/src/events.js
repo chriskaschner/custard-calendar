@@ -4,7 +4,14 @@ const MAX_PAGE_LEN = 48;
 const MAX_BATCH = 20;
 const DEFAULT_SUMMARY_DAYS = 7;
 const MAX_SUMMARY_DAYS = 90;
-const ALLOWED_EVENT_TYPES = new Set(['cta_click', 'signal_view', 'popup_open']);
+const ALLOWED_EVENT_TYPES = new Set([
+  'cta_click',
+  'signal_view',
+  'popup_open',
+  'onboarding_view',
+  'onboarding_click',
+  'quiz_complete',
+]);
 const ALLOWED_CERTAINTY = new Set(['confirmed', 'watch', 'estimated', 'none']);
 
 function jsonResponse(payload, corsHeaders, status = 200) {
@@ -200,7 +207,10 @@ async function handleEventSummary(url, env, corsHeaders) {
          COUNT(*) AS events,
          SUM(CASE WHEN event_type = 'cta_click' THEN 1 ELSE 0 END) AS cta_clicks,
          SUM(CASE WHEN event_type = 'signal_view' THEN 1 ELSE 0 END) AS signal_views,
-         SUM(CASE WHEN event_type = 'popup_open' THEN 1 ELSE 0 END) AS popup_opens
+         SUM(CASE WHEN event_type = 'popup_open' THEN 1 ELSE 0 END) AS popup_opens,
+         SUM(CASE WHEN event_type = 'onboarding_view' THEN 1 ELSE 0 END) AS onboarding_views,
+         SUM(CASE WHEN event_type = 'onboarding_click' THEN 1 ELSE 0 END) AS onboarding_clicks,
+         SUM(CASE WHEN event_type = 'quiz_complete' THEN 1 ELSE 0 END) AS quiz_completions
        FROM interaction_events
        WHERE ${whereSql}`
     ).bind(...bindValues).first();
@@ -261,6 +271,9 @@ async function handleEventSummary(url, env, corsHeaders) {
         cta_clicks: Number(totals?.cta_clicks || 0),
         signal_views: Number(totals?.signal_views || 0),
         popup_opens: Number(totals?.popup_opens || 0),
+        onboarding_views: Number(totals?.onboarding_views || 0),
+        onboarding_clicks: Number(totals?.onboarding_clicks || 0),
+        quiz_completions: Number(totals?.quiz_completions || 0),
       },
       by_event_type: byType?.results || [],
       by_page: byPage?.results || [],

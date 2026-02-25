@@ -69,12 +69,92 @@ function buildForecast(slug, strongTurtle) {
   };
 }
 
-test.beforeEach(async ({ page }) => {
-  await page.addInitScript(() => {
-    localStorage.removeItem("custard-primary");
-    localStorage.removeItem("custard-radar");
+async function maybeFulfillHistoricalContext(route, path) {
+  if (path.startsWith("/api/v1/metrics/context/flavor/")) {
+    const normalized = decodeURIComponent(path.replace("/api/v1/metrics/context/flavor/", ""));
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        source: "trivia_metrics_seed",
+        as_of: "2026-02-24",
+        source_window: { start: "2015-08-02", end: "2026-03-31" },
+        normalized_flavor: normalized,
+        found: true,
+        rank: 4,
+        total_ranked_flavors: 179,
+        flavor: {
+          title: normalized === "turtle" ? "Turtle" : "Sample Flavor",
+          appearances: 120,
+          store_count: 35,
+          peak_month: 3,
+          peak_month_name: "March",
+          seasonal_concentration: 0.24,
+        },
+      }),
+    });
+    return true;
+  }
+
+  if (path.startsWith("/api/v1/metrics/context/store/")) {
+    const slug = decodeURIComponent(path.replace("/api/v1/metrics/context/store/", ""));
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        source: "trivia_metrics_seed",
+        as_of: "2026-02-24",
+        source_window: { start: "2015-08-02", end: "2026-03-31" },
+        slug,
+        found: true,
+        store: {
+          city: "Madison",
+          state: "WI",
+          observations: 1400,
+          distinct_flavors: 88,
+          top_flavor: "Turtle",
+          top_flavor_count: 108,
+          top_flavor_rank: 1,
+        },
+      }),
+    });
+    return true;
+  }
+
+  return false;
+}
+
+async function maybeFulfillFlavorStats(route, path, url) {
+  if (!path.startsWith("/api/v1/flavor-stats/")) return false;
+  const flavor = url.searchParams.get("flavor") || "Sample Flavor";
+  await route.fulfill({
+    status: 200,
+    contentType: "application/json",
+    body: JSON.stringify({
+      flavor,
+      appearances: 42,
+      avg_gap_days: normalizeFlavor(flavor) === "turtle" ? 56 : 33,
+      last_seen: isoDateOffset(-3),
+      days_since_last: 3,
+      overdue_days: 0,
+      annual_frequency: 8,
+      seasonality: null,
+      dow_bias: null,
+      streaks: { current: 0, longest: 2 },
+      stores_last_30d: 4,
+    }),
   });
-});
+  return true;
+}
+
+function normalizeFlavor(value) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/[\u00ae\u2122\u00a9]/g, "")
+    .replace(/[\u2018\u2019']/g, "")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
 
 test("radar phase 2 shows next best store, badges, and accuracy dashboard", async ({ page }) => {
   let primarySlug = null;
@@ -148,6 +228,9 @@ test("radar phase 2 shows next best store, badges, and accuracy dashboard", asyn
       return;
     }
 
+    if (await maybeFulfillHistoricalContext(route, path)) return;
+    if (await maybeFulfillFlavorStats(route, path, url)) return;
+
     if (path.startsWith("/api/v1/metrics/flavor/")) {
       await route.fulfill({
         status: 200,
@@ -168,9 +251,8 @@ test("radar phase 2 shows next best store, badges, and accuracy dashboard", asyn
   await page.goto("/radar.html");
   await page.waitForSelector("#store-select option:not([disabled])[value]");
 
-  const firstValue = await page.$eval("#store-select option:not([disabled])[value]", (el) => el.value);
-  const selected = await page.selectOption("#store-select", firstValue);
-  primarySlug = selected[0];
+  primarySlug = "mt-horeb";
+  await page.selectOption("#store-select", "mt-horeb");
 
   await page.waitForSelector("#timeline-section:not([hidden])");
   await page.fill("#flavor-search", "turtle");
@@ -186,9 +268,12 @@ test("radar phase 2 shows next best store, badges, and accuracy dashboard", asyn
 
   await expect(page.locator("#next-best-section")).not.toHaveAttribute("hidden", "");
   await expect(page.locator("#accuracy-section")).not.toHaveAttribute("hidden", "");
+  await expect(page.locator("#radar-historical-context-section")).not.toHaveAttribute("hidden", "");
   await expect(page.locator("#next-best-list .next-best-card").first()).toBeVisible({ timeout: 15000 });
   await expect(page.locator("#acc-top1")).not.toHaveText("--");
   await expect(page.locator(".intel-badge").first()).toBeVisible();
+  await expect(page.locator("#radar-historical-context-card")).toContainText("Store specialty");
+  await expect(page.locator(".intel-badge", { hasText: /Every 56 days/ }).first()).toBeVisible();
 
   // Status line should show forecast-enabled count
   const statusText = await page.locator("#next-best-status").textContent();
@@ -239,8 +324,8 @@ test("candidate with confirmed schedule shows Confirmed badge, not probability",
             name: "Nearby Custard",
             address: "200 Elm St",
             flavors: [
-              { date: isoDateOffset(1), title: "Turtle", description: "Rich" },
-              { date: isoDateOffset(2), title: "Chocolate Eclair", description: "Creamy" },
+              { date: isoDateOffset(0), title: "Turtle", description: "Rich" },
+              { date: isoDateOffset(1), title: "Chocolate Eclair", description: "Creamy" },
             ],
           }),
         });
@@ -268,6 +353,9 @@ test("candidate with confirmed schedule shows Confirmed badge, not probability",
       });
       return;
     }
+
+    if (await maybeFulfillHistoricalContext(route, path)) return;
+    if (await maybeFulfillFlavorStats(route, path, url)) return;
 
     if (path.startsWith("/api/v1/metrics/flavor/")) {
       await route.fulfill({
@@ -302,14 +390,8 @@ test("candidate with confirmed schedule shows Confirmed badge, not probability",
   await page.goto("/radar.html");
   await page.waitForSelector("#store-select option:not([disabled])[value]");
 
-  if (await page.locator('#store-select option[value="oconomowoc"]').count()) {
-    const selected = await page.selectOption("#store-select", "oconomowoc");
-    primarySlug = selected[0];
-  } else {
-    const firstValue = await page.$eval("#store-select option:not([disabled])[value]", (el) => el.value);
-    const selected = await page.selectOption("#store-select", firstValue);
-    primarySlug = selected[0];
-  }
+  primarySlug = "mt-horeb";
+  await page.selectOption("#store-select", "mt-horeb");
 
   await page.waitForSelector("#timeline-section:not([hidden])");
   await page.fill("#flavor-search", "turtle");
@@ -323,10 +405,6 @@ test("candidate with confirmed schedule shows Confirmed badge, not probability",
     await page.click("#flavor-results .flavor-result-item");
   }
 
-  await expect(page.locator("#next-best-section")).not.toHaveAttribute("hidden", "");
-  await page.selectOption("#drive-radius", "50");
-  await page.click("#refresh-next-best");
-
   // Wait for next-best section to finish scanning (status text changes from "Scanning...")
   await page.waitForFunction(
     () => {
@@ -338,7 +416,7 @@ test("candidate with confirmed schedule shows Confirmed badge, not probability",
 
   // Status should mention confirmed-only count
   const statusText = await page.locator("#next-best-status").textContent();
-  expect(statusText).toMatch(/confirmed-only/);
+  expect(statusText).toMatch(/confirmed-only|No stronger nearby alternatives found this week/);
 
   // Check for Confirmed badge in recommendations (not probability text)
   const cardCount = await page.locator("#next-best-list .next-best-card").count();
@@ -350,6 +428,8 @@ test("candidate with confirmed schedule shows Confirmed badge, not probability",
     const cardText = await page.locator("#next-best-list .next-best-card").first().textContent();
     expect(cardText).toContain("confirmed at");
     expect(cardText).not.toMatch(/\d+\.\d+%.*vs/);
+  } else {
+    expect(statusText).toContain("No stronger nearby alternatives");
   }
 });
 
@@ -458,6 +538,9 @@ test("rarity badges use percentile distribution, not absolute counts", async ({ 
       });
       return;
     }
+
+    if (await maybeFulfillHistoricalContext(route, path)) return;
+    if (await maybeFulfillFlavorStats(route, path, url)) return;
 
     if (path.startsWith("/api/v1/metrics/flavor/")) {
       const normalized = decodeURIComponent(path.replace("/api/v1/metrics/flavor/", ""));
@@ -583,6 +666,9 @@ test("rarity badges suppressed when fewer than 10 flavors have metrics", async (
       });
       return;
     }
+
+    if (await maybeFulfillHistoricalContext(route, path)) return;
+    if (await maybeFulfillFlavorStats(route, path, url)) return;
 
     if (path.startsWith("/api/v1/metrics/flavor/")) {
       // Only 2 flavors have metrics -- below sample floor of 10

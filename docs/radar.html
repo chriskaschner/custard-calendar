@@ -54,6 +54,24 @@
       </select>
     </section>
 
+    <section id="radar-empty-state" hidden>
+      <div class="hero-empty">
+        <p class="hero-kicker">Flavor Intelligence</p>
+        <h2>Radar is your decision layer for where to go next.</h2>
+        <p class="hero-subtitle">Load one store to see confirmed vs estimated flavor odds, anomaly signals, and better nearby alternatives in one pass.</p>
+        <div class="hero-cta-row">
+          <button class="btn-primary" id="radar-start-btn" type="button">Start with a recommended store</button>
+          <button class="btn-secondary" id="radar-browse-btn" type="button">Browse stores</button>
+          <a class="btn-secondary" href="map.html">Open Flavor Map</a>
+        </div>
+        <p id="radar-geo-context" class="hero-coverage"></p>
+        <div id="radar-quick-start-wrap" class="quick-start-wrap" hidden>
+          <span class="quick-start-label">Quick start stores:</span>
+          <div id="radar-quick-start-stores" class="quick-start-stores"></div>
+        </div>
+      </div>
+    </section>
+
     <section id="flavor-section" hidden>
       <h2>2. Pick up to 3 favorite flavors</h2>
       <p class="hint">We'll highlight these in your forecast.</p>
@@ -77,9 +95,24 @@
       <div id="trust-banner" class="trust-banner" hidden></div>
     </section>
 
+    <section id="radar-actions-section" hidden>
+      <h2>3. Take action</h2>
+      <p id="radar-actions-context" class="hint"></p>
+      <div class="hero-cta-row radar-action-row">
+        <a id="radar-action-map" class="btn-secondary" href="map.html">Open map for this store</a>
+        <a id="radar-action-alerts" class="btn-secondary" href="alerts.html">Set flavor alerts</a>
+        <a id="radar-action-calendar" class="btn-primary" href="#">Subscribe to calendar</a>
+      </div>
+    </section>
+
     <section id="radar-signals-section" hidden>
       <h2 class="signals-header">Flavor Signals</h2>
       <div id="radar-signals-list" class="signals-list"></div>
+    </section>
+
+    <section id="radar-historical-context-section" hidden>
+      <h2>Historical Context</h2>
+      <div id="radar-historical-context-card"></div>
     </section>
 
     <section id="next-best-section" hidden>
@@ -150,14 +183,24 @@
       margin-top: 0.5rem;
     }
 
-    #flavor-section, #timeline-section, #next-best-section, #accuracy-section, #favorites-section {
+    #radar-empty-state, #flavor-section, #timeline-section, #radar-actions-section, #radar-historical-context-section, #next-best-section, #accuracy-section, #favorites-section {
       margin-top: 2rem;
     }
 
-    #flavor-section h2, #timeline-section h2, #next-best-section h2, #accuracy-section h2 {
+    #flavor-section h2, #timeline-section h2, #radar-actions-section h2, #radar-historical-context-section h2, #next-best-section h2, #accuracy-section h2 {
       font-size: 1rem;
       color: #003366;
       margin-bottom: 0.5rem;
+    }
+
+    .radar-action-row {
+      justify-content: flex-start;
+    }
+
+    .radar-action-row .btn-primary,
+    .radar-action-row .btn-secondary {
+      font-size: 0.875rem;
+      padding: 0.625rem 1rem;
     }
 
     .flavor-results {
@@ -274,6 +317,12 @@
       background: #f3f3ff;
       color: #5c3cb0;
       border-color: #ddd3ff;
+    }
+
+    .intel-badge-cadence {
+      background: #e9f7ef;
+      color: #1f7a3b;
+      border-color: #b8e3c8;
     }
 
     .phase2-controls {
@@ -395,6 +444,11 @@
       .accuracy-grid {
         grid-template-columns: 1fr;
       }
+
+      .radar-action-row .btn-primary,
+      .radar-action-row .btn-secondary {
+        width: 100%;
+      }
     }
   </style>
 
@@ -422,6 +476,12 @@
     const citySearch = document.getElementById('city-search');
     const storeSelect = document.getElementById('store-select');
     const storeSelected = document.getElementById('store-selected');
+    const radarEmptyState = document.getElementById('radar-empty-state');
+    const radarStartBtn = document.getElementById('radar-start-btn');
+    const radarBrowseBtn = document.getElementById('radar-browse-btn');
+    const radarGeoContext = document.getElementById('radar-geo-context');
+    const radarQuickStartWrap = document.getElementById('radar-quick-start-wrap');
+    const radarQuickStartStores = document.getElementById('radar-quick-start-stores');
     const flavorSection = document.getElementById('flavor-section');
     const flavorSearch = document.getElementById('flavor-search');
     const flavorResults = document.getElementById('flavor-results');
@@ -429,6 +489,13 @@
     const timelineSection = document.getElementById('timeline-section');
     const timelineEl = document.getElementById('timeline');
     const trustBanner = document.getElementById('trust-banner');
+    const radarActionsSection = document.getElementById('radar-actions-section');
+    const radarActionsContext = document.getElementById('radar-actions-context');
+    const radarActionMap = document.getElementById('radar-action-map');
+    const radarActionAlerts = document.getElementById('radar-action-alerts');
+    const radarActionCalendar = document.getElementById('radar-action-calendar');
+    const radarHistoricalContextSection = document.getElementById('radar-historical-context-section');
+    const radarHistoricalContextCard = document.getElementById('radar-historical-context-card');
     const nextBestSection = document.getElementById('next-best-section');
     const driveRadius = document.getElementById('drive-radius');
     const refreshNextBestBtn = document.getElementById('refresh-next-best');
@@ -452,10 +519,14 @@
     const confirmedCacheBySlug = new Map();
     const flavorMetricsCache = new Map();
     const flavorMetricsInflight = new Map();
+    const flavorStatsCache = new Map();
+    const flavorStatsInflight = new Map();
     let cachedStoreMetrics = null;
     let cachedStoreMetricsSlug = null;
     let storeFlavorCounts = new Map();
     let storeActiveStreaks = new Map();
+    let detectedGeo = null;
+    let radarOnboardingViewTracked = false;
 
     // --- Utilities ---
     function toISODate(d) {
@@ -499,10 +570,164 @@
       return days + ' day' + (days === 1 ? '' : 's') + ' ago';
     }
 
+    function emitRadarEvent(eventType, action, extra) {
+      if (!CustardPlanner || typeof CustardPlanner.emitInteractionEvent !== 'function') return;
+      const payload = {
+        event_type: eventType,
+        page: 'radar',
+        action: action,
+      };
+      if (extra && typeof extra === 'object') {
+        for (const [key, value] of Object.entries(extra)) {
+          payload[key] = value;
+        }
+      }
+      CustardPlanner.emitInteractionEvent(payload);
+    }
+
     var haversineMiles = CustardPlanner.haversineMiles;
 
     function selectedStore() {
       return allStores.find(s => s.slug === selectedSlug) || null;
+    }
+
+    function findStoreBySlug(slug) {
+      if (!slug) return null;
+      return allStores.find(s => s.slug === slug) || null;
+    }
+
+    function storeLabel(store) {
+      if (!store) return '';
+      const brand = store.brand ? (BRAND_DISPLAY[store.brand] || store.brand) : '';
+      const prefix = brand ? brand + ' \u2014 ' : '';
+      return prefix + store.city + ', ' + store.state + ' \u2014 ' + store.address;
+    }
+
+    function getRecommendedStoreSlug() {
+      const filtered = getFilteredStores();
+      if (!filtered.length) return null;
+      const geoCity = (detectedGeo && detectedGeo.city ? String(detectedGeo.city) : '').trim().toLowerCase();
+      if (geoCity) {
+        const cityMatch = filtered.find(s => String(s.city || '').trim().toLowerCase() === geoCity);
+        if (cityMatch) return cityMatch.slug;
+      }
+      return filtered[0].slug;
+    }
+
+    function renderRadarQuickStart(stores) {
+      radarQuickStartStores.innerHTML = '';
+      const picks = (stores || []).slice(0, 6);
+      if (!picks.length) {
+        radarQuickStartWrap.hidden = true;
+        return;
+      }
+      for (const store of picks) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'quick-start-chip';
+        btn.textContent = store.city + ', ' + store.state;
+        btn.addEventListener('click', () => {
+          emitRadarEvent('onboarding_click', 'quick_start_chip', { store_slug: store.slug });
+          selectStore(store.slug);
+        });
+        radarQuickStartStores.appendChild(btn);
+      }
+      radarQuickStartWrap.hidden = false;
+    }
+
+    function renderRadarEntryState() {
+      const hasSelection = !!selectedSlug;
+      radarEmptyState.hidden = hasSelection;
+      if (hasSelection) return;
+      if (!radarOnboardingViewTracked) {
+        emitRadarEvent('onboarding_view', 'empty_state');
+        radarOnboardingViewTracked = true;
+      }
+
+      flavorSection.hidden = true;
+      timelineSection.hidden = true;
+      radarActionsSection.hidden = true;
+      radarHistoricalContextSection.hidden = true;
+      nextBestSection.hidden = true;
+      accuracySection.hidden = true;
+      favoritesSection.hidden = true;
+      document.getElementById('radar-signals-section').hidden = true;
+      trustBanner.hidden = true;
+
+      const parts = [];
+      if (detectedGeo && detectedGeo.city && detectedGeo.state) {
+        parts.push('Detected near ' + detectedGeo.city + ', ' + detectedGeo.state + '.');
+      } else if (detectedGeo && detectedGeo.state) {
+        parts.push('Detected state: ' + detectedGeo.state + '.');
+      }
+      parts.push('Pick a store to unlock Radar signals, confidence trends, and next-best alternatives.');
+      radarGeoContext.textContent = parts.join(' ');
+
+      renderRadarQuickStart(getFilteredStores());
+    }
+
+    function primaryContextFlavor() {
+      if (selectedFlavors.size > 0) {
+        return [...selectedFlavors][0];
+      }
+      for (const day of cachedTimeline) {
+        if (day.type === 'confirmed' && day.flavor) return day.flavor;
+        if (day.type === 'predicted' && day.predictions && day.predictions[0]) {
+          return day.predictions[0].flavor;
+        }
+      }
+      return '';
+    }
+
+    async function renderRadarHistoricalContext() {
+      if (!selectedSlug) {
+        radarHistoricalContextSection.hidden = true;
+        return;
+      }
+      const flavorName = primaryContextFlavor();
+      if (!flavorName) {
+        radarHistoricalContextSection.hidden = true;
+        return;
+      }
+
+      try {
+        const [flavorContext, storeContext] = await Promise.all([
+          CustardPlanner.fetchFlavorHistoricalContext(WORKER_BASE, flavorName),
+          CustardPlanner.fetchStoreHistoricalContext(WORKER_BASE, selectedSlug),
+        ]);
+        const html = CustardPlanner.historicalContextHTML({
+          flavorContext,
+          storeContext,
+          flavorLabel: flavorName,
+        });
+        if (!html) {
+          radarHistoricalContextSection.hidden = true;
+          return;
+        }
+        radarHistoricalContextCard.innerHTML = html;
+        radarHistoricalContextSection.hidden = false;
+      } catch (_) {
+        radarHistoricalContextSection.hidden = true;
+      }
+    }
+
+    function updateRadarActions() {
+      if (!selectedSlug) {
+        radarActionsSection.hidden = true;
+        return;
+      }
+      const store = findStoreBySlug(selectedSlug);
+      if (!store) {
+        radarActionsSection.hidden = true;
+        return;
+      }
+
+      const location = store.city && store.state ? (store.city + ', ' + store.state) : store.name;
+      radarActionsContext.textContent = 'Using ' + location + ' as your action hub for map, alerts, and calendar subscription.';
+      radarActionMap.href = 'map.html?location=' + encodeURIComponent(location);
+      radarActionAlerts.href = 'alerts.html';
+      radarActionCalendar.href = CustardPlanner.calendarIcsUrl(WORKER_BASE, selectedSlug);
+      radarActionsSection.hidden = false;
     }
 
     function isFavorite(flavorName) {
@@ -549,10 +774,13 @@
       try {
         const resp = await fetch(WORKER_BASE + '/api/v1/geolocate');
         const data = await resp.json();
-        return data.state || 'WI';
+        return {
+          state: data.state || 'WI',
+          city: data.city || '',
+        };
       } catch (e) {
         // Geolocate blocked (CORS / offline) -- default to WI
-        return 'WI';
+        return { state: 'WI', city: '' };
       }
     }
 
@@ -616,23 +844,22 @@
           storeSelect.appendChild(opt);
         }
       }
+      if (!selectedSlug) renderRadarEntryState();
     }
 
     function selectStore(slug) {
+      const store = findStoreBySlug(slug);
+      if (!store) return;
       selectedSlug = slug;
-      const store = allStores.find(s => s.slug === slug);
-      if (store) {
-        const brand = store.brand ? (BRAND_DISPLAY[store.brand] || store.brand) : '';
-        const prefix = brand ? brand + ' \u2014 ' : '';
-        storeSelected.textContent = prefix + store.city + ', ' + store.state + ' \u2014 ' + store.address;
-        storeSelected.hidden = false;
-      }
-      if (storeSelect.querySelector('option[value="' + slug + '"]')) {
-        storeSelect.value = slug;
-      }
+      storeSelect.value = slug;
+      storeSelected.textContent = storeLabel(store);
+      storeSelected.hidden = false;
       flavorSection.hidden = false;
+      radarHistoricalContextSection.hidden = true;
       setPrimaryStoreSlug(slug);
       savePrefs();
+      updateRadarActions();
+      renderRadarEntryState();
       fetchAndRenderTimeline();
     }
 
@@ -778,6 +1005,36 @@
       return p;
     }
 
+    function flavorStatsKey(slug, flavorName) {
+      const storeSlug = String(slug || '').trim().toLowerCase();
+      const normalized = normalize(flavorName);
+      if (!storeSlug || !normalized) return '';
+      return storeSlug + '::' + normalized;
+    }
+
+    async function loadStoreFlavorStats(slug, flavorName) {
+      const key = flavorStatsKey(slug, flavorName);
+      if (!key) return null;
+      if (flavorStatsCache.has(key)) return flavorStatsCache.get(key);
+      if (flavorStatsInflight.has(key)) return flavorStatsInflight.get(key);
+
+      const p = fetch(
+        WORKER_BASE + '/api/v1/flavor-stats/' + encodeURIComponent(slug) + '?flavor=' + encodeURIComponent(flavorName)
+      )
+        .then((resp) => resp.ok ? resp.json() : null)
+        .then((data) => {
+          flavorStatsCache.set(key, data);
+          flavorStatsInflight.delete(key);
+          return data;
+        })
+        .catch(() => {
+          flavorStatsInflight.delete(key);
+          return null;
+        });
+      flavorStatsInflight.set(key, p);
+      return p;
+    }
+
     async function preloadFlavorMetrics() {
       const unique = new Set();
       for (const day of cachedTimeline) {
@@ -791,7 +1048,12 @@
         }
       }
       for (const f of selectedFlavors) unique.add(f);
-      await Promise.all([...unique].map(loadFlavorMetrics));
+      const flavorList = [...unique];
+      await Promise.all(flavorList.map(loadFlavorMetrics));
+      if (selectedSlug) {
+        // Keep per-store cadence lookups bounded for predictable page performance.
+        await Promise.all(flavorList.slice(0, 12).map((f) => loadStoreFlavorStats(selectedSlug, f)));
+      }
       computeRarityPercentiles();
     }
 
@@ -854,12 +1116,26 @@
       return null;
     }
 
+    function cadenceBadge(flavorName) {
+      if (!selectedSlug) return null;
+      const key = flavorStatsKey(selectedSlug, flavorName);
+      if (!key) return null;
+      const stats = flavorStatsCache.get(key);
+      if (!stats) return null;
+      const avgGap = Number(stats.avg_gap_days);
+      if (!Number.isFinite(avgGap)) return null;
+      if (avgGap < 2 || avgGap > 180) return null;
+      return 'Every ' + Math.round(avgGap) + ' days';
+    }
+
     function renderFlavorBadges(flavorName, day, inline = false) {
       const chips = [];
       const rarity = rarityBadge(flavorName);
+      const cadence = cadenceBadge(flavorName);
       const streak = streakBadge(flavorName);
       const overdue = overdueBadge(flavorName, day);
       if (rarity) chips.push({ type: 'rarity', label: rarity });
+      if (cadence) chips.push({ type: 'cadence', label: cadence });
       if (streak) chips.push({ type: 'streak', label: streak });
       if (overdue) chips.push({ type: 'overdue', label: overdue });
       if (chips.length === 0) return '';
@@ -1181,6 +1457,7 @@
         renderTimeline();
         renderFavoritesIntel();
         renderAccuracyDashboard();
+        await renderRadarHistoricalContext();
         await renderNextBestStoreRecommendations();
         preloadFlavorMetrics().then(() => {
           renderTimeline();
@@ -1297,6 +1574,7 @@
         renderTimeline();
         renderFavoritesIntel();
         renderAccuracyDashboard();
+        void renderRadarHistoricalContext();
         void renderNextBestStoreRecommendations();
       }
     }
@@ -1375,11 +1653,25 @@
     // --- Event handlers ---
     stateFilter.addEventListener('change', renderStoreList);
     citySearch.addEventListener('input', renderStoreList);
-    storeSelect.addEventListener('change', () => selectStore(storeSelect.value));
+    storeSelect.addEventListener('change', () => {
+      if (storeSelect.value) selectStore(storeSelect.value);
+    });
     flavorSearch.addEventListener('input', () => searchFlavors(flavorSearch.value));
     flavorSearch.addEventListener('focus', () => searchFlavors(flavorSearch.value));
     driveRadius.addEventListener('change', () => { void renderNextBestStoreRecommendations(); });
     refreshNextBestBtn.addEventListener('click', () => { void renderNextBestStoreRecommendations(); });
+    radarStartBtn.addEventListener('click', () => {
+      const slug = getRecommendedStoreSlug();
+      if (slug) {
+        emitRadarEvent('onboarding_click', 'start_recommended', { store_slug: slug });
+        selectStore(slug);
+      }
+    });
+    radarBrowseBtn.addEventListener('click', () => {
+      emitRadarEvent('onboarding_click', 'browse_stores');
+      document.getElementById('store-selector').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      citySearch.focus();
+    });
 
     document.addEventListener('click', (e) => {
       if (!e.target.closest('#flavor-section')) {
@@ -1391,14 +1683,17 @@
     async function init() {
       const prefs = loadPrefs();
       const savedPrimary = getPrimaryStoreSlug();
-      // Detect state from Cloudflare geoIP, but don't block store loading on it
-      const statePromise = (prefs && prefs.store) || savedPrimary ? Promise.resolve(null) : detectState();
-      const [detectedState] = await Promise.all([
-        statePromise,
+      // Detect location only when we don't already have a persisted store choice.
+      const geoPromise = (prefs && prefs.store) || savedPrimary
+        ? Promise.resolve({ state: null, city: '' })
+        : detectState();
+      const [geo] = await Promise.all([
+        geoPromise,
         loadCatalog(),
         loadFlavorColors(),
       ]);
-      await loadStores(detectedState);
+      detectedGeo = geo || { state: null, city: '' };
+      await loadStores(detectedGeo.state);
 
       if (prefs) {
         if (prefs.favorites) {
@@ -1410,19 +1705,23 @@
       }
 
       let initialSlug = null;
-      if (prefs && prefs.store && allStores.some(s => s.slug === prefs.store)) {
+      if (prefs && prefs.store && findStoreBySlug(prefs.store)) {
         initialSlug = prefs.store;
-      } else if (savedPrimary && allStores.some(s => s.slug === savedPrimary)) {
-        initialSlug = savedPrimary;
-      }
-
-      if (initialSlug) {
-        const store = allStores.find(s => s.slug === initialSlug);
+      } else if (savedPrimary && findStoreBySlug(savedPrimary)) {
+        const store = findStoreBySlug(savedPrimary);
         if (store && store.state && stateFilter.querySelector('option[value="' + store.state + '"]')) {
           stateFilter.value = store.state;
           renderStoreList();
         }
+        initialSlug = savedPrimary;
+      } else {
+        initialSlug = getRecommendedStoreSlug();
+      }
+
+      if (initialSlug) {
         selectStore(initialSlug);
+      } else {
+        renderRadarEntryState();
       }
     }
 

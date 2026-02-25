@@ -26,7 +26,7 @@ var FALLBACK_BASE_COLORS = {
   strawberry: '#E88AAE',
   caramel: '#C58A45',
   cheesecake: '#F3E7CB',
-  butter_pecan: '#C9A46D',
+  butter_pecan: '#F2E7D1',
   peach: '#F1B37C'
 };
 
@@ -34,7 +34,7 @@ var FALLBACK_CONE_COLORS = { waffle: '#D2691E', waffle_dark: '#B8860B' };
 
 var FALLBACK_TOPPING_COLORS = {
   oreo: '#3A2E2A',
-  andes: '#7FAF7F',
+  andes: '#1FAE7A',
   cookie_dough: '#C48A5A',
   brownie: '#4B2E2E',
   peanut_butter_cup: '#7B4A2E',

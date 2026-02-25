@@ -76,7 +76,14 @@ var CustardPlanner = (function () {
 
   var _pageLoadId = makePageLoadId();
   var _telemetryListenerBound = false;
-  var _ALLOWED_EVENT_TYPES = { cta_click: true, signal_view: true, popup_open: true };
+  var _ALLOWED_EVENT_TYPES = {
+    cta_click: true,
+    signal_view: true,
+    popup_open: true,
+    onboarding_view: true,
+    onboarding_click: true,
+    quiz_complete: true,
+  };
   var _ALLOWED_CERTAINTY = { confirmed: true, watch: true, estimated: true, none: true };
 
   function cleanTelemetryText(value, maxLen) {
@@ -746,6 +753,108 @@ var CustardPlanner = (function () {
   }
 
   // ---------------------------------------------------------------------------
+  // Historical context (metrics-pack backed snippets)
+  // ---------------------------------------------------------------------------
+
+  var _flavorContextCache = {};
+  var _storeContextCache = {};
+
+  function formatInt(value) {
+    var n = Number(value || 0);
+    if (!Number.isFinite(n)) return '0';
+    return n.toLocaleString('en-US');
+  }
+
+  function fetchFlavorHistoricalContext(workerBase, flavorName) {
+    var key = normalize(flavorName);
+    if (!key) return Promise.resolve(null);
+    var cacheKey = workerBase + '::flavor::' + key;
+    if (_flavorContextCache[cacheKey]) return _flavorContextCache[cacheKey];
+
+    var p = fetch(workerBase + '/api/v1/metrics/context/flavor/' + encodeURIComponent(key))
+      .then(function (resp) { return resp.ok ? resp.json() : null; })
+      .catch(function () { return null; });
+    _flavorContextCache[cacheKey] = p;
+    return p;
+  }
+
+  function fetchStoreHistoricalContext(workerBase, slug) {
+    var key = cleanTelemetrySlug(slug);
+    if (!key) return Promise.resolve(null);
+    var cacheKey = workerBase + '::store::' + key;
+    if (_storeContextCache[cacheKey]) return _storeContextCache[cacheKey];
+
+    var p = fetch(workerBase + '/api/v1/metrics/context/store/' + encodeURIComponent(key))
+      .then(function (resp) { return resp.ok ? resp.json() : null; })
+      .catch(function () { return null; });
+    _storeContextCache[cacheKey] = p;
+    return p;
+  }
+
+  function historicalContextHTML(opts) {
+    opts = opts || {};
+    var flavorContext = opts.flavorContext;
+    var storeContext = opts.storeContext;
+    var flavor = flavorContext && flavorContext.found && flavorContext.flavor ? flavorContext.flavor : null;
+    var store = storeContext && storeContext.found && storeContext.store ? storeContext.store : null;
+
+    var lines = [];
+    if (flavor) {
+      var rank = Number(flavorContext.rank || 0);
+      var rankedTotal = Number(flavorContext.total_ranked_flavors || 0);
+      var rankLine = 'Frequency rank';
+      if (rank > 0 && rankedTotal > 0) {
+        rankLine += ': #' + rank + ' of ' + rankedTotal;
+      }
+      rankLine += ' (' + formatInt(flavor.appearances) + ' appearances across ' + formatInt(flavor.store_count) + ' stores).';
+      lines.push(rankLine);
+
+      var peakMonth = Number(flavor.peak_month || 0);
+      var peakMonthName = flavor.peak_month_name || '';
+      if (!peakMonthName && peakMonth >= 1 && peakMonth <= 12) {
+        peakMonthName = ['January', 'February', 'March', 'April', 'May', 'June',
+          'July', 'August', 'September', 'October', 'November', 'December'][peakMonth - 1];
+      }
+      if (peakMonthName) {
+        var nowMonth = new Date().getUTCMonth() + 1;
+        var seasonLine = 'Seasonality: peaks in ' + peakMonthName + '.';
+        seasonLine += nowMonth === peakMonth ? ' In-season now.' : ' Off-season now.';
+        lines.push(seasonLine);
+      }
+    }
+
+    if (store && store.top_flavor) {
+      var specialty = 'Store specialty: ' + store.top_flavor + ' leads this store history';
+      specialty += ' (' + formatInt(store.top_flavor_count) + ' of ' + formatInt(store.observations) + ' observations).';
+      lines.push(specialty);
+    }
+
+    if (lines.length === 0) return '';
+
+    var sourceWindow = (flavorContext && flavorContext.source_window) || (storeContext && storeContext.source_window) || null;
+    var sourceLabel = '';
+    if (sourceWindow && sourceWindow.start && sourceWindow.end) {
+      sourceLabel = 'Historical window: ' + sourceWindow.start + ' to ' + sourceWindow.end + '.';
+    }
+
+    var headingFlavor = opts.flavorLabel || (flavor && flavor.title) || '';
+    var heading = headingFlavor
+      ? 'Historical context for ' + headingFlavor
+      : 'Historical context';
+
+    var listHtml = '';
+    for (var i = 0; i < lines.length; i++) {
+      listHtml += '<li>' + escapeHtml(lines[i]) + '</li>';
+    }
+
+    return '<div class="historical-context-card">'
+      + '<div class="historical-context-head">' + escapeHtml(heading) + '</div>'
+      + '<ul class="historical-context-list">' + listHtml + '</ul>'
+      + (sourceLabel ? '<div class="historical-context-source">' + escapeHtml(sourceLabel) + '</div>' : '')
+      + '</div>';
+  }
+
+  // ---------------------------------------------------------------------------
   // Public API
   // ---------------------------------------------------------------------------
 
@@ -793,6 +902,11 @@ var CustardPlanner = (function () {
     // Reliability
     fetchReliability: fetchReliability,
     watchBannerHTML: watchBannerHTML,
+
+    // Historical context
+    fetchFlavorHistoricalContext: fetchFlavorHistoricalContext,
+    fetchStoreHistoricalContext: fetchStoreHistoricalContext,
+    historicalContextHTML: historicalContextHTML,
 
     // Action CTAs
     directionsUrl: directionsUrl,

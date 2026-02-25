@@ -1036,6 +1036,37 @@ details ol {
   line-height: 1.35;
 }
 
+.historical-context-card {
+  border: 1px solid #d5e6f4;
+  border-radius: 8px;
+  background: #fafdff;
+  padding: 0.75rem 0.875rem;
+  margin-top: 0.5rem;
+}
+
+.historical-context-head {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #14385f;
+  margin-bottom: 0.35rem;
+}
+
+.historical-context-list {
+  margin: 0;
+  padding-left: 1rem;
+  display: grid;
+  gap: 0.25rem;
+  color: #355977;
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.historical-context-source {
+  margin-top: 0.45rem;
+  font-size: 0.7rem;
+  color: #6a8199;
+}
+
 .overdue-section, .similar-section {
   margin-top: 1.25rem;
 }

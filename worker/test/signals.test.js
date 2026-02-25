@@ -6,6 +6,7 @@ import {
   MIN_DOW_APPEARANCES,
   MIN_DOW_DISTINCT_DAYS,
   MIN_DOW_PEAK_PCT,
+  MAX_DOW_PEAK_PCT,
   MIN_DOW_PEAK_LIFT_PCT,
   MAX_BASELINE_PEAK_PCT,
   CHI_SQUARED_CRITICAL,
@@ -52,6 +53,7 @@ describe('signal type constants', () => {
     expect(MIN_DOW_APPEARANCES).toBe(12);
     expect(MIN_DOW_DISTINCT_DAYS).toBe(2);
     expect(MIN_DOW_PEAK_PCT).toBe(45);
+    expect(MAX_DOW_PEAK_PCT).toBe(90);
     expect(MIN_DOW_PEAK_LIFT_PCT).toBe(20);
     expect(MAX_BASELINE_PEAK_PCT).toBe(65);
     expect(CHI_SQUARED_CRITICAL).toBe(12.592);
@@ -197,6 +199,17 @@ describe('detectDowPatterns', () => {
         baselineTotal: 95,
       }
     );
+    expect(signals).toHaveLength(0);
+  });
+
+  it('suppresses near-single-day patterns even when one outlier weekday exists', () => {
+    const almostAllMondays = [
+      '2026-01-05', '2026-01-12', '2026-01-19', '2026-01-26',
+      '2026-02-02', '2026-02-09', '2026-02-16', '2026-02-23',
+      '2026-03-02', '2026-03-09', '2026-03-16', '2026-03-23',
+      '2026-03-30', '2026-04-01',
+    ];
+    const signals = detectDowPatterns([{ flavor: 'Almost Monday Only', dates: almostAllMondays }]);
     expect(signals).toHaveLength(0);
   });
 });

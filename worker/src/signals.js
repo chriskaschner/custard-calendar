@@ -45,6 +45,9 @@ export const MIN_DOW_DISTINCT_DAYS = 2;
 /** Minimum % on peak day before we surface a DOW pattern. */
 export const MIN_DOW_PEAK_PCT = 45;
 
+/** Suppress suspiciously single-day flavor patterns (often cadence artifacts). */
+export const MAX_DOW_PEAK_PCT = 90;
+
 /** Required lift vs store baseline peak weekday %. */
 export const MIN_DOW_PEAK_LIFT_PCT = 20;
 
@@ -195,17 +198,24 @@ export function detectDowPatterns(flavorHistory, opts = {}) {
       const expectedPeakPct = Math.round((expectedWeights[peakDow] || 0) * 100);
       const liftPct = peakPct - expectedPeakPct;
       if (peakPct < MIN_DOW_PEAK_PCT) continue;
+      if (peakPct > MAX_DOW_PEAK_PCT) continue;
       if (liftPct < MIN_DOW_PEAK_LIFT_PCT) continue;
+      const peakWeekdayTotal = hasBaseline ? baselineCounts[peakDow] : totalObserved;
+      const peakWeekdayRatePct = peakWeekdayTotal > 0
+        ? Math.round((dowCounts[peakDow] / peakWeekdayTotal) * 100)
+        : null;
       signals.push({
         type: SIGNAL_TYPES.DOW_PATTERN,
         flavor,
         headline: `${flavor} peaks on ${DOW_NAMES[peakDow]}s`,
-        explanation: `${flavor} appears ${peakPct}% of the time on ${DOW_NAMES[peakDow]}s (${dowCounts[peakDow]} of ${totalObserved}), versus a ${expectedPeakPct}% store baseline.`,
+        explanation: `${flavor} appears on ${DOW_NAMES[peakDow]}s in ${dowCounts[peakDow]} of ${peakWeekdayTotal} observed ${DOW_NAMES[peakDow]}s${peakWeekdayRatePct !== null ? ` (${peakWeekdayRatePct}%)` : ''}, and ${peakPct}% of this flavor's appearances land on that day (baseline ${expectedPeakPct}%).`,
         action: 'calendar',
         evidence: {
           peak_dow: peakDow,
           peak_name: DOW_NAMES[peakDow],
           peak_pct: peakPct,
+          peak_weekday_total: peakWeekdayTotal,
+          peak_weekday_rate_pct: peakWeekdayRatePct,
           expected_peak_pct: expectedPeakPct,
           lift_pct: liftPct,
           flavor_active_days: flavorActiveDays,

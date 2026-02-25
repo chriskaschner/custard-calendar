@@ -14,7 +14,7 @@ export const BASE_COLORS = {
   strawberry: '#FF6B9D',
   cheesecake: '#FFF5E1',
   caramel: '#C68E17',
-  butter_pecan: '#D4A574',
+  butter_pecan: '#F2E7D1',
   peach: '#FFE5B4',
 };
 
@@ -28,7 +28,7 @@ export const RIBBON_COLORS = {
 
 export const TOPPING_COLORS = {
   oreo: '#1A1A1A',
-  andes: '#00897B',
+  andes: '#1FAE7A',
   dove: '#3B1F0B',
   pecan: '#8B6914',
   cashew: '#D4C4A8',
@@ -62,7 +62,7 @@ export const FLAVOR_PROFILES = {
   'double strawberry': { base: 'strawberry', ribbon: null, toppings: ['strawberry_bits'], density: 'double' },
   'turtle cheesecake': { base: 'cheesecake', ribbon: 'caramel', toppings: ['dove', 'pecan', 'cheesecake_bits'], density: 'explosion' },
   'caramel turtle': { base: 'caramel', ribbon: null, toppings: ['pecan', 'dove'], density: 'standard' },
-  'andes mint avalanche': { base: 'mint', ribbon: null, toppings: ['andes', 'dove'], density: 'standard' },
+  'andes mint avalanche': { base: 'mint', ribbon: 'chocolate_syrup', toppings: ['andes', 'dove'], density: 'standard' },
   'oreo cookie cheesecake': { base: 'cheesecake', ribbon: null, toppings: ['oreo', 'cheesecake_bits'], density: 'standard' },
   "devil's food cake": { base: 'dark_chocolate', ribbon: null, toppings: ['cake', 'dove'], density: 'standard' },
   'caramel cashew': { base: 'vanilla', ribbon: 'caramel', toppings: ['cashew'], density: 'standard' },
@@ -70,7 +70,7 @@ export const FLAVOR_PROFILES = {
   'caramel chocolate pecan': { base: 'chocolate', ribbon: 'caramel', toppings: ['pecan', 'dove'], density: 'standard' },
   'dark chocolate decadence': { base: 'dark_chocolate', ribbon: null, toppings: [], density: 'pure' },
   'caramel fudge cookie dough': { base: 'vanilla', ribbon: 'fudge', toppings: ['cookie_dough'], density: 'standard' },
-  'mint cookie': { base: 'mint', ribbon: null, toppings: ['oreo'], density: 'standard' },
+  'mint cookie': { base: 'mint', ribbon: null, toppings: ['oreo'], density: 'double' },
   'caramel pecan': { base: 'vanilla', ribbon: 'caramel', toppings: ['pecan'], density: 'standard' },
   "really reese's": { base: 'chocolate', ribbon: 'peanut_butter', toppings: ['reeses'], density: 'standard' },
   'raspberry cheesecake': { base: 'cheesecake', ribbon: null, toppings: ['raspberry', 'cheesecake_bits'], density: 'standard' },
@@ -84,6 +84,7 @@ export const FLAVOR_PROFILES = {
   'salted double caramel pecan': { base: 'caramel', ribbon: 'caramel', toppings: ['pecan', 'salt'], density: 'double' },
   'crazy for cookie dough': { base: 'vanilla', ribbon: 'fudge', toppings: ['cookie_dough'], density: 'standard' },
   'chocolate heath crunch': { base: 'chocolate', ribbon: null, toppings: ['heath'], density: 'standard' },
+  'double butter pecan': { base: 'vanilla', ribbon: null, toppings: ['pecan'], density: 'double' },
 };
 
 export const CONE_TIP_COLOR = '#8B5A2B';
@@ -105,6 +106,7 @@ export function getFlavorProfile(name) {
   if (FLAVOR_PROFILES[normalized]) return FLAVOR_PROFILES[normalized];
 
   // Keyword fallback
+  if (key.includes('double butter pecan')) return { base: 'vanilla', ribbon: null, toppings: ['pecan'], density: 'double' };
   if (key.includes('mint')) return { base: 'mint', ribbon: null, toppings: [], density: 'standard' };
   if (key.includes('dark choc')) return { base: 'dark_chocolate', ribbon: null, toppings: [], density: 'standard' };
   if (key.includes('chocolate') || key.includes('cocoa')) return { base: 'chocolate', ribbon: null, toppings: [], density: 'standard' };
