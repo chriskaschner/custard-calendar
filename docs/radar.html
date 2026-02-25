@@ -408,6 +408,8 @@
     var BRAND_DISPLAY = CustardPlanner.BRAND_DISPLAY;
     var brandFromSlug = CustardPlanner.brandFromSlug;
     var SIMILARITY_GROUPS = CustardPlanner.SIMILARITY_GROUPS;
+    var getPrimaryStoreSlug = CustardPlanner.getPrimaryStoreSlug || function () { return null; };
+    var setPrimaryStoreSlug = CustardPlanner.setPrimaryStoreSlug || function () { return false; };
 
     let allStores = [];
     let flavorCatalog = [];
@@ -625,7 +627,11 @@
         storeSelected.textContent = prefix + store.city + ', ' + store.state + ' \u2014 ' + store.address;
         storeSelected.hidden = false;
       }
+      if (storeSelect.querySelector('option[value="' + slug + '"]')) {
+        storeSelect.value = slug;
+      }
       flavorSection.hidden = false;
+      setPrimaryStoreSlug(slug);
       savePrefs();
       fetchAndRenderTimeline();
     }
@@ -1384,8 +1390,9 @@
     // --- Init ---
     async function init() {
       const prefs = loadPrefs();
+      const savedPrimary = getPrimaryStoreSlug();
       // Detect state from Cloudflare geoIP, but don't block store loading on it
-      const statePromise = prefs && prefs.store ? Promise.resolve(null) : detectState();
+      const statePromise = (prefs && prefs.store) || savedPrimary ? Promise.resolve(null) : detectState();
       const [detectedState] = await Promise.all([
         statePromise,
         loadCatalog(),
@@ -1400,9 +1407,22 @@
           }
           renderSelectedFlavors();
         }
-        if (prefs.store) {
-          selectStore(prefs.store);
+      }
+
+      let initialSlug = null;
+      if (prefs && prefs.store && allStores.some(s => s.slug === prefs.store)) {
+        initialSlug = prefs.store;
+      } else if (savedPrimary && allStores.some(s => s.slug === savedPrimary)) {
+        initialSlug = savedPrimary;
+      }
+
+      if (initialSlug) {
+        const store = allStores.find(s => s.slug === initialSlug);
+        if (store && store.state && stateFilter.querySelector('option[value="' + store.state + '"]')) {
+          stateFilter.value = store.state;
+          renderStoreList();
         }
+        selectStore(initialSlug);
       }
     }
 

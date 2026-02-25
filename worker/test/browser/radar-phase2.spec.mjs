@@ -69,6 +69,13 @@ function buildForecast(slug, strongTurtle) {
   };
 }
 
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.removeItem("custard-primary");
+    localStorage.removeItem("custard-radar");
+  });
+});
+
 test("radar phase 2 shows next best store, badges, and accuracy dashboard", async ({ page }) => {
   let primarySlug = null;
 
@@ -232,8 +239,8 @@ test("candidate with confirmed schedule shows Confirmed badge, not probability",
             name: "Nearby Custard",
             address: "200 Elm St",
             flavors: [
-              { date: isoDateOffset(0), title: "Turtle", description: "Rich" },
-              { date: isoDateOffset(1), title: "Chocolate Eclair", description: "Creamy" },
+              { date: isoDateOffset(1), title: "Turtle", description: "Rich" },
+              { date: isoDateOffset(2), title: "Chocolate Eclair", description: "Creamy" },
             ],
           }),
         });
@@ -295,9 +302,14 @@ test("candidate with confirmed schedule shows Confirmed badge, not probability",
   await page.goto("/radar.html");
   await page.waitForSelector("#store-select option:not([disabled])[value]");
 
-  const firstValue = await page.$eval("#store-select option:not([disabled])[value]", (el) => el.value);
-  const selected = await page.selectOption("#store-select", firstValue);
-  primarySlug = selected[0];
+  if (await page.locator('#store-select option[value="oconomowoc"]').count()) {
+    const selected = await page.selectOption("#store-select", "oconomowoc");
+    primarySlug = selected[0];
+  } else {
+    const firstValue = await page.$eval("#store-select option:not([disabled])[value]", (el) => el.value);
+    const selected = await page.selectOption("#store-select", firstValue);
+    primarySlug = selected[0];
+  }
 
   await page.waitForSelector("#timeline-section:not([hidden])");
   await page.fill("#flavor-search", "turtle");
@@ -310,6 +322,10 @@ test("candidate with confirmed schedule shows Confirmed badge, not probability",
   } else {
     await page.click("#flavor-results .flavor-result-item");
   }
+
+  await expect(page.locator("#next-best-section")).not.toHaveAttribute("hidden", "");
+  await page.selectOption("#drive-radius", "50");
+  await page.click("#refresh-next-best");
 
   // Wait for next-best section to finish scanning (status text changes from "Scanning...")
   await page.waitForFunction(

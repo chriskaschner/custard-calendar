@@ -14,6 +14,7 @@ var CustardPlanner = (function () {
   // ---------------------------------------------------------------------------
 
   var WORKER_BASE = 'https://custard.chriskaschner.com';
+  var PRIMARY_STORE_KEY = 'custard-primary';
 
   // ---------------------------------------------------------------------------
   // Utilities
@@ -22,6 +23,31 @@ var CustardPlanner = (function () {
   function escapeHtml(str) {
     if (!str) return '';
     return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  function getPrimaryStoreSlug() {
+    try {
+      if (typeof localStorage === 'undefined') return null;
+      var slug = localStorage.getItem(PRIMARY_STORE_KEY);
+      return slug && String(slug).trim() ? String(slug).trim() : null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function setPrimaryStoreSlug(slug) {
+    try {
+      if (typeof localStorage === 'undefined') return false;
+      var clean = slug && String(slug).trim();
+      if (!clean) {
+        localStorage.removeItem(PRIMARY_STORE_KEY);
+      } else {
+        localStorage.setItem(PRIMARY_STORE_KEY, clean);
+      }
+      return true;
+    } catch (_) {
+      return false;
+    }
   }
 
   function inferPageKey() {
@@ -750,6 +776,8 @@ var CustardPlanner = (function () {
 
     // Utilities
     escapeHtml: escapeHtml,
+    getPrimaryStoreSlug: getPrimaryStoreSlug,
+    setPrimaryStoreSlug: setPrimaryStoreSlug,
 
     // Certainty
     CERTAINTY: CERTAINTY,

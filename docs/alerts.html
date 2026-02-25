@@ -248,6 +248,8 @@
   <script src="planner-shared.js"></script>
   <script>
     const WORKER_BASE = CustardPlanner.WORKER_BASE;
+    const getPrimaryStoreSlug = CustardPlanner.getPrimaryStoreSlug || function () { return null; };
+    const setPrimaryStoreSlug = CustardPlanner.setPrimaryStoreSlug || function () { return false; };
 
     const BRAND_DISPLAY = {
       kopps: "Kopp's",
@@ -284,6 +286,7 @@
         allStores = data.stores || [];
         populateStateFilter();
         renderStoreList();
+        applySavedPrimaryStore();
       } catch (err) {
         storeSelect.innerHTML = '<option disabled>Failed to load stores</option>';
       }
@@ -341,6 +344,18 @@
       }
     }
 
+    function applySavedPrimaryStore() {
+      const saved = getPrimaryStoreSlug();
+      if (!saved) return;
+      const store = allStores.find(s => s.slug === saved);
+      if (!store) return;
+      if (store.state && stateFilter.querySelector(`option[value="${store.state}"]`)) {
+        stateFilter.value = store.state;
+        renderStoreList();
+      }
+      selectStore(saved);
+    }
+
     function selectStore(slug) {
       selectedSlug = slug;
       const store = allStores.find(s => s.slug === slug);
@@ -350,7 +365,11 @@
         storeSelected.textContent = prefix + store.city + ', ' + store.state + ' \u2014 ' + store.address;
         storeSelected.hidden = false;
       }
+      if (storeSelect.querySelector('option[value="' + slug + '"]')) {
+        storeSelect.value = slug;
+      }
       flavorSection.hidden = false;
+      setPrimaryStoreSlug(slug);
       updateEmailSection();
     }
 

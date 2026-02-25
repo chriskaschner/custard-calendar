@@ -230,6 +230,8 @@
   <script>
     const WORKER_BASE = CustardPlanner.WORKER_BASE;
     const SIRI_API_BASE = CustardPlanner.WORKER_BASE;
+    const getPrimaryStoreSlug = CustardPlanner.getPrimaryStoreSlug || function () { return null; };
+    const setPrimaryStoreSlug = CustardPlanner.setPrimaryStoreSlug || function () { return false; };
 
     const BRAND_DISPLAY = {
       kopps: "Kopp's",
@@ -250,6 +252,7 @@
         allStores = data.stores || data;
         populateStates();
         filterStores();
+        applySavedPrimaryStore();
       } catch (e) {
         document.getElementById('store-select').innerHTML = '<option disabled>Failed to load stores</option>';
       }
@@ -279,18 +282,41 @@
 
       const sel = document.getElementById('store-select');
       sel.innerHTML = '';
-      filtered.slice(0, 50).forEach(s => {
+      const persistedSlug = selectedSlug || getPrimaryStoreSlug();
+      const persistedStore = persistedSlug ? filtered.find(s => s.slug === persistedSlug) : null;
+      const visibleStores = filtered.slice(0, 50);
+      if (persistedStore && !visibleStores.some(s => s.slug === persistedStore.slug)) {
+        visibleStores.unshift(persistedStore);
+        if (visibleStores.length > 50) visibleStores.pop();
+      }
+      visibleStores.forEach(s => {
         const opt = document.createElement('option');
         opt.value = s.slug;
         const brand = s.brand ? (BRAND_DISPLAY[s.brand] || s.brand) : '';
         const prefix = brand ? brand + ' \u2014 ' : '';
         opt.textContent = prefix + s.city + ', ' + s.state + ' \u2014 ' + (s.address || '');
+        if (s.slug === selectedSlug) opt.selected = true;
         sel.appendChild(opt);
       });
 
       if (filtered.length === 0) {
         sel.innerHTML = '<option disabled>No stores found</option>';
       }
+    }
+
+    function applySavedPrimaryStore() {
+      const saved = getPrimaryStoreSlug();
+      if (!saved) return;
+      const store = allStores.find(s => s.slug === saved);
+      if (!store) return;
+      const stateSel = document.getElementById('state-filter');
+      if (store.state && stateSel.querySelector(`option[value="${store.state}"]`)) {
+        stateSel.value = store.state;
+        filterStores();
+      }
+      selectStore(saved);
+      const storeSelect = document.getElementById('store-select');
+      if (storeSelect) storeSelect.value = saved;
     }
 
     function selectStore(slug) {
@@ -306,10 +332,15 @@
 
       document.getElementById('try-section').hidden = false;
       document.getElementById('setup-section').hidden = false;
+      const storeSelect = document.getElementById('store-select');
+      if (storeSelect && storeSelect.querySelector(`option[value="${slug}"]`)) {
+        storeSelect.value = slug;
+      }
 
       const apiUrl = `${SIRI_API_BASE}/api/v1/today?slug=${slug}`;
       document.getElementById('api-url').value = apiUrl;
 
+      setPrimaryStoreSlug(slug);
       fetchToday(`${WORKER_BASE}/api/v1/today?slug=${slug}`);
     }
 
