@@ -6,6 +6,25 @@ const DEFAULT_DAYS = 365;
 const MAX_DAYS = 730;
 const DEFAULT_LIMIT = 5;
 const MAX_LIMIT = 10;
+
+const STATE_NAMES = {
+  AL:'Alabama', AK:'Alaska', AZ:'Arizona', AR:'Arkansas', CA:'California',
+  CO:'Colorado', CT:'Connecticut', DE:'Delaware', FL:'Florida', GA:'Georgia',
+  HI:'Hawaii', ID:'Idaho', IL:'Illinois', IN:'Indiana', IA:'Iowa',
+  KS:'Kansas', KY:'Kentucky', LA:'Louisiana', ME:'Maine', MD:'Maryland',
+  MA:'Massachusetts', MI:'Michigan', MN:'Minnesota', MS:'Mississippi', MO:'Missouri',
+  MT:'Montana', NE:'Nebraska', NV:'Nevada', NH:'New Hampshire', NJ:'New Jersey',
+  NM:'New Mexico', NY:'New York', NC:'North Carolina', ND:'North Dakota', OH:'Ohio',
+  OK:'Oklahoma', OR:'Oregon', PA:'Pennsylvania', RI:'Rhode Island', SC:'South Carolina',
+  SD:'South Dakota', TN:'Tennessee', TX:'Texas', UT:'Utah', VT:'Vermont',
+  VA:'Virginia', WA:'Washington', WV:'West Virginia', WI:'Wisconsin', WY:'Wyoming',
+  DC:'Washington D.C.',
+};
+
+function stateLabel(code) {
+  return STATE_NAMES[String(code || '').toUpperCase()] || String(code || code);
+}
+
 const MONTH_NAMES = [
   '',
   'January',
@@ -180,7 +199,7 @@ function fallbackQuestions() {
   ];
 }
 
-function buildTriviaQuestions(aggregates, days, limit) {
+function buildTriviaQuestions(aggregates, days, limit, userState = null) {
   const { stateTotals, stateFlavorCounts, storeTotals, storeFlavorCounts, flavorTotals, storeMetaBySlug } = aggregates;
   const questions = [];
 
@@ -188,10 +207,18 @@ function buildTriviaQuestions(aggregates, days, limit) {
   const topFlavors = toTopEntries(flavorTotals, 20);
   const topStores = toTopEntries(storeTotals, 20);
 
-  // Q1: Most common flavor in top state.
-  if (topStates.length > 0 && topFlavors.length > 0) {
-    const topState = topStates[0];
-    const stateFlavorMap = stateFlavorCounts.get(topState.key) || new Map();
+  // Q1: Most common flavor in the user's state (or top-volume state if state unknown).
+  // Never ask a user about another state's flavor rankings.
+  const normalizedUserState = userState ? String(userState).toUpperCase().trim() : null;
+  const stateTarget = (() => {
+    if (normalizedUserState && stateFlavorCounts.has(normalizedUserState)) {
+      return stateTotals.get(normalizedUserState) || { key: normalizedUserState, label: normalizedUserState, count: 0 };
+    }
+    return topStates[0] || null;
+  })();
+
+  if (stateTarget && topFlavors.length > 0) {
+    const stateFlavorMap = stateFlavorCounts.get(stateTarget.key) || new Map();
     const stateFlavorTop = toTopEntries(stateFlavorMap, 6);
     if (stateFlavorTop.length > 0) {
       const correct = stateFlavorTop[0];
@@ -202,10 +229,11 @@ function buildTriviaQuestions(aggregates, days, limit) {
         if (optionPool.length >= 4) break;
       }
       const rawOptions = optionPool.slice(0, 4).map(flavorOption);
-      const fixed = withCorrectOptionId(rawOptions, `flavor-${correct.key}`, `state-top-${topState.key}`);
+      const fixed = withCorrectOptionId(rawOptions, `flavor-${correct.key}`, `state-top-${stateTarget.key}`);
+      const stateName = stateLabel(stateTarget.key);
       questions.push({
-        id: `trivia-state-top-${topState.key.toLowerCase()}`,
-        prompt: `In ${topState.label}, which flavor appeared most often over the last ${days} days?`,
+        id: `trivia-state-top-${stateTarget.key.toLowerCase()}`,
+        prompt: `In ${stateName}, which flavor appeared most often over the last ${days} days?`,
         options: fixed.options,
         correct_option_id: fixed.correct_option_id,
       });
@@ -275,7 +303,9 @@ function buildTriviaQuestions(aggregates, days, limit) {
   }
 
   // Q5: Highest total observation state.
-  if (topStates.length >= 4) {
+  // Skip when userState is known — asking someone in WI which state has the most
+  // observations is trivial (WI dominates our data set) and feels like a non-question.
+  if (!normalizedUserState && topStates.length >= 4) {
     const stateOptions = topStates.slice(0, 4);
     const correct = stateOptions[0];
     const rawOptions = stateOptions.map((entry) => stateOption(entry));
@@ -518,7 +548,7 @@ function buildMetricsSeedQuestions(seed, limit) {
   return questions.slice(0, limit);
 }
 
-async function handleTrivia(url, env, corsHeaders) {
+async function handleTrivia(url, env, corsHeaders, userState = null) {
   const days = parseBoundedInt(url, 'days', DEFAULT_DAYS, 30, MAX_DAYS);
   const limit = parseBoundedInt(url, 'limit', DEFAULT_LIMIT, 1, MAX_LIMIT);
   const sinceExpr = `-${days} day`;
@@ -596,7 +626,7 @@ async function handleTrivia(url, env, corsHeaders) {
     storeFlavorCounts,
     flavorTotals,
     storeMetaBySlug,
-  }, days, limit);
+  }, days, limit, userState);
   const metricsQuestions = buildMetricsSeedQuestions(TRIVIA_METRICS_SEED, limit);
 
   const seenQuestionIds = new Set();
@@ -656,5 +686,10 @@ export async function handleTriviaRoute(canonical, url, request, env, corsHeader
   if (request.method !== 'GET') {
     return jsonResponse({ error: 'Method not allowed. Use GET.' }, corsHeaders, 405);
   }
-  return handleTrivia(url, env, corsHeaders);
+  // Read user's state from Cloudflare geo (request.cf.region = ISO 3166-2 state code for US).
+  // env._userStateOverride allows tests to inject a state without mocking CF properties.
+  const userState = env?._userStateOverride
+    || String(request?.cf?.region || '').toUpperCase().trim()
+    || null;
+  return handleTrivia(url, env, corsHeaders, userState);
 }

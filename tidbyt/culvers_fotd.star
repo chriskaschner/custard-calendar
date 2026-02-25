@@ -25,11 +25,14 @@ BASE_COLORS = {
     "chocolate": "#6F4E37",
     "dark_chocolate": "#3B1F0B",
     "mint": "#2ECC71",
+    "mint_andes": "#1A8A4A",
     "strawberry": "#FF6B9D",
     "cheesecake": "#FFF5E1",
     "caramel": "#C68E17",
     "butter_pecan": "#D4A574",
     "peach": "#FFE5B4",
+    "lemon": "#FFF176",
+    "blackberry": "#6B3FA0",
 }
 
 # Ribbon colors (diagonal swirl through scoop)
@@ -60,6 +63,9 @@ TOPPING_COLORS = {
     "cheesecake_bits": "#FFF8DC",
     "m_and_m": "#FF4444",
     "reeses": "#D4A017",
+    "brownie": "#2D1700",
+    "blueberry": "#3B1F6B",
+    "pie_crust": "#C4966A",
 }
 
 # Flavor profiles: lowercase name -> {base, ribbon, toppings, density}
@@ -107,7 +113,7 @@ FLAVOR_PROFILES = {
         "density": "standard",
     },
     "andes mint avalanche": {
-        "base": "mint",
+        "base": "mint_andes",
         "ribbon": None,
         "toppings": ["andes", "dove"],
         "density": "standard",
@@ -238,6 +244,73 @@ FLAVOR_PROFILES = {
         "toppings": ["heath"],
         "density": "standard",
     },
+    "double butter pecan": {
+        "base": "vanilla",
+        "ribbon": None,
+        "toppings": ["pecan"],
+        "density": "double",
+    },
+    # New profiles added 2026-02-25 to match flavor-colors.js
+    "blackberry cobbler": {
+        "base": "blackberry",
+        "ribbon": None,
+        "toppings": ["pie_crust"],
+        "density": "standard",
+    },
+    "brownie thunder": {
+        "base": "chocolate",
+        "ribbon": "marshmallow",
+        "toppings": ["brownie"],
+        "density": "standard",
+    },
+    "chocolate oreo volcano": {
+        "base": "chocolate",
+        "ribbon": "marshmallow",
+        "toppings": ["oreo", "dove"],
+        "density": "explosion",
+    },
+    "lemon berry layer cake": {
+        "base": "lemon",
+        "ribbon": None,
+        "toppings": ["blueberry", "cake"],
+        "density": "standard",
+    },
+    "lemon dash cookie": {
+        "base": "lemon",
+        "ribbon": None,
+        "toppings": ["oreo"],
+        "density": "standard",
+    },
+    "oreo cheesecake": {
+        "base": "cheesecake",
+        "ribbon": None,
+        "toppings": ["oreo", "cheesecake_bits"],
+        "density": "standard",
+    },
+    "peanut butter cup": {
+        "base": "chocolate",
+        "ribbon": "peanut_butter",
+        "toppings": ["reeses"],
+        "density": "standard",
+    },
+    "salted caramel pecan pie": {
+        "base": "caramel",
+        "ribbon": None,
+        "toppings": ["pecan", "salt", "pie_crust"],
+        "density": "explosion",
+    },
+    "strawberry cheesecake": {
+        "base": "cheesecake",
+        "ribbon": None,
+        "toppings": ["strawberry_bits", "cheesecake_bits"],
+        "density": "standard",
+    },
+    "vanilla": {
+        "base": "vanilla",
+        "ribbon": None,
+        "toppings": [],
+        "density": "pure",
+    },
 }
 
 def get_flavor_profile(flavor_name):
@@ -268,6 +341,10 @@ def get_flavor_profile(flavor_name):
         return {"base": "peach", "ribbon": None, "toppings": [], "density": "standard"}
     elif "butter pecan" in key:
         return {"base": "butter_pecan", "ribbon": None, "toppings": ["pecan"], "density": "standard"}
+    elif "lemon" in key:
+        return {"base": "lemon", "ribbon": None, "toppings": [], "density": "standard"}
+    elif "blackberry" in key or "berry" in key:
+        return {"base": "blackberry", "ribbon": None, "toppings": [], "density": "standard"}
     elif "vanilla" in key:
         return {"base": "vanilla", "ribbon": None, "toppings": [], "density": "standard"}
     return {"base": "vanilla", "ribbon": None, "toppings": [], "density": "standard"}

@@ -97,6 +97,58 @@ describe('handleTriviaRoute', () => {
     // These should appear when limit is large enough and seed data is present
     expect(rankingQ || fillInQ).toBeTruthy();
   });
+
+  it('geo-aware: Q1 uses user state instead of top state when user state is known', async () => {
+    const rows = [
+      { slug: 'mt-horeb', normalized_flavor: 'vanilla', flavor: 'Vanilla', count: 50 },
+      { slug: 'mt-horeb', normalized_flavor: 'chocolate', flavor: 'Chocolate', count: 30 },
+      { slug: 'chicago-il-main-st', normalized_flavor: 'vanilla', flavor: 'Vanilla', count: 80 },
+      { slug: 'chicago-il-main-st', normalized_flavor: 'mint', flavor: 'Mint', count: 70 },
+    ];
+    // IL has higher volume (150 vs 80) but user is in WI — Q1 should be about WI.
+    // Use _userStateOverride since request.cf is a Cloudflare-only property not available in Vitest.
+    const env = {
+      DB: createMockD1(rows),
+      _storeIndexOverride: [
+        { slug: 'mt-horeb', name: 'Mt. Horeb', state: 'WI' },
+        { slug: 'chicago-il-main-st', name: 'Chicago Main', state: 'IL' },
+      ],
+      _userStateOverride: 'WI',
+    };
+    const req = makeRequest('/api/v1/trivia?days=120&limit=5');
+    const url = new URL(req.url);
+    const res = await handleTriviaRoute('/api/trivia', url, req, env, CORS);
+    const body = await res.json();
+    const stateQ = body.questions.find((q) => q.id && q.id.startsWith('trivia-state-top-'));
+    expect(stateQ).toBeDefined();
+    expect(stateQ.id).toBe('trivia-state-top-wi');
+    expect(stateQ.prompt).toMatch(/Wisconsin/i);
+  });
+
+  it('geo-aware: state volume ranking question omitted when user state is known', async () => {
+    const rows = [
+      { slug: 'mt-horeb', normalized_flavor: 'vanilla', flavor: 'Vanilla', count: 10 },
+      { slug: 'chicago-il-main-st', normalized_flavor: 'vanilla', flavor: 'Vanilla', count: 8 },
+      { slug: 'detroit-mi', normalized_flavor: 'chocolate', flavor: 'Chocolate', count: 7 },
+      { slug: 'minneapolis-mn', normalized_flavor: 'mint', flavor: 'Mint', count: 6 },
+    ];
+    const env = {
+      DB: createMockD1(rows),
+      _storeIndexOverride: [
+        { slug: 'mt-horeb', name: 'Mt. Horeb', state: 'WI' },
+        { slug: 'chicago-il-main-st', name: 'Chicago Main', state: 'IL' },
+        { slug: 'detroit-mi', name: 'Detroit', state: 'MI' },
+        { slug: 'minneapolis-mn', name: 'Minneapolis', state: 'MN' },
+      ],
+      _userStateOverride: 'WI',
+    };
+    const req = makeRequest('/api/v1/trivia?days=120&limit=10');
+    const url = new URL(req.url);
+    const res = await handleTriviaRoute('/api/trivia', url, req, env, CORS);
+    const body = await res.json();
+    const stateVolumeQ = body.questions.find((q) => q.id === 'trivia-top-state-volume');
+    expect(stateVolumeQ).toBeUndefined();
+  });
 });
 
 const MINIMAL_SEED = {
