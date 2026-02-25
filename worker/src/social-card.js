@@ -11,6 +11,113 @@
 
 import { normalize } from './flavor-matcher.js';
 import { getFlavorProfile, renderConeHDSVG, BASE_COLORS, CONE_COLORS, TOPPING_COLORS, RIBBON_COLORS } from './flavor-colors.js';
+import { TRIVIA_METRICS_SEED } from './trivia-metrics-seed.js';
+
+const MONTH_NAMES_TRIVIA = [
+  '', 'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
+];
+
+const TRIVIA_CARD_DEFS = {
+  'top-flavor': (seed) => {
+    const top = seed?.top_flavors?.[0];
+    if (!top || typeof top.title !== 'string') return null;
+    return {
+      headline: `${top.title} is the most-served flavor`,
+      fact: `Appeared across ${top.store_count || 'hundreds of'} tracked stores in our database.`,
+      flavorName: top.title,
+    };
+  },
+  'rarest-flavor': (seed) => {
+    const spotlights = Array.isArray(seed?.seasonal_spotlights) ? seed.seasonal_spotlights : [];
+    const total = Number(seed?.dataset_summary?.rows) || 0;
+    if (spotlights.length === 0) return null;
+    const rarest = [...spotlights]
+      .filter((s) => typeof s?.title === 'string')
+      .sort((a, b) => Number(a.appearances || 0) - Number(b.appearances || 0))[0];
+    if (!rarest) return null;
+    const pct = total > 0 ? ((Number(rarest.appearances || 0) / total) * 100).toFixed(2) : null;
+    return {
+      headline: `${rarest.title} is one of our rarest tracked flavors`,
+      fact: pct ? `Appears less than ${pct}% of the time in our full database.` : 'One of the rarest flavors in our historical data.',
+      flavorName: rarest.title,
+    };
+  },
+  'hnbc-season': (seed) => {
+    const hnbc = seed?.hnbc;
+    if (!hnbc?.by_month || typeof hnbc.by_month !== 'object') return null;
+    const entries = Object.entries(hnbc.by_month)
+      .map(([m, c]) => ({ month: Number(m), count: Number(c) }))
+      .filter((e) => Number.isFinite(e.month) && e.month >= 1 && e.month <= 12)
+      .sort((a, b) => b.count - a.count);
+    if (entries.length === 0) return null;
+    const monthName = MONTH_NAMES_TRIVIA[entries[0].month] || 'Unknown';
+    return {
+      headline: 'Hot-N-Buffalo Chicken Custard has a season',
+      fact: `Appears most often in ${monthName} in our historical database.`,
+      flavorName: null,
+    };
+  },
+  'top-store': (seed) => {
+    const top = seed?.top_stores?.[0];
+    if (!top || typeof top.store_slug !== 'string') return null;
+    const storeName = top.city && top.state ? `${top.city}, ${top.state}` : top.store_slug;
+    return {
+      headline: `${storeName} leads in tracked flavor days`,
+      fact: 'More historical flavor observations than any other store in our database.',
+      flavorName: top.top_flavor || null,
+    };
+  },
+};
+
+function renderTriviaCard({ headline, fact, flavorName }) {
+  const esc = (s) => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  const coneGroup = flavorName ? renderConeGroup(flavorName, 1050, 160, 6) : '';
+  const maxLen = 52;
+  const displayHeadline = headline.length > maxLen ? headline.slice(0, maxLen - 1) + '\u2026' : headline;
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#003A6B"/>
+      <stop offset="100%" stop-color="#005696"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect y="0" width="1200" height="8" fill="#9EC5E8"/>
+  ${coneGroup}
+  <text x="80" y="130" font-size="32" fill="#ffffff" font-family="system-ui, -apple-system, sans-serif">Did you know?</text>
+  <text x="80" y="220" font-size="52" font-weight="bold" fill="#ffffff" font-family="system-ui, -apple-system, sans-serif">${esc(displayHeadline)}</text>
+  <text x="80" y="310" font-size="28" fill="#9EC5E8" font-family="system-ui, -apple-system, sans-serif">${esc(fact)}</text>
+  <text x="80" y="590" font-size="22" fill="#5E8FC8" font-family="system-ui, -apple-system, sans-serif">custard.chriskaschner.com</text>
+</svg>`;
+}
+
+function handleTriviaCard(slug, corsHeaders) {
+  const def = TRIVIA_CARD_DEFS[slug];
+  if (!def) {
+    return new Response(JSON.stringify({ error: 'Trivia card not found.' }), {
+      status: 404,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+  const cardData = def(TRIVIA_METRICS_SEED);
+  if (!cardData) {
+    return new Response(JSON.stringify({ error: 'Seed data unavailable for this card.' }), {
+      status: 404,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+  const svg = renderTriviaCard(cardData);
+  return new Response(svg, {
+    status: 200,
+    headers: {
+      ...corsHeaders,
+      'Content-Type': 'image/svg+xml',
+      'Cache-Control': 'public, max-age=86400',
+    },
+  });
+}
 
 /**
  * Route handler for social card requests.
@@ -20,6 +127,10 @@ import { getFlavorProfile, renderConeHDSVG, BASE_COLORS, CONE_COLORS, TOPPING_CO
  * @returns {Promise<Response|null>} Response if matched, null otherwise
  */
 export async function handleSocialCard(path, env, corsHeaders) {
+  // Match /og/trivia/{slug}.svg — must be checked before the store/date pattern
+  const triviaMatch = path.match(/^\/og\/trivia\/([\w-]+)\.svg$/);
+  if (triviaMatch) return handleTriviaCard(triviaMatch[1], corsHeaders);
+
   // Match /og/{slug}/{date}.svg
   const match = path.match(/^\/og\/([a-z0-9][a-z0-9_-]+)\/(\d{4}-\d{2}-\d{2})\.svg$/);
   if (!match) return null;

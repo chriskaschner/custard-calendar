@@ -291,6 +291,72 @@ function buildTriviaQuestions(aggregates, days, limit) {
   return questions.slice(0, limit);
 }
 
+function buildRankingQuestion(seed) {
+  if (!seed || typeof seed !== 'object') return null;
+  const topFlavors = Array.isArray(seed.top_flavors)
+    ? seed.top_flavors.filter((row) => typeof row?.title === 'string' && row.title.trim())
+    : [];
+  const seasonalSpotlights = Array.isArray(seed.seasonal_spotlights)
+    ? seed.seasonal_spotlights.filter((row) => typeof row?.title === 'string' && row.title.trim())
+    : [];
+  if (topFlavors.length < 2) return null;
+
+  const commonFlavor = topFlavors[0];
+  const midIdx = Math.min(Math.floor(topFlavors.length / 2), topFlavors.length - 1);
+  const occasionalFlavor = topFlavors[midIdx];
+
+  // Prefer a seasonal spotlight (low appearances) as the rarest tier
+  const usedTitles = new Set([commonFlavor.title, occasionalFlavor.title]);
+  let rareFlavor = null;
+  if (seasonalSpotlights.length > 0) {
+    const sorted = [...seasonalSpotlights].sort((a, b) => Number(a.appearances || 0) - Number(b.appearances || 0));
+    for (const sf of sorted) {
+      if (!usedTitles.has(sf.title)) { rareFlavor = sf; break; }
+    }
+  }
+  if (!rareFlavor && topFlavors.length > 2) {
+    for (let i = topFlavors.length - 1; i >= 0; i--) {
+      if (!usedTitles.has(topFlavors[i].title)) { rareFlavor = topFlavors[i]; break; }
+    }
+  }
+  if (!rareFlavor) return null;
+
+  const rareId = `ranking-flavor-${sanitizeKey(rareFlavor.title, 'rare')}`;
+  const occasionalId = `ranking-flavor-${sanitizeKey(occasionalFlavor.title, 'occasional')}`;
+  const commonId = `ranking-flavor-${sanitizeKey(commonFlavor.title, 'common')}`;
+
+  const options = stableShuffle([
+    { id: rareId, label: rareFlavor.title },
+    { id: occasionalId, label: occasionalFlavor.title },
+    { id: commonId, label: commonFlavor.title },
+  ], `ranking-${rareFlavor.title}`);
+
+  return {
+    id: 'metrics-ranking-rarity',
+    type: 'ranking',
+    prompt: 'Order these flavors from rarest to most common (rarest first):',
+    options,
+    correct_order: [rareId, occasionalId, commonId],
+  };
+}
+
+function buildFillInQuestion(seed) {
+  if (!seed || typeof seed !== 'object') return null;
+  const topFlavors = Array.isArray(seed.top_flavors)
+    ? seed.top_flavors.filter((row) => typeof row?.title === 'string' && row.title.trim())
+    : [];
+  if (topFlavors.length === 0) return null;
+  const topFlavor = topFlavors[0];
+  return {
+    id: 'metrics-fill-in-top-flavor',
+    type: 'fill_in',
+    prompt: 'What flavor has appeared most often across all tracked stores in our database?',
+    placeholder: 'Type the flavor name...',
+    correct_answer: topFlavor.title.toLowerCase().trim(),
+    options: [],
+  };
+}
+
 function buildMetricsSeedQuestions(seed, limit) {
   if (!seed || typeof seed !== 'object') return [];
 
@@ -547,6 +613,12 @@ async function handleTrivia(url, env, corsHeaders) {
 
   addQuestions(d1Questions);
   if (questions.length < limit) addQuestions(metricsQuestions);
+  // Append expanded-format questions at most once per response
+  if (questions.length < limit) {
+    const rankingQ = buildRankingQuestion(TRIVIA_METRICS_SEED);
+    const fillInQ = buildFillInQuestion(TRIVIA_METRICS_SEED);
+    addQuestions([rankingQ, fillInQ].filter(Boolean));
+  }
   if (questions.length < limit) addQuestions(fallbackQuestions());
 
   const usedD1 = d1Questions.length > 0;
@@ -576,6 +648,8 @@ async function handleTrivia(url, env, corsHeaders) {
     'Cache-Control': 'public, max-age=900',
   });
 }
+
+export { buildRankingQuestion, buildFillInQuestion };
 
 export async function handleTriviaRoute(canonical, url, request, env, corsHeaders) {
   if (canonical !== '/api/trivia') return null;

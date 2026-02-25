@@ -111,6 +111,68 @@ describe('handleSocialCard', () => {
     expect(body).not.toContain('\uD83C\uDF66'); // no ice cream emoji
   });
 
+  it('trivia route: returns 404 for unknown trivia slug', async () => {
+    const res = await handleSocialCard('/og/trivia/not-real.svg', {}, CORS);
+    expect(res.status).toBe(404);
+    const body = await res.json();
+    expect(body.error).toBeTruthy();
+  });
+
+  it('trivia route: top-flavor card returns SVG with "Did you know?" header', async () => {
+    const res = await handleSocialCard('/og/trivia/top-flavor.svg', {}, CORS);
+    expect(res.status).toBe(200);
+    expect(res.headers.get('Content-Type')).toBe('image/svg+xml');
+    const body = await res.text();
+    expect(body).toContain('<svg');
+    expect(body).toContain('Did you know?');
+  });
+
+  it('trivia route: top-flavor card mentions the top flavor name', async () => {
+    const res = await handleSocialCard('/og/trivia/top-flavor.svg', {}, CORS);
+    const body = await res.text();
+    // Seed has Turtle as topFlavors[0]
+    expect(body).toContain('Turtle');
+  });
+
+  it('trivia route: rarest-flavor card returns SVG', async () => {
+    const res = await handleSocialCard('/og/trivia/rarest-flavor.svg', {}, CORS);
+    expect(res.status).toBe(200);
+    const body = await res.text();
+    expect(body).toContain('<svg');
+    expect(body).toContain('Did you know?');
+  });
+
+  it('trivia route: hnbc-season card returns SVG with month reference', async () => {
+    const res = await handleSocialCard('/og/trivia/hnbc-season.svg', {}, CORS);
+    expect(res.status).toBe(200);
+    const body = await res.text();
+    expect(body).toContain('<svg');
+    expect(body).toContain('Did you know?');
+  });
+
+  it('trivia route: top-store card returns SVG', async () => {
+    const res = await handleSocialCard('/og/trivia/top-store.svg', {}, CORS);
+    expect(res.status).toBe(200);
+    const body = await res.text();
+    expect(body).toContain('<svg');
+    expect(body).toContain('Did you know?');
+  });
+
+  it('trivia route: sets 24h cache TTL', async () => {
+    const res = await handleSocialCard('/og/trivia/top-flavor.svg', {}, CORS);
+    expect(res.headers.get('Cache-Control')).toBe('public, max-age=86400');
+  });
+
+  it('trivia route: does not match non-trivia og paths', async () => {
+    // Normal store/date path should still work fine
+    const env = { DB: createMockD1({ snapshot: { flavor: 'Vanilla' } }) };
+    const res = await handleSocialCard('/og/mt-horeb/2026-02-22.svg', env, CORS);
+    expect(res.status).toBe(200);
+    const body = await res.text();
+    expect(body).toContain('Vanilla');
+    expect(body).not.toContain('Did you know?');
+  });
+
   it('produces different fill colors for different flavors', async () => {
     const peachEnv = {
       DB: createMockD1({

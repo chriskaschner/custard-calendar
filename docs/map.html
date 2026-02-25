@@ -419,7 +419,7 @@
             flavor: store.flavor || null,
             certainty_tier: store.flavor ? 'confirmed' : 'none',
           });
-          if (store.flavor) enrichPopupIntel(marker, store.flavor);
+          if (store.flavor) enrichPopupIntel(marker, store.flavor, store.slug || null);
           if (store.slug) enrichPopupStoreSpecialty(marker, store.slug);
         });
         markers.addLayer(marker);
@@ -794,19 +794,29 @@
       return parts.join('');
     }
 
-    function injectPopupIntel(marker, html) {
+    function injectPopupIntel(marker, html, slug, flavorName) {
       const popup = marker.getPopup && marker.getPopup();
       if (!popup) return;
       const el = popup.getElement && popup.getElement();
       if (!el) return;
       const placeholder = el.querySelector('.popup-intel');
-      if (placeholder) placeholder.innerHTML = html;
+      if (placeholder) {
+        placeholder.innerHTML = html;
+        if (html && slug) {
+          CustardPlanner.emitInteractionEvent({
+            event_type: 'popup_open',
+            action: 'rarity_shown',
+            store_slug: slug,
+            flavor: flavorName || null,
+          });
+        }
+      }
     }
 
-    async function enrichPopupIntel(marker, flavorName) {
+    async function enrichPopupIntel(marker, flavorName, slug) {
       const key = normalizeFlavorKey(flavorName);
       if (flavorIntelCache.has(key)) {
-        injectPopupIntel(marker, flavorIntelCache.get(key));
+        injectPopupIntel(marker, flavorIntelCache.get(key), slug, flavorName);
         return;
       }
       try {
@@ -815,7 +825,7 @@
         const data = await resp.json();
         const html = buildPopupIntelHTML(data);
         flavorIntelCache.set(key, html);
-        injectPopupIntel(marker, html);
+        injectPopupIntel(marker, html, slug, flavorName);
       } catch (_) {}
     }
 
@@ -824,18 +834,27 @@
       return '<span class="popup-specialty">Store specialty: ' + escapeHtml(specialty.title) + '</span>';
     }
 
-    function injectPopupSpecialty(marker, html) {
+    function injectPopupSpecialty(marker, html, slug) {
       const popup = marker.getPopup && marker.getPopup();
       if (!popup) return;
       const el = popup.getElement && popup.getElement();
       if (!el) return;
       const slot = el.querySelector('.popup-specialty-slot');
-      if (slot) slot.innerHTML = html;
+      if (slot) {
+        slot.innerHTML = html;
+        if (html && slug) {
+          CustardPlanner.emitInteractionEvent({
+            event_type: 'popup_open',
+            action: 'specialty_shown',
+            store_slug: slug,
+          });
+        }
+      }
     }
 
     async function enrichPopupStoreSpecialty(marker, slug) {
       if (storeIntelCache.has(slug)) {
-        injectPopupSpecialty(marker, storeIntelCache.get(slug));
+        injectPopupSpecialty(marker, storeIntelCache.get(slug), slug);
         return;
       }
       try {
@@ -844,7 +863,7 @@
         var data = await resp.json();
         var html = data.specialty_flavor ? buildStoreSpecialtyHTML(data.specialty_flavor) : '';
         storeIntelCache.set(slug, html);
-        injectPopupSpecialty(marker, html);
+        injectPopupSpecialty(marker, html, slug);
       } catch (_) {}
     }
 

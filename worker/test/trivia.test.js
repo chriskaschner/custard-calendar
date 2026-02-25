@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { handleTriviaRoute } from '../src/trivia.js';
+import { handleTriviaRoute, buildRankingQuestion, buildFillInQuestion } from '../src/trivia.js';
 
 const CORS = { 'Access-Control-Allow-Origin': '*' };
 
@@ -84,5 +84,116 @@ describe('handleTriviaRoute', () => {
     const url = new URL(req.url);
     const res = await handleTriviaRoute('/api/trivia/unknown', url, req, { DB: createMockD1() }, CORS);
     expect(res).toBeNull();
+  });
+
+  it('includes ranking and fill_in questions when seed provides sufficient data', async () => {
+    const req = makeRequest('/api/v1/trivia?days=90&limit=10');
+    const url = new URL(req.url);
+    const res = await handleTriviaRoute('/api/trivia', url, req, {}, CORS);
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    const rankingQ = body.questions.find((q) => q.type === 'ranking');
+    const fillInQ = body.questions.find((q) => q.type === 'fill_in');
+    // These should appear when limit is large enough and seed data is present
+    expect(rankingQ || fillInQ).toBeTruthy();
+  });
+});
+
+const MINIMAL_SEED = {
+  top_flavors: [
+    { title: 'Turtle', appearances: 14254, store_count: 965 },
+    { title: 'Caramel Cashew', appearances: 12478, store_count: 981 },
+    { title: 'Butter Pecan', appearances: 10275, store_count: 969 },
+    { title: 'Snickers Swirl', appearances: 9982, store_count: 984 },
+  ],
+  seasonal_spotlights: [
+    { title: 'Mooey Gooey Twist', appearances: 252, store_count: 252, peak_month: 5 },
+    { title: 'Egg Nog Brickle', appearances: 288, store_count: 117, peak_month: 12 },
+  ],
+};
+
+describe('buildRankingQuestion', () => {
+  it('returns null when seed is missing or empty', () => {
+    expect(buildRankingQuestion(null)).toBeNull();
+    expect(buildRankingQuestion({})).toBeNull();
+    expect(buildRankingQuestion({ top_flavors: [] })).toBeNull();
+    expect(buildRankingQuestion({ top_flavors: [{ title: 'Only One' }] })).toBeNull();
+  });
+
+  it('returns a well-formed ranking question from valid seed', () => {
+    const q = buildRankingQuestion(MINIMAL_SEED);
+    expect(q).not.toBeNull();
+    expect(q.type).toBe('ranking');
+    expect(typeof q.id).toBe('string');
+    expect(typeof q.prompt).toBe('string');
+    expect(Array.isArray(q.options)).toBe(true);
+    expect(q.options).toHaveLength(3);
+    expect(Array.isArray(q.correct_order)).toBe(true);
+    expect(q.correct_order).toHaveLength(3);
+  });
+
+  it('correct_order references valid option ids', () => {
+    const q = buildRankingQuestion(MINIMAL_SEED);
+    const optionIds = new Set(q.options.map((o) => o.id));
+    for (const id of q.correct_order) {
+      expect(optionIds.has(id)).toBe(true);
+    }
+  });
+
+  it('all three options have distinct titles', () => {
+    const q = buildRankingQuestion(MINIMAL_SEED);
+    const labels = q.options.map((o) => o.label);
+    expect(new Set(labels).size).toBe(3);
+  });
+
+  it('uses seasonal spotlight as the rarest option when available', () => {
+    const q = buildRankingQuestion(MINIMAL_SEED);
+    // Mooey Gooey Twist has lowest appearances (252) — should be the rare option
+    const rareId = q.correct_order[0];
+    const rareOption = q.options.find((o) => o.id === rareId);
+    expect(rareOption.label).toBe('Mooey Gooey Twist');
+  });
+
+  it('still produces a question without seasonal_spotlights when top_flavors has 3+ entries', () => {
+    const seed = { top_flavors: MINIMAL_SEED.top_flavors };
+    const q = buildRankingQuestion(seed);
+    expect(q).not.toBeNull();
+    expect(q.options).toHaveLength(3);
+  });
+});
+
+describe('buildFillInQuestion', () => {
+  it('returns null when seed is missing or top_flavors is empty', () => {
+    expect(buildFillInQuestion(null)).toBeNull();
+    expect(buildFillInQuestion({})).toBeNull();
+    expect(buildFillInQuestion({ top_flavors: [] })).toBeNull();
+  });
+
+  it('returns a well-formed fill_in question', () => {
+    const q = buildFillInQuestion(MINIMAL_SEED);
+    expect(q).not.toBeNull();
+    expect(q.type).toBe('fill_in');
+    expect(typeof q.id).toBe('string');
+    expect(typeof q.prompt).toBe('string');
+    expect(typeof q.correct_answer).toBe('string');
+    expect(q.correct_answer).toBe(q.correct_answer.toLowerCase());
+  });
+
+  it('answer is the top flavor (most appearances) in lowercase', () => {
+    const q = buildFillInQuestion(MINIMAL_SEED);
+    // Turtle is topFlavors[0]
+    expect(q.correct_answer).toBe('turtle');
+  });
+
+  it('includes a placeholder string', () => {
+    const q = buildFillInQuestion(MINIMAL_SEED);
+    expect(typeof q.placeholder).toBe('string');
+    expect(q.placeholder.length).toBeGreaterThan(0);
+  });
+
+  it('options array is empty (fill_in has no options)', () => {
+    const q = buildFillInQuestion(MINIMAL_SEED);
+    expect(Array.isArray(q.options)).toBe(true);
+    expect(q.options).toHaveLength(0);
   });
 });

@@ -353,44 +353,118 @@ async function renderQuestions(quiz) {
     legend.textContent = `${idx + 1}. ${question.prompt}`;
     fieldset.appendChild(legend);
 
-    const grid = document.createElement('div');
-    grid.className = 'quiz-options-grid';
-    fieldset.appendChild(grid);
+    const questionType = question.type || 'multiple_choice';
 
-    question.options.forEach((option) => {
-      const label = document.createElement('label');
-      label.className = 'quiz-option';
+    if (questionType === 'ranking') {
+      // Hidden input stores current order as "id1,id2,id3"
+      const hiddenInput = document.createElement('input');
+      hiddenInput.type = 'hidden';
+      hiddenInput.name = question.id;
+      fieldset.appendChild(hiddenInput);
 
-      const input = document.createElement('input');
-      input.type = 'radio';
-      input.name = question.id;
-      input.value = option.id;
+      const rankingList = document.createElement('div');
+      rankingList.className = 'quiz-ranking-list';
 
-      const iconSvg = option.icon && window.QuizSprites
-        ? window.QuizSprites.resolve(option.icon, 4) : '';
+      (question.options || []).forEach((option) => {
+        const card = document.createElement('div');
+        card.className = 'quiz-ranking-card';
+        card.dataset.optionId = option.id;
+        card.setAttribute('role', 'button');
+        card.setAttribute('tabindex', '0');
 
-      label.appendChild(input);
+        const badge = document.createElement('span');
+        badge.className = 'quiz-rank-badge';
 
-      const copy = document.createElement('span');
-      copy.className = 'quiz-option-copy';
+        const labelEl = document.createElement('span');
+        labelEl.className = 'quiz-ranking-label';
+        labelEl.textContent = option.label;
 
-      if (iconSvg) {
-        label.classList.add('has-icon');
-        const iconEl = document.createElement('span');
-        iconEl.className = 'quiz-option-icon';
-        iconEl.setAttribute('aria-hidden', 'true');
-        iconEl.innerHTML = iconSvg;
-        copy.appendChild(iconEl);
-      }
+        card.appendChild(badge);
+        card.appendChild(labelEl);
 
-      const textEl = document.createElement('span');
-      textEl.className = 'quiz-option-label';
-      textEl.textContent = option.label;
-      copy.appendChild(textEl);
+        function updateRankBadges() {
+          const currentOrder = hiddenInput.value ? hiddenInput.value.split(',') : [];
+          rankingList.querySelectorAll('.quiz-ranking-card').forEach((c) => {
+            const rankIdx = currentOrder.indexOf(c.dataset.optionId);
+            const b = c.querySelector('.quiz-rank-badge');
+            if (rankIdx >= 0) {
+              b.textContent = String(rankIdx + 1);
+              c.classList.add('ranked');
+            } else {
+              b.textContent = '';
+              c.classList.remove('ranked');
+            }
+          });
+        }
 
-      label.appendChild(copy);
-      grid.appendChild(label);
-    });
+        card.addEventListener('click', () => {
+          const currentOrder = hiddenInput.value ? hiddenInput.value.split(',') : [];
+          const optId = option.id;
+          if (currentOrder.includes(optId)) {
+            hiddenInput.value = currentOrder.filter((id) => id !== optId).join(',');
+          } else {
+            hiddenInput.value = [...currentOrder, optId].join(',');
+          }
+          updateRankBadges();
+        });
+
+        card.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); card.click(); }
+        });
+
+        rankingList.appendChild(card);
+      });
+
+      fieldset.appendChild(rankingList);
+    } else if (questionType === 'fill_in') {
+      const textInput = document.createElement('input');
+      textInput.type = 'text';
+      textInput.name = question.id;
+      textInput.className = 'quiz-fill-in-input';
+      textInput.placeholder = question.placeholder || 'Type your answer...';
+      textInput.autocomplete = 'off';
+      fieldset.appendChild(textInput);
+    } else {
+      // Default: multiple_choice
+      const grid = document.createElement('div');
+      grid.className = 'quiz-options-grid';
+      fieldset.appendChild(grid);
+
+      question.options.forEach((option) => {
+        const label = document.createElement('label');
+        label.className = 'quiz-option';
+
+        const input = document.createElement('input');
+        input.type = 'radio';
+        input.name = question.id;
+        input.value = option.id;
+
+        const iconSvg = option.icon && window.QuizSprites
+          ? window.QuizSprites.resolve(option.icon, 4) : '';
+
+        label.appendChild(input);
+
+        const copy = document.createElement('span');
+        copy.className = 'quiz-option-copy';
+
+        if (iconSvg) {
+          label.classList.add('has-icon');
+          const iconEl = document.createElement('span');
+          iconEl.className = 'quiz-option-icon';
+          iconEl.setAttribute('aria-hidden', 'true');
+          iconEl.innerHTML = iconSvg;
+          copy.appendChild(iconEl);
+        }
+
+        const textEl = document.createElement('span');
+        textEl.className = 'quiz-option-label';
+        textEl.textContent = option.label;
+        copy.appendChild(textEl);
+
+        label.appendChild(copy);
+        grid.appendChild(label);
+      });
+    }
 
     els.questionsWrap.appendChild(fieldset);
   });
@@ -405,7 +479,7 @@ function collectAnswers(quiz, formEl) {
   const traitScores = {};
   const selected = {};
   const commentaries = [];
-  const trivia = { correct: 0, total: 0, accuracy: null };
+  const trivia = { correct: 0, total: 0, accuracy: null, answerFeedback: [] };
   const questions = getActiveQuestions(quiz);
 
   for (const trait of state.traits) {
@@ -413,28 +487,64 @@ function collectAnswers(quiz, formEl) {
   }
 
   for (const question of questions) {
-    const selectedId = data.get(question.id);
-    if (!selectedId) {
-      throw new Error('Please answer all questions before running your custard forecast.');
-    }
-    selected[question.id] = String(selectedId);
-    const selectedOption = question.options.find((opt) => opt.id === selectedId);
-    if (!selectedOption) continue;
-    if (typeof question.correct_option_id === 'string' && question.correct_option_id) {
-      trivia.total += 1;
-      if (question.correct_option_id === String(selectedId)) {
-        trivia.correct += 1;
+    const questionType = question.type || 'multiple_choice';
+
+    if (questionType === 'fill_in') {
+      const answer = String(data.get(question.id) || '').trim();
+      if (!answer) {
+        throw new Error('Please answer all questions before running your custard forecast.');
       }
-    }
-    if (selectedOption.commentary) {
-      commentaries.push(selectedOption.commentary);
-    }
-    const deltas = selectedOption.traits || {};
-    for (const [trait, delta] of Object.entries(deltas)) {
-      if (typeof traitScores[trait] !== 'number') traitScores[trait] = 0;
-      const value = Number(delta);
-      if (!Number.isFinite(value)) continue;
-      traitScores[trait] += value;
+      selected[question.id] = answer;
+      if (typeof question.correct_answer === 'string' && question.correct_answer) {
+        trivia.total += 1;
+        if (answer.toLowerCase() === question.correct_answer.toLowerCase().trim()) {
+          trivia.correct += 1;
+        }
+        trivia.answerFeedback.push(`Answer: ${question.correct_answer}`);
+      }
+    } else if (questionType === 'ranking') {
+      const orderStr = String(data.get(question.id) || '');
+      const orderIds = orderStr ? orderStr.split(',').filter(Boolean) : [];
+      const optionCount = Array.isArray(question.options) ? question.options.length : 0;
+      if (orderIds.length < optionCount) {
+        throw new Error('Please rank all options before running your custard forecast.');
+      }
+      selected[question.id] = orderStr;
+      if (Array.isArray(question.correct_order) && question.correct_order.length > 0) {
+        trivia.total += 1;
+        const isCorrect = question.correct_order.every((id, idx) => orderIds[idx] === id);
+        if (isCorrect) trivia.correct += 1;
+        const correctLabels = question.correct_order.map((id) => {
+          const opt = (question.options || []).find((o) => o.id === id);
+          return opt ? opt.label : id;
+        });
+        trivia.answerFeedback.push(`Correct order: ${correctLabels.join(' \u2192 ')}`);
+      }
+    } else {
+      // multiple_choice (default)
+      const selectedId = data.get(question.id);
+      if (!selectedId) {
+        throw new Error('Please answer all questions before running your custard forecast.');
+      }
+      selected[question.id] = String(selectedId);
+      const selectedOption = question.options.find((opt) => opt.id === selectedId);
+      if (!selectedOption) continue;
+      if (typeof question.correct_option_id === 'string' && question.correct_option_id) {
+        trivia.total += 1;
+        if (question.correct_option_id === String(selectedId)) {
+          trivia.correct += 1;
+        }
+      }
+      if (selectedOption.commentary) {
+        commentaries.push(selectedOption.commentary);
+      }
+      const deltas = selectedOption.traits || {};
+      for (const [trait, delta] of Object.entries(deltas)) {
+        if (typeof traitScores[trait] !== 'number') traitScores[trait] = 0;
+        const value = Number(delta);
+        if (!Number.isFinite(value)) continue;
+        traitScores[trait] += value;
+      }
     }
   }
 
@@ -787,9 +897,12 @@ async function runQuiz(evt) {
 
     const traits = topTraits(traitScores, 3);
     const triviaLabel = trivia.total > 0 ? ` Trivia: ${trivia.correct}/${trivia.total} correct.` : '';
+    const feedbackLabel = trivia.answerFeedback && trivia.answerFeedback.length > 0
+      ? ' ' + trivia.answerFeedback.join(' ')
+      : '';
     els.resultTraits.textContent = traits.length
-      ? `Top traits: ${traits.map((t) => `${t.trait} (${t.score})`).join(', ')}.${triviaLabel}`
-      : `Top traits: balanced profile.${triviaLabel}`;
+      ? `Top traits: ${traits.map((t) => `${t.trait} (${t.score})`).join(', ')}.${triviaLabel}${feedbackLabel}`
+      : `Top traits: balanced profile.${triviaLabel}${feedbackLabel}`;
 
     const lateNote = lateNight ? ' Last chance tonight -- stores close around 10pm.' : '';
 
@@ -932,6 +1045,7 @@ async function runQuiz(evt) {
       trivia_correct: trivia.total > 0 ? trivia.correct : null,
       trivia_total: trivia.total > 0 ? trivia.total : null,
       trait_scores: traitScores,
+      page_load_id: CustardPlanner.getPageLoadId(),
     });
 
     els.resultSection.hidden = false;

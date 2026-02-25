@@ -89,6 +89,7 @@ async function handleQuizEventIngest(request, env, corsHeaders) {
   const radiusMiles = cleanRadius(body?.radius_miles);
   const hasRadiusMatch = Boolean(body?.has_radius_match);
   const traitScores = cleanTraits(body?.trait_scores);
+  const pageLoadId = cleanText(body?.page_load_id, 80);
 
   const cf = request.cf || {};
   const city = cleanText(cf.city, 80);
@@ -112,8 +113,9 @@ async function handleQuizEventIngest(request, env, corsHeaders) {
         cf_city,
         cf_region,
         cf_country,
-        created_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        created_at,
+        page_load_id
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).bind(
       eventType,
       quizId,
@@ -129,6 +131,7 @@ async function handleQuizEventIngest(request, env, corsHeaders) {
       region,
       country,
       createdAt,
+      pageLoadId,
     ).run();
   } catch (err) {
     return jsonResponse({ error: `Failed to persist quiz event: ${err.message}` }, corsHeaders, 500);

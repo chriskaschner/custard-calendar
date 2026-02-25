@@ -945,6 +945,7 @@ var CustardPlanner = (function () {
     alertPageUrl: alertPageUrl,
     actionCTAsHTML: actionCTAsHTML,
     emitInteractionEvent: emitInteractionEvent,
+    getPageLoadId: function() { return _pageLoadId; },
 
     // Signals
     signalCardHTML: signalCardHTML,
