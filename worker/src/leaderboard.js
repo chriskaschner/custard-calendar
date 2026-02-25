@@ -15,6 +15,38 @@ import { STORE_INDEX as DEFAULT_STORE_INDEX } from './store-index.js';
 import { TRIVIA_METRICS_SEED } from './trivia-metrics-seed.js';
 
 const DEFAULT_DAYS = 90;
+
+// City-to-metro mapping for Wisconsin intra-state breakdown.
+// Keys are lowercase city names; values are metro slugs.
+const WI_METRO_MAP = {
+  // Madison metro
+  'madison': 'madison', 'sun prairie': 'madison', 'middleton': 'madison',
+  'verona': 'madison', 'mcfarland': 'madison', 'cottage grove': 'madison',
+  'cross plains': 'madison', 'waunakee': 'madison', 'deforest': 'madison',
+  'oregon': 'madison', 'fitchburg': 'madison', 'monona': 'madison',
+  // Milwaukee metro
+  'milwaukee': 'milwaukee', 'brookfield': 'milwaukee', 'waukesha': 'milwaukee',
+  'glendale': 'milwaukee', 'greenfield': 'milwaukee', 'new berlin': 'milwaukee',
+  'muskego': 'milwaukee', 'menomonee falls': 'milwaukee', 'mequon': 'milwaukee',
+  'mukwonago': 'milwaukee', 'oconomowoc': 'milwaukee', 'pewaukee': 'milwaukee',
+  'hartland': 'milwaukee', 'wales': 'milwaukee', 'sussex': 'milwaukee',
+  'east troy': 'milwaukee', 'shorewood': 'milwaukee', 'west allis': 'milwaukee',
+  'west milwaukee': 'milwaukee', 'elm grove': 'milwaukee', 'franklin': 'milwaukee',
+  'brown deer': 'milwaukee', 'cudahy': 'milwaukee', 'south milwaukee': 'milwaukee',
+  'oak creek': 'milwaukee', 'hales corners': 'milwaukee', 'wauwatosa': 'milwaukee',
+  'whitefish bay': 'milwaukee', 'bayside': 'milwaukee', 'fox point': 'milwaukee',
+};
+
+const WI_METRO_LABELS = {
+  madison: 'Madison',
+  milwaukee: 'Milwaukee',
+  other: 'Other WI',
+};
+
+function cityToMetro(city) {
+  if (!city) return 'other';
+  return WI_METRO_MAP[String(city).toLowerCase().trim()] || 'other';
+}
 const MAX_DAYS = 730;
 const DEFAULT_LIMIT = 5;
 const MAX_LIMIT = 10;
@@ -60,8 +92,9 @@ async function handleStateLeaderboard(url, env, corsHeaders) {
     }
   }
 
-  // Aggregate counts by state -> flavor
+  // Aggregate counts by state -> flavor, and by WI metro -> flavor
   const stateFlavorMap = new Map();
+  const metroFlavorMap = new Map(); // WI metro breakdown: madison / milwaukee / other
 
   for (const row of groupedRows) {
     const slug = String(row.slug || '').trim();
@@ -70,7 +103,8 @@ async function handleStateLeaderboard(url, env, corsHeaders) {
     const count = Number(row.count || 0);
     if (!slug || !normalizedFlavor || count <= 0) continue;
 
-    const state = storeMetaBySlug.get(slug)?.state;
+    const storeMeta = storeMetaBySlug.get(slug);
+    const state = storeMeta?.state;
     if (!state) continue;
     if (stateFilter.length > 0 && !stateFilter.includes(state)) continue;
 
@@ -80,6 +114,15 @@ async function handleStateLeaderboard(url, env, corsHeaders) {
       flavorMap.set(normalizedFlavor, { flavor: flavorLabel, count: 0 });
     }
     flavorMap.get(normalizedFlavor).count += count;
+
+    // WI metro breakdown
+    if (state === 'WI') {
+      const metro = cityToMetro(storeMeta?.city);
+      if (!metroFlavorMap.has(metro)) metroFlavorMap.set(metro, new Map());
+      const mf = metroFlavorMap.get(metro);
+      if (!mf.has(normalizedFlavor)) mf.set(normalizedFlavor, { flavor: flavorLabel, count: 0 });
+      mf.get(normalizedFlavor).count += count;
+    }
   }
 
   // Rank results per state
@@ -89,6 +132,18 @@ async function handleStateLeaderboard(url, env, corsHeaders) {
       .sort((a, b) => b.count - a.count || a.flavor.localeCompare(b.flavor))
       .slice(0, limit)
       .map((entry, idx) => ({ rank: idx + 1, flavor: entry.flavor, count: entry.count }));
+  }
+
+  // WI metro breakdown (only populated when WI data present)
+  const metroLeaders = {};
+  for (const [metro, flavorMap] of metroFlavorMap) {
+    metroLeaders[metro] = {
+      label: WI_METRO_LABELS[metro] || metro,
+      top: [...flavorMap.values()]
+        .sort((a, b) => b.count - a.count || a.flavor.localeCompare(b.flavor))
+        .slice(0, limit)
+        .map((entry, idx) => ({ rank: idx + 1, flavor: entry.flavor, count: entry.count })),
+    };
   }
 
   // Fall back to national metrics seed when no D1 data returned
@@ -106,12 +161,17 @@ async function handleStateLeaderboard(url, env, corsHeaders) {
     }
   }
 
-  return Response.json({
+  const responseBody = {
     window_days: days,
     source,
     state_leaders: stateLeaders,
     states_returned: Object.keys(stateLeaders).length,
-  }, {
+  };
+  if (Object.keys(metroLeaders).length > 0) {
+    responseBody.wi_metro_leaders = metroLeaders;
+  }
+
+  return Response.json(responseBody, {
     headers: {
       ...corsHeaders,
       'Cache-Control': 'public, max-age=900',

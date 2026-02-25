@@ -63,10 +63,10 @@ export const FLAVOR_FAMILIES = {
   caramel: { color: '#D4A056', members: ['caramel cashew', 'caramel fudge cookie dough', 'caramel pecan', 'caramel turtle', 'salted caramel pecan pie', 'chocolate caramel twist'] },
   cheesecake: { color: '#FFF8DC', members: ['oreo cheesecake', 'oreo cookie cheesecake', 'raspberry cheesecake', 'strawberry cheesecake', 'turtle cheesecake'] },
   turtle: { color: '#8B6914', members: ['turtle', 'turtle dove', 'turtle cheesecake', 'caramel turtle'] },
-  cookie: { color: '#C4A882', members: ['crazy for cookie dough', 'caramel fudge cookie dough', 'mint cookie', 'oreo cookie cheesecake', 'oreo cookies and cream'] },
+  cookie: { color: '#C4A882', members: ['crazy for cookie dough', 'caramel fudge cookie dough', 'mint cookie', 'oreo cookie cheesecake', 'lemon dash cookie'] },
   peanutButter: { color: '#C8A96E', members: ['dark chocolate pb crunch', 'peanut butter cup', 'reeses peanut butter cup'] },
   berry: { color: '#E91E63', members: ['blackberry cobbler', 'raspberry cheesecake', 'strawberry cheesecake', 'lemon berry layer cake'] },
-  pecan: { color: '#A67B5B', members: ['butter pecan', 'caramel pecan', 'salted caramel pecan pie', 'georgia peach pecan'] },
+  pecan: { color: '#A67B5B', members: ['butter pecan', 'caramel pecan', 'salted caramel pecan pie', 'double butter pecan'] },
 };
 
 export const SIMILARITY_GROUPS = {
@@ -109,7 +109,7 @@ export const SIMILARITY_GROUPS = {
     'caramel fudge cookie dough',
     'mint cookie',
     'oreo cookie cheesecake',
-    'oreo cookies and cream',
+    'lemon dash cookie',
   ],
   peanutButter: [
     'dark chocolate pb crunch',
@@ -126,7 +126,7 @@ export const SIMILARITY_GROUPS = {
     'butter pecan',
     'caramel pecan',
     'salted caramel pecan pie',
-    'georgia peach pecan',
+    'double butter pecan',
   ],
 };
 
