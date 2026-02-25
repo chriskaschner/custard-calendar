@@ -173,6 +173,46 @@ describe('handleSocialCard', () => {
     expect(body).not.toContain('Did you know?');
   });
 
+  it('page route: returns 404 for unknown page slug', async () => {
+    const res = await handleSocialCard('/og/page/does-not-exist.svg', {}, CORS);
+    expect(res.status).toBe(404);
+    const body = await res.json();
+    expect(body.error).toBeTruthy();
+  });
+
+  it('page route: forecast card returns SVG with headline and cone', async () => {
+    const res = await handleSocialCard('/og/page/forecast.svg', {}, CORS);
+    expect(res.status).toBe(200);
+    expect(res.headers.get('Content-Type')).toBe('image/svg+xml');
+    const body = await res.text();
+    expect(body).toContain('<svg');
+    expect(body).toContain("Today's Flavor Forecast");
+    expect(body).toContain('<rect'); // pixel-art cone
+  });
+
+  it('page route: all nine page slugs return 200 SVG', async () => {
+    const slugs = ['forecast', 'calendar', 'alerts', 'map', 'quiz', 'radar', 'siri', 'widget', 'fronts'];
+    for (const slug of slugs) {
+      const res = await handleSocialCard(`/og/page/${slug}.svg`, {}, CORS);
+      expect(res.status, `slug "${slug}" should return 200`).toBe(200);
+      const body = await res.text();
+      expect(body).toContain('<svg');
+    }
+  });
+
+  it('page route: sets 24h cache TTL', async () => {
+    const res = await handleSocialCard('/og/page/map.svg', {}, CORS);
+    expect(res.headers.get('Cache-Control')).toBe('public, max-age=86400');
+  });
+
+  it('page route: does not interfere with store/date or trivia routes', async () => {
+    const env = { DB: createMockD1({ snapshot: { flavor: 'Vanilla' } }) };
+    const storeRes = await handleSocialCard('/og/mt-horeb/2026-02-22.svg', env, CORS);
+    expect(storeRes.status).toBe(200);
+    const triviaRes = await handleSocialCard('/og/trivia/top-flavor.svg', {}, CORS);
+    expect(triviaRes.status).toBe(200);
+  });
+
   it('produces different fill colors for different flavors', async () => {
     const peachEnv = {
       DB: createMockD1({

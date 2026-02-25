@@ -1,12 +1,12 @@
 /**
  * Dynamic SVG social card generator.
  *
- * Generates 1200x630 OG-image-compatible SVG cards for individual
- * store/date combos. Cards show the flavor name, store, and metrics
- * (frequency, streak) when available from D1. Embeds a pixel-art cone
- * colored to match the flavor profile.
+ * Generates 1200x630 OG-image-compatible SVG cards for:
+ *   - Per-store/date flavor cards:  GET /og/{slug}/{date}.svg
+ *   - Per-page static cards:        GET /og/page/{page-slug}.svg
+ *   - Trivia/Did-you-know cards:    GET /og/trivia/{slug}.svg
  *
- * Endpoint: GET /v1/og/{slug}/{date}.svg
+ * All cards embed pixel-art cones colored to the flavor profile.
  */
 
 import { normalize } from './flavor-matcher.js';
@@ -70,6 +70,100 @@ const TRIVIA_CARD_DEFS = {
   },
 };
 
+// ---------------------------------------------------------------------------
+// Page-level OG cards
+// One card per site page: /og/page/{slug}.svg
+// ---------------------------------------------------------------------------
+
+const PAGE_CARD_DEFS = {
+  forecast: {
+    headline: "Today's Flavor Forecast",
+    subhead: 'Live schedules from six Wisconsin custard brands.',
+    flavorName: 'Turtle',
+  },
+  calendar: {
+    headline: 'Subscribe to Your Store',
+    subhead: 'Daily updates in Google, Apple, or any .ics client.',
+    flavorName: 'Vanilla',
+  },
+  alerts: {
+    headline: 'Never Miss Your Favorite',
+    subhead: 'Email alerts when your flavor hits the schedule.',
+    flavorName: 'Mint Explosion',
+  },
+  map: {
+    headline: 'Find Your Nearest Flavor',
+    subhead: 'Confirmed schedules on an interactive store map.',
+    flavorName: 'Caramel Cashew',
+  },
+  quiz: {
+    headline: 'Find Your Custard Match',
+    subhead: 'Six quiz modes matched to today\'s live schedule.',
+    flavorName: "Really Reese's",
+  },
+  radar: {
+    headline: 'Scan for Nearby Flavors',
+    subhead: 'Nearby flavors ranked by distance, right now.',
+    flavorName: 'Chocolate Volcano',
+  },
+  siri: {
+    headline: "Ask Siri What's Scooping",
+    subhead: 'Siri Shortcut for hands-free flavor checks.',
+    flavorName: 'Butter Pecan',
+  },
+  widget: {
+    headline: "Today's Flavor at a Glance",
+    subhead: "Today's flavor, right on your iOS home screen.",
+    flavorName: 'Dark Chocolate Decadence',
+  },
+  fronts: {
+    headline: 'Track Flavor Fronts',
+    subhead: 'Regional flavor patterns visualized as weather fronts.',
+    flavorName: 'Blackberry Cobbler',
+  },
+};
+
+function renderPageCard({ headline, subhead, flavorName }) {
+  const esc = (s) => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  const profile = getFlavorProfile(flavorName || '');
+  const accentColor = BASE_COLORS[profile.base] || '#005696';
+  const coneGroup = flavorName ? renderConeGroup(flavorName, 1050, 130, 6) : '';
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1a1a2e"/>
+      <stop offset="100%" stop-color="#16213e"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect y="0" width="1200" height="8" fill="${accentColor}"/>
+  ${coneGroup}
+  <text x="80" y="220" font-size="52" font-weight="bold" fill="#ffffff" font-family="system-ui, -apple-system, sans-serif">${esc(headline)}</text>
+  <text x="80" y="310" font-size="28" fill="#9EC5E8" font-family="system-ui, -apple-system, sans-serif">${esc(subhead)}</text>
+  <text x="80" y="590" font-size="22" fill="#4a4a5a" font-family="system-ui, -apple-system, sans-serif">custard.chriskaschner.com</text>
+</svg>`;
+}
+
+function handlePageCard(pageSlug, corsHeaders) {
+  const def = PAGE_CARD_DEFS[pageSlug];
+  if (!def) {
+    return new Response(JSON.stringify({ error: 'Page card not found.' }), {
+      status: 404,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+  const svg = renderPageCard(def);
+  return new Response(svg, {
+    status: 200,
+    headers: {
+      ...corsHeaders,
+      'Content-Type': 'image/svg+xml',
+      'Cache-Control': 'public, max-age=86400',
+    },
+  });
+}
+
 function renderTriviaCard({ headline, fact, flavorName }) {
   const esc = (s) => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   const coneGroup = flavorName ? renderConeGroup(flavorName, 1050, 160, 6) : '';
@@ -127,6 +221,10 @@ function handleTriviaCard(slug, corsHeaders) {
  * @returns {Promise<Response|null>} Response if matched, null otherwise
  */
 export async function handleSocialCard(path, env, corsHeaders) {
+  // Match /og/page/{slug}.svg — page-level static cards
+  const pageMatch = path.match(/^\/og\/page\/([\w-]+)\.svg$/);
+  if (pageMatch) return handlePageCard(pageMatch[1], corsHeaders);
+
   // Match /og/trivia/{slug}.svg — must be checked before the store/date pattern
   const triviaMatch = path.match(/^\/og\/trivia\/([\w-]+)\.svg$/);
   if (triviaMatch) return handleTriviaCard(triviaMatch[1], corsHeaders);
