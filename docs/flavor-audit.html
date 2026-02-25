@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flavor Asset Parity Audit</title>
+<style>
+  :root {
+    --bg: #0e1117;
+    --surface: #1a1f2e;
+    --surface2: #242938;
+    --border: #2e3548;
+    --text: #e8eaf0;
+    --muted: #8892aa;
+    --accent: #005696;
+    --ok: #1e4d36;
+    --warn: #4d3c1e;
+    --err: #4d1e1e;
+    --ok-text: #6dd49b;
+    --warn-text: #e6b84f;
+    --err-text: #f28b82;
+    --info: #1e304d;
+    --info-text: #80b4e6;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; font-size: 14px; line-height: 1.5; }
+
+  header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 14px 24px; display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; }
+  header h1 { font-size: 18px; font-weight: 600; }
+  .status-bar { display: flex; gap: 16px; font-size: 12px; flex-wrap: wrap; }
+  .stat { color: var(--muted); }
+  .stat span { font-weight: 600; }
+  .stat.ok span { color: var(--ok-text); }
+  .stat.warn span { color: var(--warn-text); }
+  .stat.err span { color: var(--err-text); }
+
+  main { padding: 20px 24px; max-width: 1440px; margin: 0 auto; }
+
+  section { margin-bottom: 36px; }
+  h2 { font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 14px; }
+
+  /* Collision pairs */
+  .collision-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 12px; }
+  .collision-pair { background: var(--warn); border: 1px solid #6d4d1e; border-radius: 6px; padding: 12px; }
+  .collision-pair h3 { font-size: 11px; font-weight: 600; color: var(--warn-text); margin-bottom: 10px; letter-spacing: 0.04em; }
+  .collision-pair .sides { display: flex; gap: 12px; }
+  .collision-side { flex: 1; background: var(--surface); border-radius: 4px; padding: 8px; display: flex; flex-direction: column; gap: 6px; align-items: center; }
+  .collision-side .label { font-size: 11px; color: var(--muted); text-align: center; }
+  .collision-side .name { font-size: 12px; color: var(--text); text-align: center; font-weight: 500; }
+  .collision-side .badge { font-size: 10px; padding: 1px 6px; border-radius: 3px; }
+  .badge-ok { background: var(--ok); color: var(--ok-text); }
+  .badge-err { background: var(--err); color: var(--err-text); }
+  .badge-warn { background: var(--warn); color: var(--warn-text); }
+
+  /* Filters */
+  .filter-bar { display: flex; gap: 12px; margin-bottom: 14px; align-items: center; flex-wrap: wrap; }
+  .filter-bar input[type=text] { background: var(--surface); border: 1px solid var(--border); color: var(--text); border-radius: 4px; padding: 6px 10px; font-size: 13px; width: 200px; }
+  .filter-bar input[type=text]::placeholder { color: var(--muted); }
+  .filter-bar label { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 5px; cursor: pointer; white-space: nowrap; }
+  .filter-count { font-size: 12px; color: var(--muted); margin-left: auto; }
+
+  /* Column header */
+  .col-header { display: grid; grid-template-columns: 220px 72px 72px 96px 112px 1fr; gap: 0; margin-bottom: 6px; padding: 0 12px; }
+  .col-header span { font-size: 10px; color: var(--muted); font-weight: 600; text-align: center; line-height: 1.3; }
+  .col-header span:first-child { text-align: left; }
+
+  /* Flavor rows */
+  .flavor-grid { display: flex; flex-direction: column; gap: 3px; }
+  .flavor-row {
+    display: grid;
+    grid-template-columns: 220px 72px 72px 96px 112px 1fr;
+    align-items: center;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    overflow: hidden;
+  }
+  .flavor-row:hover { border-color: #3e4a65; }
+  .flavor-row.status-ok {}
+  .flavor-row.status-warn { border-color: #6d4d1e; background: #181208; }
+  .flavor-row.status-err { border-color: #6d1e1e; background: #130808; }
+  .flavor-row.status-profile-only { border-color: #1e4a6d; background: #080c14; }
+
+  .col { padding: 8px 10px; display: flex; align-items: center; justify-content: center; border-right: 1px solid var(--border); min-height: 74px; }
+  .col:last-child { border-right: none; }
+  .col-name { justify-content: flex-start; flex-direction: column; align-items: flex-start; gap: 3px; }
+  .col-meta { justify-content: flex-start; flex-direction: column; align-items: flex-start; gap: 6px; padding: 8px 12px; }
+
+  .flavor-title { font-weight: 500; font-size: 13px; }
+  .flavor-desc { font-size: 10px; color: var(--muted); line-height: 1.3; max-width: 200px; }
+  .row-badge { font-size: 10px; padding: 1px 6px; border-radius: 3px; white-space: nowrap; }
+
+  /* Map marker */
+  .marker-wrap { position: relative; width: 48px; height: 56px; display: flex; align-items: flex-start; justify-content: center; }
+  .marker-pin { border-radius: 50% 50% 50% 0; transform: rotate(-45deg); width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border: 2px solid; background: var(--surface2); }
+  .marker-pin svg { transform: rotate(45deg); }
+
+  /* Swatches */
+  .swatch-row { display: flex; gap: 4px; flex-wrap: wrap; }
+  .sw { width: 18px; height: 18px; border-radius: 3px; border: 1px solid rgba(255,255,255,0.1); flex-shrink: 0; }
+  .sw-label { font-size: 9px; color: var(--muted); }
+  .swatch-group { display: flex; flex-direction: column; gap: 2px; align-items: center; }
+
+  .meta-tags { display: flex; gap: 4px; flex-wrap: wrap; }
+  .mtag { font-size: 10px; padding: 1px 6px; border-radius: 3px; background: var(--surface2); color: var(--muted); border: 1px solid var(--border); white-space: nowrap; }
+  .mtag.d-pure { color: #aaa; }
+  .mtag.d-standard { color: var(--info-text); }
+  .mtag.d-double { color: var(--ok-text); }
+  .mtag.d-explosion { color: var(--warn-text); }
+  .mtag.d-overload { color: var(--err-text); }
+
+  .placeholder { color: var(--muted); font-style: italic; font-size: 11px; opacity: 0.6; }
+  .no-profile-msg { color: var(--err-text); font-size: 11px; max-width: 180px; line-height: 1.4; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Flavor Asset Parity Audit</h1>
+  <div class="status-bar" id="status-bar">
+    <span class="stat" id="stat-profiles">Loading...</span>
+    <span class="stat" id="stat-catalog">Loading...</span>
+    <span class="stat" id="stat-ok"></span>
+    <span class="stat warn" id="stat-missing"></span>
+    <span class="stat err" id="stat-profileonly"></span>
+  </div>
+</header>
+
+<main>
+
+<section id="section-collisions">
+  <h2>Name collisions — same flavor, different names across surfaces</h2>
+  <div class="collision-grid" id="collision-grid"></div>
+</section>
+
+<section id="section-grid">
+  <h2>All flavors — catalog + profiles unified</h2>
+  <div class="filter-bar">
+    <input type="text" id="search" placeholder="Filter flavors...">
+    <label><input type="checkbox" id="show-ok" checked> Has both</label>
+    <label><input type="checkbox" id="show-warn" checked> Catalog only (no profile)</label>
+    <label><input type="checkbox" id="show-profileonly" checked> Profile only (not in catalog)</label>
+    <span class="filter-count" id="filter-count"></span>
+  </div>
+  <div class="col-header">
+    <span style="text-align:left">Flavor + description</span>
+    <span>Widget<br>mini ×5</span>
+    <span>Map<br>mini ×4</span>
+    <span>Radar/Card<br>HD ×4</span>
+    <span>OG / Social<br>HD ×5</span>
+    <span>Colors + Profile</span>
+  </div>
+  <div class="flavor-grid" id="flavor-grid"></div>
+</section>
+
+</main>
+
+<script>
+var WORKER_BASE = (window.CustardPlanner && window.CustardPlanner.WORKER_BASE) || 'https://custard.chriskaschner.com';
+
+// Known name collisions to highlight at top
+var COLLISIONS = [
+  {
+    label: 'Chocolate name split',
+    a: { name: 'Chocolate Volcano',      has_profile: true,  where: 'flavor-colors.js profile, catalog' },
+    b: { name: 'Chocolate Oreo Volcano', has_profile: false, where: 'catalog, flavor-matcher.js, archetypes' },
+  },
+  {
+    label: 'Georgia Peach name split',
+    a: { name: 'Georgia Peach',          has_profile: true,  where: 'flavor-colors.js profile' },
+    b: { name: 'Georgia Peach Pecan',    has_profile: false, where: 'catalog, flavor-matcher.js pecan group, map fallback' },
+  },
+  {
+    label: 'Salted Caramel name split',
+    a: { name: 'Salted Double Caramel Pecan', has_profile: true,  where: 'flavor-colors.js profile' },
+    b: { name: 'Salted Caramel Pecan Pie',    has_profile: false, where: 'catalog, flavor-matcher.js caramel group' },
+  },
+  {
+    label: 'OREO Cheesecake variants',
+    a: { name: 'OREO Cookie Cheesecake', has_profile: true,  where: 'flavor-colors.js profile, catalog' },
+    b: { name: 'OREO Cheesecake',        has_profile: false, where: 'catalog only (separate entry)' },
+  },
+  {
+    label: 'Reese\'s / PB Cup names',
+    a: { name: "Really Reese's",    has_profile: true,  where: 'flavor-colors.js profile, catalog' },
+    b: { name: 'Peanut Butter Cup', has_profile: false, where: 'catalog, flavor-matcher.js peanutButter group' },
+  },
+];
+
+// ---- Color / cone renderer ----
+var flavorColorData = null;
+var FB_BASE = { vanilla:'#F5DEB3', chocolate:'#7B4A2E', dark_chocolate:'#4B2E2E', mint:'#8FD9A8', strawberry:'#E88AAE', caramel:'#C58A45', cheesecake:'#F3E7CB', butter_pecan:'#F2E7D1', peach:'#F1B37C' };
+var FB_CONE = { waffle:'#D2691E', waffle_dark:'#B8860B' };
+var FB_TOP  = { oreo:'#3A2E2A', andes:'#1FAE7A', cookie_dough:'#C48A5A', brownie:'#4B2E2E', peanut_butter_cup:'#7B4A2E', pecan:'#A56A43', caramel_bits:'#C58A45', heath:'#C58A45', raspberry:'#B24A64', reeses:'#A56A43' };
+var FB_RIB  = { caramel:'#C58A45', fudge:'#4B2E2E', peanut_butter:'#9B6A3A', marshmallow:'#EDE3D1', strawberry:'#B24A64', lemon:'#F2D14C', blackberry:'#5A3D6E' };
+
+function nfk(n) { return String(n||'').toLowerCase().replace(/[\u00ae\u2122]/g,'').replace(/[\u2018\u2019]/g,"'").replace(/\s+/g,' ').trim(); }
+function getProfile(name) { if (!flavorColorData||!name) return null; return (flavorColorData.profiles||{})[nfk(name)]||null; }
+function baseCol(name) {
+  var k=nfk(name), p=getProfile(name), bc=flavorColorData?flavorColorData.base_colors||{}:{};
+  if (p&&bc[p.base]) return bc[p.base];
+  if (k.includes('mint')) return bc.mint||FB_BASE.mint;
+  if (k.includes('dark choc')) return bc.dark_chocolate||FB_BASE.dark_chocolate;
+  if (k.includes('chocolate')||k.includes('cocoa')) return bc.chocolate||FB_BASE.chocolate;
+  if (k.includes('strawberry')) return bc.strawberry||FB_BASE.strawberry;
+  if (k.includes('cheesecake')) return bc.cheesecake||FB_BASE.cheesecake;
+  if (k.includes('caramel')) return bc.caramel||FB_BASE.caramel;
+  if (k.includes('peach')) return bc.peach||FB_BASE.peach;
+  if (k.includes('butter pecan')) return bc.butter_pecan||FB_BASE.butter_pecan;
+  return bc.vanilla||FB_BASE.vanilla;
+}
+function lightenHex(hex,amt) { var r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16); return '#'+[r,g,b].map(function(c){return Math.round(c+(255-c)*amt).toString(16).padStart(2,'0');}).join('').toUpperCase(); }
+function r(x,y,w,h,fill) { return '<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" fill="'+fill+'"/>'; }
+
+function miniCone(name,s) {
+  s=s||5;
+  var p=getProfile(name), bc=flavorColorData?flavorColorData.base_colors||{}:{}, tc=flavorColorData?flavorColorData.topping_colors||{}:{}, rc=flavorColorData?flavorColorData.ribbon_colors||{}:{}, cc=flavorColorData?(flavorColorData.cone_colors||FB_CONE):FB_CONE;
+  var bCol=(p&&bc[p.base])?bc[p.base]:baseCol(name), rkKey=p?p.ribbon:null, rCol=rkKey?(rc[rkKey]||FB_RIB[rkKey]||null):null;
+  var density=p?p.density:'standard', tops=p?(p.toppings||[]):[], tSlots;
+  if(density==='pure') tSlots=[];
+  else if(density==='double'){tSlots=tops.length>0?[tops[0],tops[0]]:[];if(tops.length>1)tSlots.push(tops[1]);}
+  else if(density==='explosion') tSlots=tops.slice(0,4);
+  else tSlots=tops.slice(0,4);
+  var out=[];
+  [[3,5],[2,6],[1,7],[1,7],[1,7],[2,6]].forEach(function(row,i){for(var c=row[0];c<=row[1];c++)out.push(r(c*s,i*s,s,s,bCol));});
+  var tsl=[[2,1],[6,1],[3,3],[5,2]];
+  tSlots.forEach(function(tk,ti){if(ti===3&&rCol)return;var tcol=tc[tk]||FB_TOP[tk];if(!tcol)return;out.push(r(tsl[ti][0]*s,tsl[ti][1]*s,s,s,tcol));});
+  if(rCol)[[3,0],[4,1],[5,2]].forEach(function(rs){out.push(r(rs[0]*s,rs[1]*s,s,s,rCol));});
+  [[2,6],[2,6],[3,5],[3,5]].forEach(function(row,cr){for(var c=row[0];c<=row[1];c++){var wc=((cr+c)%2===0)?cc.waffle:cc.waffle_dark;out.push(r(c*s,(cr+6)*s,s,s,wc));}});
+  out.push(r(4*s,10*s,s,s,cc.waffle_dark));
+  return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+(9*s)+' '+(11*s)+'" width="'+(9*s)+'" height="'+(11*s)+'" shape-rendering="crispEdges">'+out.join('')+'</svg>';
+}
+
+function hdCone(name,s) {
+  s=s||5;
+  var p=getProfile(name), bc=flavorColorData?flavorColorData.base_colors||{}:{}, tc=flavorColorData?flavorColorData.topping_colors||{}:{}, rc=flavorColorData?flavorColorData.ribbon_colors||{}:{}, cc=flavorColorData?(flavorColorData.cone_colors||FB_CONE):FB_CONE, TIP='#8B5A2B';
+  var bCol=(p&&bc[p.base])?bc[p.base]:baseCol(name), rkKey=p?p.ribbon:null, rCol=rkKey?(rc[rkKey]||FB_RIB[rkKey]||null):null;
+  var density=p?p.density:'standard', tops=p?(p.toppings||[]):[], tSlots;
+  if(density==='pure') tSlots=[];
+  else if(density==='double'){var pri=tops[0],sec=tops[1]||pri;tSlots=pri?[pri,pri,sec,pri,sec,pri,sec]:[];}
+  else if(density==='explosion'){tSlots=[];for(var i=0;i<8;i++)tSlots.push(tops[i%tops.length]||tops[0]);}
+  else if(density==='overload'){tSlots=tops.length?[tops[0],tops[0],tops[0],tops[0],tops[0],tops[0]]:[];}
+  else{tSlots=[];for(var si=0;si<6;si++)tSlots.push(tops[si%tops.length]||tops[0]);}
+  var hl=lightenHex(bCol,0.3), out=[];
+  [[4,13],[2,15],[2,15],[2,15],[2,15],[2,15],[2,15],[2,15],[2,15],[2,15],[2,15],[4,13]].forEach(function(row,i){for(var c=row[0];c<=row[1];c++)out.push(r(c*s,i*s,s,s,bCol));});
+  [[4,0],[3,1]].forEach(function(h){out.push(r(h[0]*s,h[1]*s,s,s,hl));});
+  var tsl=[[4,2],[12,1],[6,3],[14,5],[3,6],[11,7],[5,9],[13,8]];
+  tSlots.forEach(function(tk,ti){var tcol=tc[tk]||FB_TOP[tk];if(!tcol)return;out.push(r(tsl[ti][0]*s,tsl[ti][1]*s,s,s,tcol));});
+  if(rCol)[[7,1],[8,3],[9,4],[10,5],[9,7],[8,9]].forEach(function(rs){out.push(r(rs[0]*s,rs[1]*s,s,s,rCol));});
+  [[4,13],[4,13],[5,12],[5,12],[6,11],[6,11],[7,10],[7,10],[8,9]].forEach(function(row,cr){for(var c=row[0];c<=row[1];c++){var wc=((cr+c)%2===0)?cc.waffle:cc.waffle_dark;out.push(r(c*s,(cr+12)*s,s,s,wc));}});
+  out.push(r(8*s,21*s,s,s,TIP));out.push(r(9*s,21*s,s,s,TIP));
+  return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+(18*s)+' '+(22*s)+'" width="'+(18*s)+'" height="'+(22*s)+'" shape-rendering="crispEdges">'+out.join('')+'</svg>';
+}
+
+// ---- Collision section ----
+function buildCollisions() {
+  var el = document.getElementById('collision-grid');
+  el.innerHTML = COLLISIONS.map(function(c) {
+    var side = function(s) {
+      var badge = s.has_profile
+        ? '<span class="badge badge-ok">profile</span>'
+        : '<span class="badge badge-err">no profile</span>';
+      var cone = s.has_profile ? hdCone(s.name, 3) : '<span class="placeholder">fallback</span>';
+      return '<div class="collision-side">'
+        + '<div class="name">'+s.name+'</div>'
+        + badge
+        + cone
+        + '<div class="label">'+s.where+'</div>'
+        + '</div>';
+    };
+    return '<div class="collision-pair"><h3>'+c.label+'</h3><div class="sides">'+side(c.a)+side(c.b)+'</div></div>';
+  }).join('');
+}
+
+// ---- Flavor row ----
+function profileTitle(id) {
+  var t = id.split(' ').map(function(w){return w.charAt(0).toUpperCase()+w.slice(1);}).join(' ');
+  return t.replace(/\bOreo\b/g,'OREO');
+}
+
+function buildRow(flavor, profiles) {
+  var name = flavor.title;
+  var desc = flavor.description || '';
+  var hasProfile = !!getProfile(name);
+  var inCatalog  = !flavor._profileOnly;
+  var profileOnly = flavor._profileOnly;
+
+  // status
+  var status, rowBadge;
+  if (hasProfile && inCatalog)  { status = 'ok';           rowBadge = '<span class="row-badge badge-ok">profile + catalog</span>'; }
+  else if (!hasProfile)         { status = 'warn';         rowBadge = '<span class="row-badge badge-err">no profile</span>'; }
+  else                          { status = 'profile-only'; rowBadge = '<span class="row-badge badge-warn">profile only — not in catalog</span>'; }
+
+  var row = document.createElement('div');
+  row.className = 'flavor-row status-'+status;
+  row.dataset.name = name.toLowerCase();
+  row.dataset.status = status;
+
+  // col 1: name
+  var c1 = '<div class="col col-name">'
+    + '<span class="flavor-title">'+name+'</span>'
+    + (desc ? '<span class="flavor-desc">'+desc+'</span>' : '')
+    + rowBadge
+    + '</div>';
+
+  // col 2: mini x5
+  var c2 = '<div class="col">'+miniCone(name,5)+'</div>';
+
+  // col 3: map marker (mini x4 in pin)
+  var ac = baseCol(name);
+  var c3 = '<div class="col"><div class="marker-wrap"><div class="marker-pin" style="border-color:'+ac+'">'+miniCone(name,4)+'</div></div></div>';
+
+  // col 4: HD x4
+  var c4 = '<div class="col">'+hdCone(name,4)+'</div>';
+
+  // col 5: HD x5
+  var c5 = '<div class="col">'+hdCone(name,5)+'</div>';
+
+  // col 6: swatches + meta
+  var c6;
+  if (hasProfile) {
+    var p = getProfile(name);
+    var bc2 = flavorColorData?flavorColorData.base_colors||{}:{};
+    var tc  = flavorColorData?flavorColorData.topping_colors||{}:{};
+    var rc2 = flavorColorData?flavorColorData.ribbon_colors||{}:{};
+    var sw = '';
+    if (p && bc2[p.base]) sw += '<div class="swatch-group"><div class="sw" style="background:'+bc2[p.base]+'" title="base: '+p.base+'"></div><div class="sw-label">'+p.base+'</div></div>';
+    var seenT = {};
+    (p?p.toppings||[]:[] ).forEach(function(tk){ if(seenT[tk])return;seenT[tk]=1; var tc2=tc[tk]||FB_TOP[tk]; if(tc2) sw+='<div class="swatch-group"><div class="sw" style="background:'+tc2+'" title="topping: '+tk+'"></div><div class="sw-label">'+tk+'</div></div>'; });
+    if (p&&p.ribbon){ var rcol=rc2[p.ribbon]||FB_RIB[p.ribbon]; if(rcol) sw+='<div class="swatch-group"><div class="sw" style="background:'+rcol+';border:2px dashed rgba(255,255,255,0.25)" title="ribbon: '+p.ribbon+'"></div><div class="sw-label">'+p.ribbon+'</div></div>'; }
+    var den = p?p.density||'standard':'standard';
+    c6 = '<div class="col col-meta">'
+      + '<div class="swatch-row">'+sw+'</div>'
+      + '<div class="meta-tags"><span class="mtag d-'+den+'">'+den+'</span>'
+      + (p&&p.ribbon?'<span class="mtag">ribbon: '+p.ribbon+'</span>':'')
+      + '</div>'
+      + '</div>';
+  } else {
+    c6 = '<div class="col col-meta"><div class="no-profile-msg">No cone profile — all surfaces will use fallback colors for this flavor.</div></div>';
+  }
+
+  row.innerHTML = c1+c2+c3+c4+c5+c6;
+  return row;
+}
+
+// ---- Filter ----
+function applyFilters() {
+  var q = document.getElementById('search').value.toLowerCase();
+  var showOk   = document.getElementById('show-ok').checked;
+  var showWarn = document.getElementById('show-warn').checked;
+  var showProf = document.getElementById('show-profileonly').checked;
+  var total=0, visible=0;
+  document.querySelectorAll('.flavor-row').forEach(function(row){
+    total++;
+    var name = row.dataset.name||'';
+    var status = row.dataset.status;
+    var matchQ = !q || name.includes(q);
+    var matchS = (status==='ok'&&showOk) || (status==='warn'&&showWarn) || (status==='profile-only'&&showProf);
+    row.style.display = (matchQ&&matchS) ? '' : 'none';
+    if(matchQ&&matchS) visible++;
+  });
+  document.getElementById('filter-count').textContent = visible+' of '+total+' shown';
+}
+['search','show-ok','show-warn','show-profileonly'].forEach(function(id){
+  var el = document.getElementById(id);
+  if(el) el.addEventListener(id==='search'?'input':'change', applyFilters);
+});
+
+// ---- Main build ----
+function build(colorData, catalogFlavors) {
+  flavorColorData = colorData;
+  var profiles = colorData ? colorData.profiles||{} : {};
+
+  // Merge: catalog entries + profile-only entries
+  var seen = {};
+  var allFlavors = [];
+  catalogFlavors.forEach(function(f){ seen[nfk(f.title)]=true; allFlavors.push(f); });
+
+  // Add profiles that have no matching catalog entry
+  Object.keys(profiles).forEach(function(id){
+    if (!seen[id]) {
+      allFlavors.push({ title: profileTitle(id), description: '', _profileOnly: true });
+    }
+  });
+
+  // Sort alphabetically
+  allFlavors.sort(function(a,b){ return a.title.localeCompare(b.title); });
+
+  // Stats
+  var okCount=0, warnCount=0, profOnlyCount=0;
+  allFlavors.forEach(function(f){
+    var hp = !!getProfile(f.title);
+    if (hp && !f._profileOnly) okCount++;
+    else if (!hp) warnCount++;
+    else profOnlyCount++;
+  });
+
+  document.getElementById('stat-profiles').innerHTML = '<span>'+Object.keys(profiles).length+'</span> color profiles';
+  document.getElementById('stat-profiles').className = 'stat ok';
+  document.getElementById('stat-catalog').innerHTML = '<span>'+catalogFlavors.length+'</span> catalog flavors';
+  document.getElementById('stat-catalog').className = 'stat ok';
+  document.getElementById('stat-ok').innerHTML = '<span>'+okCount+'</span> aligned';
+  document.getElementById('stat-ok').className = 'stat ok';
+  document.getElementById('stat-missing').innerHTML = '<span>'+warnCount+'</span> missing profile';
+  document.getElementById('stat-profileonly').innerHTML = '<span>'+profOnlyCount+'</span> profile-only';
+
+  // Build collision section
+  buildCollisions();
+
+  // Build grid
+  var grid = document.getElementById('flavor-grid');
+  grid.innerHTML = '';
+  allFlavors.forEach(function(f){ grid.appendChild(buildRow(f, profiles)); });
+  applyFilters();
+}
+
+// Fetch both APIs in parallel
+var colorData = null, catalogData = null, loaded = 0;
+function tryBuild() { if(++loaded===2) build(colorData, catalogData||[]); }
+
+fetch(WORKER_BASE+'/api/v1/flavor-colors')
+  .then(function(r){return r.ok?r.json():null;})
+  .then(function(d){ colorData=d; tryBuild(); })
+  .catch(function(){ tryBuild(); });
+
+fetch(WORKER_BASE+'/api/v1/flavors/catalog')
+  .then(function(r){return r.ok?r.json():null;})
+  .then(function(d){
+    if (d && Array.isArray(d.flavors)) catalogData=d.flavors;
+    else if (Array.isArray(d)) catalogData=d;
+    tryBuild();
+  })
+  .catch(function(){ tryBuild(); });
+</script>
+</body>
+</html>
