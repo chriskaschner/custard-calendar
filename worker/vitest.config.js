@@ -16,6 +16,10 @@ export default defineConfig({
         branches: 60,
         functions: 70,
         lines: 70,
+        // Per-file floors to prevent regression in previously-low-coverage modules
+        'src/email-sender.js': { branches: 63 },
+        'src/snapshot-targets.js': { branches: 75 },
+        'src/metrics.js': { branches: 59 },
       },
     },
   },

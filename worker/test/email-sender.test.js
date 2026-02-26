@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { sendAlertEmail, sendWeeklyDigestEmail } from '../src/email-sender.js';
+import { sendAlertEmail, sendWeeklyDigestEmail, sendConfirmationEmail } from '../src/email-sender.js';
 
 // Capture what gets sent to the Resend API without making real HTTP calls
 let capturedBody = null;
@@ -99,5 +99,88 @@ describe('sendWeeklyDigestEmail — signals block', () => {
     await sendWeeklyDigestEmail({ ...BASE_DIGEST_PARAMS, signals }, API_KEY, FROM);
     expect(capturedBody.html).toContain("This Week's Signals");
     expect(capturedBody.html).toContain('Mint Explosion peaks in December');
+  });
+});
+
+describe('sendConfirmationEmail', () => {
+  beforeEach(() => { capturedBody = null; });
+
+  it('sends to the Resend API with recipient and subject', async () => {
+    await sendConfirmationEmail(
+      {
+        email: 'user@example.com',
+        storeName: 'Mt. Horeb',
+        favorites: ['Turtle', 'Caramel Cashew'],
+        confirmUrl: 'https://example.com/confirm?token=abc123',
+      },
+      API_KEY,
+      FROM,
+    );
+    expect(capturedBody).not.toBeNull();
+    expect(capturedBody.to[0]).toBe('user@example.com');
+    expect(capturedBody.subject).toContain('Confirm');
+  });
+
+  it('includes store name and confirm link in the body', async () => {
+    await sendConfirmationEmail(
+      {
+        email: 'user@example.com',
+        storeName: 'Mt. Horeb',
+        favorites: ['Turtle'],
+        confirmUrl: 'https://example.com/confirm?token=abc123',
+      },
+      API_KEY,
+      FROM,
+    );
+    expect(capturedBody.html).toContain('Mt. Horeb');
+    expect(capturedBody.html).toContain('https://example.com/confirm?token=abc123');
+  });
+
+  it('escapes HTML in storeName and favorites', async () => {
+    await sendConfirmationEmail(
+      {
+        email: 'user@example.com',
+        storeName: '<b>Evil</b>',
+        favorites: ['<script>xss</script>'],
+        confirmUrl: 'https://example.com/confirm',
+      },
+      API_KEY,
+      FROM,
+    );
+    expect(capturedBody.html).not.toContain('<b>Evil</b>');
+    expect(capturedBody.html).not.toContain('<script>');
+    expect(capturedBody.html).toContain('&lt;b&gt;Evil&lt;/b&gt;');
+  });
+});
+
+describe('sendWeeklyDigestEmail — forecast block', () => {
+  beforeEach(() => { capturedBody = null; });
+
+  it('renders forecast predictions block when forecast.predictions is present', async () => {
+    const forecast = {
+      predictions: [
+        { flavor: 'Turtle', probability: 0.45 },
+        { flavor: 'Caramel Cashew', probability: 0.25 },
+      ],
+    };
+    await sendWeeklyDigestEmail({ ...BASE_DIGEST_PARAMS, forecast }, API_KEY, FROM);
+    expect(capturedBody.html).toContain("Tomorrow's Estimated Outlook");
+    expect(capturedBody.html).toContain('Turtle');
+    expect(capturedBody.html).toContain('Caramel Cashew');
+  });
+
+  it('renders overdue flavors section inside forecast block', async () => {
+    const forecast = {
+      predictions: [{ flavor: 'Turtle', probability: 0.4 }],
+      overdue_flavors: [{ flavor: 'Turtle', days_since: 18, avg_gap: 10 }],
+    };
+    await sendWeeklyDigestEmail({ ...BASE_DIGEST_PARAMS, forecast }, API_KEY, FROM);
+    expect(capturedBody.html).toContain('Overdue');
+    expect(capturedBody.html).toContain('18d since last');
+  });
+
+  it('omits forecast block when forecast is null', async () => {
+    await sendWeeklyDigestEmail({ ...BASE_DIGEST_PARAMS, forecast: null }, API_KEY, FROM);
+    expect(capturedBody.html).not.toContain("Tomorrow's Estimated Outlook");
   });
 });

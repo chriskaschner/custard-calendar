@@ -149,6 +149,39 @@ describe('getCronCursor / setCronCursor', () => {
   });
 });
 
+describe('error paths — catch branches', () => {
+  it('getSubscriptionSlugs returns [] when KV list throws', async () => {
+    const badKV = {
+      list: vi.fn(async () => { throw new Error('KV unavailable'); }),
+      get: vi.fn(async () => null),
+    };
+    const result = await getSubscriptionSlugs(badKV);
+    expect(result).toEqual([]);
+  });
+
+  it('getCronCursor returns 0 when db is null', async () => {
+    const result = await getCronCursor(null, 'snapshot_harvest');
+    expect(result).toBe(0);
+  });
+
+  it('getCronCursor returns 0 when db.prepare throws', async () => {
+    const badDb = { prepare: vi.fn(() => { throw new Error('DB error'); }) };
+    const result = await getCronCursor(badDb, 'snapshot_harvest');
+    expect(result).toBe(0);
+  });
+
+  it('setCronCursor is a no-op when db is null', async () => {
+    // Should not throw
+    await expect(setCronCursor(null, 'snapshot_harvest', 5)).resolves.toBeUndefined();
+  });
+
+  it('setCronCursor swallows errors when db.prepare throws', async () => {
+    const badDb = { prepare: vi.fn(() => { throw new Error('DB write error'); }) };
+    // Should not throw — error is caught internally
+    await expect(setCronCursor(badDb, 'snapshot_harvest', 5)).resolves.toBeUndefined();
+  });
+});
+
 describe('batch cursor progression', () => {
   it('two calls advance through sorted list without skip or starve', async () => {
     const db = createMockDb(['alpha', 'bravo', 'charlie', 'delta', 'echo']);
