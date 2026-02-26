@@ -470,7 +470,7 @@ describe('GET /api/metrics/context/store/{slug} — specialty_flavor', () => {
 describe('GET /api/v1/metrics/flavor-hierarchy', () => {
   const CORS = { 'Access-Control-Allow-Origin': '*' };
 
-  // Build a mock D1 that returns pre-set dates for any slug IN (...) + normalized_flavor query.
+  // Build a mock D1 that returns pre-set {slug, date} rows for slug IN (...) + normalized_flavor.
   function createHierarchyMockD1(datesBySlug) {
     // datesBySlug: { [slug]: ['2025-01-01', ...], ... }
     return {
@@ -478,16 +478,15 @@ describe('GET /api/v1/metrics/flavor-hierarchy', () => {
         bind: vi.fn((...args) => ({
           all: vi.fn(async () => {
             // Last arg is the normalized_flavor; rest are slugs
-            const normalizedFlavor = args[args.length - 1];
             const slugArgs = args.slice(0, args.length - 1);
-            const dates = [];
+            const rows = [];
             for (const slug of slugArgs) {
               for (const d of (datesBySlug[slug] || [])) {
-                dates.push({ date: d });
+                rows.push({ slug, date: d });
               }
             }
-            dates.sort((a, b) => a.date.localeCompare(b.date));
-            return { results: dates };
+            rows.sort((a, b) => a.date.localeCompare(b.date));
+            return { results: rows };
           }),
           first: vi.fn(async () => null),
         })),
@@ -596,6 +595,28 @@ describe('GET /api/v1/metrics/flavor-hierarchy', () => {
     expect(body.scopes.store.appearances).toBe(0);
     expect(body.scopes.national).toBeNull(); // not in seed
     expect(body.effective_scope).toBe('national'); // fallback even if national is null
+  });
+
+  it('metro avg_gap is per-store average, not collapsed calendar-day gap', async () => {
+    // Regression: same-day appearances at two stores should NOT collapse into one
+    // calendar date, which would produce an artificially small avg_gap.
+    //
+    // Store A: flavor on Jan 1, Feb 1, Mar 1 -> avg_gap ~31d
+    // Store B: flavor on Jan 1, Feb 1, Mar 1 -> avg_gap ~31d (same days as A)
+    //
+    // Wrong (old Set dedup): deduped = [Jan1, Feb1, Mar1] -> avg_gap = 31d, appearances = 3
+    // Correct (per-slug avg):  total appearances = 6, avg_gap = mean(31, 31) = 31d
+    const storeADates = ['2024-01-01', '2024-02-01', '2024-03-01'];
+    const storeBDates = ['2024-01-01', '2024-02-01', '2024-03-01'];
+    const db = createHierarchyMockD1({ 'mt-horeb': storeADates, 'verona': storeBDates });
+    const url = makeUrl('Caramel Cashew', 'mt-horeb');
+    const res = await handleMetricsRoute('/api/metrics/flavor-hierarchy', { DB: db }, CORS, url);
+    const body = await res.json();
+    // appearances must count store-days (3 + 3 = 6), not deduped calendar days (3)
+    expect(body.scopes.metro.appearances).toBe(6);
+    // avg_gap should be ~31 (mean of per-store gaps), not artificially small
+    expect(body.scopes.metro.avg_gap_days).toBeGreaterThanOrEqual(28);
+    expect(body.scopes.metro.avg_gap_days).toBeLessThanOrEqual(35);
   });
 });
 

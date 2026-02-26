@@ -75,28 +75,57 @@ function computeGapStats(dates) {
 }
 
 /**
- * Query all appearance dates for a flavor across a set of slugs.
+ * Query all appearance rows {slug, date} for a flavor across a set of slugs.
  * Batches into groups of 98 slugs to stay under D1's 100-bind limit.
  */
 async function queryDatesForSlugs(db, slugs, normalizedFlavor) {
   if (!db || !slugs.length) return [];
   const SLUG_BATCH = 98; // leave 2 slots: 1 for flavor, 1 safety margin
-  const allDates = [];
+  const allRows = [];
   for (let i = 0; i < slugs.length; i += SLUG_BATCH) {
     const batch = slugs.slice(i, i + SLUG_BATCH);
     const placeholders = batch.map(() => '?').join(',');
     try {
       const result = await db.prepare(
-        `SELECT date FROM snapshots WHERE slug IN (${placeholders}) AND normalized_flavor = ? ORDER BY date ASC`,
+        `SELECT slug, date FROM snapshots WHERE slug IN (${placeholders}) AND normalized_flavor = ? ORDER BY date ASC`,
       ).bind(...batch, normalizedFlavor).all();
       for (const row of (result?.results || [])) {
-        allDates.push(row.date);
+        allRows.push({ slug: row.slug, date: row.date });
       }
     } catch {
       // Partial failure: continue with what we have
     }
   }
-  return allDates;
+  return allRows;
+}
+
+/**
+ * Compute appearances + avg_gap_days across multiple stores.
+ *
+ * Groups rows by slug, computes per-store avg_gap, then averages those gaps.
+ * This avoids the deduplication error in computeGapStats where same-day
+ * appearances from different stores collapse into one calendar date.
+ *
+ * appearances = total store-day count (not deduped calendar days).
+ * avg_gap_days = mean of per-store avg_gap_days (only stores with >= 2 appearances).
+ */
+function computeGapStatsPerSlug(rows) {
+  if (!rows.length) return { appearances: 0, avg_gap_days: null };
+  const bySlug = new Map();
+  for (const { slug, date } of rows) {
+    if (!bySlug.has(slug)) bySlug.set(slug, []);
+    bySlug.get(slug).push(date);
+  }
+  const slugGaps = [];
+  for (const dates of bySlug.values()) {
+    const stats = computeGapStats(dates);
+    if (stats.avg_gap_days !== null) slugGaps.push(stats.avg_gap_days);
+  }
+  const avg_gap_days =
+    slugGaps.length > 0
+      ? Math.round(slugGaps.reduce((a, b) => a + b, 0) / slugGaps.length)
+      : null;
+  return { appearances: rows.length, avg_gap_days };
 }
 
 /**
@@ -132,32 +161,36 @@ async function handleFlavorHierarchyMetrics(rawFlavor, rawSlug, env, corsHeaders
   const scopes = {};
 
   // --- Store scope ---
+  // Single store: extract dates from rows, use computeGapStats (dedup is correct for one store).
   {
-    const dates = db ? await queryDatesForSlugs(db, [slug], normalizedFlavor) : [];
-    const stats = computeGapStats(dates);
+    const rows = db ? await queryDatesForSlugs(db, [slug], normalizedFlavor) : [];
+    const stats = computeGapStats(rows.map((r) => r.date));
     scopes.store = { appearances: stats.appearances, avg_gap_days: stats.avg_gap_days };
   }
 
   // --- Metro scope (WI only) ---
+  // Multiple stores: use computeGapStatsPerSlug to avoid collapsing same-day
+  // appearances from different stores into a single calendar date.
   const metro = storeCity ? (WI_METRO_MAP[storeCity] || null) : null;
   if (metro && metro !== 'other') {
     const metroSlugs = STORE_INDEX
       .filter((s) => WI_METRO_MAP[(s.city || '').toLowerCase().trim()] === metro)
       .map((s) => s.slug);
-    const dates = db ? await queryDatesForSlugs(db, metroSlugs, normalizedFlavor) : [];
-    const stats = computeGapStats(dates);
+    const rows = db ? await queryDatesForSlugs(db, metroSlugs, normalizedFlavor) : [];
+    const stats = computeGapStatsPerSlug(rows);
     scopes.metro = { appearances: stats.appearances, avg_gap_days: stats.avg_gap_days, metro };
   } else {
     scopes.metro = null;
   }
 
   // --- State scope ---
+  // Multiple stores: use computeGapStatsPerSlug (same reason as metro).
   if (storeState) {
     const stateSlugs = STORE_INDEX
       .filter((s) => s.state === storeState)
       .map((s) => s.slug);
-    const dates = db ? await queryDatesForSlugs(db, stateSlugs, normalizedFlavor) : [];
-    const stats = computeGapStats(dates);
+    const rows = db ? await queryDatesForSlugs(db, stateSlugs, normalizedFlavor) : [];
+    const stats = computeGapStatsPerSlug(rows);
     scopes.state = { appearances: stats.appearances, avg_gap_days: stats.avg_gap_days, state: storeState };
   } else {
     scopes.state = null;
