@@ -126,18 +126,15 @@ export async function handleApiToday(url, env, corsHeaders, fetchFlavorsFn = def
             avgGapDays = Math.round(totalGap / (dates.length - 1));
           }
 
-          // Percentile ranking: where does this flavor's count fall among all flavors?
-          const thisCnt = appearances;
-          const counts = allCounts.results.map(r => r.cnt).sort((a, b) => a - b);
-          const rank = counts.filter(c => c < thisCnt).length;
-          const percentile = rank / counts.length;
-
+          // Derive rarity label from avg_gap_days so it stays consistent with
+          // the "Every N days" cadence text shown to the user. A count-based
+          // percentile rank produces contradictory labels when D1 data is sparse
+          // (a flavor with few D1 rows ranks "Ultra Rare" even if avg_gap is 47d).
           let label = null;
-          if (percentile < 0.10) label = 'Ultra Rare';
-          else if (percentile < 0.25) label = 'Rare';
-          else if (percentile < 0.50) label = 'Uncommon';
-          else if (percentile < 0.75) label = 'Common';
-          else label = 'Staple';
+          if (avgGapDays !== null) {
+            if (avgGapDays > 120) label = 'Ultra Rare';
+            else if (avgGapDays > 60) label = 'Rare';
+          }
 
           rarity = { appearances, avg_gap_days: avgGapDays, label };
         }

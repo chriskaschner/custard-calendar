@@ -25,6 +25,23 @@ var CustardPlanner = (function () {
     return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
 
+  /**
+   * Derive a rarity label from avg_gap_days (per-store cadence).
+   * This keeps the badge consistent with the "Every N days" cadence text.
+   * Thresholds:
+   *   > 120 days  -> Ultra Rare  (appears less than ~3x/year)
+   *   > 60 days   -> Rare        (appears roughly every 2-4 months)
+   *   <= 60 days  -> null        (appears frequently enough to not be notable)
+   */
+  function rarityLabelFromGapDays(avgGapDays) {
+    var days = Math.round(Number(avgGapDays));
+    if (!Number.isFinite(days) || days < 2) return null;
+    if (days > 120) return 'Ultra Rare';
+    if (days > 60) return 'Rare';
+    return null;
+  }
+
+  // Keep percentile helpers for trivia/leaderboard usage (not rarity badges)
   function rarityLabelFromPercentile(percentile) {
     var p = Number(percentile);
     if (!Number.isFinite(p)) return null;
@@ -915,6 +932,7 @@ var CustardPlanner = (function () {
     escapeHtml: escapeHtml,
     getPrimaryStoreSlug: getPrimaryStoreSlug,
     setPrimaryStoreSlug: setPrimaryStoreSlug,
+    rarityLabelFromGapDays: rarityLabelFromGapDays,
     rarityLabelFromPercentile: rarityLabelFromPercentile,
     rarityLabelFromRank: rarityLabelFromRank,
     formatCadenceText: formatCadenceText,

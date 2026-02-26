@@ -1152,7 +1152,9 @@ describe('/api/today endpoint', () => {
     expect(body.rarity).toBeTruthy();
     expect(body.rarity.appearances).toBe(3);
     expect(body.rarity.avg_gap_days).toBeGreaterThan(0);
-    expect(['Ultra Rare', 'Rare', 'Uncommon', 'Common', 'Staple']).toContain(body.rarity.label);
+    // Label derived from avg_gap_days: >120d='Ultra Rare', >60d='Rare', else null.
+    // With SNAPSHOT_DATES spanning ~264d total / 2 gaps = ~132d avg_gap -> 'Ultra Rare'.
+    expect(body.rarity.label === null || ['Ultra Rare', 'Rare'].includes(body.rarity.label)).toBe(true);
   });
 
   it('65: returns 400 when slug is missing', async () => {

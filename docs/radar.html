@@ -1100,10 +1100,14 @@
     }
 
     function rarityBadge(flavorName) {
-      const key = normalize(flavorName);
-      const percentile = rarityPercentileMap.get(key);
-      if (percentile === undefined) return null;
-      return CustardPlanner.rarityLabelFromPercentile(percentile);
+      // Use avg_gap_days (per-store cadence) so the badge is consistent with
+      // the "Every N days" cadence text shown alongside it.
+      if (!selectedSlug) return null;
+      const cacheKey = flavorStatsKey(selectedSlug, flavorName);
+      if (!cacheKey) return null;
+      const stats = flavorStatsCache.get(cacheKey);
+      if (!stats) return null;
+      return CustardPlanner.rarityLabelFromGapDays(stats.avg_gap_days);
     }
 
     function streakBadge(flavorName) {

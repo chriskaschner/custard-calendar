@@ -133,7 +133,12 @@ async function maybeFulfillFlavorStats(route, path, url) {
     body: JSON.stringify({
       flavor,
       appearances: 42,
-      avg_gap_days: normalizeFlavor(flavor) === "turtle" ? 56 : 33,
+      // Georgia Peach: 150d avg gap -> "Ultra Rare" (>120d threshold)
+      // Turtle: 80d avg gap -> "Rare" (>60d threshold)
+      // All others: 33d avg gap -> no badge (<= 60d threshold)
+      avg_gap_days: normalizeFlavor(flavor) === "georgia peach" ? 150
+        : normalizeFlavor(flavor) === "turtle" ? 80
+        : 33,
       last_seen: isoDateOffset(-3),
       days_since_last: 3,
       overdue_days: 0,
@@ -587,10 +592,9 @@ test("rarity badges use percentile distribution, not absolute counts", async ({ 
   // Wait for metrics preload + re-render with badges
   await page.waitForTimeout(5000);
 
-  // Georgia Peach (5 appearances, bottom percentile of 12) should get "Ultra Rare"
+  // Georgia Peach (mock avg_gap=150d > 120d threshold) should show "Ultra Rare" badge
   const rarityBadges = page.locator(".intel-badge-rarity");
   const badgeTexts = await rarityBadges.allTextContents();
-  // At least one should be "Ultra Rare" (Georgia Peach)
   expect(badgeTexts).toContain("Ultra Rare");
 });
 
