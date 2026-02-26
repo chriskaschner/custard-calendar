@@ -404,6 +404,227 @@ export function renderConeHDSVG(flavorName, scale = 1) {
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" shape-rendering="crispEdges">${rects.join('')}</svg>`;
 }
 
+// --- Premium cone renderer (24×28 pixel grid, scatter toppings) ---
+//
+// Third tier above HD and Hero. Key differences from Hero:
+//   - Round dome scoop geometry (narrows at top AND bottom)
+//   - Per-pixel texture hash (5% lighter / 5% darker / 90% base)
+//   - Seeded Mulberry32 scatter toppings with collision detection
+//   - Per-piece shaped toppings (dot / chunk / sliver)
+//   - Diagonal ribbon band (7 anchor points, 3×2 each)
+//
+// Grid: 24×28px. Top 14 rows = scoop, bottom 14 rows = cone.
+// Intended usage: scale 6 = 144×168px (audit page column).
+
+// Scoop rows [startCol, endCol] for rows 0-13 (row 0 = top crown).
+// Capped to 0-23 (grid is 24px wide).
+const _PREM_SCOOP_ROWS = [
+  [3, 18], [1, 22], [0, 23], [0, 23], [0, 23], [0, 23], [0, 23],
+  [0, 23], [1, 22], [2, 20], [3, 18], [4, 16], [5, 15], [6, 14],
+];
+
+// Cone rows [startCol, endCol] for rows 14-27 (checkerboard taper).
+const _PREM_CONE_ROWS = [
+  [5, 19], [5, 19], [6, 18], [6, 18], [7, 17], [7, 17], [8, 16],
+  [8, 16], [9, 15], [9, 15], [10, 14], [10, 14], [11, 13], [11, 13],
+];
+
+// Ribbon path: 7 anchor points, each rendered 3px wide × 2px tall.
+// Overlapping points form a continuous diagonal band.
+const _PREM_RIBBON_PATH = [[6,2],[8,4],[10,6],[12,8],[14,10],[12,11],[10,12]];
+
+// Per-piece topping shapes (offsets from anchor [col, row]).
+const _PREM_TOPPING_SHAPES = {
+  default: [[0,0],[1,0],[0,1],[1,1]],             // 2×2 dot
+  chunk:   [[0,0],[1,0],[2,0],[0,1],[1,1],[2,1]], // 3×2 chunk
+  sliver:  [[0,0],[0,1],[0,2]],                   // 1×3 sliver
+};
+
+// Map topping color keys to shape type; unrecognized → default (dot).
+const _PREM_SHAPE_MAP = {
+  pie_crust: 'chunk', pecan: 'chunk', pretzel: 'chunk',
+  heath: 'sliver', chocolate_chip: 'sliver',
+};
+
+/**
+ * Mulberry32 PRNG — returns a closure that yields floats in [0, 1).
+ */
+function _mulberry32(seed) {
+  let s = seed >>> 0;
+  return function () {
+    s = (s + 0x6D2B79F5) >>> 0;
+    let t = Math.imul(s ^ (s >>> 15), s | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/**
+ * Resolve the flat topping list for scatter placement.
+ *
+ * Rules by density:
+ *   pure     → []
+ *   standard → toppings as-is
+ *   double   → first topping doubled, second topping once
+ *   explosion→ every topping doubled (flatMap × 2)
+ *   overload → first topping × 6
+ *
+ * @param {{ toppings: string[], density: string }} profile
+ * @returns {string[]}
+ */
+export function resolvePremiumToppingList(profile) {
+  const toppings = profile.toppings || [];
+  const density = profile.density || 'standard';
+  if (density === 'pure') return [];
+  if (density === 'double') {
+    if (toppings.length === 0) return [];
+    const result = [toppings[0], toppings[0]];
+    if (toppings.length > 1) result.push(toppings[1]);
+    return result;
+  }
+  if (density === 'explosion') {
+    return toppings.flatMap(t => [t, t]);
+  }
+  if (density === 'overload') {
+    return toppings.length > 0 ? Array(6).fill(toppings[0]) : [];
+  }
+  return toppings.slice(); // standard
+}
+
+/**
+ * Render a premium SVG cone for a flavor at the given scale.
+ *
+ * Grid: 24×28px. Features: round dome scoop geometry, per-pixel texture
+ * hash, upper-left highlight cap, bottom shadow rim, diagonal ribbon band,
+ * and seeded scatter toppings with per-piece shapes and collision detection.
+ *
+ * @param {string} flavorName
+ * @param {number} [scale=1]
+ * @returns {string} SVG markup
+ */
+export function renderConePremiumSVG(flavorName, scale = 1) {
+  const profile = getFlavorProfile(flavorName);
+  const baseColor = BASE_COLORS[profile.base] || BASE_COLORS.vanilla;
+  const ribbonKey = profile.ribbon;
+  const hasRibbon = ribbonKey && profile.density !== 'pure';
+  const ribbonColor = hasRibbon ? (RIBBON_COLORS[ribbonKey] || null) : null;
+
+  const GRID_W = 24;
+  const GRID_H = 28;
+  const w = GRID_W * scale;
+  const h = GRID_H * scale;
+  const s = scale;
+  const rects = [];
+
+  // Deterministic seed from flavor name
+  const seed = flavorName.split('').reduce((a, c) => (a * 31 + c.charCodeAt(0)) | 0, 0);
+  const rng = _mulberry32(seed);
+
+  function rect(col, row, pw, ph, color) {
+    rects.push(`<rect x="${col * s}" y="${row * s}" width="${pw * s}" height="${ph * s}" fill="${color}"/>`);
+  }
+
+  // Per-pixel texture hash: 5% lighter / 5% darker / 90% base (deterministic)
+  function texHash(col, row) {
+    const h = ((col * 2246822519) ^ (row * 3266489917) ^ seed) >>> 0;
+    const r = h % 20;
+    if (r === 0) return lightenHex(baseColor, 0.07);
+    if (r === 1) return darkenHex(baseColor, 0.07);
+    return baseColor;
+  }
+
+  const hlColor = lightenHex(baseColor, 0.22);
+  const shadowColor = darkenHex(baseColor, 0.10);
+
+  // 1. Base scoop fill with per-pixel texture hash
+  for (let row = 0; row < _PREM_SCOOP_ROWS.length; row++) {
+    const [sc, ec] = _PREM_SCOOP_ROWS[row];
+    for (let col = sc; col <= ec; col++) {
+      rect(col, row, 1, 1, texHash(col, row));
+    }
+  }
+
+  // 2. Highlight cap: upper-left cluster (rows 0-1 cols 4-7, rows 2-3 cols 3-5)
+  for (let col = 4; col <= 7; col++) {
+    rect(col, 0, 1, 1, hlColor);
+    rect(col, 1, 1, 1, hlColor);
+  }
+  for (let col = 3; col <= 5; col++) {
+    rect(col, 2, 1, 1, hlColor);
+    rect(col, 3, 1, 1, hlColor);
+  }
+
+  // 3. Shadow rim: outer edges of bottom 2 scoop rows (rows 12-13)
+  // Row 12: [5, 15] → shadow left 2 (5-6) and right 2 (14-15)
+  // Row 13: [6, 14] → shadow left 2 (6-7) and right 2 (13-14)
+  rect(5, 12, 1, 1, shadowColor); rect(6, 12, 1, 1, shadowColor);
+  rect(14, 12, 1, 1, shadowColor); rect(15, 12, 1, 1, shadowColor);
+  rect(6, 13, 1, 1, shadowColor); rect(7, 13, 1, 1, shadowColor);
+  rect(13, 13, 1, 1, shadowColor); rect(14, 13, 1, 1, shadowColor);
+
+  // 4. Ribbon: diagonal band rendered before toppings so toppings appear on top
+  if (ribbonColor) {
+    for (const [rx, ry] of _PREM_RIBBON_PATH) {
+      rect(rx, ry, 3, 2, ribbonColor);
+    }
+  }
+
+  // 5. Scatter toppings with Mulberry32 PRNG + collision detection
+  const toppingList = resolvePremiumToppingList(profile);
+  const totalPieces = toppingList.length * 2;
+  const occupied = new Set();
+
+  for (let pi = 0; pi < totalPieces; pi++) {
+    const toppingKey = toppingList[pi % toppingList.length];
+    const color = TOPPING_COLORS[toppingKey];
+    if (!color) continue;
+    const shapeKey = _PREM_SHAPE_MAP[toppingKey] || 'default';
+    const shape = _PREM_TOPPING_SHAPES[shapeKey];
+
+    for (let attempt = 0; attempt < 30; attempt++) {
+      const row = Math.floor(rng() * _PREM_SCOOP_ROWS.length);
+      const [sc, ec] = _PREM_SCOOP_ROWS[row];
+      const col = sc + Math.floor(rng() * (ec - sc + 1));
+
+      // Verify every shape pixel is within scoop bounds and unoccupied
+      let valid = true;
+      for (const [dc, dr] of shape) {
+        const pc = col + dc;
+        const pr = row + dr;
+        if (pr >= _PREM_SCOOP_ROWS.length) { valid = false; break; }
+        const [rsc, rec] = _PREM_SCOOP_ROWS[pr];
+        if (pc < rsc || pc > rec) { valid = false; break; }
+        if (occupied.has(pr * 100 + pc)) { valid = false; break; }
+      }
+
+      if (valid) {
+        for (const [dc, dr] of shape) {
+          const pc = col + dc;
+          const pr = row + dr;
+          occupied.add(pr * 100 + pc);
+          rect(pc, pr, 1, 1, color);
+        }
+        break;
+      }
+    }
+  }
+
+  // 6. Cone: checkerboard taper, rows 14-27
+  for (let ri = 0; ri < _PREM_CONE_ROWS.length; ri++) {
+    const absRow = ri + 14;
+    const [sc, ec] = _PREM_CONE_ROWS[ri];
+    for (let col = sc; col <= ec; col++) {
+      const color = ((absRow + col) % 2 === 0) ? CONE_COLORS.waffle : CONE_COLORS.waffle_dark;
+      rect(col, absRow, 1, 1, color);
+    }
+  }
+
+  // 7. Cone tip: last cone row (row 27) overridden with CONE_TIP_COLOR
+  rect(11, 27, 3, 1, CONE_TIP_COLOR);
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" shape-rendering="crispEdges">${rects.join('')}</svg>`;
+}
+
 // --- Hero cone renderer v2 (36×42 pixel grid) ---
 //
 // From-scratch redesign fixing three problems in the v1 26×24 design:

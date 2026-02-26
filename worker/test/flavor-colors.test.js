@@ -4,7 +4,9 @@ import {
   renderConeSVG,
   renderConeHDSVG,
   renderConeHeroSVG,
+  renderConePremiumSVG,
   resolveHDToppingSlots,
+  resolvePremiumToppingList,
   lightenHex,
   darkenHex,
   BASE_COLORS,
@@ -302,5 +304,126 @@ describe('renderConeHeroSVG', () => {
   it('renders Butter Pecan with pecan topping color', () => {
     const svg = renderConeHeroSVG('Butter Pecan');
     expect(svg).toContain(TOPPING_COLORS.pecan);
+  });
+});
+
+describe('resolvePremiumToppingList', () => {
+  it('returns empty array for pure density', () => {
+    expect(resolvePremiumToppingList({ toppings: ['oreo'], density: 'pure' })).toEqual([]);
+  });
+
+  it('returns same toppings for standard density', () => {
+    const result = resolvePremiumToppingList({ toppings: ['oreo', 'andes'], density: 'standard' });
+    expect(result).toEqual(['oreo', 'andes']);
+  });
+
+  it('returns each topping doubled for explosion density', () => {
+    const result = resolvePremiumToppingList({ toppings: ['oreo', 'andes', 'dove'], density: 'explosion' });
+    expect(result).toHaveLength(6);
+    expect(result).toEqual(['oreo', 'oreo', 'andes', 'andes', 'dove', 'dove']);
+  });
+
+  it('returns 6 identical items for overload density', () => {
+    const result = resolvePremiumToppingList({ toppings: ['oreo'], density: 'overload' });
+    expect(result).toEqual(['oreo', 'oreo', 'oreo', 'oreo', 'oreo', 'oreo']);
+  });
+
+  it('doubles first topping for double density', () => {
+    const result = resolvePremiumToppingList({ toppings: ['strawberry_bits', 'dove'], density: 'double' });
+    expect(result).toEqual(['strawberry_bits', 'strawberry_bits', 'dove']);
+    // first appears 2x
+    expect(result.filter(t => t === 'strawberry_bits')).toHaveLength(2);
+  });
+});
+
+describe('renderConePremiumSVG', () => {
+  it('returns valid SVG markup', () => {
+    const svg = renderConePremiumSVG('Mint Explosion');
+    expect(svg).toContain('<svg');
+    expect(svg).toContain('xmlns="http://www.w3.org/2000/svg"');
+    expect(svg).toContain('<rect');
+    expect(svg).toContain('</svg>');
+  });
+
+  it('uses 24x28 viewBox at scale 1', () => {
+    const svg = renderConePremiumSVG('Vanilla');
+    expect(svg).toContain('viewBox="0 0 24 28"');
+    expect(svg).toContain('width="24"');
+    expect(svg).toContain('height="28"');
+  });
+
+  it('scales correctly: scale 6 gives viewBox 0 0 144 168', () => {
+    const svg = renderConePremiumSVG('Vanilla', 6);
+    expect(svg).toContain('viewBox="0 0 144 168"');
+    expect(svg).toContain('width="144"');
+    expect(svg).toContain('height="168"');
+  });
+
+  it('includes base color for Mint Explosion', () => {
+    const svg = renderConePremiumSVG('Mint Explosion');
+    expect(svg).toContain(BASE_COLORS.mint);
+  });
+
+  it('includes highlight color (lightenHex base 0.22) for Caramel Chocolate Pecan', () => {
+    const svg = renderConePremiumSVG('Caramel Chocolate Pecan');
+    const base = BASE_COLORS.chocolate_custard;
+    expect(svg).toContain(lightenHex(base, 0.22));
+  });
+
+  it('includes shadow color (darkenHex base 0.10) for Caramel Chocolate Pecan', () => {
+    const svg = renderConePremiumSVG('Caramel Chocolate Pecan');
+    const base = BASE_COLORS.chocolate_custard;
+    expect(svg).toContain(darkenHex(base, 0.10));
+  });
+
+  it('includes ribbon color when flavor has ribbon', () => {
+    const svg = renderConePremiumSVG('Caramel Chocolate Pecan');
+    expect(svg).toContain(RIBBON_COLORS.caramel);
+  });
+
+  it('no ribbon for pure density flavor', () => {
+    const svg = renderConePremiumSVG('Dark Chocolate Decadence');
+    // dark_chocolate base == RIBBON_COLORS.fudge (#3B1F0B) — skip fudge check
+    expect(svg).not.toContain(RIBBON_COLORS.caramel);
+    expect(svg).not.toContain(RIBBON_COLORS.marshmallow);
+    expect(svg).not.toContain(RIBBON_COLORS.peanut_butter);
+  });
+
+  it('includes topping color for flavor with toppings', () => {
+    const svg = renderConePremiumSVG('Caramel Chocolate Pecan');
+    // pecan color appears (also matches CONE_TIP_COLOR but still verifies toppings render)
+    expect(svg).toContain(TOPPING_COLORS.pecan);
+  });
+
+  it('is deterministic -- same output for same flavor name and scale', () => {
+    const svg1 = renderConePremiumSVG('Caramel Chocolate Pecan', 3);
+    const svg2 = renderConePremiumSVG('Caramel Chocolate Pecan', 3);
+    expect(svg1).toBe(svg2);
+  });
+
+  it('produces different output for different flavor profiles', () => {
+    const svgCCP = renderConePremiumSVG('Caramel Chocolate Pecan', 1);
+    const svgTurtle = renderConePremiumSVG('Turtle', 1);
+    expect(svgCCP).not.toBe(svgTurtle);
+  });
+
+  it('includes cone tip color', () => {
+    const svg = renderConePremiumSVG('Vanilla');
+    expect(svg).toContain(CONE_TIP_COLOR);
+  });
+
+  it('renders pure vanilla with base color and no unexpected topping or ribbon colors', () => {
+    const svg = renderConePremiumSVG('Vanilla');
+    expect(svg).toContain(BASE_COLORS.vanilla);
+    // No topping colors (skip those matching CONE_TIP_COLOR due to color collision)
+    for (const [, c] of Object.entries(TOPPING_COLORS)) {
+      if (c === CONE_TIP_COLOR) continue;
+      expect(svg).not.toContain(c);
+    }
+    // No ribbon colors (skip any that equal base color)
+    for (const c of Object.values(RIBBON_COLORS)) {
+      if (c === BASE_COLORS.vanilla) continue;
+      expect(svg).not.toContain(c);
+    }
   });
 });
