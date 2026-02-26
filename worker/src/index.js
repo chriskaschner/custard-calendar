@@ -14,7 +14,7 @@ import { STORE_INDEX as DEFAULT_STORE_INDEX } from './store-index.js';
 import { BRAND_COLORS, SIMILARITY_GROUPS, FLAVOR_FAMILIES } from './flavor-matcher.js';
 import { handleAlertRoute } from './alert-routes.js';
 import { handleFlavorCatalog } from './flavor-catalog.js';
-import { handleMetricsRoute } from './metrics.js';
+import { handleMetricsRoute, handleGeoEDA } from './metrics.js';
 import { handleFlavorStats } from './flavor-stats.js';
 import { handleForecast } from './forecast.js';
 import { handleQuizRoute } from './quiz-routes.js';
@@ -229,6 +229,8 @@ export async function handleRequest(request, env, fetchFlavorsFn = defaultFetchF
     if (metricsResponse) {
       response = metricsResponse;
     }
+  } else if (canonical === '/api/analytics/geo-eda') {
+    response = await handleGeoEDA(url, env, corsHeaders);
   } else if (canonical.startsWith('/api/leaderboard/')) {
     const leaderboardResponse = await handleLeaderboardRoute(canonical, url, request, env, corsHeaders);
     if (leaderboardResponse) {
@@ -263,7 +265,7 @@ export async function handleRequest(request, env, fetchFlavorsFn = defaultFetchF
   }
 
   return Response.json(
-    { error: 'Not found. Use /api/v1/today, /api/v1/flavors, /api/v1/stores, /api/v1/geolocate, /api/v1/nearby-flavors, /api/v1/flavors/catalog, /api/v1/flavor-config, /api/v1/flavor-colors, /api/v1/flavor-stats/{slug}, /api/v1/forecast/{slug}, /api/v1/reliability, /api/v1/reliability/{slug}, /api/v1/plan, /api/v1/signals/{slug}, /api/v1/events, /api/v1/events/summary, /api/v1/trivia, /api/v1/metrics/intelligence, /api/v1/metrics/context/flavor/{name}, /api/v1/metrics/context/store/{slug}, /api/v1/metrics/flavor/{name}, /api/v1/metrics/store/{slug}, /api/v1/metrics/trending, /api/v1/metrics/accuracy, /api/v1/metrics/accuracy/{slug}, /api/v1/metrics/coverage, /api/v1/metrics/flavor-hierarchy, /api/v1/quiz/events, /api/v1/quiz/personality-index, /api/v1/alerts/*, /v1/calendar.ics, /v1/og/{slug}/{date}.svg, or /health' },
+    { error: 'Not found. Use /api/v1/today, /api/v1/flavors, /api/v1/stores, /api/v1/geolocate, /api/v1/nearby-flavors, /api/v1/flavors/catalog, /api/v1/flavor-config, /api/v1/flavor-colors, /api/v1/flavor-stats/{slug}, /api/v1/forecast/{slug}, /api/v1/reliability, /api/v1/reliability/{slug}, /api/v1/plan, /api/v1/signals/{slug}, /api/v1/events, /api/v1/events/summary, /api/v1/trivia, /api/v1/metrics/intelligence, /api/v1/metrics/context/flavor/{name}, /api/v1/metrics/context/store/{slug}, /api/v1/metrics/flavor/{name}, /api/v1/metrics/store/{slug}, /api/v1/metrics/trending, /api/v1/metrics/accuracy, /api/v1/metrics/accuracy/{slug}, /api/v1/metrics/coverage, /api/v1/metrics/flavor-hierarchy, /api/v1/analytics/geo-eda, /api/v1/quiz/events, /api/v1/quiz/personality-index, /api/v1/alerts/*, /v1/calendar.ics, /v1/og/{slug}/{date}.svg, or /health' },
     { status: 404, headers: corsHeaders }
   );
 }

@@ -6,6 +6,7 @@
  *   GET /api/v1/metrics/flavor/{normalized}  — frequency, recency, store count
  *   GET /api/v1/metrics/store/{slug}         — diversity, flavor history, streaks
  *   GET /api/v1/metrics/trending             — most/least common this week vs historical
+ *   GET /api/v1/analytics/geo-eda           — geographic EDA: exclusive flavors, cadence variance, outlier stores
  */
 
 import { TRIVIA_METRICS_SEED } from './trivia-metrics-seed.js';
@@ -694,6 +695,367 @@ function detectStreaks(history) {
   }
 
   return streaks;
+}
+
+// ---------------------------------------------------------------------------
+// Geographic EDA endpoint
+// ---------------------------------------------------------------------------
+
+/**
+ * Resolve the set of slugs that belong to a given scope+region.
+ *
+ * scope = 'national' → all slugs in STORE_INDEX
+ * scope = 'state'    → region is a two-letter state code, e.g. "WI"
+ * scope = 'metro'    → region is a metro slug, e.g. "madison" or "milwaukee"
+ *                      (currently WI-only via WI_METRO_MAP)
+ *
+ * Returns { scopeSlugs, label } or null when the region yields no stores.
+ */
+function resolveScopeSlugs(scope, region, storeIndex) {
+  if (scope === 'national') {
+    return { scopeSlugs: storeIndex.map((s) => s.slug), label: 'national' };
+  }
+
+  if (scope === 'state') {
+    const stateUpper = String(region || '').trim().toUpperCase();
+    if (!/^[A-Z]{2}$/.test(stateUpper)) return null;
+    const slugs = storeIndex.filter((s) => s.state === stateUpper).map((s) => s.slug);
+    return slugs.length > 0 ? { scopeSlugs: slugs, label: stateUpper } : null;
+  }
+
+  if (scope === 'metro') {
+    const metroKey = String(region || '').trim().toLowerCase();
+    if (!metroKey) return null;
+    // Metro mapping: use WI_METRO_MAP (city → metro slug)
+    const slugs = storeIndex
+      .filter((s) => WI_METRO_MAP[(s.city || '').toLowerCase().trim()] === metroKey)
+      .map((s) => s.slug);
+    return slugs.length > 0 ? { scopeSlugs: slugs, label: metroKey } : null;
+  }
+
+  return null;
+}
+
+/**
+ * Compute mean and population standard deviation of a numeric array.
+ * Returns { mean, stddev } — stddev is 0 when fewer than 2 elements.
+ */
+function computeStats(values) {
+  if (values.length === 0) return { mean: 0, stddev: 0 };
+  const mean = values.reduce((a, b) => a + b, 0) / values.length;
+  if (values.length < 2) return { mean, stddev: 0 };
+  const variance = values.reduce((sum, v) => sum + (v - mean) ** 2, 0) / values.length;
+  return { mean, stddev: Math.sqrt(variance) };
+}
+
+/**
+ * GET /api/v1/analytics/geo-eda
+ *
+ * Query params:
+ *   scope  = metro | state | national  (default: national)
+ *   region = metro slug or state code when scope is metro/state
+ *
+ * Response:
+ *   exclusive_flavors  — top flavors whose appearances are concentrated in this scope
+ *   cadence_variance   — flavors with the widest gap between scope avg_gap and national avg_gap
+ *   outlier_stores     — stores whose monthly unique-flavor count is a statistical outlier vs scope peers
+ *
+ * Cache-Control: public, max-age=86400 (24 h — batch/exploratory, not real-time)
+ */
+export async function handleGeoEDA(url, env, corsHeaders) {
+  const scope = (url?.searchParams?.get('scope') || 'national').toLowerCase().trim();
+  const region = (url?.searchParams?.get('region') || '').trim();
+
+  const VALID_SCOPES = ['national', 'state', 'metro'];
+  if (!VALID_SCOPES.includes(scope)) {
+    return Response.json(
+      { error: `Invalid scope "${scope}". Must be one of: national, state, metro` },
+      { status: 400, headers: corsHeaders },
+    );
+  }
+
+  const storeIndex = env._storeIndexOverride || STORE_INDEX;
+  const resolved = resolveScopeSlugs(scope, region, storeIndex);
+
+  if (!resolved) {
+    return Response.json(
+      { error: `Region "${region}" not found for scope "${scope}"` },
+      { status: 400, headers: corsHeaders },
+    );
+  }
+
+  const { scopeSlugs, label } = resolved;
+
+  const db = env.DB || null;
+  if (!db) {
+    return Response.json(
+      { error: 'Analytics not available — D1 database not configured' },
+      { status: 503, headers: corsHeaders },
+    );
+  }
+
+  const [exclusiveFlavors, cadenceVariance, outlierStores] = await Promise.all([
+    computeExclusiveFlavors(db, scopeSlugs, scope, storeIndex),
+    computeCadenceVariance(db, scopeSlugs, scope),
+    computeOutlierStores(db, scopeSlugs, storeIndex),
+  ]);
+
+  return Response.json(
+    {
+      scope,
+      region: scope === 'national' ? null : label,
+      generated_at: new Date().toISOString(),
+      store_count: scopeSlugs.length,
+      exclusive_flavors: exclusiveFlavors,
+      cadence_variance: cadenceVariance,
+      outlier_stores: outlierStores,
+    },
+    {
+      headers: {
+        ...corsHeaders,
+        'Cache-Control': 'public, max-age=86400',
+      },
+    },
+  );
+}
+
+/**
+ * Flavors appearing at >= 50% of stores in this scope, sorted by appearances desc.
+ * "Exclusive" here means "scope-concentrated" — common within the scope.
+ * For sub-national scopes we include pct_of_scope_stores to surface regional concentration.
+ *
+ * D1 100-bind limit: batch slug lists in groups of 98.
+ */
+async function computeExclusiveFlavors(db, scopeSlugs, scope, storeIndex) {
+  if (!scopeSlugs.length) return [];
+
+  const SLUG_BATCH = 98;
+  // Aggregate: { [normalized_flavor]: { flavor, count, storeSet } }
+  const flavorAgg = new Map();
+
+  try {
+    for (let i = 0; i < scopeSlugs.length; i += SLUG_BATCH) {
+      const batch = scopeSlugs.slice(i, i + SLUG_BATCH);
+      const placeholders = batch.map(() => '?').join(',');
+      const result = await db.prepare(
+        `SELECT normalized_flavor, MAX(flavor) AS flavor, slug, COUNT(*) AS cnt
+         FROM snapshots
+         WHERE slug IN (${placeholders})
+         GROUP BY normalized_flavor, slug`,
+      ).bind(...batch).all();
+
+      for (const row of (result?.results || [])) {
+        const nf = row.normalized_flavor;
+        if (!nf) continue;
+        if (!flavorAgg.has(nf)) {
+          flavorAgg.set(nf, { flavor: row.flavor || nf, appearances: 0, storeSet: new Set() });
+        }
+        const entry = flavorAgg.get(nf);
+        entry.appearances += Number(row.cnt || 0);
+        entry.storeSet.add(row.slug);
+      }
+    }
+  } catch {
+    return [];
+  }
+
+  const totalStores = scopeSlugs.length;
+  const minStores = Math.max(1, Math.ceil(totalStores * 0.5));
+
+  const results = [];
+  for (const [, entry] of flavorAgg) {
+    if (entry.storeSet.size >= minStores) {
+      results.push({
+        flavor: entry.flavor,
+        appearances: entry.appearances,
+        pct_of_scope_stores: totalStores > 0
+          ? Math.round((entry.storeSet.size / totalStores) * 1000) / 1000
+          : 0,
+      });
+    }
+  }
+
+  results.sort((a, b) => b.appearances - a.appearances || a.flavor.localeCompare(b.flavor));
+  return results.slice(0, 20);
+}
+
+/**
+ * Flavors with the largest absolute difference between scope avg_gap_days and national avg_gap_days.
+ * Only includes flavors with >= 5 appearances in the scope and a known national avg.
+ */
+async function computeCadenceVariance(db, scopeSlugs, scope) {
+  if (!scopeSlugs.length) return [];
+
+  const SLUG_BATCH = 98;
+
+  // Per-flavor date lists for scope
+  const scopeDates = new Map(); // normalized_flavor → Set<date>
+  const scopeFlavorNames = new Map(); // normalized_flavor → display name
+
+  try {
+    for (let i = 0; i < scopeSlugs.length; i += SLUG_BATCH) {
+      const batch = scopeSlugs.slice(i, i + SLUG_BATCH);
+      const placeholders = batch.map(() => '?').join(',');
+      const result = await db.prepare(
+        `SELECT normalized_flavor, MAX(flavor) AS flavor, date
+         FROM snapshots
+         WHERE slug IN (${placeholders})
+         GROUP BY normalized_flavor, date`,
+      ).bind(...batch).all();
+
+      for (const row of (result?.results || [])) {
+        const nf = row.normalized_flavor;
+        if (!nf) continue;
+        if (!scopeDates.has(nf)) scopeDates.set(nf, new Set());
+        scopeDates.get(nf).add(row.date);
+        if (!scopeFlavorNames.has(nf)) scopeFlavorNames.set(nf, row.flavor || nf);
+      }
+    }
+  } catch {
+    return [];
+  }
+
+  // National avg_gap from seed
+  const seed = TRIVIA_METRICS_SEED || {};
+  const lookup = seed?.planner_features?.flavor_lookup || {};
+  const summary = seed?.dataset_summary || {};
+  const spanDays = (summary.min_date && summary.max_date)
+    ? (new Date(summary.max_date) - new Date(summary.min_date)) / 86400000
+    : null;
+
+  const results = [];
+
+  for (const [nf, dateSet] of scopeDates) {
+    const sortedDates = [...dateSet].sort();
+    const appearances = sortedDates.length;
+    if (appearances < 5) continue;
+
+    // Scope avg_gap: average gap between consecutive calendar dates (deduped across stores)
+    let scopeAvgGap = null;
+    if (appearances >= 2) {
+      let totalGap = 0;
+      for (let i = 1; i < sortedDates.length; i++) {
+        totalGap += (new Date(sortedDates[i]) - new Date(sortedDates[i - 1])) / 86400000;
+      }
+      scopeAvgGap = Math.round(totalGap / (appearances - 1));
+    }
+
+    if (scopeAvgGap === null) continue;
+
+    // National avg_gap from seed
+    const seedRow = lookup[nf];
+    let nationalAvgGap = null;
+    if (seedRow) {
+      const seedApps = Number(seedRow.appearances || 0);
+      const seedStores = Number(seedRow.store_count || 1);
+      if (seedApps > 0 && seedStores > 0 && spanDays !== null) {
+        const appsPerStore = seedApps / seedStores;
+        if (appsPerStore > 0) nationalAvgGap = Math.round(spanDays / appsPerStore);
+      }
+    }
+
+    if (nationalAvgGap === null || nationalAvgGap === 0) continue;
+
+    const varianceRatio = Math.round((scopeAvgGap / nationalAvgGap) * 100) / 100;
+
+    // Only surface flavors with meaningful divergence (ratio outside 0.5–2.0)
+    if (varianceRatio < 0.3 || varianceRatio > 10) continue;
+
+    results.push({
+      flavor: scopeFlavorNames.get(nf) || nf,
+      normalized_flavor: nf,
+      avg_gap_days: scopeAvgGap,
+      national_avg_gap_days: nationalAvgGap,
+      variance_ratio: varianceRatio,
+    });
+  }
+
+  // Sort by absolute deviation from 1.0 (most divergent first)
+  results.sort((a, b) => {
+    const devA = Math.abs(a.variance_ratio - 1);
+    const devB = Math.abs(b.variance_ratio - 1);
+    return devB - devA;
+  });
+
+  return results.slice(0, 20);
+}
+
+/**
+ * Stores that are statistical outliers in avg_unique_flavors_per_month vs their scope peers.
+ * Requires >= 2 months of data per store to be included.
+ * z_score computed against scope mean/stddev; |z| >= 1.5 = outlier.
+ */
+async function computeOutlierStores(db, scopeSlugs, storeIndex) {
+  if (!scopeSlugs.length) return [];
+
+  const SLUG_BATCH = 98;
+  // monthly unique-flavor counts per store
+  const storeMonthly = new Map(); // slug → Map<yearmonth, Set<normalized_flavor>>
+
+  try {
+    for (let i = 0; i < scopeSlugs.length; i += SLUG_BATCH) {
+      const batch = scopeSlugs.slice(i, i + SLUG_BATCH);
+      const placeholders = batch.map(() => '?').join(',');
+      const result = await db.prepare(
+        `SELECT slug, strftime('%Y-%m', date) AS yearmonth, normalized_flavor
+         FROM snapshots
+         WHERE slug IN (${placeholders})`,
+      ).bind(...batch).all();
+
+      for (const row of (result?.results || [])) {
+        const { slug, yearmonth, normalized_flavor: nf } = row;
+        if (!slug || !yearmonth || !nf) continue;
+        if (!storeMonthly.has(slug)) storeMonthly.set(slug, new Map());
+        const monthMap = storeMonthly.get(slug);
+        if (!monthMap.has(yearmonth)) monthMap.set(yearmonth, new Set());
+        monthMap.get(yearmonth).add(nf);
+      }
+    }
+  } catch {
+    return [];
+  }
+
+  // Compute avg_unique_flavors_per_month per store (require >= 2 months)
+  const storeAvgs = [];
+  for (const [slug, monthMap] of storeMonthly) {
+    if (monthMap.size < 2) continue;
+    const monthCounts = [...monthMap.values()].map((s) => s.size);
+    const avg = monthCounts.reduce((a, b) => a + b, 0) / monthCounts.length;
+    storeAvgs.push({ slug, avg: Math.round(avg * 10) / 10, months: monthMap.size });
+  }
+
+  if (storeAvgs.length < 3) return []; // too few stores to compute meaningful z-scores
+
+  const { mean: scopeMean, stddev: scopeStddev } = computeStats(storeAvgs.map((s) => s.avg));
+  const scopeMedian = (() => {
+    const sorted = storeAvgs.map((s) => s.avg).sort((a, b) => a - b);
+    const mid = Math.floor(sorted.length / 2);
+    return sorted.length % 2 === 1 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+  })();
+
+  if (scopeStddev === 0) return [];
+
+  // Build store name lookup from storeIndex (already resolved by caller)
+  const storeNameMap = new Map((storeIndex || STORE_INDEX).map((s) => [s.slug, s.name]));
+
+  const outliers = [];
+  for (const { slug, avg, months } of storeAvgs) {
+    const zScore = Math.round(((avg - scopeMean) / scopeStddev) * 100) / 100;
+    if (Math.abs(zScore) >= 1.5) {
+      outliers.push({
+        slug,
+        name: storeNameMap.get(slug) || slug,
+        avg_unique_flavors_per_month: avg,
+        scope_median: Math.round(scopeMedian * 10) / 10,
+        z_score: zScore,
+        months_observed: months,
+      });
+    }
+  }
+
+  // Sort by |z_score| descending
+  outliers.sort((a, b) => Math.abs(b.z_score) - Math.abs(a.z_score));
+  return outliers.slice(0, 20);
 }
 
 export { detectStreaks };
