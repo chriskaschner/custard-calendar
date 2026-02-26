@@ -85,6 +85,7 @@ export const FLAVOR_PROFILES = {
   'caramel peanut buttercup': { base: 'vanilla', ribbon: 'peanut_butter', toppings: ['dove'], density: 'standard' },
   'turtle': { base: 'vanilla', ribbon: 'caramel', toppings: ['dove', 'pecan'], density: 'standard' },
   'georgia peach': { base: 'peach', ribbon: null, toppings: ['peach_bits'], density: 'standard' },
+  'georgia peach pecan': { base: 'peach', ribbon: null, toppings: ['peach_bits', 'pecan'], density: 'standard' },
   'snickers swirl': { base: 'chocolate', ribbon: 'caramel', toppings: ['snickers'], density: 'standard' },
   'chocolate volcano': { base: 'chocolate', ribbon: 'chocolate_syrup', toppings: ['oreo', 'dove', 'm_and_m'], density: 'explosion' },
   'oreo cookie overload': { base: 'chocolate', ribbon: 'chocolate_syrup', toppings: ['oreo'], density: 'overload' },
