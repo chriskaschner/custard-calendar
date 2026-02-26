@@ -192,6 +192,23 @@ Not active. Only promote if they clearly improve core decision KPIs.
 - [ ] **Flavor chatbot** -- conversational Q&A for flavor info via web chat UI
 - [ ] **Pairwise flavor voting** -- group "where should we go tonight?" (deprioritized, no clear MVP)
 
+## Data Health -- Store Coverage Audit
+
+Per-store appearance counts visible in the UI come from D1 snapshots (live Worker DB), not from the full local backfill corpus. D1 has significantly less data: mt-horeb shows 10 Caramel Cashew appearances in D1 vs 53 in local SQLite. This makes rarity/cadence metrics misleading for under-loaded stores.
+
+**Priority order for evaluation and fix: mt-horeb → verona → madison-todd-drive → rest of WI → nationwide.**
+
+Local corpus health summary (backfill + wayback combined):
+- mt-horeb: 1,475 clean rows, 94 flavors, 2015-09-02 → 2026-03-31, 7 gaps > 14d
+- verona: 1,422 clean rows, 100 flavors, 2015-09-02 → 2022-09-30, 6 gaps > 14d
+- madison-todd-drive: 1,691 clean rows, 104 flavors, 2015-09-02 → 2023-07-31, 6 gaps > 14d
+
+Known backfill coverage gaps (systematic, not random): 62-93 day holes in spring/summer/fall for all three stores — collection artifact from quarterly fetch windows.
+
+- [ ] **Upload full backfill corpus to D1** -- the local SQLite files (backfill + wayback) contain the authoritative historical record. The Worker's D1 `snapshots` table currently has only a partial subset. Audit D1 row counts per slug vs local SQLite; bulk-upload missing rows. Start with mt-horeb, verona, madison-todd-drive; then rest of WI; then nationwide. Rate limit: use the Cloudflare D1 import tooling or batch wrangler commands (not live API calls).
+- [ ] **Expose D1 + local backfill data in metrics context** -- `/api/v1/metrics/context/store/{slug}` queries D1 snapshots only. After D1 upload is complete, verify that counts match local SQLite counts for the three preferred stores. Add a data-health diagnostic endpoint (`/api/v1/metrics/health/{slug}`) that returns row count, date range, and gap count from D1 for a given store -- useful for ongoing monitoring.
+- [ ] **Fix rarity/cadence display for sparse D1 stores** -- currently `avg_gap_days` in flavor-stats.js is computed from D1 rows only. For stores with < 30 D1 rows, the avg_gap_days will be unreliable and the rarity badge (now correctly derived from avg_gap_days) will be misleading. Add a `data_depth_warning` flag to the rarity response when D1 row count is < 30, and suppress the rarity badge on the frontend when this flag is set.
+
 ## Background -- Analytics as Content
 
 The analytics pipeline's best output isn't predictions -- it's **flavor intelligence**: rarity scores, streak tracking, frequency stats, similarity clusters. All grounded in what actually happened, surfaced as shareable content and discovery tools.
