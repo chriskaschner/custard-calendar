@@ -453,7 +453,7 @@ function buildGrid(catalog) {
 // ---------------------------------------------------------------------------
 buildGrid(SEED_CATALOG);
 
-var WORKER_BASE=(window.CustardPlanner&&window.CustardPlanner.WORKER_BASE)||'https://custard.chriskaschner.com';
+var WORKER_BASE=(new URLSearchParams(location.search).get('worker')==='local')?'http://localhost:8788':((window.CustardPlanner&&window.CustardPlanner.WORKER_BASE)||'https://custard.chriskaschner.com');
 var done=0;
 var liveCatalog=null;
 

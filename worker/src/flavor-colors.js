@@ -92,7 +92,7 @@ export const FLAVOR_PROFILES = {
   'chocolate heath crunch': { base: 'chocolate', ribbon: null, toppings: ['heath'], density: 'standard' },
   'double butter pecan': { base: 'vanilla', ribbon: null, toppings: ['pecan'], density: 'double' },
   // Catalog entries without prior profiles
-  'blackberry cobbler': { base: 'blackberry', ribbon: null, toppings: ['pie_crust', 'pie_crust', 'blueberry'], density: 'standard' },
+  'blackberry cobbler': { base: 'blackberry', ribbon: null, toppings: ['pie_crust', 'pie_crust', 'pie_crust'], density: 'standard' },
   'brownie thunder': { base: 'chocolate', ribbon: 'marshmallow', toppings: ['brownie'], density: 'standard' },
   'chocolate oreo volcano': { base: 'chocolate', ribbon: 'marshmallow', toppings: ['oreo', 'dove'], density: 'explosion' },
   'lemon berry layer cake': { base: 'lemon', ribbon: null, toppings: ['blueberry', 'cake'], density: 'standard' },
