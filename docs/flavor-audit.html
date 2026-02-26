@@ -107,6 +107,13 @@
   .map-bg-d { background: var(--surface2); padding: 3px; border-radius: 3px; }
   .map-bg-l { background: #e8edf5; padding: 3px; border-radius: 3px; }
 
+  /* Resolved collisions details block */
+  .col-resolved { margin-top: 10px; }
+  .col-resolved summary { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); cursor: pointer; padding: 6px 0; user-select: none; }
+  .col-resolved summary:hover { color: var(--text); }
+  .col-resolved[open] summary { color: var(--text); margin-bottom: 10px; }
+  .col-none { font-size: 12px; color: var(--muted); padding: 8px 0; }
+
   /* Quality flags */
   .qflags { display: flex; flex-direction: column; gap: 3px; }
   .qf { font-size: 9px; padding: 1px 5px; border-radius: 3px; white-space: nowrap; }
@@ -131,8 +138,13 @@
 <main>
 
 <section>
-  <h2>Name collisions — same flavor, different names across surfaces</h2>
-  <div class="col-grid" id="col-grid"></div>
+  <h2>Active collisions — same flavor, different names across surfaces</h2>
+  <div class="col-grid" id="col-grid-active"></div>
+  <p class="col-none" id="col-none" style="display:none">No active collisions detected.</p>
+  <details class="col-resolved" id="col-resolved-wrap">
+    <summary id="col-resolved-summary">Resolved investigations (0)</summary>
+    <div class="col-grid" id="col-grid-resolved"></div>
+  </details>
 </section>
 
 <section>
@@ -263,23 +275,24 @@ var SEED_CATALOG = [
 ];
 
 var COLLISIONS = [
-  { label:'Chocolate Volcano / Chocolate Oreo Volcano',
+  // resolved: true = investigation complete, verdict documented
+  { resolved:true, label:'Chocolate Volcano / Chocolate Oreo Volcano',
     verdict:'Distinct flavors — no same-day co-occurrence at any store. Chocolate Oreo Volcano retired July 2023; tagged historical.',
     a:{ name:'Chocolate Volcano',       has_profile:true, where:'active — profile + catalog' },
     b:{ name:'Chocolate Oreo Volcano',  has_profile:true, where:'historical — profile + catalog (retired 2023)' } },
-  { label:'Georgia Peach / Georgia Peach Pecan',
+  { resolved:true, label:'Georgia Peach / Georgia Peach Pecan',
     verdict:'Georgia Peach Pecan had 0 rows across all databases — fabricated entry, removed from catalog.',
-    a:{ name:'Georgia Peach',           has_profile:true, where:'profile-only (not in catalog)' },
+    a:{ name:'Georgia Peach',           has_profile:true, where:'active — profile + catalog' },
     b:{ name:'Georgia Peach Pecan',     has_profile:false, where:'deleted — 0 rows, never a real flavor' } },
-  { label:'Salted Double Caramel Pecan / Salted Caramel Pecan Pie',
+  { resolved:true, label:'Salted Double Caramel Pecan / Salted Caramel Pecan Pie',
     verdict:'Distinct flavors — no same-day co-occurrence. Salted Caramel Pecan Pie last seen March 2025; tagged historical.',
-    a:{ name:'Salted Double Caramel Pecan', has_profile:true, where:'active — profile only (not in alerts catalog)' },
+    a:{ name:'Salted Double Caramel Pecan', has_profile:true, where:'active — profile + catalog' },
     b:{ name:'Salted Caramel Pecan Pie',    has_profile:true, where:'historical — profile + catalog (last 2025-03)' } },
-  { label:'OREO Cookie Cheesecake / OREO Cheesecake',
+  { resolved:true, label:'OREO Cookie Cheesecake / OREO Cheesecake',
     verdict:'Distinct flavors — no same-day co-occurrence. OREO Cheesecake is current Gille\'s name; OREO Cookie Cheesecake is current Culver\'s name.',
     a:{ name:'OREO Cookie Cheesecake',  has_profile:true, where:'active Culver\'s name — profile + catalog' },
     b:{ name:'OREO Cheesecake',         has_profile:true, where:'active Gille\'s name — profile + catalog' } },
-  { label:"Really Reese's / Peanut Butter Cup",
+  { resolved:true, label:"Really Reese's / Peanut Butter Cup",
     verdict:"Same product — Culver's called it Peanut Butter Cup through April 2021, then renamed to Really Reese's. 80 stores, zero same-day overlap. PB Cup tagged historical.",
     a:{ name:"Really Reese's",          has_profile:true, where:"active Culver's name — profile + catalog" },
     b:{ name:'Peanut Butter Cup',       has_profile:true, where:"historical — profile + catalog (retired 2021)" } },
@@ -363,11 +376,31 @@ function hdCone(name,s) {
 // Build collision section
 // ---------------------------------------------------------------------------
 function buildCollisions() {
-  document.getElementById('col-grid').innerHTML = COLLISIONS.map(function(col) {
+  function renderPair(col) {
     var side=function(s){ return '<div class="col-side"><div class="cname">'+s.name+'</div>'+(s.has_profile?'<span class="badge b-ok">profile</span>':'<span class="badge b-err">no profile</span>')+hdCone(s.name,3)+'<div class="cwhere">'+s.where+'</div></div>'; };
     var verdict=col.verdict?'<div style="font-size:11px;color:#9EC5E8;margin:8px 0 4px;line-height:1.4;">'+col.verdict+'</div>':'';
     return '<div class="col-pair"><h3>'+col.label+'</h3>'+verdict+'<div class="col-sides">'+side(col.a)+side(col.b)+'</div></div>';
-  }).join('');
+  }
+
+  var active=COLLISIONS.filter(function(c){return !c.resolved;});
+  var resolved=COLLISIONS.filter(function(c){return !!c.resolved;});
+
+  var activeGrid=document.getElementById('col-grid-active');
+  var noneMsg=document.getElementById('col-none');
+  if(active.length) {
+    activeGrid.innerHTML=active.map(renderPair).join('');
+    noneMsg.style.display='none';
+  } else {
+    activeGrid.innerHTML='';
+    noneMsg.style.display='';
+  }
+
+  var resolvedGrid=document.getElementById('col-grid-resolved');
+  var resolvedWrap=document.getElementById('col-resolved-wrap');
+  var resolvedSummary=document.getElementById('col-resolved-summary');
+  resolvedGrid.innerHTML=resolved.map(renderPair).join('');
+  resolvedSummary.textContent='Resolved investigations ('+resolved.length+')';
+  resolvedWrap.style.display=resolved.length?'':'none';
 }
 
 // ---------------------------------------------------------------------------
