@@ -120,19 +120,19 @@ describe('resolveHDToppingSlots', () => {
 });
 
 describe('renderConeHDSVG', () => {
-  it('returns valid SVG with 18x22 viewBox', () => {
+  it('returns valid SVG with 18x21 viewBox', () => {
     const svg = renderConeHDSVG('Mint Explosion');
     expect(svg).toContain('<svg');
-    expect(svg).toContain('viewBox="0 0 18 22"');
+    expect(svg).toContain('viewBox="0 0 18 21"');
     expect(svg).toContain('shape-rendering="crispEdges"');
     expect(svg).toContain('</svg>');
   });
 
   it('scales correctly', () => {
     const svg = renderConeHDSVG('Mint Explosion', 5);
-    expect(svg).toContain('viewBox="0 0 90 110"');
+    expect(svg).toContain('viewBox="0 0 90 105"');
     expect(svg).toContain('width="90"');
-    expect(svg).toContain('height="110"');
+    expect(svg).toContain('height="105"');
   });
 
   it('includes highlight pixels lighter than base', () => {

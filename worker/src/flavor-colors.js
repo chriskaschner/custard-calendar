@@ -68,7 +68,7 @@ export const FLAVOR_PROFILES = {
   'double strawberry': { base: 'strawberry', ribbon: null, toppings: ['strawberry_bits'], density: 'double' },
   'turtle cheesecake': { base: 'cheesecake', ribbon: 'caramel', toppings: ['dove', 'pecan', 'cheesecake_bits'], density: 'explosion' },
   'caramel turtle': { base: 'caramel', ribbon: null, toppings: ['pecan', 'dove'], density: 'standard' },
-  'andes mint avalanche': { base: 'mint_andes', ribbon: 'chocolate_syrup', toppings: ['andes', 'dove'], density: 'standard' },
+  'andes mint avalanche': { base: 'mint_andes', ribbon: 'chocolate_syrup', toppings: ['andes', 'andes', 'dove'], density: 'standard' },
   'oreo cookie cheesecake': { base: 'cheesecake', ribbon: null, toppings: ['oreo', 'cheesecake_bits'], density: 'standard' },
   "devil's food cake": { base: 'dark_chocolate', ribbon: null, toppings: ['cake', 'dove'], density: 'standard' },
   'caramel cashew': { base: 'vanilla', ribbon: 'caramel', toppings: ['cashew'], density: 'standard' },
@@ -92,7 +92,7 @@ export const FLAVOR_PROFILES = {
   'chocolate heath crunch': { base: 'chocolate', ribbon: null, toppings: ['heath'], density: 'standard' },
   'double butter pecan': { base: 'vanilla', ribbon: null, toppings: ['pecan'], density: 'double' },
   // Catalog entries without prior profiles
-  'blackberry cobbler': { base: 'blackberry', ribbon: null, toppings: ['pie_crust'], density: 'standard' },
+  'blackberry cobbler': { base: 'blackberry', ribbon: null, toppings: ['pie_crust', 'pie_crust', 'blueberry'], density: 'standard' },
   'brownie thunder': { base: 'chocolate', ribbon: 'marshmallow', toppings: ['brownie'], density: 'standard' },
   'chocolate oreo volcano': { base: 'chocolate', ribbon: 'marshmallow', toppings: ['oreo', 'dove'], density: 'explosion' },
   'lemon berry layer cake': { base: 'lemon', ribbon: null, toppings: ['blueberry', 'cake'], density: 'standard' },
@@ -176,18 +176,17 @@ export function renderConeSVG(flavorName, scale = 1) {
   const toppingSlots = resolveToppingSlots(profile);
 
   const w = 9 * scale;
-  const h = 11 * scale;
+  const h = 10 * scale;
   const s = scale;
   const rects = [];
 
-  // Scoop (rows 0-5, rounded top and bottom)
+  // Scoop (rows 0-4, rounded top; full-width bottom sits wider than cone)
   const scoopRows = [
     [3, 5],   // row 0: cols 3-5 (narrow crown)
     [2, 6],   // row 1: cols 2-6 (taper)
     [1, 7],   // row 2: cols 1-7 (full width)
     [1, 7],   // row 3
-    [1, 7],   // row 4
-    [2, 6],   // row 5: cols 2-6 (rounded bottom)
+    [1, 7],   // row 4: full-width bottom (overhangs cone by 1px each side)
   ];
 
   // Base fill
@@ -218,22 +217,22 @@ export function renderConeSVG(flavorName, scale = 1) {
     }
   }
 
-  // Cone (rows 6-9: checkerboard, row 10: 1px tip)
+  // Cone (rows 5-8: checkerboard, row 9: 1px tip)
   const coneRows = [
+    [2, 6],  // row 5: 5px
     [2, 6],  // row 6: 5px
-    [2, 6],  // row 7: 5px
+    [3, 5],  // row 7: 3px
     [3, 5],  // row 8: 3px
-    [3, 5],  // row 9: 3px
   ];
   for (let row = 0; row < coneRows.length; row++) {
     const [sc, ec] = coneRows[row];
     for (let col = sc; col <= ec; col++) {
       const color = ((row + col) % 2 === 0) ? CONE_COLORS.waffle : CONE_COLORS.waffle_dark;
-      rects.push(`<rect x="${col * s}" y="${(row + 6) * s}" width="${s}" height="${s}" fill="${color}"/>`);
+      rects.push(`<rect x="${col * s}" y="${(row + 5) * s}" width="${s}" height="${s}" fill="${color}"/>`);
     }
   }
-  // Tip at (4, 10)
-  rects.push(`<rect x="${4 * s}" y="${10 * s}" width="${s}" height="${s}" fill="${CONE_COLORS.waffle_dark}"/>`);
+  // Tip at (4, 9)
+  rects.push(`<rect x="${4 * s}" y="${9 * s}" width="${s}" height="${s}" fill="${CONE_COLORS.waffle_dark}"/>`);
 
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" shape-rendering="crispEdges">${rects.join('')}</svg>`;
 }
@@ -309,7 +308,7 @@ export function renderConeHDSVG(flavorName, scale = 1) {
   const highlightColor = lightenHex(baseColor, 0.3);
 
   const w = 18 * scale;
-  const h = 22 * scale;
+  const h = 21 * scale;
   const s = scale;
   const rects = [];
 
@@ -327,8 +326,7 @@ export function renderConeHDSVG(flavorName, scale = 1) {
     [2, 15],   // row 7: 14px
     [2, 15],   // row 8: 14px
     [2, 15],   // row 9: 14px
-    [3, 14],   // row 10: 12px
-    [4, 13],   // row 11: 10px (bottom corners nipped)
+    [3, 14],   // row 10: 12px (full-width bottom; overhangs cone by 1px each side)
   ];
 
   // Base fill
@@ -362,28 +360,28 @@ export function renderConeHDSVG(flavorName, scale = 1) {
     }
   }
 
-  // Cone (rows 12-21: checkerboard taper + 2px tip)
+  // Cone (rows 11-19: checkerboard taper + 2px tip)
   const coneRows = [
+    [4, 13],  // row 11: 10px
     [4, 13],  // row 12: 10px
-    [4, 13],  // row 13: 10px
+    [5, 12],  // row 13:  8px
     [5, 12],  // row 14:  8px
-    [5, 12],  // row 15:  8px
+    [6, 11],  // row 15:  6px
     [6, 11],  // row 16:  6px
-    [6, 11],  // row 17:  6px
+    [7, 10],  // row 17:  4px
     [7, 10],  // row 18:  4px
-    [7, 10],  // row 19:  4px
-    [8, 9],   // row 20:  2px
+    [8, 9],   // row 19:  2px
   ];
   for (let row = 0; row < coneRows.length; row++) {
     const [sc, ec] = coneRows[row];
     for (let col = sc; col <= ec; col++) {
       const color = ((row + col) % 2 === 0) ? CONE_COLORS.waffle : CONE_COLORS.waffle_dark;
-      rects.push(`<rect x="${col * s}" y="${(row + 12) * s}" width="${s}" height="${s}" fill="${color}"/>`);
+      rects.push(`<rect x="${col * s}" y="${(row + 11) * s}" width="${s}" height="${s}" fill="${color}"/>`);
     }
   }
-  // Tip row 21: 2px dark
-  rects.push(`<rect x="${8 * s}" y="${21 * s}" width="${s}" height="${s}" fill="${CONE_TIP_COLOR}"/>`);
-  rects.push(`<rect x="${9 * s}" y="${21 * s}" width="${s}" height="${s}" fill="${CONE_TIP_COLOR}"/>`);
+  // Tip row 20: 2px dark
+  rects.push(`<rect x="${8 * s}" y="${20 * s}" width="${s}" height="${s}" fill="${CONE_TIP_COLOR}"/>`);
+  rects.push(`<rect x="${9 * s}" y="${20 * s}" width="${s}" height="${s}" fill="${CONE_TIP_COLOR}"/>`);
 
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" shape-rendering="crispEdges">${rects.join('')}</svg>`;
 }

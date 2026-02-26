@@ -198,8 +198,8 @@ function renderMiniConeSVG(flavorName, scale) {
   var s = scale || 5;
   var rects = [];
 
-  // Scoop base fill (rounded top + bottom)
-  var scoopRows = [[3,5],[2,6],[1,7],[1,7],[1,7],[2,6]];
+  // Scoop base fill (rounded top; full-width bottom overhangs cone by 1px each side)
+  var scoopRows = [[3,5],[2,6],[1,7],[1,7],[1,7]];
   for (var row = 0; row < scoopRows.length; row++) {
     var sc = scoopRows[row][0], ec = scoopRows[row][1];
     for (var col = sc; col <= ec; col++) {
@@ -224,18 +224,18 @@ function renderMiniConeSVG(flavorName, scale) {
     }
   }
 
-  // Cone checkerboard (rows 6-9) + tip (row 10)
+  // Cone checkerboard (rows 5-8) + tip (row 9)
   var coneRows = [[2,6],[2,6],[3,5],[3,5]];
   for (var cr = 0; cr < coneRows.length; cr++) {
     var csc = coneRows[cr][0], cec = coneRows[cr][1];
     for (var col2 = csc; col2 <= cec; col2++) {
       var wc = ((cr + col2) % 2 === 0) ? coneColors.waffle : coneColors.waffle_dark;
-      rects.push('<rect x="' + (col2*s) + '" y="' + ((cr+6)*s) + '" width="' + s + '" height="' + s + '" fill="' + wc + '"/>');
+      rects.push('<rect x="' + (col2*s) + '" y="' + ((cr+5)*s) + '" width="' + s + '" height="' + s + '" fill="' + wc + '"/>');
     }
   }
-  rects.push('<rect x="' + (4*s) + '" y="' + (10*s) + '" width="' + s + '" height="' + s + '" fill="' + coneColors.waffle_dark + '"/>');
+  rects.push('<rect x="' + (4*s) + '" y="' + (9*s) + '" width="' + s + '" height="' + s + '" fill="' + coneColors.waffle_dark + '"/>');
 
-  return '<svg class="mini-cone" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + (9*s) + ' ' + (11*s) + '" width="' + (9*s) + '" height="' + (11*s) + '" shape-rendering="crispEdges">' + rects.join('') + '</svg>';
+  return '<svg class="mini-cone" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + (9*s) + ' ' + (10*s) + '" width="' + (9*s) + '" height="' + (10*s) + '" shape-rendering="crispEdges">' + rects.join('') + '</svg>';
 }
 
 // ---------------------------------------------------------------------------
@@ -262,8 +262,8 @@ function renderMiniConeHDSVG(flavorName, scale) {
   var s = scale || 5;
   var rects = [];
 
-  // Scoop (rows 0-11)
-  var scoopRows = [[4,13],[2,15],[2,15],[2,15],[2,15],[2,15],[2,15],[2,15],[2,15],[2,15],[2,15],[4,13]];
+  // Scoop (rows 0-10; full-width bottom overhangs cone by 1px each side)
+  var scoopRows = [[4,13],[2,15],[2,15],[2,15],[2,15],[2,15],[2,15],[2,15],[2,15],[2,15],[2,15]];
   for (var row = 0; row < scoopRows.length; row++) {
     var sc = scoopRows[row][0], ec = scoopRows[row][1];
     for (var col = sc; col <= ec; col++) {
@@ -293,17 +293,17 @@ function renderMiniConeHDSVG(flavorName, scale) {
     }
   }
 
-  // Cone (rows 12-20 checkerboard + row 21 tip)
+  // Cone (rows 11-19 checkerboard + row 20 tip)
   var coneRows = [[4,13],[4,13],[5,12],[5,12],[6,11],[6,11],[7,10],[7,10],[8,9]];
   for (var cr = 0; cr < coneRows.length; cr++) {
     var csc = coneRows[cr][0], cec = coneRows[cr][1];
     for (var col2 = csc; col2 <= cec; col2++) {
       var wc = ((cr + col2) % 2 === 0) ? coneColors.waffle : coneColors.waffle_dark;
-      rects.push('<rect x="' + (col2*s) + '" y="' + ((cr+12)*s) + '" width="' + s + '" height="' + s + '" fill="' + wc + '"/>');
+      rects.push('<rect x="' + (col2*s) + '" y="' + ((cr+11)*s) + '" width="' + s + '" height="' + s + '" fill="' + wc + '"/>');
     }
   }
-  rects.push('<rect x="' + (8*s) + '" y="' + (21*s) + '" width="' + s + '" height="' + s + '" fill="' + CONE_TIP + '"/>');
-  rects.push('<rect x="' + (9*s) + '" y="' + (21*s) + '" width="' + s + '" height="' + s + '" fill="' + CONE_TIP + '"/>');
+  rects.push('<rect x="' + (8*s) + '" y="' + (20*s) + '" width="' + s + '" height="' + s + '" fill="' + CONE_TIP + '"/>');
+  rects.push('<rect x="' + (9*s) + '" y="' + (20*s) + '" width="' + s + '" height="' + s + '" fill="' + CONE_TIP + '"/>');
 
-  return '<svg class="mini-cone" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + (18*s) + ' ' + (22*s) + '" width="' + (18*s) + '" height="' + (22*s) + '" shape-rendering="crispEdges">' + rects.join('') + '</svg>';
+  return '<svg class="mini-cone" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + (18*s) + ' ' + (21*s) + '" width="' + (18*s) + '" height="' + (21*s) + '" shape-rendering="crispEdges">' + rects.join('') + '</svg>';
 }
