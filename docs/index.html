@@ -130,6 +130,11 @@
       </div>
     </section>
 
+    <!-- Flavor signal hero (top signal only, shown if confidence threshold met) -->
+    <section id="signals-section" class="hero-signal" hidden>
+      <div id="signals-list" class="signals-list"></div>
+    </section>
+
     <section id="calendar-cta" class="calendar-cta" hidden>
       <div class="calendar-cta-card">
         <div class="calendar-cta-icon">
@@ -149,12 +154,6 @@
     </section>
 
     <div id="watch-banner-container"></div>
-
-    <!-- Flavor signals -->
-    <section id="signals-section" hidden>
-      <h2 class="signals-header">Flavor Signals</h2>
-      <div id="signals-list" class="signals-list"></div>
-    </section>
 
     <!-- Week strip -->
     <section id="week-section" hidden>
@@ -211,9 +210,11 @@
       <a href="privacy.html">Privacy</a>
     </div>
     <p style="margin-top:0.5rem;">Not affiliated with any restaurant. Flavor data sourced from restaurant websites.</p>
+    <div class="page-share-mount" id="page-share"></div>
   </footer>
 
   <script src="planner-shared.js"></script>
+  <script>CustardPlanner.initShareButton('page-share');</script>
   <script>var WORKER_BASE = CustardPlanner.WORKER_BASE;</script>
   <script src="cone-renderer.js"></script>
   <script>
@@ -645,7 +646,7 @@
     }
 
     function fetchSignals(slug) {
-      CustardPlanner.fetchSignals(WORKER_BASE, slug, document.getElementById('signals-section'), document.getElementById('signals-list'));
+      CustardPlanner.fetchSignals(WORKER_BASE, slug, document.getElementById('signals-section'), document.getElementById('signals-list'), 1);
     }
 
     function buildTimeline(confirmedFlavors, forecast, today) {

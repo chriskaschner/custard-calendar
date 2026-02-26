@@ -950,6 +950,9 @@ var CustardPlanner = (function () {
     // Signals
     signalCardHTML: signalCardHTML,
     fetchSignals: fetchSignalsShared,
+
+    // Share
+    initShareButton: initShareButton,
   };
 
   // ---------------------------------------------------------------------------
@@ -1054,5 +1057,45 @@ var CustardPlanner = (function () {
         trackSignalViews(list);
       })
       .catch(function () { /* enhancement-only */ });
+  }
+
+  // ---------------------------------------------------------------------------
+  // Share button
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Mount a share button into a container element.
+   * Uses Web Share API when available; falls back to clipboard copy.
+   * Reads og:url and og:title meta tags for share payload.
+   * @param {HTMLElement|string} container - Element or element ID to mount into
+   */
+  function initShareButton(container) {
+    if (typeof container === 'string') container = document.getElementById(container);
+    if (!container) return;
+
+    var ogUrl = document.querySelector('meta[property="og:url"]');
+    var ogTitle = document.querySelector('meta[property="og:title"]');
+    var shareUrl = (ogUrl && ogUrl.content) || window.location.href;
+    var shareTitle = (ogTitle && ogTitle.content) || document.title;
+
+    var btn = document.createElement('button');
+    btn.className = 'share-btn';
+    btn.setAttribute('aria-label', 'Share this page');
+    btn.textContent = 'Share';
+
+    btn.addEventListener('click', function () {
+      if (navigator.share) {
+        navigator.share({ title: shareTitle, url: shareUrl }).catch(function () {});
+      } else {
+        navigator.clipboard.writeText(shareUrl).then(function () {
+          btn.textContent = 'Link copied';
+          setTimeout(function () { btn.textContent = 'Share'; }, 2000);
+        }).catch(function () {
+          window.prompt('Copy this link:', shareUrl);
+        });
+      }
+    });
+
+    container.appendChild(btn);
   }
 })();

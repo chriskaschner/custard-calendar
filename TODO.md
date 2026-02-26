@@ -111,7 +111,7 @@ Turn high-specificity seasonal/store insights into explainable content with evid
 - [x] **Signal detection** -- `worker/src/signals.js`: 5 signal types (overdue, dow_pattern, seasonal, active_streak, rare_find). Statistically gated: chi-squared for DOW (p<0.05), 1.5x ratio for overdue, 50% concentration for seasonal. `/api/v1/signals/{slug}` endpoint. 31 tests, 483 total. (2026-02-27)
 - [x] **Surface across pages** -- Signal cards on Forecast (index.html) and Radar (radar.html) via shared `CustardPlanner.fetchSignals()`. Color-coded accent bars per signal type. (2026-02-27)
 - [x] **Action linkage** -- Every signal card has a CTA: overdue/seasonal -> Set Alert, dow_pattern -> Subscribe, streak/rare_find -> Directions. Built into `signalCardHTML()` in planner-shared.js. (2026-02-27)
-- [ ] **Elevate Flavor Signals on main page** -- signals are currently rendered below the today card on index.html as a secondary section. Promote to a first-class position: show the single highest-confidence signal for the user's selected store in the hero area (directly below the today flavor card), with a badge callout and inline CTA. Only show if a signal exists and confidence is above threshold. Use existing `signalCardHTML()` output, just repositioned and visually weighted.
+- [x] **Elevate Flavor Signals on main page** -- moved `signals-section` to immediately after `today-section` (above calendar-cta); added `hero-signal` CSS class with stronger border (2px, darker), larger headline/explanation font, wider accent bar; changed fetch limit to 1 (single highest-confidence signal); removed header label (section is self-describing via the card). (2026-02-26)
 
 ## Next/Later -- Map/Fronts Visual v2
 
@@ -150,7 +150,7 @@ Consumer habit product first, intelligence platform second. One promise everywhe
 
 **180-day roadmap:**
 - [x] **0-45 days: Focus + Consistency** -- (2) Homepage hero simplified to one primary CTA ("Find your store") + one secondary ("View the map"); quiz CTA removed from hero. (3) User-facing copy already consumer-focused; no enterprise language in HTML pages. (4) `docs/privacy.html` created with data-use explainer (no cookies, anonymous session ID, alert email opt-in, third-party services); Privacy link added to footer of all 9 docs pages. Item (1) (sister repo endpoint unification) tracked separately. (2026-02-25)
-- [ ] **45-90 days: Growth Loops** -- (1) Expose social-share loops from existing OG capability (`/v1/og/...`) in UI. (2) Turn quiz results into shareable outcomes with direct map/alert deep links. (3) Add channel cross-promo loops: web -> widget/tidbyt install prompts; alert emails -> map/radar return links; widget page -> alerts/calendar upsell. (4) Build search landing templates per store/state from `docs/stores.json` (high-intent SEO surface).
+- [ ] **45-90 days: Growth Loops** -- (1) [x] Share button on all 9 pages via `CustardPlanner.initShareButton()` in `planner-shared.js`; uses Web Share API with clipboard fallback; reads og:url + og:title meta tags. (2) [ ] Turn quiz results into shareable outcomes with archetype + flavor query params + deep links to map/alert. (3) [ ] Channel cross-promo: alert emails -> map/radar return links; widget page -> alerts/calendar upsell. (4) Removed: SEO landing templates moved to Someday/Maybe.
 - [ ] **90-180 days: Personalization + Defensibility** -- (1) "My Custard" state (saved store + favorites) as first-class home. (2) Reframe Radar as decision assistant ("best nearby option today") not feature showcase. (3) Operationalize rarity/seasonality content into recurring editorial/email moments. (4) ML predictions stay as support signal unless confidence/reliability thresholds are met.
 
 **KPI system (formalize weekly operating cadence):**
@@ -168,12 +168,25 @@ Consumer habit product first, intelligence platform second. One promise everywhe
 - custard-tidbyt: community distribution adapter with shared contract tests
 - Treat as adapters, not independent products; reduce marketing confusion + breakage risk
 
+## Sister Repos
+
+Sibling repositories that depend on the Worker API. Breakages here are silent user-facing failures.
+
+- [ ] **custard-scriptable emergency fix** -- `../custard-scriptable/Custard Calendar.js` uses hardcoded `workers.dev` base URL and calls `/api/flavors` (pre-v1 endpoint). Users get stale data or silent 404s. Fix: update base URL to `custard.chriskaschner.com` and endpoint to `/api/v1/flavors`. Live breakage -- high priority.
+- [ ] **custard-tidbyt contract smoke test** -- add a test in `../custard-tidbyt` that hits the live `/api/v1/flavors` endpoint and asserts schema version header + required fields (`flavors[].title`, `flavors[].date`, `stores[].slug`). Prevents silent drift if Worker API response shape changes.
+
+## Now -- Licensing and Testing
+
+- [x] **License update: non-commercial clause** -- added `LICENSE` at repo root: code under custom non-commercial source license; content/data under CC BY-NC 4.0. Commercial use requires prior written consent. Brand disclaimer included. (2026-02-26)
+- [x] **Test coverage gate** -- installed `@vitest/coverage-v8@^3.x`; added `coverage` block to `worker/vitest.config.js` (provider: v8, thresholds: branch 60%, function 70%, line 70%); added `test:coverage` script to `package.json`. First report: 96.41% lines, 72.44% branches, 93.21% functions -- all above threshold. Top gap modules: `email-sender.js` (46% branch), `hotspot-targets.js` (47% branch), `metrics.js` (58% branch). (2026-02-26)
+- [ ] **Test suite speed and CI hardening** -- remaining from coverage review: (1) reduce total Worker test runtime (currently 2.6s); (2) add per-route coverage gates (email-sender, hotspot-targets, metrics have lowest branch coverage); (3) add live-API integration gate to Python pytest run; (4) nightly integration test (fetch -> calendar -> tidbyt pipeline).
+
 ## Someday/Maybe
 
 Not active. Only promote if they clearly improve core decision KPIs.
 
 - [ ] **Alexa skill** -- custom skill using `/api/v1/today` (requires Amazon dev account + certification)
-- [ ] **iOS Scriptable widget: multi-store mode** -- add a configurable mode that shows today's flavor for the user's top 3 selected stores (with quick per-store fallback when one store has no current data).
+- [x] **iOS Scriptable widget: multi-store mode** -- implemented as `buildMultiStore()` in `widgets/custard-today.js`; `MODE="multi"` + `slugs=[...]` injected by widget.html copy-script for 3-store layout. Widget page redesigned with three layout cards, type selector, multi-slot picker, and default WI store previews. (2026-02-25).
 - [ ] **Android widget** -- parity with iOS Scriptable widget using `/api/v1` data
 - [ ] **Madison-area brand expansion** -- selection methodology for adding new brands beyond MKE geo
 - [ ] **Flavor chatbot** -- conversational Q&A for flavor info via web chat UI

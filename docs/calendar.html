@@ -124,9 +124,11 @@
 
   <footer>
     <p><a href="privacy.html">Privacy</a> &middot; Not affiliated with any restaurant. Flavor data sourced from restaurant websites.</p>
+    <div class="page-share-mount" id="page-share"></div>
   </footer>
 
   <script src="planner-shared.js"></script>
+  <script>CustardPlanner.initShareButton('page-share');</script>
   <script>
     const WORKER_BASE = CustardPlanner.WORKER_BASE;
     const ACCESS_TOKEN = ''; // Set to match Worker's ACCESS_TOKEN, or leave empty for open access

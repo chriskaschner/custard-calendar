@@ -25,13 +25,8 @@
     }
 
     body.quiz-page {
-      background:
-        radial-gradient(circle at 12% 14%, rgba(244, 194, 91, 0.25), transparent 35%),
-        radial-gradient(circle at 84% 16%, rgba(19, 164, 143, 0.2), transparent 35%),
-        linear-gradient(160deg, #eef8ff 0%, #f8fdff 52%, #edf7ff 100%);
       color: var(--quiz-ink);
       font-family: "Trebuchet MS", "Gill Sans", "Lucida Grande", sans-serif;
-      min-height: 100vh;
       animation: pageFade 420ms ease-out;
     }
 
@@ -513,10 +508,12 @@
 
   <footer>
     <small>Custard Personality Engine beta. Results are for fun and based on current flavor availability.</small>
+    <div class="page-share-mount" id="page-share"></div>
   </footer>
 
   <script src="cone-renderer.js"></script>
   <script src="planner-shared.js"></script>
+  <script>CustardPlanner.initShareButton('page-share');</script>
   <script src="quizzes/sprites.js"></script>
   <script type="module" src="quizzes/engine.js"></script>
 </body>

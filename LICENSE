@@ -1,0 +1,45 @@
+Custard Calendar — Non-Commercial License
+Copyright (c) 2024-2026 Chris Kaschner. All rights reserved.
+
+SUMMARY
+Code and content in this repository are available for personal, educational,
+and non-commercial use only. Commercial use of any kind requires prior written
+consent from the copyright holder.
+
+CODE LICENSE
+The software source code in this repository (JavaScript, Python, Starlark, and
+related configuration files) is made available under the following terms:
+
+  Permission is granted, free of charge, to any person obtaining a copy of
+  this software, to use, copy, modify, and distribute it for personal,
+  educational, or non-commercial purposes, subject to the following conditions:
+
+  1. This license notice and copyright statement must be retained in all copies
+     or substantial portions of the software.
+
+  2. Commercial use -- defined as any use intended for or directed toward
+     commercial advantage or monetary compensation -- is prohibited without
+     prior written permission from the copyright holder.
+
+  3. The software is provided "as is", without warranty of any kind, express or
+     implied, including but not limited to the warranties of merchantability,
+     fitness for a particular purpose, and non-infringement. In no event shall
+     the copyright holder be liable for any claim, damages, or other liability
+     arising from use of the software.
+
+CONTENT LICENSE
+All non-code assets in this repository (documentation, flavor data, brand copy,
+analytics datasets, design assets, and this website's content) are licensed
+under Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0).
+
+  You are free to share and adapt this material for non-commercial purposes
+  with attribution. Full license text: https://creativecommons.org/licenses/by-nc/4.0/
+
+COMMERCIAL USE
+To inquire about commercial licensing, contact: chris@chriskaschner.com
+
+BRAND DISCLAIMER
+This project is not affiliated with, endorsed by, or connected to Culver's,
+Kopp's Frozen Custard, Gille's Frozen Custard, Hefner's Frozen Custard,
+Kraverz, Oscar's Frozen Custard, or any other brand referenced herein.
+Flavor data is sourced from publicly available restaurant websites.

@@ -100,6 +100,7 @@
 
   <footer>
     <p><a href="privacy.html">Privacy</a> &middot; Not affiliated with any restaurant. Flavor data sourced from restaurant websites.</p>
+    <div class="page-share-mount" id="page-share"></div>
   </footer>
 
   <style>
@@ -246,6 +247,7 @@
   </style>
 
   <script src="planner-shared.js"></script>
+  <script>CustardPlanner.initShareButton('page-share');</script>
   <script>
     const WORKER_BASE = CustardPlanner.WORKER_BASE;
     const getPrimaryStoreSlug = CustardPlanner.getPrimaryStoreSlug || function () { return null; };

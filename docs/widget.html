@@ -61,6 +61,8 @@
       gap: 0.75rem;
       margin-top: 1rem;
       align-items: start;
+      overflow-x: auto;
+      padding-bottom: 0.25rem;
     }
     /* -- Shared card shell -- */
     .size-card {
@@ -69,11 +71,15 @@
       overflow: hidden;
       color: white;
       font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+      flex-shrink: 0;
     }
-    /* Small: 1:1 ratio, max 170px */
+    /* Small: 1:1 ratio */
     .size-card.small { width: 170px; height: 170px; display: flex; flex-direction: column; }
-    /* Medium: ~2.13:1 ratio */
+    /* Medium 3-day: ~2.13:1 ratio */
     .size-card.medium { width: 340px; height: 170px; display: flex; flex-direction: column; }
+    /* Medium 3-store: same physical size */
+    .size-card.multi { width: 340px; height: 170px; display: flex; flex-direction: column; }
+    .size-card.multi .card-header { border-bottom: 1px solid rgba(255,255,255,0.08); }
 
     /* Branded header bar (Tidbyt-style) */
     .size-card .card-header {
@@ -167,6 +173,66 @@
       overflow: hidden;
       text-overflow: ellipsis;
     }
+    /* -- Multi card: 3 store rows -- */
+    .size-card.multi .card-body { padding: 0 16px 6px; }
+    .multi-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 1;
+      min-height: 0;
+    }
+    .multi-row + .multi-row { border-top: 1px solid rgba(255,255,255,0.08); }
+    .multi-row .mr-city { font-size: 9px; opacity: 0.45; flex-shrink: 0; }
+    .multi-row .mr-flavor {
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1.2;
+      flex: 1;
+      min-width: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .multi-row .mr-rarity { font-size: 8px; font-weight: 700; color: #90CAF9; flex-shrink: 0; }
+    /* -- Rotated cones on medium and multi cards -- */
+    .size-card.medium .cone-icon,
+    .size-card.multi .cone-icon {
+      transform: rotate(-45deg);
+      transform-origin: center;
+      flex-shrink: 0;
+      display: inline-block;
+    }
+    /* -- Widget type selector -- */
+    .widget-type-selector {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.75rem;
+      flex-wrap: wrap;
+    }
+    .type-btn {
+      padding: 0.375rem 0.875rem;
+      background: #f0f4f8;
+      border: 1.5px solid #ddd;
+      border-radius: 20px;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      cursor: pointer;
+      color: #444;
+    }
+    .type-btn.active {
+      background: #005696;
+      border-color: #005696;
+      color: white;
+      font-weight: 600;
+    }
+    .type-btn:hover:not(.active) { background: #e0e8f0; border-color: #b0bdd0; }
+    /* -- Card selection ring -- */
+    .size-card.selected {
+      outline: 3px solid #005696;
+      outline-offset: 2px;
+    }
+    /* -- Store filter -- */
     .store-filter {
       display: flex;
       gap: 0.75rem;
@@ -199,6 +265,39 @@
       color: #999;
       margin-left: 0.25rem;
     }
+    /* -- Multi-slot picker -- */
+    .store-slots {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+    .slot-card {
+      flex: 1;
+      padding: 0.5rem 0.75rem;
+      background: white;
+      border: 1.5px solid #ddd;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.8125rem;
+    }
+    .slot-card.active { border-color: #005696; background: #e8f0fe; }
+    .slot-card:hover:not(.active) { background: #f5f5f5; }
+    .slot-role {
+      display: block;
+      font-size: 0.7rem;
+      color: #888;
+      margin-bottom: 0.2rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .slot-name {
+      display: block;
+      font-weight: 600;
+      color: #333;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
     .script-actions {
       display: flex;
       gap: 0.5rem;
@@ -216,7 +315,7 @@
       text-decoration: none;
       cursor: pointer;
     }
-    .script-actions a:hover, .script-actions button:hover { background: #005696; }
+    .script-actions a:hover, .script-actions button:hover { background: #004a80; }
   </style>
 </head>
 <body>
@@ -241,10 +340,11 @@
       <h2>Widget Preview</h2>
       <p style="color:#666;font-size:0.875rem;margin-bottom:0.75rem;">What you'll see on your home screen.</p>
       <div class="widget-sizes">
-        <div class="size-card small" id="preview-small">
+        <!-- Small 1x1 -->
+        <div class="size-card small selected" id="preview-small">
           <div class="card-header" id="small-header">
-            <span id="preview-location">Mt. Horeb</span>
             <span class="date-label" id="preview-date"></span>
+            <span id="preview-location">Mt. Horeb</span>
           </div>
           <div class="card-body">
             <div class="flavor-row">
@@ -257,20 +357,59 @@
             <div class="rarity-badge" id="preview-rarity"></div>
           </div>
         </div>
+        <!-- Medium 3-day -->
         <div class="size-card medium" id="preview-medium">
           <div class="card-header" id="medium-header">
-            <span id="preview-location-med">Mt. Horeb</span>
             <span class="date-label">This Week</span>
+            <span id="preview-location-med">Mt. Horeb</span>
           </div>
           <div class="card-body" id="preview-rows"></div>
         </div>
+        <!-- Medium 3-store -->
+        <div class="size-card multi" id="preview-multi">
+          <div class="card-header" id="multi-header">
+            <span>Today</span>
+            <span class="date-label" id="multi-stores-label">Your Stores</span>
+          </div>
+          <div class="card-body" id="preview-multi-rows"></div>
+        </div>
+      </div>
+      <!-- Type selector -->
+      <div class="widget-type-selector">
+        <button class="type-btn active" data-type="small">Small — Today</button>
+        <button class="type-btn" data-type="3day">Medium — 3 Day</button>
+        <button class="type-btn" data-type="3store">Medium — 3 Store</button>
       </div>
     </section>
 
     <section style="margin-top:1.5rem;">
       <h2>Pick Your Store</h2>
-      <p style="color:#666;font-size:0.875rem;margin-bottom:0.75rem;">Choose your store and the preview above updates live. The script we copy in the next step is pre-configured for this store.</p>
 
+      <!-- Single-store description (visible for small/3day) -->
+      <div id="single-store-picker">
+        <p style="color:#666;font-size:0.875rem;margin-bottom:0.75rem;">Choose your store and the preview above updates live. The script we copy in the next step is pre-configured for this store.</p>
+      </div>
+
+      <!-- Multi-slot picker (visible for 3store) -->
+      <div id="multi-slot-picker" style="display:none">
+        <p style="color:#666;font-size:0.875rem;margin-bottom:0.75rem;">Pick up to 3 stores. Tap a slot to select it, then click a store from the list.</p>
+        <div class="store-slots">
+          <div class="slot-card active" data-slot="primary">
+            <span class="slot-role">Primary</span>
+            <span class="slot-name" id="slot-primary-name">Pick a store</span>
+          </div>
+          <div class="slot-card" data-slot="backup1">
+            <span class="slot-role">Backup 1</span>
+            <span class="slot-name" id="slot-backup1-name">Pick a store</span>
+          </div>
+          <div class="slot-card" data-slot="backup2">
+            <span class="slot-role">Backup 2</span>
+            <span class="slot-name" id="slot-backup2-name">Pick a store</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Shared search + list (always visible) -->
       <div class="store-filter">
         <select id="state-filter">
           <option value="">All States</option>
@@ -306,27 +445,34 @@
           <li>Long-press the new widget, tap <strong>Edit Widget</strong>.</li>
           <li>Set <strong>Script</strong> to the script you just created.</li>
         </ol>
-        <p style="font-size:0.75rem;color:#888;margin-top:0.5rem;">No need to set a parameter -- the store is already baked into the script.</p>
+        <p style="font-size:0.75rem;color:#888;margin-top:0.5rem;">No need to set a parameter — the store is already baked into the script.</p>
       </div>
 
       <div class="step-card">
         <h3><span class="step-number">4</span> Done</h3>
-        <p>The widget refreshes automatically throughout the day. Small shows today's flavor with cone icon and description; medium shows a 3-day schedule with cone icons, flavor names, and descriptions.</p>
+        <p>The widget refreshes automatically throughout the day. Small shows today's flavor with cone icon; medium 3-day shows a 3-day schedule; medium 3-store shows today's flavor at three different locations.</p>
       </div>
     </section>
   </main>
 
   <footer>
     <p><a href="privacy.html">Privacy</a> &middot; Not affiliated with any restaurant. Flavor data sourced from restaurant websites.</p>
+    <div class="page-share-mount" id="page-share"></div>
   </footer>
 
   <script src="planner-shared.js"></script>
+  <script>CustardPlanner.initShareButton('page-share');</script>
   <script>var WORKER_BASE = CustardPlanner.WORKER_BASE;</script>
   <script src="cone-renderer.js"></script>
   <script>
     var SCRIPT_URL = 'https://raw.githubusercontent.com/chriskaschner/custard-calendar/main/widgets/custard-today.js';
     var allStores = [];
-    var selectedSlug = null; // set to random store after load
+    var widgetType = 'small'; // 'small' | '3day' | '3store'
+    var selectedSlug = null;  // for small/3day single-store previews
+    var primarySlug = null;
+    var backup1Slug = null;
+    var backup2Slug = null;
+    var activeSlot = 'primary';
 
     var stateFilter = document.getElementById('state-filter');
     var citySearch = document.getElementById('city-search');
@@ -334,7 +480,45 @@
     var copyScriptBtn = document.getElementById('copy-script');
     var scriptStoreLabel = document.getElementById('script-store-label');
 
-    // Load stores, pick a random WI store to start
+    // --- Widget type selector ---
+
+    function getCopyBtnLabel() {
+      return widgetType === '3store' ? 'Copy Script for 3 Stores' : 'Copy Script for My Store';
+    }
+
+    function updateCardSelection() {
+      document.getElementById('preview-small').classList.toggle('selected', widgetType === 'small');
+      document.getElementById('preview-medium').classList.toggle('selected', widgetType === '3day');
+      document.getElementById('preview-multi').classList.toggle('selected', widgetType === '3store');
+    }
+
+    function updatePickerVisibility() {
+      var single = document.getElementById('single-store-picker');
+      var multi = document.getElementById('multi-slot-picker');
+      if (widgetType === '3store') {
+        single.style.display = 'none';
+        multi.style.display = 'block';
+      } else {
+        single.style.display = 'block';
+        multi.style.display = 'none';
+      }
+    }
+
+    document.querySelectorAll('.type-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        widgetType = this.dataset.type;
+        document.querySelectorAll('.type-btn').forEach(function(b) { b.classList.remove('active'); });
+        this.classList.add('active');
+        updateCardSelection();
+        updatePickerVisibility();
+        copyScriptBtn.textContent = getCopyBtnLabel();
+        updateScriptLabel();
+        renderStores();
+      });
+    });
+
+    // --- Store loading and init ---
+
     async function loadStores() {
       try {
         var resp = await fetch('stores.json?v=' + new Date().toISOString().slice(0, 10));
@@ -342,24 +526,27 @@
         allStores = data.stores || [];
         populateStates();
 
-        // Pick a random WI store as the initial selection
+        // Pick 3 random WI stores for default multi-store preview
         var wiStores = allStores.filter(function(s) { return s.state === 'WI'; });
         var pool = wiStores.length > 0 ? wiStores : allStores;
-        var randomStore = pool[Math.floor(Math.random() * pool.length)];
-        if (randomStore) {
-          selectedSlug = randomStore.slug;
-        } else {
-          selectedSlug = 'mt-horeb';
-        }
+        var shuffled = pool.slice().sort(function() { return Math.random() - 0.5; }).slice(0, 3);
+        primarySlug = shuffled[0] ? shuffled[0].slug : 'mt-horeb';
+        backup1Slug = shuffled[1] ? shuffled[1].slug : null;
+        backup2Slug = shuffled[2] ? shuffled[2].slug : null;
+        selectedSlug = primarySlug;
 
+        updateSlotUI();
         renderStores();
         loadPreview(selectedSlug);
+        loadMultiPreview();
         updateScriptLabel();
         prefetchScript();
       } catch (err) {
         storeList.innerHTML = '<div style="padding:0.5rem;color:#c00">Failed to load stores</div>';
         selectedSlug = 'mt-horeb';
+        primarySlug = 'mt-horeb';
         loadPreview(selectedSlug);
+        loadMultiPreview();
         prefetchScript();
       }
     }
@@ -399,33 +586,96 @@
       storeList.innerHTML = '';
       for (var i = 0; i < filtered.length; i++) {
         var s = filtered[i];
+        var isSelected = (widgetType === '3store')
+          ? (s.slug === primarySlug || s.slug === backup1Slug || s.slug === backup2Slug)
+          : (s.slug === selectedSlug);
         var div = document.createElement('div');
-        div.className = 'store-option' + (s.slug === selectedSlug ? ' selected' : '');
+        div.className = 'store-option' + (isSelected ? ' selected' : '');
         div.innerHTML = storeLabel(s) + '<span class="slug-hint">' + s.slug + '</span>';
         div.dataset.slug = s.slug;
-        div.addEventListener('click', function() {
-          selectStore(this.dataset.slug);
-        });
+        div.addEventListener('click', function() { selectStore(this.dataset.slug); });
         storeList.appendChild(div);
       }
     }
 
     function updateScriptLabel() {
-      var store = allStores.find(function(s) { return s.slug === selectedSlug; });
-      if (store) {
-        var brand = store.brand ? (BRAND_DISPLAY[store.brand] || store.brand) : '';
-        var label = brand ? (brand + ' -- ' + store.city) : (store.city + ', ' + store.state);
-        scriptStoreLabel.textContent = label;
+      if (widgetType === '3store') {
+        var count = [primarySlug, backup1Slug, backup2Slug].filter(Boolean).length;
+        scriptStoreLabel.textContent = count + ' store' + (count !== 1 ? 's' : '') + ' selected';
       } else {
-        scriptStoreLabel.textContent = selectedSlug;
+        var store = allStores.find(function(s) { return s.slug === selectedSlug; });
+        if (store) {
+          var brand = store.brand ? (BRAND_DISPLAY[store.brand] || store.brand) : '';
+          scriptStoreLabel.textContent = brand ? (brand + ' -- ' + store.city) : (store.city + ', ' + store.state);
+        } else {
+          scriptStoreLabel.textContent = selectedSlug || 'your store';
+        }
       }
     }
 
+    // --- Multi-slot picker logic ---
+
+    function updateSlotUI() {
+      var slotMap = { primary: primarySlug, backup1: backup1Slug, backup2: backup2Slug };
+      for (var slot in slotMap) {
+        var nameEl = document.getElementById('slot-' + slot + '-name');
+        if (!nameEl) continue;
+        var s = slotMap[slot];
+        if (s) {
+          var store = allStores.find(function(st) { return st.slug === s; });
+          nameEl.textContent = store ? (store.city + ', ' + store.state) : s;
+        } else {
+          nameEl.textContent = 'Pick a store';
+        }
+      }
+      document.querySelectorAll('.slot-card').forEach(function(c) {
+        c.classList.toggle('active', c.dataset.slot === activeSlot);
+      });
+    }
+
+    document.querySelectorAll('.slot-card').forEach(function(card) {
+      card.addEventListener('click', function() {
+        activeSlot = this.dataset.slot;
+        updateSlotUI();
+      });
+    });
+
     function selectStore(slug) {
-      selectedSlug = slug;
-      updateScriptLabel();
-      renderStores();
-      loadPreview(slug);
+      if (widgetType === '3store') {
+        if (slug === primarySlug) {
+          primarySlug = null;
+          activeSlot = 'primary';
+        } else if (slug === backup1Slug) {
+          backup1Slug = null;
+          activeSlot = 'backup1';
+        } else if (slug === backup2Slug) {
+          backup2Slug = null;
+          activeSlot = 'backup2';
+        } else {
+          if (activeSlot === 'primary') {
+            primarySlug = slug;
+            if (!backup1Slug) activeSlot = 'backup1';
+            else if (!backup2Slug) activeSlot = 'backup2';
+          } else if (activeSlot === 'backup1') {
+            backup1Slug = slug;
+            if (!backup2Slug) activeSlot = 'backup2';
+            else if (!primarySlug) activeSlot = 'primary';
+          } else if (activeSlot === 'backup2') {
+            backup2Slug = slug;
+            if (!primarySlug) activeSlot = 'primary';
+            else if (!backup1Slug) activeSlot = 'backup1';
+          }
+        }
+        updateSlotUI();
+        renderStores();
+        loadMultiPreview();
+        updateScriptLabel();
+      } else {
+        selectedSlug = slug;
+        updateScriptLabel();
+        renderStores();
+        loadPreview(slug);
+      }
     }
 
     stateFilter.addEventListener('change', renderStores);
@@ -453,7 +703,6 @@
       }).catch(function() {});
     }
 
-    // Replace the default slug in the script with the user's selected store
     function personalizeScript(scriptText, slug) {
       return scriptText.replace(
         /var slug = \(args\.widgetParameter \|\| ".*?"\)\.trim\(\);/,
@@ -461,20 +710,29 @@
       );
     }
 
+    function personalizeMultiScript(scriptText, p, b1, b2) {
+      var slugsList = JSON.stringify([p || 'mt-horeb', b1, b2]);
+      return scriptText.replace(
+        /var slug = \(args\.widgetParameter \|\| ".*?"\)\.trim\(\);/,
+        'var slug = (args.widgetParameter || "' + (p || 'mt-horeb') + '").trim();\nvar MODE = "multi";\nvar slugs = ' + slugsList + ';'
+      );
+    }
+
     function doCopy(text) {
+      var resetLabel = getCopyBtnLabel();
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(text).then(function() {
           copyScriptBtn.textContent = 'Copied!';
-          setTimeout(function() { copyScriptBtn.textContent = 'Copy Script for My Store'; }, 2000);
+          setTimeout(function() { copyScriptBtn.textContent = resetLabel; }, 2000);
         }).catch(function() {
           copyToClipboardFallback(text);
           copyScriptBtn.textContent = 'Copied!';
-          setTimeout(function() { copyScriptBtn.textContent = 'Copy Script for My Store'; }, 2000);
+          setTimeout(function() { copyScriptBtn.textContent = resetLabel; }, 2000);
         });
       } else {
         copyToClipboardFallback(text);
         copyScriptBtn.textContent = 'Copied!';
-        setTimeout(function() { copyScriptBtn.textContent = 'Copy Script for My Store'; }, 2000);
+        setTimeout(function() { copyScriptBtn.textContent = resetLabel; }, 2000);
       }
     }
 
@@ -483,7 +741,12 @@
         window.open(SCRIPT_URL, '_blank');
         return;
       }
-      var personalized = personalizeScript(cachedScript, selectedSlug || 'mt-horeb');
+      var personalized;
+      if (widgetType === '3store') {
+        personalized = personalizeMultiScript(cachedScript, primarySlug, backup1Slug, backup2Slug);
+      } else {
+        personalized = personalizeScript(cachedScript, selectedSlug || 'mt-horeb');
+      }
       doCopy(personalized);
     });
 
@@ -493,6 +756,15 @@
       if (!desc) return '';
       if (desc.length <= maxLen) return desc;
       return desc.substring(0, maxLen - 1).trim() + '\u2026';
+    }
+
+    function cityFromStoreName(storeName, fallback) {
+      if (!storeName) return fallback || '';
+      var ofMatch = storeName.match(/of\s+(.+?)(?:,|\s*-)/);
+      if (ofMatch) return ofMatch[1].trim();
+      var commaMatch = storeName.match(/^(.+?),/);
+      if (commaMatch) return commaMatch[1].trim();
+      return fallback || storeName;
     }
 
     async function loadPreview(slug) {
@@ -516,11 +788,7 @@
           }
 
           var rarityEl = document.getElementById('preview-rarity');
-          if (today.rarity && today.rarity.label) {
-            rarityEl.textContent = today.rarity.label.toUpperCase();
-          } else {
-            rarityEl.textContent = '';
-          }
+          rarityEl.textContent = (today.rarity && today.rarity.label) ? today.rarity.label.toUpperCase() : '';
 
           var brandKey = today.brand || "Culver's";
           var brandColors = {
@@ -532,19 +800,8 @@
             "Oscar's":  { bg: '#BC272C', text: '#fff' }
           };
           var bc = brandColors[brandKey] || brandColors["Culver's"];
+          var city = cityFromStoreName(today.store, slug);
 
-          // Extract city from store name (e.g. "Culver's of Mt. Horeb, WI" -> "Mt. Horeb")
-          var city = '';
-          var storeName = today.store || '';
-          var ofMatch = storeName.match(/of\s+(.+?)(?:,|\s*-)/);
-          if (ofMatch) { city = ofMatch[1].trim(); }
-          else {
-            var commaMatch = storeName.match(/^(.+?),/);
-            if (commaMatch) city = commaMatch[1].trim();
-          }
-          if (!city) city = selectedSlug;
-
-          // Set header bars
           var smallHeader = document.getElementById('small-header');
           smallHeader.style.background = bc.bg;
           smallHeader.style.color = bc.text;
@@ -566,10 +823,7 @@
           for (var i = 0; i < upcoming.length; i++) {
             var card = document.createElement('div');
             card.className = 'flavor-card';
-            var coneSvg = '';
-            if (typeof renderMiniConeSVG === 'function') {
-              coneSvg = renderMiniConeSVG(upcoming[i].title, 4);
-            }
+            var coneSvg = (typeof renderMiniConeSVG === 'function') ? renderMiniConeSVG(upcoming[i].title, 4) : '';
             var descHtml = upcoming[i].description
               ? '<div class="fdesc">' + escapeHtml(truncateDesc(upcoming[i].description, 70)) + '</div>'
               : '';
@@ -584,6 +838,48 @@
         }
       } catch (err) {
         document.getElementById('preview-flavor').textContent = 'Preview unavailable';
+      }
+    }
+
+    async function loadMultiPreview() {
+      if (typeof loadFlavorColors === 'function') {
+        try { await loadFlavorColors(); } catch (e) { /* best effort */ }
+      }
+
+      var slugs = [primarySlug, backup1Slug, backup2Slug];
+      var rowsEl = document.getElementById('preview-multi-rows');
+      if (!rowsEl) return;
+
+      var results = await Promise.all(slugs.map(async function(s) {
+        if (!s) return null;
+        try {
+          var resp = await fetch(WORKER_BASE + '/api/v1/today?slug=' + encodeURIComponent(s));
+          if (resp.ok) return await resp.json();
+          return null;
+        } catch(e) { return null; }
+      }));
+
+      rowsEl.innerHTML = '';
+      for (var i = 0; i < 3; i++) {
+        var data = results[i];
+        var rowSlug = slugs[i];
+        var row = document.createElement('div');
+        row.className = 'multi-row';
+
+        var city = data ? cityFromStoreName(data.store, rowSlug) : (rowSlug ? rowSlug.replace(/-/g, ' ') : '');
+        var coneSvg = (typeof renderMiniConeSVG === 'function' && data && data.flavor)
+          ? renderMiniConeSVG(data.flavor, 4)
+          : '';
+        var flavorName = data ? (data.flavor || 'TBD') : (rowSlug ? 'Loading\u2026' : '\u2014');
+        var rarityHtml = (data && data.rarity && data.rarity.label)
+          ? '<span class="mr-rarity">' + escapeHtml(data.rarity.label.toUpperCase()) + '</span>'
+          : '';
+
+        row.innerHTML = '<span class="cone-icon">' + coneSvg + '</span>'
+          + '<span class="mr-city">' + escapeHtml(city) + '</span>'
+          + '<span class="mr-flavor">' + escapeHtml(flavorName) + '</span>'
+          + rarityHtml;
+        rowsEl.appendChild(row);
       }
     }
 

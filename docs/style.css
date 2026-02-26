@@ -1030,16 +1030,32 @@ details ol {
 }
 
 /* Flavor signals */
-.signals-header {
-  font-size: 1rem;
-  color: #005696;
-  margin: 1rem 0 0.5rem;
-}
-
 .signals-list {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+}
+
+/* Hero variant: elevated position directly below today card */
+.hero-signal {
+  margin: 0.75rem 0 0;
+}
+
+.hero-signal .signal-card {
+  border-width: 2px;
+  border-color: #b8d4ed;
+}
+
+.hero-signal .signal-headline {
+  font-size: 1rem;
+}
+
+.hero-signal .signal-explanation {
+  font-size: 0.875rem;
+}
+
+.hero-signal .signal-card-accent {
+  width: 5px;
 }
 
 .signal-card {
@@ -2429,6 +2445,32 @@ footer a {
 
 .footer-links a:hover {
   text-decoration: underline;
+}
+
+/* Share button */
+.share-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+  padding: 0.3rem 0.75rem;
+  border: 1px solid #b8d4ed;
+  border-radius: 20px;
+  background: #fff;
+  color: #005696;
+  font-size: 0.8rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.share-btn:hover {
+  background: #f0f7ff;
+}
+
+.page-share-mount {
+  display: flex;
+  justify-content: center;
+  margin-top: 0.75rem;
 }
 
 /* Error state */
