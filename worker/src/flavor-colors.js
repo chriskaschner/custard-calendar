@@ -404,90 +404,110 @@ export function renderConeHDSVG(flavorName, scale = 1) {
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" shape-rendering="crispEdges">${rects.join('')}</svg>`;
 }
 
-// --- Hero cone renderer (26x24 pixel grid) ---
+// --- Hero cone renderer v2 (36×42 pixel grid) ---
+//
+// From-scratch redesign fixing three problems in the v1 26×24 design:
+//   - v1 used block-style highlight/shadow (rectangular strips read as color
+//     artifacts, not depth). v2 uses 4 specular + 3 shadow pixels at specific
+//     edge positions -- small clusters, not bands.
+//   - v1 used seeded PRNG scatter for toppings (random placement produced
+//     uneven clusters). v2 uses 8 fixed topping slots (same as renderConeHDSVG).
+//   - v1 ribbon was 10 single-pixel steps (staircase at scale 8). v2 ribbon is
+//     a 9-point S-curve, each point 2px wide -- visible band at any scale.
+//
+// Grid: 36×42px. Intended usage:
+//   scale 4 = 144×168px  (hero / index page, matches renderConeHDSVG ×8)
+//   scale 6 = 216×252px  (large hero)
+//   scale 8 = 288×336px  (OG social cards)
 
-// Scoop rows [startCol, endCol] for rows 0-12, elliptical on 26px wide canvas.
+// Scoop rows [startCol, endCol] for rows 0-21, centered on 36px-wide canvas.
+// Mostly flat-sided (rows 2-19 = full 28px width), corners nipped top+bottom --
+// same principle as the HD cone but scaled to the wider canvas.
 const _HERO_SCOOP_ROWS = [
-  [8, 17],  // row 0:  10px (top, corners nipped)
-  [6, 19],  // row 1:  14px
-  [5, 20],  // row 2:  16px
-  [4, 21],  // row 3:  18px
-  [4, 21],  // row 4:  18px
-  [3, 22],  // row 5:  20px (widest)
-  [3, 22],  // row 6:  20px
-  [4, 21],  // row 7:  18px
-  [5, 20],  // row 8:  16px
-  [6, 19],  // row 9:  14px
-  [7, 18],  // row 10: 12px
-  [8, 17],  // row 11: 10px
-  [9, 16],  // row 12:  8px (bottom, meets cone)
+  [8, 27],  // row 0:  20px (top cap, corners nipped)
+  [6, 29],  // row 1:  24px
+  [4, 31],  // row 2:  28px full width
+  [4, 31],  // row 3
+  [4, 31],  // row 4
+  [4, 31],  // row 5
+  [4, 31],  // row 6
+  [4, 31],  // row 7
+  [4, 31],  // row 8
+  [4, 31],  // row 9
+  [4, 31],  // row 10
+  [4, 31],  // row 11
+  [4, 31],  // row 12
+  [4, 31],  // row 13
+  [4, 31],  // row 14
+  [4, 31],  // row 15
+  [4, 31],  // row 16
+  [4, 31],  // row 17
+  [4, 31],  // row 18
+  [4, 31],  // row 19
+  [6, 29],  // row 20: 24px (bottom shoulder)
+  [7, 28],  // row 21: 22px (meets cone)
 ];
 
-// Cone rows [startCol, endCol] for rows 13-22 (checkerboard taper).
+// Cone rows [startCol, endCol] for rows 22-39 (checkerboard taper).
 const _HERO_CONE_ROWS = [
-  [8, 17],  // row 13: 10px
-  [9, 16],  // row 14:  8px
-  [9, 16],  // row 15:  8px
-  [10, 15], // row 16:  6px
-  [10, 15], // row 17:  6px
-  [11, 14], // row 18:  4px
-  [11, 14], // row 19:  4px
-  [12, 13], // row 20:  2px
-  [12, 13], // row 21:  2px
-  [12, 13], // row 22:  2px
+  [7, 28],  // row 22: 22px
+  [7, 28],  // row 23
+  [9, 26],  // row 24: 18px
+  [9, 26],  // row 25
+  [11, 24], // row 26: 14px
+  [11, 24], // row 27
+  [13, 22], // row 28: 10px
+  [13, 22], // row 29
+  [14, 21], // row 30:  8px
+  [14, 21], // row 31
+  [15, 20], // row 32:  6px
+  [15, 20], // row 33
+  [16, 19], // row 34:  4px
+  [16, 19], // row 35
+  [16, 19], // row 36
+  [16, 19], // row 37
+  [17, 18], // row 38:  2px
+  [17, 18], // row 39
 ];
-// Row 23: tip (2px, CONE_TIP_COLOR). Total grid height = 24.
+// Rows 40-41: tip (2px, CONE_TIP_COLOR). Total grid height = 42.
 
-// Pixel dimensions [w, h] per topping type at hero scale.
-const _HERO_TOPPING_SIZES = {
-  pecan:        [2, 2],
-  dove:         [1, 2],
-  oreo:         [2, 2],
-  brownie:      [2, 3],
-  cake:         [2, 3],
-  cookie_dough: [2, 2],
-  cashew:       [2, 1],
-};
+// Specular highlight -- 4 pixels at upper-left of scoop dome.
+// lightenHex(base, 0.25). Small cluster; reads as specular, not a stripe.
+const _HERO_HIGHLIGHT_SLOTS = [[8, 0], [9, 0], [6, 1], [7, 1]];
 
-function _heroToppingSize(key) {
-  return _HERO_TOPPING_SIZES[key] || [2, 2];
-}
+// Occlusion shadow -- 3 pixels at lower-right edge of scoop.
+// darkenHex(base, 0.12). Edge-following; reads as depth, not a band.
+const _HERO_SHADOW_SLOTS = [[29, 19], [28, 20], [27, 21]];
 
-// djb2 hash of a flavor name string -> unsigned 32-bit seed.
-function _heroSeed(flavorName) {
-  let h = 5381;
-  for (let i = 0; i < flavorName.length; i++) {
-    h = ((h << 5) + h + flavorName.charCodeAt(i)) >>> 0;
-  }
-  return h || 1;
-}
+// Topping slots: 8 fixed positions, each rendered as 2×2 pixels.
+// Left-then-right alternation, spread across full scoop height (rows 1-18).
+// Ribbon threads through cols 14-19; toppings stay at cols 8-11 and 22-27
+// so there is no geometric overlap between ribbon and topping pixels.
+const _HERO_TOPPING_SLOTS = [
+  [10,  1],  // T1: top-left
+  [22,  3],  // T2: top-right
+  [ 8,  7],  // T3: mid-left
+  [26,  8],  // T4: mid-right
+  [10, 12],  // T5: lower-mid-left
+  [24, 13],  // T6: lower-mid-right
+  [ 8, 17],  // T7: lower-left
+  [23, 18],  // T8: lower-right
+];
 
-// Park-Miller LCG. Returns a closure producing floats in [0, 1).
-function _heroRng(seed) {
-  let s = seed >>> 0;
-  return function () {
-    s = (s * 1664525 + 1013904223) >>> 0;
-    return s / 4294967296;
-  };
-}
-
-// Returns true if (col, row) is within the scoop boundary.
-function _heroInScoop(col, row) {
-  if (row < 0 || row >= _HERO_SCOOP_ROWS.length) return false;
-  const [sc, ec] = _HERO_SCOOP_ROWS[row];
-  return col >= sc && col <= ec;
-}
+// Ribbon path: 9-point S-curve through scoop center.
+// Each point rendered as 2px wide × 1px tall to ensure a visible band
+// at any scale without the staircase artifact of 1-pixel single steps.
+const _HERO_RIBBON_PATH = [
+  [14,  2], [15,  4], [16,  6], [17,  8], [18, 10],
+  [17, 12], [16, 14], [15, 16], [16, 18],
+];
 
 /**
  * Render a hero-scale SVG cone for a flavor at the given scale.
  *
- * Grid: 26x24 pixels -- elliptical scoop with 3-shade depth shading,
- * 2px-wide diagonal ribbon with highlight edge, and seeded-scatter toppings
- * (each piece placed pseudo-randomly, deterministic per flavor name).
- *
- * Profile field `heroPixelMap` (optional): explicit pixel overrides
- * [[x, y, w, h, colorKey], ...] that replace the scatter algorithm for
- * hand-tuned flavors.
+ * Grid: 36×42px. Uses 8 fixed topping slots (same approach as renderConeHDSVG),
+ * a 4-pixel specular highlight + 3-pixel edge shadow for depth, and a 9-point
+ * S-curve ribbon (2px wide) that threads the scoop center.
  *
  * @param {string} flavorName
  * @param {number} [scale=1]
@@ -501,80 +521,55 @@ export function renderConeHeroSVG(flavorName, scale = 1) {
   const ribbonColor = hasRibbon ? (RIBBON_COLORS[ribbonKey] || null) : null;
   const toppingSlots = resolveHDToppingSlots(profile);
 
-  const GRID_W = 26;
-  const GRID_H = 24;
+  const GRID_W = 36;
+  const GRID_H = 42;
   const w = GRID_W * scale;
   const h = GRID_H * scale;
   const s = scale;
   const rects = [];
 
-  const shadowColor = darkenHex(baseColor, 0.15);
-  const hlColor = lightenHex(baseColor, 0.20);
+  const hlColor = lightenHex(baseColor, 0.25);
+  const shadowColor = darkenHex(baseColor, 0.12);
 
   function rect(col, row, pw, ph, color) {
     rects.push(`<rect x="${col * s}" y="${row * s}" width="${pw * s}" height="${ph * s}" fill="${color}"/>`);
   }
 
-  // 1. Base scoop fill with depth shading.
-  //    Highlight zone: rows 0-4, leftmost 2 pixels of each row (upper-left specular).
-  //    Shadow zone: rows 2-12, last pixel of each row (right-edge occlusion).
+  // 1. Base scoop fill.
   for (let row = 0; row < _HERO_SCOOP_ROWS.length; row++) {
     const [sc, ec] = _HERO_SCOOP_ROWS[row];
     for (let col = sc; col <= ec; col++) {
-      let color = baseColor;
-      if (row <= 4 && col <= sc + 1) {
-        color = hlColor;
-      } else if (row >= 2 && col === ec) {
-        color = shadowColor;
-      }
-      rect(col, row, 1, 1, color);
+      rect(col, row, 1, 1, baseColor);
     }
   }
 
-  // 2. Ribbon: 1px-wide diagonal stripe, upper-left to lower-right.
-  //    Single pixel per path step, primary ribbon color only.
+  // 2. Depth shading: upper-left specular highlight + lower-right shadow.
+  for (const [hx, hy] of _HERO_HIGHLIGHT_SLOTS) {
+    rect(hx, hy, 1, 1, hlColor);
+  }
+  for (const [sx, sy] of _HERO_SHADOW_SLOTS) {
+    rect(sx, sy, 1, 1, shadowColor);
+  }
+
+  // 3. Toppings: 8 fixed 2×2 slots filled up to resolveHDToppingSlots length.
+  for (let i = 0; i < toppingSlots.length && i < _HERO_TOPPING_SLOTS.length; i++) {
+    const color = TOPPING_COLORS[toppingSlots[i]];
+    if (!color) continue;
+    const [tx, ty] = _HERO_TOPPING_SLOTS[i];
+    rect(tx, ty, 2, 2, color);
+  }
+
+  // 4. Ribbon: 9-point S-curve, each point 2px wide × 1px tall.
+  //    Renders after toppings so ribbon wins at any overlap.
   if (ribbonColor) {
-    const ribbonPath = [
-      [5, 1], [6, 2], [7, 3], [8, 4], [9, 5],
-      [10, 6], [11, 7], [12, 8], [13, 9], [14, 10],
-    ];
-    for (const [rc, rr] of ribbonPath) {
-      if (_heroInScoop(rc, rr)) rect(rc, rr, 1, 1, ribbonColor);
+    for (const [rx, ry] of _HERO_RIBBON_PATH) {
+      rect(rx, ry, 2, 1, ribbonColor);
     }
   }
 
-  // 3. Toppings: scatter via seeded PRNG, or explicit heroPixelMap if defined.
-  if (toppingSlots.length > 0) {
-    if (profile.heroPixelMap) {
-      for (const [px, py, pw, ph, colorKey] of profile.heroPixelMap) {
-        const color = TOPPING_COLORS[colorKey] || colorKey;
-        rect(px, py, pw, ph, color);
-      }
-    } else {
-      const rng = _heroRng(_heroSeed(flavorName));
-      for (const toppingKey of toppingSlots) {
-        const color = TOPPING_COLORS[toppingKey];
-        if (!color) continue;
-        const [tw, th] = _heroToppingSize(toppingKey);
-        let col = 0, row = 0, ok = false;
-        for (let tries = 0; tries < 10; tries++) {
-          const ir = 1 + Math.floor(rng() * 11);  // rows 1-11
-          const [sc, ec] = _HERO_SCOOP_ROWS[ir];
-          const range = ec - sc - tw - 3;  // 2px interior margin each side
-          if (range < 1) continue;
-          const ic = sc + 2 + Math.floor(rng() * range);
-          if (_heroInScoop(ic, ir) && _heroInScoop(ic + tw - 1, ir + th - 1)) {
-            col = ic; row = ir; ok = true; break;
-          }
-        }
-        if (ok) rect(col, row, tw, th, color);
-      }
-    }
-  }
-
-  // 4. Cone: checkerboard taper, rows 13-22.
+  // 5. Cone: checkerboard taper, rows 22-39.
   for (let ri = 0; ri < _HERO_CONE_ROWS.length; ri++) {
-    const row = ri + 13;
+    const row = ri + 22;
     const [sc, ec] = _HERO_CONE_ROWS[ri];
     for (let col = sc; col <= ec; col++) {
       const color = ((row + col) % 2 === 0) ? CONE_COLORS.waffle : CONE_COLORS.waffle_dark;
@@ -582,9 +577,9 @@ export function renderConeHeroSVG(flavorName, scale = 1) {
     }
   }
 
-  // 5. Tip: row 23, 2px.
-  rect(12, 23, 1, 1, CONE_TIP_COLOR);
-  rect(13, 23, 1, 1, CONE_TIP_COLOR);
+  // 6. Tip: rows 40-41, 2px wide.
+  rect(17, 40, 2, 1, CONE_TIP_COLOR);
+  rect(17, 41, 2, 1, CONE_TIP_COLOR);
 
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" shape-rendering="crispEdges">${rects.join('')}</svg>`;
 }

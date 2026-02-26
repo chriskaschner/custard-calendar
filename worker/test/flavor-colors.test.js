@@ -209,18 +209,18 @@ describe('renderConeHeroSVG', () => {
     expect(svg).toContain('</svg>');
   });
 
-  it('uses 26x24 grid at scale 1', () => {
+  it('uses 36x42 grid at scale 1', () => {
     const svg = renderConeHeroSVG('Vanilla');
-    expect(svg).toContain('viewBox="0 0 26 24"');
-    expect(svg).toContain('width="26"');
-    expect(svg).toContain('height="24"');
+    expect(svg).toContain('viewBox="0 0 36 42"');
+    expect(svg).toContain('width="36"');
+    expect(svg).toContain('height="42"');
   });
 
   it('scales correctly', () => {
     const svg = renderConeHeroSVG('Vanilla', 8);
-    expect(svg).toContain('viewBox="0 0 208 192"');
-    expect(svg).toContain('width="208"');
-    expect(svg).toContain('height="192"');
+    expect(svg).toContain('viewBox="0 0 288 336"');
+    expect(svg).toContain('width="288"');
+    expect(svg).toContain('height="336"');
   });
 
   it('includes base color in scoop fill', () => {
@@ -231,13 +231,13 @@ describe('renderConeHeroSVG', () => {
   it('includes highlight color (lighter than base)', () => {
     const svg = renderConeHeroSVG('Caramel Chocolate Pecan');
     const base = BASE_COLORS.chocolate_custard;
-    expect(svg).toContain(lightenHex(base, 0.20));
+    expect(svg).toContain(lightenHex(base, 0.25));
   });
 
   it('includes shadow color (darker than base)', () => {
     const svg = renderConeHeroSVG('Caramel Chocolate Pecan');
     const base = BASE_COLORS.chocolate_custard;
-    expect(svg).toContain(darkenHex(base, 0.15));
+    expect(svg).toContain(darkenHex(base, 0.12));
   });
 
   it('includes ribbon color when flavor has ribbon', () => {
@@ -272,10 +272,10 @@ describe('renderConeHeroSVG', () => {
     expect(svg1).toBe(svg2);
   });
 
-  it('produces different scatter for different flavor names', () => {
+  it('produces different output for different flavor profiles', () => {
     const svgCCP = renderConeHeroSVG('Caramel Chocolate Pecan', 1);
     const svgTurtle = renderConeHeroSVG('Turtle', 1);
-    // Different flavor names -> different scatter -> different SVG
+    // Different profiles (base/ribbon/toppings) -> different SVG
     expect(svgCCP).not.toBe(svgTurtle);
   });
 
@@ -299,10 +299,7 @@ describe('renderConeHeroSVG', () => {
     }
   });
 
-  it('uses heroPixelMap override when defined on profile', () => {
-    // Temporarily test with an inline profile by patching FLAVOR_PROFILES
-    // We cannot mutate the import easily, so verify that scatter-based render
-    // for a profile without heroPixelMap still includes topping color.
+  it('renders Butter Pecan with pecan topping color', () => {
     const svg = renderConeHeroSVG('Butter Pecan');
     expect(svg).toContain(TOPPING_COLORS.pecan);
   });

@@ -420,16 +420,16 @@ function hdCone(name,s) {
   return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+(18*s)+' '+(22*s)+'" width="'+(18*s)+'" height="'+(22*s)+'" shape-rendering="crispEdges">'+o.join('')+'</svg>';
 }
 
-// Hero cone renderer -- mirrors renderConeHeroSVG in worker/src/flavor-colors.js
-// Grid: 26x24 pixels, elliptical scoop with depth shading, seeded-scatter toppings.
-var _HSR=[[8,17],[6,19],[5,20],[4,21],[4,21],[3,22],[3,22],[4,21],[5,20],[6,19],[7,18],[8,17],[9,16]];
-var _HCR=[[8,17],[9,16],[9,16],[10,15],[10,15],[11,14],[11,14],[12,13],[12,13],[12,13]];
-var _HTS={pecan:[2,2],dove:[1,2],oreo:[2,2],brownie:[2,3],cake:[2,3],cookie_dough:[2,2],cashew:[2,1]};
-function _hseed(n){var h=5381;for(var i=0;i<n.length;i++)h=((h<<5)+h+n.charCodeAt(i))>>>0;return h||1;}
-function _hrng(seed){var s=seed>>>0;return function(){s=(s*1664525+1013904223)>>>0;return s/4294967296;};}
-function _hisc(col,row){if(row<0||row>=_HSR.length)return false;var r=_HSR[row];return col>=r[0]&&col<=r[1];}
+// Hero cone renderer v2 -- mirrors renderConeHeroSVG in worker/src/flavor-colors.js
+// Grid: 36x42px. Fixed topping slots, 4-pixel specular highlight, 9-point ribbon.
+var _HSR=[[8,27],[6,29],[4,31],[4,31],[4,31],[4,31],[4,31],[4,31],[4,31],[4,31],[4,31],[4,31],[4,31],[4,31],[4,31],[4,31],[4,31],[4,31],[4,31],[4,31],[6,29],[7,28]];
+var _HCR=[[7,28],[7,28],[9,26],[9,26],[11,24],[11,24],[13,22],[13,22],[14,21],[14,21],[15,20],[15,20],[16,19],[16,19],[16,19],[16,19],[17,18],[17,18]];
+var _HHL=[[8,0],[9,0],[6,1],[7,1]]; // highlight slots
+var _HSH=[[29,19],[28,20],[27,21]]; // shadow slots
+var _HTS=[[10,1],[22,3],[8,7],[26,8],[10,12],[24,13],[8,17],[23,18]]; // topping slots (2x2)
+var _HRP=[[14,2],[15,4],[16,6],[17,8],[18,10],[17,12],[16,14],[15,16],[16,18]]; // ribbon path
 function heroCone(name,s) {
-  s=s||8;
+  s=s||4;
   var p=getP(name), bc=colorData.base_colors||{}, tc=colorData.topping_colors||{}, rc=colorData.ribbon_colors||{}, cc=colorData.cone_colors||SEED_CONE;
   var b=(p&&bc[p.base])?bc[p.base]:bCol(name), rk=p?p.ribbon:null, rCol=rk?(rc[rk]||SEED_RIBBON[rk]||null):null;
   var den=p?p.density:'standard', tops=p?(p.toppings||[]):[], ts;
@@ -438,47 +438,27 @@ function heroCone(name,s) {
   else if(den==='explosion'){ts=[];for(var i=0;i<8;i++)ts.push(tops[i%tops.length]||tops[0]);}
   else if(den==='overload') ts=tops.length?[tops[0],tops[0],tops[0],tops[0],tops[0],tops[0]]:[];
   else{ts=[];for(var si=0;si<6;si++)ts.push(tops[si%tops.length]||tops[0]);}
-  var sh=dk(b,0.15),hl=lh(b,0.20),o=[];
-  // 1. Scoop fill with depth shading
-  _HSR.forEach(function(r,row){
-    for(var col=r[0];col<=r[1];col++){
-      var c=b;
-      if(row<=4&&col<=r[0]+1) c=hl;
-      else if(row>=2&&col===r[1]) c=sh;
-      o.push(R(col*s,row*s,s,s,c));
-    }
-  });
-  // 2. Ribbon (1px-wide diagonal)
-  if(rCol){
-    [[5,1],[6,2],[7,3],[8,4],[9,5],[10,6],[11,7],[12,8],[13,9],[14,10]].forEach(function(r){
-      if(_hisc(r[0],r[1])) o.push(R(r[0]*s,r[1]*s,s,s,rCol));
-    });
+  var hl=lh(b,0.25),sh=dk(b,0.12),o=[];
+  // 1. Base scoop fill
+  _HSR.forEach(function(r,row){for(var col=r[0];col<=r[1];col++)o.push(R(col*s,row*s,s,s,b));});
+  // 2. Depth shading: highlight + shadow
+  _HHL.forEach(function(pt){o.push(R(pt[0]*s,pt[1]*s,s,s,hl));});
+  _HSH.forEach(function(pt){o.push(R(pt[0]*s,pt[1]*s,s,s,sh));});
+  // 3. Toppings: fixed 2x2 slots
+  for(var i=0;i<ts.length&&i<_HTS.length;i++){
+    var col=tc[ts[i]]||SEED_TOPPING[ts[i]]; if(!col) continue;
+    o.push(R(_HTS[i][0]*s,_HTS[i][1]*s,2*s,2*s,col));
   }
-  // 3. Topping scatter (seeded PRNG)
-  if(ts.length>0){
-    var rng=_hrng(_hseed(name));
-    ts.forEach(function(k){
-      var col=tc[k]||SEED_TOPPING[k]; if(!col) return;
-      var sz=_HTS[k]||[2,2], tw=sz[0],th=sz[1];
-      var pc=0,pr=0,ok=false;
-      for(var t=0;t<10;t++){
-        var ir=1+Math.floor(rng()*11);
-        var row=_HSR[ir],range=row[1]-row[0]-tw-3;
-        if(range<1) continue;
-        var ic=row[0]+2+Math.floor(rng()*range);
-        if(_hisc(ic,ir)&&_hisc(ic+tw-1,ir+th-1)){pc=ic;pr=ir;ok=true;break;}
-      }
-      if(ok) o.push(R(pc*s,pr*s,tw*s,th*s,col));
-    });
-  }
-  // 4. Cone rows 13-22
+  // 4. Ribbon: 9-point S-curve, 2px wide
+  if(rCol){_HRP.forEach(function(pt){o.push(R(pt[0]*s,pt[1]*s,2*s,s,rCol));});}
+  // 5. Cone rows 22-39
   _HCR.forEach(function(r,ri){
-    var row=ri+13;
+    var row=ri+22;
     for(var col=r[0];col<=r[1];col++){var wc=((row+col)%2===0)?cc.waffle:cc.waffle_dark;o.push(R(col*s,row*s,s,s,wc));}
   });
-  // 5. Tip row 23
-  o.push(R(12*s,23*s,s,s,CONE_TIP));o.push(R(13*s,23*s,s,s,CONE_TIP));
-  return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+(26*s)+' '+(24*s)+'" width="'+(26*s)+'" height="'+(24*s)+'" shape-rendering="crispEdges">'+o.join('')+'</svg>';
+  // 6. Tip rows 40-41
+  o.push(R(17*s,40*s,2*s,s,CONE_TIP));o.push(R(17*s,41*s,2*s,s,CONE_TIP));
+  return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+(36*s)+' '+(42*s)+'" width="'+(36*s)+'" height="'+(42*s)+'" shape-rendering="crispEdges">'+o.join('')+'</svg>';
 }
 
 // Render HD cone using LEGACY_PROFILES (before-state for comparison column)
@@ -595,8 +575,8 @@ function buildRow(flavor) {
   // c6: HD ×8 (hero/OG — documented scale for social cards)
   var c6='<div class="c" style="padding:4px;">'+hdCone(name,8)+'</div>';
 
-  // c6b: Hero ×8 (new seeded-scatter renderer for comparison)
-  var c6b='<div class="c" style="padding:4px;">'+heroCone(name,8)+'</div>';
+  // c6b: Hero ×4 (36x42 grid v2 — fixed slots, 4px specular, 2px-wide ribbon)
+  var c6b='<div class="c" style="padding:4px;">'+heroCone(name,4)+'</div>';
 
   // c7: quality flags + colors
   var c7;
