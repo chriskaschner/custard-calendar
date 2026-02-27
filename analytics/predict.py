@@ -41,11 +41,22 @@ class FrequencyRecencyModel(FlavorPredictor):
     Recency is scored as "overdue ratio": days_since_last / expected_interval.
     Flavors past their typical interval get boosted; recently-served ones get suppressed.
     This avoids the failure mode where raw days-since amplifies rare flavors.
+
+    Weight blend: freq=0.60, recency=0.20, dow=0.10, seasonal=0.10.
+    DoW and seasonal bonuses require a minimum of 5 appearances per flavor to fire;
+    below that threshold they contribute 0 so sparse-store predictions degrade
+    gracefully to pure freq+recency.
     """
 
-    def __init__(self, frequency_weight: float = 0.7, recency_weight: float = 0.3):
+    # Minimum appearances required for a flavor to receive a DoW or seasonal bonus.
+    MIN_BONUS_APPEARANCES = 5
+
+    def __init__(self, frequency_weight: float = 0.6, recency_weight: float = 0.2,
+                 dow_weight: float = 0.1, seasonal_weight: float = 0.1):
         self.frequency_weight = frequency_weight
         self.recency_weight = recency_weight
+        self.dow_weight = dow_weight
+        self.seasonal_weight = seasonal_weight
         self.df: pd.DataFrame | None = None
         self.all_flavors: list[str] = []
 
@@ -53,6 +64,65 @@ class FrequencyRecencyModel(FlavorPredictor):
         self.df = df
         self.all_flavors = sorted(df["title"].unique())
         return self
+
+    def _compute_dow_bonus(self, df_store: pd.DataFrame, target_dow: int) -> dict:
+        """Return per-flavor DoW bonus scores (0..1), normalized to sum to 1.
+
+        Only flavors with >= MIN_BONUS_APPEARANCES total appearances at this store
+        are eligible; others get 0. target_dow is 0=Mon..6=Sun, matching
+        pandas dt.dayofweek convention.
+        """
+        counts = df_store["title"].value_counts()
+        eligible = counts[counts >= self.MIN_BONUS_APPEARANCES].index
+
+        if len(eligible) == 0:
+            return {}
+
+        dow_counts = (
+            df_store[df_store["title"].isin(eligible)]
+            .groupby("title")["dow"]
+            .apply(lambda s: (s == target_dow).sum())
+        )
+
+        total = dow_counts.sum()
+        if total == 0:
+            return {}
+
+        normalized = dow_counts / total
+        return normalized.to_dict()
+
+    def _compute_seasonal_bonus(self, df_store: pd.DataFrame, target_month: int) -> dict:
+        """Return per-flavor seasonal bonus scores (0..1), normalized to sum to 1.
+
+        Uses a 3-month sliding window (target_month +/- 1, wrapping Dec->Jan),
+        mirroring the detectSeasonal() logic in signals.js. Only flavors with
+        >= MIN_BONUS_APPEARANCES total appearances are eligible.
+        """
+        counts = df_store["title"].value_counts()
+        eligible = counts[counts >= self.MIN_BONUS_APPEARANCES].index
+
+        if len(eligible) == 0:
+            return {}
+
+        # Build 3-month window with wrap-around
+        months_in_window = {
+            ((target_month - 2) % 12) + 1,
+            ((target_month - 1) % 12) + 1,
+            target_month,
+        }
+
+        seasonal_counts = (
+            df_store[df_store["title"].isin(eligible)]
+            .groupby("title")["month"]
+            .apply(lambda s: s.isin(months_in_window).sum())
+        )
+
+        total = seasonal_counts.sum()
+        if total == 0:
+            return {}
+
+        normalized = seasonal_counts / total
+        return normalized.to_dict()
 
     def predict_proba(self, store_slug: str, date: pd.Timestamp) -> pd.Series:
         df = self.df
@@ -90,9 +160,19 @@ class FrequencyRecencyModel(FlavorPredictor):
         overdue_ratio = overdue_ratio.clip(upper=3.0) / 3.0
         overdue_ratio = overdue_ratio.reindex(self.all_flavors, fill_value=0.0)
 
+        # DoW bonus
+        dow_bonus_dict = self._compute_dow_bonus(historical, date.dayofweek)
+        dow_bonus = pd.Series(dow_bonus_dict, dtype=float).reindex(self.all_flavors, fill_value=0.0)
+
+        # Seasonal bonus
+        seasonal_bonus_dict = self._compute_seasonal_bonus(historical, date.month)
+        seasonal_bonus = pd.Series(seasonal_bonus_dict, dtype=float).reindex(self.all_flavors, fill_value=0.0)
+
         # Combined score
         scores = (self.frequency_weight * freq_probs +
-                  self.recency_weight * overdue_ratio)
+                  self.recency_weight * overdue_ratio +
+                  self.dow_weight * dow_bonus +
+                  self.seasonal_weight * seasonal_bonus)
         total = scores.sum()
         if total > 0:
             scores = scores / total
