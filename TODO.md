@@ -197,6 +197,10 @@ Not active. Only promote if they clearly improve core decision KPIs.
 - [ ] **Madison-area brand expansion** -- selection methodology for adding new brands beyond MKE geo
 - [ ] **Flavor chatbot** -- conversational Q&A for flavor info via web chat UI
 - [ ] **Pairwise flavor voting** -- group "where should we go tonight?" (deprioritized, no clear MVP)
+- [ ] **Ensemble predictor** -- combine FR (40%), Markov (40%), PCA-collaborative (20%). Current 3.2% top-1 -> maybe 5-6%. Prediction-only; no surface value without forecast headline.
+- [ ] **Confidence intervals in forecast output** -- P95 uncertainty bands on predictions.
+- [ ] **Cluster-based transfer learning** -- PCA cluster centroid as prior for sparse stores. Prediction infrastructure only.
+- [ ] **Cluster-personalized forecast emails** -- compare store to its PCA cluster centroid. Prediction-framed; revisit if forecast email becomes primary channel.
 
 ## Data Health -- Store Coverage Audit
 
@@ -223,13 +227,8 @@ The analytics pipeline's best output isn't predictions -- it's **flavor intellig
 
 - [x] **Refresh local dataset metrics snapshot** -- recomputed scale/coverage across `backfill`, `backfill-national`, and `backfill-wayback`; combined cleaned corpus now 330,490 rows across 998 stores (2015-08-02 to 2026-03-31). Added pause-point + resume command to WORKLOG. (2026-02-24)
 - [ ] **Add DoW + seasonality features** -- 38 flavors show significant day-of-week bias. Add to FrequencyRecency and MarkovRecency models. Expected +5-8% top-1 accuracy.
-- [ ] **Implement ensemble predictor** -- combine FR (40%), Markov (40%), PCA-collaborative (20%). Current 3.2% top-1 -> maybe 5-6%.
 - [x] **Expand overdue watch-list** -- n_overdue default raised from 3 to 5 in forecast_writer.py. (2026-02-27)
-- [ ] **Confidence intervals in forecast output** -- P95 uncertainty bands.
 - [x] **Fix NMF convergence** -- max_iter raised from 500 to 1000 in collaborative.py. Test fixture still warns (sparse synthetic data), production should converge. n_components=5 needs accuracy evaluation. (2026-02-27)
-- [ ] **Cluster-based transfer learning** -- PCA cluster centroid as prior for sparse stores.
-- [ ] **Embedding-based fallback recommendations** -- "if X unavailable, try Y."
-- [ ] **Cluster-personalized forecast emails** -- compare store to its PCA cluster centroid.
 
 ## Completed
 
