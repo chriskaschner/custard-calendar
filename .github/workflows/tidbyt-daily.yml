@@ -43,7 +43,7 @@ jobs:
               role: "secondary"
           worker_base: "https://custard.chriskaschner.com"
           tidbyt:
-            device_id: "repeatedly-enduring-fetching-bowerbird-761"
+            device_id: "${{ secrets.TIDBYT_DEVICE_ID }}"
             installation_id: "culvers"
             view_mode: "three_day"
             brand: "culvers"
