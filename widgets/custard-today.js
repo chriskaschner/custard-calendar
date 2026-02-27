@@ -340,9 +340,9 @@ async function buildMedium() {
   return w;
 }
 
-// --- Multi-store Medium Widget: dark header + 3 store rows ---
-// Header: "Today" LEFT, "Your Stores" RIGHT
-// Each row: cone icon | city | flavor name | rarity
+// --- Multi-store Medium Widget: branded header + 3 store rows ---
+// Header: branded color from first store, "Today" LEFT only
+// Each row: cone icon | [city + rarity right-aligned, flavor name, description]
 
 async function buildMultiStore(slugs) {
   var validSlugs = slugs.filter(function(s) { return s !== null && s !== undefined; });
@@ -355,73 +355,82 @@ async function buildMultiStore(slugs) {
     } catch(e) { return null; }
   }));
 
+  // Use first valid result's brand for header (matches small/medium widgets)
+  var firstData = results.find(function(r) { return r !== null; });
+  var style = brandStyle(firstData ? (firstData.brand || "Culver's") : "Culver's");
+
   var w = new ListWidget();
   w.backgroundColor = new Color("#1a1a1a");
   w.setPadding(0, 0, 0, 0);
 
-  // Header: "Today" LEFT, "Your Stores" RIGHT
+  // Branded header bar: "Today" LEFT only
   var header = w.addStack();
-  header.backgroundColor = new Color("#222222");
+  header.backgroundColor = new Color(style.bg);
   header.setPadding(6, 16, 6, 16);
   header.layoutHorizontally();
   header.centerAlignContent();
 
   var todayLbl = header.addText("Today");
-  todayLbl.font = Font.semiboldSystemFont(11);
-  todayLbl.textColor = Color.white();
-  header.addSpacer(null);
-  var storesLbl = header.addText("Your Stores");
-  storesLbl.font = Font.systemFont(10);
-  storesLbl.textColor = new Color("#ffffff", 0.8);
+  todayLbl.font = Font.systemFont(10);
+  todayLbl.textColor = new Color(style.text, 0.8);
 
-  // Content body: 3 store rows
+  // Content body: store rows matching buildMedium padding/spacing
   var body = w.addStack();
-  body.setPadding(4, 14, 8, 14);
+  body.setPadding(6, 16, 10, 16);
   body.layoutVertically();
 
   for (var i = 0; i < validSlugs.length; i++) {
     var data = results[i];
     var storeSlug = validSlugs[i];
 
-    if (i > 0) {
-      var sep = body.addStack();
-      sep.backgroundColor = new Color("#ffffff", 0.1);
-      sep.size = new Size(312, 1);
-      body.addSpacer(2);
-    }
-
     var row = body.addStack();
     row.layoutHorizontally();
     row.centerAlignContent();
-    row.spacing = 6;
+    row.spacing = 8;
 
-    var coneImg = drawConeIcon(data ? data.flavor : null, 26);
+    var coneImg = drawConeIcon(data ? data.flavor : null, 28);
     var coneEl = row.addImage(coneImg);
-    coneEl.imageSize = new Size(26, 26);
+    coneEl.imageSize = new Size(28, 28);
+
+    var textCol = row.addStack();
+    textCol.layoutVertically();
+    textCol.spacing = 1;
+
+    // Top line: city name LEFT, rarity RIGHT (mirrors date label in 3-day)
+    var topRow = textCol.addStack();
+    topRow.layoutHorizontally();
+    topRow.centerAlignContent();
 
     var city = data ? cityFromStore(data.store) : storeSlug;
-    var cityEl = row.addText(city);
-    cityEl.font = Font.systemFont(9);
-    cityEl.textColor = new Color("#ffffff", 0.45);
+    var cityEl = topRow.addText(city);
+    cityEl.font = Font.mediumSystemFont(10);
+    cityEl.textColor = new Color("#ffffff", 0.5);
     cityEl.lineLimit = 1;
 
-    row.addSpacer(4);
+    topRow.addSpacer(null);
+
+    if (data && data.rarity && data.rarity.label) {
+      var rarityEl = topRow.addText(data.rarity.label.toUpperCase());
+      rarityEl.font = Font.boldMonospacedSystemFont(8);
+      var rarityColor = RARITY_COLORS[data.rarity.label] || RARITY_COLORS["Common"];
+      rarityEl.textColor = new Color(rarityColor);
+    }
 
     var flavorName = data ? (data.flavor || "TBD") : "\u2014";
-    var flavorEl = row.addText(flavorName);
-    flavorEl.font = Font.boldSystemFont(12);
+    var flavorEl = textCol.addText(flavorName);
+    flavorEl.font = Font.boldSystemFont(13);
     flavorEl.textColor = Color.white();
     flavorEl.lineLimit = 1;
     flavorEl.minimumScaleFactor = 0.7;
 
-    if (data && data.rarity && data.rarity.label) {
-      row.addSpacer(null);
-      var rarityEl = row.addText(data.rarity.label.toUpperCase());
-      rarityEl.font = Font.boldMonospacedSystemFont(8);
-      rarityEl.textColor = new Color("#90CAF9");
+    if (data && data.description) {
+      var desc = textCol.addText(truncateDesc(data.description, 65));
+      desc.font = Font.systemFont(10);
+      desc.textColor = new Color("#ffffff", 0.55);
+      desc.lineLimit = 1;
     }
 
-    body.addSpacer(2);
+    if (i < validSlugs.length - 1) body.addSpacer(4);
   }
 
   return w;
