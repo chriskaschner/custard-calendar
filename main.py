@@ -80,7 +80,11 @@ def load_config(config_path: str = 'config.yaml') -> Dict:
 def step_fetch(config: Dict) -> Dict:
     """Step 1: Fetch flavor data and write cache."""
     logger.info("Step 1: Fetching flavor data...")
-    cache_data = fetch_and_cache(config)
+    try:
+        cache_data = fetch_and_cache(config)
+    except Exception as err:
+        print(f"ERROR: fetch failed: {err}", file=sys.stderr)
+        sys.exit(1)
 
     location_count = len(cache_data.get('locations', {}))
     total_flavors = sum(
@@ -273,6 +277,10 @@ def main():
             logger.warning("Loaded cache has no valid timestamp metadata.")
         else:
             logger.info(f"Loaded cache age: {age:.1f}h")
+            # O8: Warn to stderr when cache is potentially stale so scheduled
+            # runs (cron/CI) surface the condition even without log monitoring.
+            if age > 48:
+                print(f"WARNING: cache is {age:.1f}h old, may be stale", file=sys.stderr)
 
         if run_tidbyt and args.refresh_stale_cache and cache_is_stale(cache_data, args.max_cache_age_hours):
             logger.warning(

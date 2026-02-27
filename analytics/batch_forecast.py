@@ -40,9 +40,15 @@ def generate_all_forecasts(
     model = FrequencyRecencyModel().fit(df)
 
     forecasts = {}
+    skipped = []
     for slug in stores:
         store_df = df[df["store_slug"] == slug]
         if len(store_df) < 10:
+            skipped.append(slug)
+            print(
+                f"WARNING: skipping {slug} — only {len(store_df)} observations",
+                file=sys.stderr,
+            )
             continue
         if n_days > 1:
             forecast = generate_multiday_forecast_json(
@@ -51,6 +57,9 @@ def generate_all_forecasts(
         else:
             forecast = generate_forecast_json(model, df, slug, target_date, n_predictions)
         forecasts[slug] = forecast
+
+    if skipped:
+        print(f"Skipped {len(skipped)} stores: {', '.join(skipped)}", file=sys.stderr)
 
     return {
         "generated_at": datetime.now().isoformat(),
@@ -87,6 +96,10 @@ def main():
     )
     print(f"Generated {result['n_stores']} forecasts for {result['target_date']}",
           file=sys.stderr)
+
+    if not result["forecasts"]:
+        print("ERROR: no forecasts generated — check data and store list", file=sys.stderr)
+        sys.exit(1)
 
     output_path = Path(args.output)
     output_path.parent.mkdir(parents=True, exist_ok=True)
