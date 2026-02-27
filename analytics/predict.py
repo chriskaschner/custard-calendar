@@ -104,11 +104,14 @@ class FrequencyRecencyModel(FlavorPredictor):
         if len(eligible) == 0:
             return {}
 
-        # Build 3-month window with wrap-around
+        # Build 3-month window with wrap-around: previous, current, next month.
+        # Fix: original code used {prev_prev, prev, current} due to off-by-one
+        # in the modular arithmetic (((m-1)%12)+1 == m for all m). For January
+        # this produced {December, January} instead of {December, January, February}.
         months_in_window = {
-            ((target_month - 2) % 12) + 1,
-            ((target_month - 1) % 12) + 1,
+            ((target_month - 2) % 12) + 1,  # previous month
             target_month,
+            (target_month % 12) + 1,        # next month
         }
 
         seasonal_counts = (
