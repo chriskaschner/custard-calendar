@@ -715,12 +715,12 @@
         var familyName = familyEntries[i][0];
         var stores = familyEntries[i][1];
         var color = stores[0] ? stores[0].color : '#666';
-        var div = document.createElement('div');
-        div.className = 'hotspot-row';
-        div.innerHTML = '<span class="hotspot-dot" style="background:' + color + '"></span>' +
+        var li = document.createElement('li');
+        li.className = 'hotspot-row';
+        li.innerHTML = '<span class="hotspot-dot" style="background:' + color + '"></span>' +
           '<span class="hotspot-name">' + escapeHtml(familyName) + '</span>' +
           '<span class="hotspot-score">' + stores.length + ' stores</span>';
-        frontsHotspots.appendChild(div);
+        frontsHotspots.appendChild(li);
       }
     }
 

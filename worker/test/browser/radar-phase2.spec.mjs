@@ -278,7 +278,7 @@ test("radar phase 2 shows next best store, badges, and accuracy dashboard", asyn
   await expect(page.locator("#acc-top1")).not.toHaveText("--");
   await expect(page.locator(".intel-badge").first()).toBeVisible();
   await expect(page.locator("#radar-historical-context-card")).toContainText("Store specialty");
-  await expect(page.locator(".intel-badge", { hasText: /Every 56 days/ }).first()).toBeVisible();
+  await expect(page.locator(".intel-badge", { hasText: /Every 80 days/ }).first()).toBeVisible();
 
   // Status line should show forecast-enabled count
   const statusText = await page.locator("#next-best-status").textContent();
@@ -666,6 +666,30 @@ test("rarity badges suppressed when fewer than 10 flavors have metrics", async (
           total_days: 50,
           recent_history: [],
           active_streaks: [],
+        }),
+      });
+      return;
+    }
+
+    // Sparse store: override flavor-stats to return low appearances so rarityBadge()
+    // skips the store-level path (< 30 threshold) and avg_gap_days < 60d suppresses
+    // the hierarchy fallback too. Must come before maybeFulfillFlavorStats.
+    if (path.startsWith("/api/v1/flavor-stats/")) {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          flavor: url.searchParams.get("flavor") || "",
+          appearances: 5,
+          avg_gap_days: 28,
+          last_seen: isoDateOffset(-3),
+          days_since_last: 3,
+          overdue_days: 0,
+          annual_frequency: 13,
+          seasonality: null,
+          dow_bias: null,
+          streaks: { current: 0, longest: 1 },
+          stores_last_30d: 2,
         }),
       });
       return;
