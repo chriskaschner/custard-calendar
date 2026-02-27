@@ -47,6 +47,19 @@ export async function recordSnapshot(kv, slug, date, flavor, description, option
   } catch (err) {
     // D1 write failures are non-fatal; this path should never block serving flavor data.
     console.error(`D1 snapshot write failed for ${slug}/${date}: ${err.message}`);
+    // O3: Count snapshot write failures for observability via /health endpoint.
+    const kvBinding = options.kv;
+    if (kvBinding) {
+      try {
+        const today = new Date().toISOString().slice(0, 10);
+        const errKey = `meta:snapshot-errors:${today}`;
+        const raw = await kvBinding.get(errKey);
+        const cnt = raw ? parseInt(raw, 10) : 0;
+        await kvBinding.put(errKey, String(cnt + 1), { expirationTtl: 86400 });
+      } catch {
+        // counter write is best-effort; do not throw
+      }
+    }
   }
 }
 

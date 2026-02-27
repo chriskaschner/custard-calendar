@@ -132,6 +132,16 @@ export async function getFlavorsCached(slug, kv, fetchFlavorsFn, isOverride = fa
   // Cache miss: fetch from upstream
   const data = await fetcher(slug);
 
+  // O2: Track parse failures — empty flavors array after a fresh fetch indicates
+  // upstream HTML parsing returned nothing (structure change or network blip).
+  if (data.flavors && data.flavors.length === 0) {
+    const today = new Date().toISOString().slice(0, 10);
+    const pfKey = `meta:parse-fail-count:${today}`;
+    const pfRaw = kv ? await kv.get(pfKey) : null;
+    const pfCount = pfRaw ? parseInt(pfRaw, 10) : 0;
+    await safeKvPut(kv, pfKey, String(pfCount + 1), { expirationTtl: 86400 });
+  }
+
   // Store in KV with TTL (best-effort)
   const cacheRecord = makeFlavorCacheRecord(data, slug, isShared);
   await safeKvPut(kv, cacheKey, cacheRecord, {
@@ -139,7 +149,7 @@ export async function getFlavorsCached(slug, kv, fetchFlavorsFn, isOverride = fa
   });
 
   // Persist flavor observations to D1 (durable historical source of truth)
-  await recordSnapshots(null, slug, data, { db: env.DB || null, brand: brandInfo.brand });
+  await recordSnapshots(null, slug, data, { db: env.DB || null, brand: brandInfo.brand, kv });
 
   return data;
 }

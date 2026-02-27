@@ -167,8 +167,31 @@ export async function handleRequest(request, env, fetchFlavorsFn = defaultFetchF
       }
     } catch { checks.d1 = { ok: false }; degraded = true; }
 
+    // O2/O3/O4: Read today's observability counters (non-fatal; default 0)
+    const today = new Date().toISOString().slice(0, 10);
+    let parseFailuresToday = 0;
+    let snapshotErrorsToday = 0;
+    let emailErrorsToday = 0;
+    if (env.FLAVOR_CACHE) {
+      try {
+        const pfRaw = await env.FLAVOR_CACHE.get(`meta:parse-fail-count:${today}`);
+        parseFailuresToday = pfRaw ? parseInt(pfRaw, 10) : 0;
+        const seRaw = await env.FLAVOR_CACHE.get(`meta:snapshot-errors:${today}`);
+        snapshotErrorsToday = seRaw ? parseInt(seRaw, 10) : 0;
+        const eeRaw = await env.FLAVOR_CACHE.get(`meta:email-errors:${today}`);
+        emailErrorsToday = eeRaw ? parseInt(eeRaw, 10) : 0;
+      } catch { /* counter reads are best-effort */ }
+    }
+
     return Response.json(
-      { status: degraded ? 'degraded' : 'ok', timestamp: new Date().toISOString(), checks },
+      {
+        status: degraded ? 'degraded' : 'ok',
+        timestamp: new Date().toISOString(),
+        checks,
+        parse_failures_today: parseFailuresToday,
+        snapshot_errors_today: snapshotErrorsToday,
+        email_errors_today: emailErrorsToday,
+      },
       { headers: corsHeaders }
     );
   }

@@ -144,6 +144,14 @@ export async function checkAlerts(env, getFlavorsCachedFn) {
         sent++;
       } else {
         errors.push(`${sub.email}/${sub.slug}: ${result.error}`);
+        // O4: Count email send errors for observability via /health endpoint.
+        try {
+          const today = new Date().toISOString().slice(0, 10);
+          const errKey = `meta:email-errors:${today}`;
+          const raw = await kv.get(errKey);
+          const cnt = raw ? parseInt(raw, 10) : 0;
+          await kv.put(errKey, String(cnt + 1), { expirationTtl: 86400 });
+        } catch { /* counter write is best-effort */ }
       }
     } catch (err) {
       errors.push(`${sub.email}/${sub.slug}: ${err.message}`);
@@ -276,6 +284,14 @@ export async function checkWeeklyDigests(env, getFlavorsCachedFn) {
         sent++;
       } else {
         errors.push(`${sub.email}/${sub.slug}: ${result.error}`);
+        // O4: Count email send errors for observability via /health endpoint.
+        try {
+          const today = new Date().toISOString().slice(0, 10);
+          const errKey = `meta:email-errors:${today}`;
+          const raw = await kv.get(errKey);
+          const cnt = raw ? parseInt(raw, 10) : 0;
+          await kv.put(errKey, String(cnt + 1), { expirationTtl: 86400 });
+        } catch { /* counter write is best-effort */ }
       }
     } catch (err) {
       errors.push(`${sub.email}/${sub.slug}: ${err.message}`);
