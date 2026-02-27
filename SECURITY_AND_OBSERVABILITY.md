@@ -54,8 +54,8 @@ The Worker acts as an open proxy to Culver's locator. An attacker can:
 
 `encodeURIComponent` prevents URL injection, so the fetch target is always `culvers.com`. The risk is abuse volume, not request redirection.
 
-**Status:** Open
-**Remediation:** Add per-IP rate limiting to this endpoint (20 req/hour). Consider caching more aggressively — most legitimate use is from the map page with a small set of locations.
+**Status:** Resolved (commit fda5064)
+**Implementation:** Per-IP KV counter `rl:nearby:{ip}:{hour}` with 1h TTL. Returns 429 after 20 req/hr. Signature of `handleApiNearbyFlavors` updated to accept `request` as first param.
 
 ---
 
@@ -84,8 +84,8 @@ The subscribe endpoint accepts `Content-Type: application/json` POST requests. W
 
 The double opt-in requirement limits the impact (attacker can't activate the subscription), but the attacker can spam up to 3 confirmation emails per hour to any email address via the per-email rate limit.
 
-**Status:** Partially mitigated (per-email rate limit at 3/hour, double opt-in required)
-**Remediation:** Fixing M2 (restrict CORS origin) eliminates this. Additionally, consider validating the `Origin` header server-side.
+**Status:** Resolved (commit fda5064)
+**Implementation:** Server-side Origin check added to `handleSubscribe()`. Requests with an Origin not in ALLOWED_ORIGINS return 403. Empty Origin (curl, server-side) passes through. Existing per-email rate limit (3/hr) + double opt-in remain in place.
 
 ---
 
@@ -104,8 +104,8 @@ These endpoints have no per-IP throttling:
 
 The fetch budget protects upstream Culver's from exhaustion, but the Worker itself absorbs unbounded load. An attacker can scrape the entire store manifest, all flavor data, and all metrics.
 
-**Status:** Open
-**Remediation:** Add lightweight per-IP rate limiting (100 req/min) using Cloudflare's built-in rate limiting rules or a KV-based counter. Prioritize `nearby-flavors`, `metrics`, and `og` endpoints which are most expensive.
+**Status:** Partially resolved (commit fda5064)
+**Implementation:** `/og/*` rate limited at 60 req/hr per IP using KV counter `rl:og:{ip}:{hour}`. `/api/nearby-flavors` rate limited under M1. Remaining expensive endpoints (`/api/metrics/*`, `/api/forecast/*`) still unthrottled — accepted for now given auth gate and low traffic.
 
 ---
 
@@ -397,6 +397,9 @@ When Culver's changes their HTML structure, `parseNextData()` throws with a gene
 
 **Impact:** If Culver's redesigns their page, all calendars, emails, and the map silently degrade to placeholder text. Nobody is alerted.
 
+**Status:** Resolved (commit 8272007)
+**Implementation:** `getFlavorsCached()` increments `meta:parse-fail-count:YYYY-MM-DD` (KV, 24h TTL) when an upstream fetch returns an empty flavors array. Counter surfaced in `/health` as `parse_failures_today`.
+
 #### O3: D1 snapshot writes fail silently
 
 **Location:** `worker/src/snapshot-writer.js:59-78`
@@ -411,6 +414,9 @@ D1 write failures are caught and logged to `console.error()`, which goes to Clou
 
 **Impact:** Metrics endpoints (`/api/v1/metrics/*`) return increasingly stale data. The D1 database silently stops growing. No alerting.
 
+**Status:** Resolved (commit 8272007)
+**Implementation:** `recordSnapshot()` catch block increments `meta:snapshot-errors:YYYY-MM-DD` (KV, 24h TTL) via `options.kv` (threaded from `getFlavorsCached`). Counter surfaced in `/health` as `snapshot_errors_today`.
+
 #### O4: Email send failures are accumulated then lost
 
 **Location:** `worker/src/alert-checker.js:111-132`
@@ -418,6 +424,9 @@ D1 write failures are caught and logged to `console.error()`, which goes to Clou
 Email send errors are pushed to an `errors[]` array, which is returned from `checkAlerts()` — but as noted in O1, the caller discards this. Resend API errors (rate limits, bounces, blocked addresses) are never persisted or monitored.
 
 **Impact:** Subscribers silently stop receiving emails. Bounce rates not tracked. Resend API quota not monitored.
+
+**Status:** Resolved (commit 8272007)
+**Implementation:** Both `checkAlerts()` and `checkWeeklyDigests()` increment `meta:email-errors:YYYY-MM-DD` (KV, 24h TTL) on `!result.ok`. Counter surfaced in `/health` as `email_errors_today`.
 
 #### O5: Flavor catalog corruption recovered silently
 
@@ -462,6 +471,9 @@ Each pipeline step (fetch → calendar → tidbyt) runs sequentially. If step 1 
 
 **Impact:** Scheduled runs (cron/GitHub Actions) show green even when serving stale data.
 
+**Status:** Resolved (commit 92190d7)
+**Implementation:** `step_fetch()` wraps `fetch_and_cache()` in try/except and calls `sys.exit(1)` on failure. Stale cache (>48h) prints WARNING to stderr unconditionally when loaded from cache file.
+
 #### O9: Batch forecast silently skips stores
 
 **Location:** `analytics/batch_forecast.py`
@@ -469,6 +481,9 @@ Each pipeline step (fetch → calendar → tidbyt) runs sequentially. If step 1 
 Stores with fewer than 10 observations are silently skipped. If the SQLite database is truncated or corrupted, all stores could be skipped, producing an empty forecast JSON with no error.
 
 **Impact:** Forecast endpoint returns 404 for stores that should have predictions. No alerting.
+
+**Status:** Resolved (commit 92190d7)
+**Implementation:** Each skipped store logs WARNING to stderr with slug + observation count. `main()` exits 1 if `result["forecasts"]` is empty (complete pipeline failure).
 
 #### O10: Claude API call has no exception handling
 
@@ -489,6 +504,9 @@ The `client.messages.create()` call has no try/except. If the Claude API is down
 - Data integrity (any NULL store_slugs? Malformed dates?)
 
 **Impact:** Corrupted or truncated SQLite produces garbage analytics/predictions with no warning.
+
+**Status:** Resolved (commit 92190d7)
+**Implementation:** `load_clean()` validates `REQUIRED_COLUMNS = {store_slug, flavor_date, title}` (raises ValueError on schema drift), warns on empty dataset, and warns when newest record is >7 days old. Three tests in `analytics/tests/test_data_loader.py` exercise all three paths without requiring the backfill DB.
 
 ---
 
@@ -762,3 +780,4 @@ If we build an internal dashboard (even a simple HTML page), these are the key p
 |------|----------|-------|----------|
 | 2026-02-22 | Claude (automated) | Security: Worker, frontend, Python, Tidbyt, cross-repo | 6 medium, 6 low, 3 cross-repo |
 | 2026-02-22 | Claude (automated) | Observability: Worker cron, Python pipeline, data freshness | 11 silent failure modes, 5 proposed SLOs, 12 remediation items |
+| 2026-02-27 | Claude (automated) | Remediation pass: M1, M3, M4 (partial), O2, O3, O4, O7/O8, O9, O11 | 9 items resolved; CI browser test skip guard added; seasonal window bug fixed |
