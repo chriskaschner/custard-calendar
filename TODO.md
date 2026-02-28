@@ -183,6 +183,35 @@ Sibling repositories that depend on the Worker API. Breakages here are silent us
 - [x] **custard-tidbyt contract smoke test** -- `tests/test_api_contract.py` in custard-tidbyt: 9 live smoke tests covering /api/v1/flavors (title/date shape), /api/v1/stores (slug/name shape), API-Version header. Fixed WORKER_BASE from workers.dev to custard.chriskaschner.com. SKIP_LIVE_API=1 to skip in offline CI. (2026-02-26)
 - [x] **Tidbyt daily deploy not running** -- root cause: `TIDBYT_API_TOKEN` and `TIDBYT_DEVICE_ID` secrets were not set in GitHub repo. `main.py` was also swallowing the missing-token error and exiting 0 (silent false success). Fixed: secrets added, `device_id` moved from hardcoded workflow value to `TIDBYT_DEVICE_ID` secret, `--tidbyt-only` now exits 1 on push failure. (2026-02-27)
 
+## Next -- Page Metrics and Usage Visibility
+
+**Current state:** action tracking is fully built (`interaction_events` D1 table, `POST /api/v1/events` sendBeacon, `GET /api/v1/events/summary`, `analytics_report.py`). Tracked today: CTA clicks, signal views, popup opens, quiz completions. **Gap:** no `page_view` events, so `by_page` in the summary is only populated when people take actions -- passive visits are invisible.
+
+**Two-track approach:**
+
+**Track 1 — Extend existing event system** (adds product-specific intelligence)
+- [ ] **Page view events** -- add `page_view` to allowed event types in `events.js` + `planner-shared.js`; emit on every docs page load with `referrer` (from `document.referrer`) and `device_type` (mobile/desktop from `navigator.userAgent`); add both fields to the `interaction_events` schema via migration. `by_page` in `events/summary` becomes meaningful immediately.
+- [ ] **Store select event** -- emit `store_select` with `store_slug` when user picks a store from dropdown on index.html or Scoop. Tells you which stores drive engagement, not just which are searched. Allowed event type: `store_select`.
+- [ ] **Scoop-specific events** -- emit `filter_toggle` (with `filter_name` + `filter_mode`: include/exclude) when user activates a flavor chip or No Nuts toggle on The Scoop; emit `widget_tap` (with slug list) when Scoop detects arrival via `?stores=` URL param. New allowed types: `filter_toggle`, `widget_tap`.
+- [ ] **Alert funnel events** -- emit `alert_form_view` on alerts.html load and `alert_subscribe_success` on confirmed subscription. Closes the subscribe-funnel gap: currently only `cta_click` with action=alert is tracked (intent), not completion.
+- [ ] **Summary endpoint additions** -- extend `GET /api/v1/events/summary` to return `by_device_type` and `top_referrers` aggregates; update `analytics_report.py` to print these new fields.
+
+**Standard metrics Track 1 covers once shipped:**
+- Page views per page (which of 10 pages gets traffic)
+- Session counts (daily unique `page_load_id` values)
+- Traffic sources (referrer breakdown: direct, search, social, widget)
+- Device split (mobile vs desktop — important for widget users)
+- Top stores by engagement (store_select events)
+- Scoop filter popularity (which flavor chips get used)
+- Widget-to-web attribution (widget_tap rate)
+- Alert subscription funnel (view → intent → confirm)
+
+**Track 2 — Cloudflare Web Analytics beacon** (adds passive/complementary data)
+- [ ] **CF beacon on all docs pages** -- add Cloudflare Web Analytics `<script>` beacon tag to all 10 docs pages (index, map, radar, alerts, siri, calendar, quiz, widget, privacy, scoop). Requires: pull beacon token from Cloudflare dashboard (Zone > Analytics > Web Analytics > add site). No cookies, GDPR-compliant, bot-filtered at edge, free. Gives: time-on-page, bounce rate, full referrer chain, browser/OS breakdown, real unique visitor estimate (CF edge-level, not JS). Complements Track 1; does not replace it.
+- Standard metrics Track 2 adds: bot-filtered traffic baseline, time-on-page, bounce rate per page, browser/OS distribution, more accurate unique visitor count.
+
+**Implementation order:** Track 1 page_view first (immediate visibility into who's there), then store_select, then Scoop events (after Scoop page is built), then Track 2 beacon (one-time config step, can be done anytime).
+
 ## Now -- Licensing and Testing
 
 - [x] **License update: non-commercial clause** -- added `LICENSE` at repo root: code under custom non-commercial source license; content/data under CC BY-NC 4.0. Commercial use requires prior written consent. Brand disclaimer included. (2026-02-26)
