@@ -27,6 +27,10 @@ function jsonResponse(payload, corsHeaders, status = 200) {
   return Response.json(payload, { status, headers: corsHeaders });
 }
 
+function serverError(env, corsHeaders, status = 500, error = 'Internal server error') {
+  return jsonResponse({ error, request_id: env?._requestId || null }, corsHeaders, status);
+}
+
 function cleanText(value, maxLen = MAX_STRING_LEN) {
   if (typeof value !== 'string') return null;
   const trimmed = value.trim();
@@ -122,7 +126,7 @@ function parseDays(url) {
 
 async function handleEventIngest(request, env, corsHeaders) {
   if (!env.DB) {
-    return jsonResponse({ error: 'Interaction telemetry unavailable: D1 not configured.' }, corsHeaders, 503);
+    return serverError(env, corsHeaders, 503, 'Interaction telemetry unavailable.');
   }
 
   let body;
@@ -197,7 +201,7 @@ async function handleEventIngest(request, env, corsHeaders) {
       ).run();
     }
   } catch (err) {
-    return jsonResponse({ error: `Failed to persist interaction events: ${err.message}` }, corsHeaders, 500);
+    return serverError(env, corsHeaders, 500, 'Failed to persist interaction events.');
   }
 
   return jsonResponse({ ok: true, ingested: events.length }, corsHeaders, 202);
@@ -205,7 +209,7 @@ async function handleEventIngest(request, env, corsHeaders) {
 
 async function handleEventSummary(url, env, corsHeaders) {
   if (!env.DB) {
-    return jsonResponse({ error: 'Interaction summary unavailable: D1 not configured.' }, corsHeaders, 503);
+    return serverError(env, corsHeaders, 503, 'Interaction summary unavailable.');
   }
 
   const days = parseDays(url);
@@ -339,7 +343,7 @@ async function handleEventSummary(url, env, corsHeaders) {
       top_referrers: topReferrers?.results || [],
     }, corsHeaders);
   } catch (err) {
-    return jsonResponse({ error: `Failed to compute interaction summary: ${err.message}` }, corsHeaders, 500);
+    return serverError(env, corsHeaders, 500, 'Failed to compute interaction summary.');
   }
 }
 

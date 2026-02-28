@@ -295,7 +295,7 @@ async function handleHealthMetrics(db, slug, corsHeaders) {
     );
   } catch (err) {
     return Response.json(
-      { error: 'D1 query failed', details: err?.message || 'unknown error' },
+      { error: 'D1 query failed', request_id: corsHeaders['X-Request-ID'] || null },
       { status: 503, headers: corsHeaders },
     );
   }
@@ -339,7 +339,7 @@ export async function handleMetricsRoute(path, env, corsHeaders, url = null) {
   const db = env.DB;
   if (!db) {
     return Response.json(
-      { error: 'Metrics not available — D1 database not configured' },
+      { error: 'Metrics not available — D1 database not configured', request_id: env?._requestId || null },
       { status: 503, headers: corsHeaders },
     );
   }
@@ -890,7 +890,7 @@ export async function handleGeoEDA(url, env, corsHeaders) {
   const db = env.DB || null;
   if (!db) {
     return Response.json(
-      { error: 'Analytics not available — D1 database not configured' },
+      { error: 'Analytics not available — D1 database not configured', request_id: env?._requestId || null },
       { status: 503, headers: corsHeaders },
     );
   }

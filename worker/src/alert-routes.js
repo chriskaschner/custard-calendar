@@ -17,12 +17,14 @@ import { STORE_INDEX as DEFAULT_STORE_INDEX } from './store-index.js';
 import { removeSubscriptionIndex, upsertSubscriptionIndex } from './subscription-store.js';
 
 // M3: Allowed origins for CSRF protection on POST /api/alerts/subscribe
-const ALLOWED_ORIGINS = [
+const DEFAULT_ALLOWED_ORIGINS = [
+  'https://custard.chriskaschner.com',
   'https://custard.today',
   'https://chriskaschner.github.io',
   'http://localhost:8080',
   'http://127.0.0.1:8080',
 ];
+const ALERT_HTML_CSP = "default-src 'none'; style-src 'unsafe-inline'; img-src 'self' data:; base-uri 'none'; frame-ancestors 'none'";
 
 // Validation constants
 const MAX_FAVORITES = 10;
@@ -86,7 +88,8 @@ async function handleSubscribe(request, env, corsHeaders) {
   // M3: Server-side Origin check — CSRF protection for double opt-in subscribe.
   // Empty Origin (e.g., server-side curl) is allowed; only reject unknown browser origins.
   const origin = request.headers.get('Origin') || '';
-  if (origin && !ALLOWED_ORIGINS.some(o => origin.startsWith(o))) {
+  const allowlist = parseAllowedOrigins(env.ALERT_ALLOWED_ORIGINS);
+  if (origin && !allowlist.some(o => origin.startsWith(o))) {
     return Response.json(
       { error: 'Forbidden' },
       { status: 403, headers: corsHeaders },
@@ -445,7 +448,11 @@ function htmlResponse(bodyContent, status, corsHeaders) {
 
   return new Response(html, {
     status,
-    headers: { ...corsHeaders, 'Content-Type': 'text/html; charset=utf-8' },
+    headers: {
+      ...corsHeaders,
+      'Content-Type': 'text/html; charset=utf-8',
+      'Content-Security-Policy': ALERT_HTML_CSP,
+    },
   });
 }
 
@@ -460,4 +467,13 @@ function escapeHtml(str) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
+}
+
+function parseAllowedOrigins(raw) {
+  if (!raw || typeof raw !== 'string') return DEFAULT_ALLOWED_ORIGINS;
+  const parsed = raw
+    .split(',')
+    .map(value => value.trim())
+    .filter(Boolean);
+  return parsed.length > 0 ? parsed : DEFAULT_ALLOWED_ORIGINS;
 }

@@ -56,12 +56,16 @@ function jsonResponse(payload, corsHeaders, status = 200) {
   return Response.json(payload, { status, headers: corsHeaders });
 }
 
+function serverError(env, corsHeaders, status = 500, error = 'Internal server error') {
+  return jsonResponse({ error, request_id: env?._requestId || null }, corsHeaders, status);
+}
+
 async function handleQuizEventIngest(request, env, corsHeaders) {
   if (request.method !== 'POST') {
     return jsonResponse({ error: 'Method not allowed. Use POST.' }, corsHeaders, 405);
   }
   if (!env.DB) {
-    return jsonResponse({ error: 'Quiz telemetry unavailable: D1 not configured.' }, corsHeaders, 503);
+    return serverError(env, corsHeaders, 503, 'Quiz telemetry unavailable.');
   }
 
   let body;
@@ -134,7 +138,7 @@ async function handleQuizEventIngest(request, env, corsHeaders) {
       pageLoadId,
     ).run();
   } catch (err) {
-    return jsonResponse({ error: `Failed to persist quiz event: ${err.message}` }, corsHeaders, 500);
+    return serverError(env, corsHeaders, 500, 'Failed to persist quiz event.');
   }
 
   return jsonResponse({ ok: true }, corsHeaders, 202);
@@ -149,7 +153,7 @@ function parseDaysParam(url) {
 
 async function handlePersonalityIndex(url, env, corsHeaders) {
   if (!env.DB) {
-    return jsonResponse({ error: 'Personality index unavailable: D1 not configured.' }, corsHeaders, 503);
+    return serverError(env, corsHeaders, 503, 'Personality index unavailable.');
   }
 
   const days = parseDaysParam(url);
@@ -225,7 +229,7 @@ async function handlePersonalityIndex(url, env, corsHeaders) {
       top_regions: regions?.results || [],
     }, corsHeaders);
   } catch (err) {
-    return jsonResponse({ error: `Failed to compute personality index: ${err.message}` }, corsHeaders, 500);
+    return serverError(env, corsHeaders, 500, 'Failed to compute personality index.');
   }
 }
 

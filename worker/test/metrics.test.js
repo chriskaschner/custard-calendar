@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { detectStreaks, handleMetricsRoute } from '../src/metrics.js';
+import { handleRequest } from '../src/index.js';
 
 // --- Mock D1 database ---
 
@@ -79,6 +80,15 @@ function createMockD1(rows = []) {
 }
 
 const CORS = { 'Access-Control-Allow-Origin': '*' };
+
+function createMockKV(initial = {}) {
+  const store = new Map(Object.entries(initial));
+  return {
+    get: vi.fn(async (key) => store.get(key) || null),
+    put: vi.fn(async (key, value) => store.set(key, value)),
+    _store: store,
+  };
+}
 
 // --- Metrics HTTP route tests ---
 
@@ -830,5 +840,37 @@ describe('GET /api/metrics/health/{slug}', () => {
   it('returns 503 when DB binding is missing', async () => {
     const res = await handleMetricsRoute('/api/metrics/health/mt-horeb', {}, CORS);
     expect(res.status).toBe(503);
+  });
+});
+
+describe('metrics route protection (index-level)', () => {
+  it('requires admin bearer token for /api/v1/metrics/accuracy', async () => {
+    const env = {
+      FLAVOR_CACHE: createMockKV(),
+      ADMIN_ACCESS_TOKEN: 'admin-secret-token',
+    };
+
+    const noTokenReq = new Request('https://example.com/api/v1/metrics/accuracy');
+    const noTokenRes = await handleRequest(noTokenReq, env);
+    expect(noTokenRes.status).toBe(403);
+
+    const validTokenReq = new Request('https://example.com/api/v1/metrics/accuracy', {
+      headers: { Authorization: 'Bearer admin-secret-token' },
+    });
+    const validTokenRes = await handleRequest(validTokenReq, env);
+    // Auth passes; DB is missing in this env.
+    expect(validTokenRes.status).toBe(503);
+  });
+
+  it('applies read rate limiting for /api/v1/metrics/*', async () => {
+    const hour = new Date().toISOString().slice(0, 13);
+    const kv = createMockKV({ [`rl:metrics:read:1.2.3.4:${hour}`]: '120' });
+    const env = { FLAVOR_CACHE: kv };
+
+    const req = new Request('https://example.com/api/v1/metrics/intelligence', {
+      headers: { 'CF-Connecting-IP': '1.2.3.4' },
+    });
+    const res = await handleRequest(req, env);
+    expect(res.status).toBe(429);
   });
 });

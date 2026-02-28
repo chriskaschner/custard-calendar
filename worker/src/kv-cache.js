@@ -3,6 +3,11 @@ import { getFetcherForSlug } from './brand-registry.js';
 
 const KV_TTL_SECONDS = 86400; // 24 hours
 const FLAVOR_CACHE_RECORD_VERSION = 1;
+const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+const SAFE_TEXT_RE = /^[\p{L}\p{N}\s.,'’"&()!:+\-/%®™]*$/u;
+const MAX_TITLE_LENGTH = 100;
+const MAX_DESCRIPTION_LENGTH = 500;
+const MAX_STORE_NAME_LENGTH = 120;
 
 /**
  * KV writes should be best-effort only. Caller correctness cannot depend on put success.
@@ -21,6 +26,62 @@ export async function safeKvPut(kv, key, value, options = {}) {
     console.error(`KV write failed for ${key}: ${err.message}`);
     return false;
   }
+}
+
+function isValidIsoDate(raw) {
+  if (typeof raw !== 'string' || !ISO_DATE_RE.test(raw)) return false;
+  const parsed = new Date(`${raw}T00:00:00Z`);
+  if (Number.isNaN(parsed.getTime())) return false;
+  return parsed.toISOString().slice(0, 10) === raw;
+}
+
+function sanitizeText(raw, maxLen) {
+  if (typeof raw !== 'string') return null;
+  const trimmed = raw.trim().slice(0, maxLen);
+  if (!trimmed) return null;
+  if (!SAFE_TEXT_RE.test(trimmed)) return null;
+  return trimmed;
+}
+
+/**
+ * Sanitize upstream flavor payload to reduce content-injection risk.
+ * Drops invalid entries and preserves only trusted fields.
+ * @param {Object} payload
+ * @returns {{ data: Object, dropped: number, rawCount: number }}
+ */
+export function sanitizeFlavorPayload(payload) {
+  const rawFlavors = Array.isArray(payload?.flavors) ? payload.flavors : [];
+  const flavors = [];
+  let dropped = 0;
+
+  for (const row of rawFlavors) {
+    const date = row?.date;
+    const title = sanitizeText(row?.title, MAX_TITLE_LENGTH);
+    const descriptionRaw = row?.description ?? '';
+    const description = descriptionRaw
+      ? sanitizeText(String(descriptionRaw), MAX_DESCRIPTION_LENGTH)
+      : '';
+
+    if (!isValidIsoDate(date) || !title || (descriptionRaw && description == null)) {
+      dropped++;
+      continue;
+    }
+    flavors.push({ date, title, description: description || '' });
+  }
+
+  const storeName = sanitizeText(payload?.name || 'Unknown', MAX_STORE_NAME_LENGTH) || 'Unknown';
+  return {
+    data: { name: storeName, flavors },
+    dropped,
+    rawCount: rawFlavors.length,
+  };
+}
+
+async function incrementDailyCounter(kv, keyPrefix, dateStr) {
+  const key = `${keyPrefix}:${dateStr}`;
+  const raw = kv ? await kv.get(key) : null;
+  const count = raw ? parseInt(raw, 10) : 0;
+  await safeKvPut(kv, key, String(count + 1), { expirationTtl: 86400 });
 }
 
 /**
@@ -130,16 +191,23 @@ export async function getFlavorsCached(slug, kv, fetchFlavorsFn, isOverride = fa
   }
 
   // Cache miss: fetch from upstream
-  const data = await fetcher(slug);
+  const upstreamData = await fetcher(slug);
+  const sanitized = sanitizeFlavorPayload(upstreamData);
+  const data = sanitized.data;
+
+  const today = new Date().toISOString().slice(0, 10);
+  if (sanitized.dropped > 0) {
+    await incrementDailyCounter(kv, 'meta:payload-anomaly-count', today);
+  }
 
   // O2: Track parse failures — empty flavors array after a fresh fetch indicates
   // upstream HTML parsing returned nothing (structure change or network blip).
   if (data.flavors && data.flavors.length === 0) {
-    const today = new Date().toISOString().slice(0, 10);
-    const pfKey = `meta:parse-fail-count:${today}`;
-    const pfRaw = kv ? await kv.get(pfKey) : null;
-    const pfCount = pfRaw ? parseInt(pfRaw, 10) : 0;
-    await safeKvPut(kv, pfKey, String(pfCount + 1), { expirationTtl: 86400 });
+    await incrementDailyCounter(kv, 'meta:parse-fail-count', today);
+    // If upstream had data but all entries were rejected, do not cache/persist.
+    if (sanitized.rawCount > 0) {
+      throw new Error(`No valid flavor entries after sanitization for ${slug}`);
+    }
   }
 
   // Store in KV with TTL (best-effort)

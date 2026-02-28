@@ -4,12 +4,17 @@ compatibility_date = "2024-09-23"
 
 [vars]
 ENVIRONMENT = "production"
-# Access token for limiting access during testing.
-# Remove or leave empty for open access.
-# For better security, use: npx wrangler secret put ACCESS_TOKEN
+# Legacy admin token fallback (deprecated).
+# New admin protection uses ADMIN_ACCESS_TOKEN secret.
 ACCESS_TOKEN = ""
-# CORS origin restriction. Set to your GitHub Pages URL in production.
-# Leave empty for open access (default).
+# Comma-separated allowlist for browser-origin POST writes
+# (defaults include custard.chriskaschner.com + localhost).
+PUBLIC_WRITE_ALLOWED_ORIGINS = "https://custard.chriskaschner.com,http://localhost:8080,http://127.0.0.1:8080"
+# Comma-separated allowlist for POST /api/alerts/subscribe Origin checks.
+ALERT_ALLOWED_ORIGINS = "https://custard.chriskaschner.com,https://custard.today,https://chriskaschner.github.io,http://localhost:8080,http://127.0.0.1:8080"
+# CORS origin restriction for browser requests.
+# If omitted, Worker defaults to https://custard.chriskaschner.com.
+# Set "*" only if you intentionally want open cross-origin reads.
 ALLOWED_ORIGIN = "https://custard.chriskaschner.com"
 # Base URL for alert email links. Set to your Worker URL in production.
 WORKER_BASE_URL = "https://custard.chriskaschner.com"
@@ -19,6 +24,7 @@ ALERT_FROM_EMAIL = "alerts@custard.chriskaschner.com"
 # Secrets (set via: npx wrangler secret put <NAME>):
 #   RESEND_API_KEY — API key from resend.com for sending alert emails
 #   REPORT_EMAIL_TO — recipient address for the weekly analytics report email
+#   ADMIN_ACCESS_TOKEN — bearer token for admin-only analytics routes
 
 # KV namespace for caching flavor data + alert subscriptions (24h TTL)
 [[kv_namespaces]]

@@ -31,35 +31,142 @@ import { handlePlan } from './planner.js';
 import { handleSignals } from './signals.js';
 import { isValidSlug } from './slug-validation.js';
 import { getFetcherForSlug, getBrandForSlug } from './brand-registry.js';
-import { getFlavorsCached, safeKvPut } from './kv-cache.js';
+import { getFlavorsCached } from './kv-cache.js';
 import { handleCalendar } from './route-calendar.js';
 import { handleApiToday } from './route-today.js';
 import { handleApiNearbyFlavors } from './route-nearby.js';
+import { applyIpRateLimit } from './rate-limit.js';
 
 const CACHE_MAX_AGE = 3600; // 1 hour (browser + edge cache)
+const API_CSP = "default-src 'none'; base-uri 'none'; frame-ancestors 'none'";
+const PUBLIC_WRITE_DEFAULT_ORIGINS = [
+  'https://custard.chriskaschner.com',
+  'http://localhost:8080',
+  'http://127.0.0.1:8080',
+];
+const ADMIN_EXACT_ROUTES = new Set([
+  '/api/events/summary',
+  '/api/quiz/personality-index',
+  '/api/analytics/geo-eda',
+  '/api/metrics/accuracy',
+]);
 
 /**
- * Check access token if one is configured.
- * Set ACCESS_TOKEN in wrangler.toml [vars] or as a secret to enable.
- * When not set, all requests are allowed (open access).
- *
- * Accepts:
- *   - Authorization: Bearer <token> header (preferred)
- *   - ?token=<token> query param (legacy fallback)
+ * Parse comma-separated origin lists from env.
  */
-function checkAccess(request, url, env) {
-  const requiredToken = env.ACCESS_TOKEN;
-  if (!requiredToken) return true; // no token configured = open access
+function parseOriginList(raw, fallback = []) {
+  if (!raw || typeof raw !== 'string') return fallback;
+  const parsed = raw
+    .split(',')
+    .map(value => value.trim())
+    .filter(Boolean);
+  return parsed.length > 0 ? parsed : fallback;
+}
 
-  // Check Authorization header first
-  const authHeader = request.headers.get('Authorization');
-  if (authHeader) {
-    const match = authHeader.match(/^Bearer\s+(\S+)$/i);
-    if (match && match[1] === requiredToken) return true;
+function originAllowed(origin, allowlist) {
+  return allowlist.some(allowed => origin.startsWith(allowed));
+}
+
+function isAdminRoute(canonical) {
+  if (ADMIN_EXACT_ROUTES.has(canonical)) return true;
+  return /^\/api\/metrics\/accuracy\/[^/]+$/.test(canonical);
+}
+
+function isPublicWriteRoute(canonical, method) {
+  return method === 'POST' && (
+    canonical === '/api/events'
+    || canonical === '/api/quiz/events'
+  );
+}
+
+function getPublicWriteLimitConfig(canonical) {
+  if (canonical === '/api/events') {
+    return {
+      prefix: 'rl:events:write',
+      limit: 120,
+      error: 'Rate limit exceeded. Max 120 event writes per hour.',
+    };
   }
+  if (canonical === '/api/quiz/events') {
+    return {
+      prefix: 'rl:quiz:write',
+      limit: 120,
+      error: 'Rate limit exceeded. Max 120 quiz event writes per hour.',
+    };
+  }
+  return null;
+}
 
-  // Fall back to query param
-  return url.searchParams.get('token') === requiredToken;
+function getExpensiveReadLimitConfig(canonical, method) {
+  if (method !== 'GET') return null;
+  if (canonical.startsWith('/og/')) {
+    return {
+      prefix: 'rl:og',
+      limit: 60,
+      error: 'Rate limit exceeded. Max 60 /og/ requests per hour.',
+    };
+  }
+  if (canonical.startsWith('/api/metrics/')) {
+    return {
+      prefix: 'rl:metrics:read',
+      limit: 120,
+      error: 'Rate limit exceeded. Max 120 metrics requests per hour.',
+    };
+  }
+  if (/^\/api\/forecast\/[a-z0-9][a-z0-9_-]+$/.test(canonical)) {
+    return {
+      prefix: 'rl:forecast:read',
+      limit: 120,
+      error: 'Rate limit exceeded. Max 120 forecast requests per hour.',
+    };
+  }
+  if (/^\/api\/flavor-stats\/[^/]+$/.test(canonical)) {
+    return {
+      prefix: 'rl:flavor-stats:read',
+      limit: 120,
+      error: 'Rate limit exceeded. Max 120 flavor-stats requests per hour.',
+    };
+  }
+  if (canonical.startsWith('/api/signals/')) {
+    return {
+      prefix: 'rl:signals:read',
+      limit: 120,
+      error: 'Rate limit exceeded. Max 120 signals requests per hour.',
+    };
+  }
+  if (canonical === '/api/plan') {
+    return {
+      prefix: 'rl:plan:read',
+      limit: 120,
+      error: 'Rate limit exceeded. Max 120 plan requests per hour.',
+    };
+  }
+  return null;
+}
+
+/**
+ * Check admin access token.
+ * Uses ADMIN_ACCESS_TOKEN (preferred) with ACCESS_TOKEN as fallback.
+ */
+function checkAdminAccess(request, env) {
+  const required = env.ADMIN_ACCESS_TOKEN || env.ACCESS_TOKEN;
+  if (!required) {
+    return {
+      ok: false,
+      status: 503,
+      error: 'Admin endpoint unavailable: ADMIN_ACCESS_TOKEN not configured.',
+    };
+  }
+  const authHeader = request.headers.get('Authorization');
+  const match = authHeader ? authHeader.match(/^Bearer\s+(\S+)$/i) : null;
+  if (match && match[1] === required) {
+    return { ok: true };
+  }
+  return {
+    ok: false,
+    status: 403,
+    error: 'Invalid or missing admin access token.',
+  };
 }
 
 /**
@@ -97,6 +204,24 @@ function addVersionHeaders(response, isVersioned) {
   });
 }
 
+async function withRequestIdInServerErrorBody(response, requestId) {
+  if (!response || response.status < 500) return response;
+  const contentType = response.headers.get('Content-Type') || '';
+  if (!contentType.includes('application/json')) return response;
+  try {
+    const payload = await response.clone().json();
+    if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return response;
+    if (payload.request_id) return response;
+    const headers = new Headers(response.headers);
+    return new Response(
+      JSON.stringify({ ...payload, request_id: requestId }),
+      { status: response.status, statusText: response.statusText, headers },
+    );
+  } catch {
+    return response;
+  }
+}
+
 export { isValidSlug } from './slug-validation.js';
 export { getFetcherForSlug, getBrandForSlug } from './brand-registry.js';
 export { getFlavorsCached } from './kv-cache.js';
@@ -112,8 +237,10 @@ export { getFlavorsCached } from './kv-cache.js';
  */
 export async function handleRequest(request, env, fetchFlavorsFn = defaultFetchFlavors) {
   const url = new URL(request.url);
+  const requestId = request.headers.get('CF-Ray') || crypto.randomUUID();
+  env._requestId = requestId;
   const requestOrigin = request.headers.get('Origin') || '';
-  const configuredOrigin = env.ALLOWED_ORIGIN || '*';
+  const configuredOrigin = env.ALLOWED_ORIGIN || 'https://custard.chriskaschner.com';
   // Allow configured origin + localhost for development
   let allowedOrigin = configuredOrigin;
   if (configuredOrigin !== '*' && /^https?:\/\/localhost(:\d+)?$/.test(requestOrigin)) {
@@ -123,9 +250,14 @@ export async function handleRequest(request, env, fetchFlavorsFn = defaultFetchF
     'Access-Control-Allow-Origin': allowedOrigin,
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Expose-Headers': 'X-Request-ID',
+    'X-Request-ID': requestId,
     'X-Frame-Options': 'DENY',
     'X-Content-Type-Options': 'nosniff',
     'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+    'Referrer-Policy': 'strict-origin-when-cross-origin',
+    'Permissions-Policy': 'geolocation=(), microphone=(), camera=()',
+    'Content-Security-Policy': API_CSP,
   };
 
   // Handle CORS preflight
@@ -168,11 +300,12 @@ export async function handleRequest(request, env, fetchFlavorsFn = defaultFetchF
       }
     } catch { checks.d1 = { ok: false }; degraded = true; }
 
-    // O2/O3/O4: Read today's observability counters (non-fatal; default 0)
+    // O2/O3/O4 + X1 sanitizer anomaly count (non-fatal; default 0)
     const today = new Date().toISOString().slice(0, 10);
     let parseFailuresToday = 0;
     let snapshotErrorsToday = 0;
     let emailErrorsToday = 0;
+    let payloadAnomaliesToday = 0;
     if (env.FLAVOR_CACHE) {
       try {
         const pfRaw = await env.FLAVOR_CACHE.get(`meta:parse-fail-count:${today}`);
@@ -181,6 +314,8 @@ export async function handleRequest(request, env, fetchFlavorsFn = defaultFetchF
         snapshotErrorsToday = seRaw ? parseInt(seRaw, 10) : 0;
         const eeRaw = await env.FLAVOR_CACHE.get(`meta:email-errors:${today}`);
         emailErrorsToday = eeRaw ? parseInt(eeRaw, 10) : 0;
+        const paRaw = await env.FLAVOR_CACHE.get(`meta:payload-anomaly-count:${today}`);
+        payloadAnomaliesToday = paRaw ? parseInt(paRaw, 10) : 0;
       } catch { /* counter reads are best-effort */ }
     }
 
@@ -192,17 +327,73 @@ export async function handleRequest(request, env, fetchFlavorsFn = defaultFetchF
         parse_failures_today: parseFailuresToday,
         snapshot_errors_today: snapshotErrorsToday,
         email_errors_today: emailErrorsToday,
+        payload_anomalies_today: payloadAnomaliesToday,
       },
       { headers: corsHeaders }
     );
   }
 
-  // Access control (supports both Bearer header and ?token= query param)
-  if (!checkAccess(request, url, env)) {
-    return Response.json(
-      { error: 'Invalid or missing access token' },
-      { status: 403, headers: corsHeaders }
-    );
+  // Public write routes stay open, but browser origins are restricted and
+  // all writes are per-IP rate limited.
+  if (isPublicWriteRoute(canonical, request.method)) {
+    const allowlist = parseOriginList(env.PUBLIC_WRITE_ALLOWED_ORIGINS, PUBLIC_WRITE_DEFAULT_ORIGINS);
+    if (requestOrigin && !originAllowed(requestOrigin, allowlist)) {
+      return Response.json(
+        { error: 'Forbidden', request_id: requestId },
+        { status: 403, headers: corsHeaders },
+      );
+    }
+
+    const writeLimit = getPublicWriteLimitConfig(canonical);
+    if (writeLimit) {
+      const writeLimited = await applyIpRateLimit({
+        request,
+        kv: env.FLAVOR_CACHE,
+        corsHeaders,
+        prefix: writeLimit.prefix,
+        limit: writeLimit.limit,
+        error: writeLimit.error,
+      });
+      if (writeLimited) return writeLimited;
+    }
+  }
+
+  // Admin-only analytics routes require ADMIN_ACCESS_TOKEN bearer auth.
+  if (isAdminRoute(canonical)) {
+    const admin = checkAdminAccess(request, env);
+    if (!admin.ok) {
+      return Response.json(
+        { error: admin.error, request_id: requestId },
+        { status: admin.status, headers: corsHeaders },
+      );
+    }
+  }
+
+  // Per-IP rate limits for expensive public read routes.
+  const readLimit = getExpensiveReadLimitConfig(canonical, request.method);
+  if (readLimit) {
+    const readLimited = await applyIpRateLimit({
+      request,
+      kv: env.FLAVOR_CACHE,
+      corsHeaders,
+      prefix: readLimit.prefix,
+      limit: readLimit.limit,
+      error: readLimit.error,
+    });
+    if (readLimited) return readLimited;
+  }
+
+  if (request.method === 'GET' && canonical.startsWith('/api/alerts/')) {
+    // Alert links are token-gated per-subscriber and should not be brute-forced.
+    const alertsLimited = await applyIpRateLimit({
+      request,
+      kv: env.FLAVOR_CACHE,
+      corsHeaders,
+      prefix: 'rl:alerts:read',
+      limit: 120,
+      error: 'Rate limit exceeded. Max 120 alert token requests per hour.',
+    });
+    if (alertsLimited) return alertsLimited;
   }
 
   // Route on canonical path, then tag with API-Version if versioned
@@ -272,24 +463,9 @@ export async function handleRequest(request, env, fetchFlavorsFn = defaultFetchF
       response = reliabilityResponse;
     }
   } else if (canonical.startsWith('/og/')) {
-    // M4: Per-IP rate limiting on /og/* — SVG generation is expensive
-    const OG_RATE_LIMIT_PER_HOUR = 60;
-    const ogIp = request.headers.get('CF-Connecting-IP') || 'unknown';
-    const ogHour = new Date().toISOString().slice(0, 13);
-    const ogRlKey = `rl:og:${ogIp}:${ogHour}`;
-    const ogCountRaw = env.FLAVOR_CACHE ? await env.FLAVOR_CACHE.get(ogRlKey) : null;
-    const ogCount = ogCountRaw ? parseInt(ogCountRaw, 10) : 0;
-    if (ogCount >= OG_RATE_LIMIT_PER_HOUR) {
-      response = Response.json(
-        { error: 'Rate limit exceeded. Max 60 /og/ requests per hour.' },
-        { status: 429, headers: corsHeaders },
-      );
-    } else {
-      await safeKvPut(env.FLAVOR_CACHE, ogRlKey, String(ogCount + 1), { expirationTtl: 3600 });
-      const cardResponse = await handleSocialCard(canonical, env, corsHeaders);
-      if (cardResponse) {
-        response = cardResponse;
-      }
+    const cardResponse = await handleSocialCard(canonical, env, corsHeaders);
+    if (cardResponse) {
+      response = cardResponse;
     }
   } else if (canonical.startsWith('/api/alerts/')) {
     // Rewrite url.pathname for alert-routes matching
@@ -302,11 +478,15 @@ export async function handleRequest(request, env, fetchFlavorsFn = defaultFetchF
   }
 
   if (response) {
-    return addVersionHeaders(response, isVersioned);
+    const enriched = await withRequestIdInServerErrorBody(response, requestId);
+    return addVersionHeaders(enriched, isVersioned);
   }
 
   return Response.json(
-    { error: 'Not found. Use /api/v1/today, /api/v1/flavors, /api/v1/stores, /api/v1/geolocate, /api/v1/nearby-flavors, /api/v1/flavors/catalog, /api/v1/flavor-config, /api/v1/flavor-colors, /api/v1/flavor-stats/{slug}, /api/v1/forecast/{slug}, /api/v1/reliability, /api/v1/reliability/{slug}, /api/v1/plan, /api/v1/signals/{slug}, /api/v1/events, /api/v1/events/summary, /api/v1/trivia, /api/v1/metrics/intelligence, /api/v1/metrics/context/flavor/{name}, /api/v1/metrics/context/store/{slug}, /api/v1/metrics/flavor/{name}, /api/v1/metrics/store/{slug}, /api/v1/metrics/trending, /api/v1/metrics/accuracy, /api/v1/metrics/accuracy/{slug}, /api/v1/metrics/coverage, /api/v1/metrics/flavor-hierarchy, /api/v1/metrics/health/{slug}, /api/v1/analytics/geo-eda, /api/v1/quiz/events, /api/v1/quiz/personality-index, /api/v1/alerts/*, /v1/calendar.ics, /v1/og/{slug}/{date}.svg, or /health' },
+    {
+      error: 'Not found. Use /api/v1/today, /api/v1/flavors, /api/v1/stores, /api/v1/geolocate, /api/v1/nearby-flavors, /api/v1/flavors/catalog, /api/v1/flavor-config, /api/v1/flavor-colors, /api/v1/flavor-stats/{slug}, /api/v1/forecast/{slug}, /api/v1/reliability, /api/v1/reliability/{slug}, /api/v1/plan, /api/v1/signals/{slug}, /api/v1/events, /api/v1/events/summary, /api/v1/trivia, /api/v1/metrics/intelligence, /api/v1/metrics/context/flavor/{name}, /api/v1/metrics/context/store/{slug}, /api/v1/metrics/flavor/{name}, /api/v1/metrics/store/{slug}, /api/v1/metrics/trending, /api/v1/metrics/accuracy, /api/v1/metrics/accuracy/{slug}, /api/v1/metrics/coverage, /api/v1/metrics/flavor-hierarchy, /api/v1/metrics/health/{slug}, /api/v1/analytics/geo-eda, /api/v1/quiz/events, /api/v1/quiz/personality-index, /api/v1/alerts/*, /v1/calendar.ics, /v1/og/{slug}/{date}.svg, or /health',
+      request_id: requestId,
+    },
     { status: 404, headers: corsHeaders }
   );
 }

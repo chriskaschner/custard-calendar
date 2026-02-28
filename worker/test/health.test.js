@@ -85,4 +85,36 @@ describe('/health endpoint', () => {
     expect(Number.isInteger(body.snapshot_errors_today)).toBe(true);
     expect(body.snapshot_errors_today).toBe(0);
   });
+
+  it('includes payload_anomalies_today as an integer (defaults to 0)', async () => {
+    const mockKV = createMockKV();
+    const env = { FLAVOR_CACHE: mockKV };
+
+    const req = new Request('https://example.com/health');
+    const res = await handleRequest(req, env);
+    const body = await res.json();
+
+    expect(Number.isInteger(body.payload_anomalies_today)).toBe(true);
+    expect(body.payload_anomalies_today).toBe(0);
+  });
+
+  it('reports payload anomalies alongside existing observability counters', async () => {
+    const today = new Date().toISOString().slice(0, 10);
+    const mockKV = createMockKV({
+      [`meta:parse-fail-count:${today}`]: '2',
+      [`meta:snapshot-errors:${today}`]: '4',
+      [`meta:email-errors:${today}`]: '3',
+      [`meta:payload-anomaly-count:${today}`]: '7',
+    });
+    const env = { FLAVOR_CACHE: mockKV };
+
+    const req = new Request('https://example.com/health');
+    const res = await handleRequest(req, env);
+    const body = await res.json();
+
+    expect(body.parse_failures_today).toBe(2);
+    expect(body.snapshot_errors_today).toBe(4);
+    expect(body.email_errors_today).toBe(3);
+    expect(body.payload_anomalies_today).toBe(7);
+  });
 });

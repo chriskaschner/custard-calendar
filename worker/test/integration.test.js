@@ -234,11 +234,11 @@ describe('Security hardening', () => {
     expect(res.headers.get('Access-Control-Allow-Origin')).toBe('https://mysite.github.io');
   });
 
-  it('16: defaults CORS to wildcard when ALLOWED_ORIGIN not set', async () => {
+  it('16: defaults CORS to canonical origin when ALLOWED_ORIGIN not set', async () => {
     const req = makeRequest('/calendar.ics?primary=mt-horeb');
     const res = await handleRequest(req, env, mockFetchFlavors);
 
-    expect(res.headers.get('Access-Control-Allow-Origin')).toBe('*');
+    expect(res.headers.get('Access-Control-Allow-Origin')).toBe('https://custard.chriskaschner.com');
   });
 });
 
@@ -960,7 +960,12 @@ describe('/api/v1/events endpoints', () => {
   }
 
   it('routes /api/v1/events and adds API-Version header', async () => {
-    const env = { FLAVOR_CACHE: createMockKV(), DB: createEventsMockDB(), _validSlugsOverride: TEST_VALID_SLUGS };
+    const env = {
+      FLAVOR_CACHE: createMockKV(),
+      DB: createEventsMockDB(),
+      _validSlugsOverride: TEST_VALID_SLUGS,
+      ADMIN_ACCESS_TOKEN: 'admin-secret-token',
+    };
     const req = new Request('https://example.com/api/v1/events', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -979,8 +984,16 @@ describe('/api/v1/events endpoints', () => {
   });
 
   it('routes /api/v1/events/summary and adds API-Version header', async () => {
-    const env = { FLAVOR_CACHE: createMockKV(), DB: createEventsMockDB(), _validSlugsOverride: TEST_VALID_SLUGS };
-    const req = new Request('https://example.com/api/v1/events/summary?days=7', { method: 'GET' });
+    const env = {
+      FLAVOR_CACHE: createMockKV(),
+      DB: createEventsMockDB(),
+      _validSlugsOverride: TEST_VALID_SLUGS,
+      ADMIN_ACCESS_TOKEN: 'admin-secret-token',
+    };
+    const req = new Request('https://example.com/api/v1/events/summary?days=7', {
+      method: 'GET',
+      headers: { Authorization: 'Bearer admin-secret-token' },
+    });
 
     const res = await handleRequest(req, env, createMockFetchFlavors());
     expect(res.status).toBe(200);
@@ -1028,10 +1041,17 @@ describe('/api/v1/trivia endpoint', () => {
   });
 });
 
-describe('Bearer token auth', () => {
+describe('Admin route auth', () => {
   let mockKV;
   let mockFetchFlavors;
   let env;
+  const ADMIN_ROUTES = [
+    '/api/v1/events/summary?days=7',
+    '/api/v1/quiz/personality-index?days=7',
+    '/api/v1/analytics/geo-eda',
+    '/api/v1/metrics/accuracy',
+    '/api/v1/metrics/accuracy/mt-horeb',
+  ];
 
   beforeEach(() => {
     mockKV = createMockKV();
@@ -1039,42 +1059,60 @@ describe('Bearer token auth', () => {
     env = {
       FLAVOR_CACHE: mockKV,
       _validSlugsOverride: TEST_VALID_SLUGS,
-      ACCESS_TOKEN: 'test-secret-token',
+      ADMIN_ACCESS_TOKEN: 'admin-secret-token',
     };
   });
 
-  it('57: accepts Authorization: Bearer header', async () => {
-    const req = new Request('https://example.com/api/v1/flavors?slug=mt-horeb', {
-      headers: { 'Authorization': 'Bearer test-secret-token' },
+  it('57: keeps public read endpoints open without admin token', async () => {
+    const req = new Request('https://example.com/api/v1/flavors?slug=mt-horeb');
+    const res = await handleRequest(req, env, mockFetchFlavors);
+    expect(res.status).toBe(200);
+  });
+
+  for (const path of ADMIN_ROUTES) {
+    it(`58: rejects admin route with missing token (${path})`, async () => {
+      const req = makeRequest(path);
+      const res = await handleRequest(req, env, mockFetchFlavors);
+      expect(res.status).toBe(403);
+      const body = await res.json();
+      expect(body.error).toMatch(/admin access token/i);
     });
-    const res = await handleRequest(req, env, mockFetchFlavors);
-    expect(res.status).toBe(200);
-  });
+  }
 
-  it('58: still accepts ?token= query param as fallback', async () => {
-    const req = makeRequest('/api/v1/flavors?slug=mt-horeb&token=test-secret-token');
-    const res = await handleRequest(req, env, mockFetchFlavors);
-    expect(res.status).toBe(200);
-  });
-
-  it('59: rejects request with wrong Bearer token', async () => {
-    const req = new Request('https://example.com/api/v1/flavors?slug=mt-horeb', {
-      headers: { 'Authorization': 'Bearer wrong-token' },
+  for (const path of ADMIN_ROUTES) {
+    it(`59: rejects admin route with invalid bearer token (${path})`, async () => {
+      const req = new Request(`https://example.com${path}`, {
+        headers: { 'Authorization': 'Bearer wrong-token' },
+      });
+      const res = await handleRequest(req, env, mockFetchFlavors);
+      expect(res.status).toBe(403);
     });
-    const res = await handleRequest(req, env, mockFetchFlavors);
-    expect(res.status).toBe(403);
-  });
+  }
 
-  it('60: rejects request with no auth when ACCESS_TOKEN is set', async () => {
-    const req = makeRequest('/api/v1/flavors?slug=mt-horeb');
-    const res = await handleRequest(req, env, mockFetchFlavors);
-    expect(res.status).toBe(403);
-  });
+  for (const path of ADMIN_ROUTES) {
+    it(`60: allows admin route with valid bearer token (${path})`, async () => {
+      const req = new Request(`https://example.com${path}`, {
+        headers: { 'Authorization': 'Bearer admin-secret-token' },
+      });
+      const res = await handleRequest(req, env, mockFetchFlavors);
+      // Auth gate passed; DB is not configured in this test env.
+      expect(res.status).toBe(503);
+      const body = await res.json();
+      expect(body.error).toBeTruthy();
+      expect(body.request_id).toBeTruthy();
+    });
+  }
 
-  it('60b: /health remains public even when ACCESS_TOKEN is set', async () => {
-    const req = makeRequest('/health');
-    const res = await handleRequest(req, env, mockFetchFlavors);
-    expect(res.status).toBe(200);
+  it('60b: returns 503 for admin route when token is not configured', async () => {
+    const noTokenEnv = {
+      FLAVOR_CACHE: mockKV,
+      _validSlugsOverride: TEST_VALID_SLUGS,
+    };
+    const req = makeRequest('/api/v1/events/summary?days=7');
+    const res = await handleRequest(req, noTokenEnv, mockFetchFlavors);
+    expect(res.status).toBe(503);
+    const body = await res.json();
+    expect(body.error).toMatch(/not configured/i);
   });
 });
 

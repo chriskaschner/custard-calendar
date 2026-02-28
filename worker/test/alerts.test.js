@@ -164,6 +164,48 @@ describe('Alert routes', () => {
       expect(data.error).toMatch(/json/i);
     });
 
+    it('6b: rejects unknown browser Origin on subscribe', async () => {
+      const req = new Request('https://example.com/api/alerts/subscribe', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Origin': 'https://evil.example',
+          'CF-Connecting-IP': '1.2.3.4',
+        },
+        body: JSON.stringify({
+          email: 'origin-deny@test.com',
+          slug: 'mt-horeb',
+          favorites: ['Turtle'],
+        }),
+      });
+
+      const res = await handleRequest(req, env, mockFetchFlavors);
+      expect(res.status).toBe(403);
+      const data = await res.json();
+      expect(data.error).toBe('Forbidden');
+    });
+
+    it('6c: accepts canonical browser Origin on subscribe', async () => {
+      const req = new Request('https://example.com/api/alerts/subscribe', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Origin': 'https://custard.chriskaschner.com',
+          'CF-Connecting-IP': '1.2.3.4',
+        },
+        body: JSON.stringify({
+          email: 'origin-allow@test.com',
+          slug: 'mt-horeb',
+          favorites: ['Turtle'],
+        }),
+      });
+
+      const res = await handleRequest(req, env, mockFetchFlavors);
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      expect(data.ok).toBe(true);
+    });
+
     it('7: returns same 200 for duplicate subscription (no enumeration leak)', async () => {
       // Pre-populate an active subscription
       const encoder = new TextEncoder();
