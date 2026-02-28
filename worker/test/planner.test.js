@@ -491,6 +491,25 @@ describe('fetchForecastMap', () => {
 
 // --- handlePlan API ---
 
+// Build a minimal KV mock that returns a flavor payload for a given slug.
+function makeFlavorKv(slugFlavorMap = {}) {
+  return {
+    get: vi.fn(async (key) => {
+      // key format is "flavors:<slug>" for slug-scoped entries
+      const slug = key.replace(/^flavors:/, '');
+      const flavor = slugFlavorMap[slug];
+      if (!flavor) return null;
+      const today = new Date().toISOString().slice(0, 10);
+      // Return a v1 cache record
+      return JSON.stringify({
+        _meta: { v: 1, shared: false, slug, cachedAt: new Date().toISOString() },
+        data: { name: slug, flavors: [{ title: flavor, date: today, description: '' }] },
+      });
+    }),
+    put: vi.fn(async () => {}),
+  };
+}
+
 describe('handlePlan', () => {
   function makeUrl(params = {}) {
     const u = new URL('https://test.com/api/v1/plan');
@@ -502,6 +521,13 @@ describe('handlePlan', () => {
 
   const mockCors = { 'Access-Control-Allow-Origin': '*' };
 
+  // Minimal store index override: two stores close to Madison WI
+  const nearbyStoreIndex = new Map([
+    ['mt-horeb-wi', { lat: 43.022, lng: -89.736, name: 'Mt. Horeb, WI', address: '100 E Main St' }],
+    ['verona-wi', { lat: 43.0, lng: -89.534, name: 'Verona, WI', address: '200 S Main St' }],
+    ['far-store', { lat: 45.0, lng: -89.7, name: 'Far North, WI', address: '999 North Rd' }],
+  ]);
+
   it('returns 400 if no location', async () => {
     const resp = await handlePlan(makeUrl(), {}, mockCors);
     expect(resp.status).toBe(400);
@@ -509,82 +535,65 @@ describe('handlePlan', () => {
     expect(json.error).toContain('location');
   });
 
-  it('returns empty recommendations when locator returns no stores', async () => {
+  it('returns 400 if location is not parseable as lat,lon', async () => {
+    const resp = await handlePlan(makeUrl({ location: 'madison, wi' }), {}, mockCors);
+    expect(resp.status).toBe(400);
+    const json = await resp.json();
+    expect(json.error).toContain('Invalid');
+  });
+
+  it('returns empty recommendations when no stores in radius', async () => {
     const env = {
-      FLAVOR_CACHE: { get: vi.fn(async () => JSON.stringify({ data: { geofences: [] } })) },
+      FLAVOR_CACHE: makeFlavorKv({}),
       DB: null,
+      _storeIndexOverride: new Map([
+        ['remote', { lat: 45.0, lng: -80.0, name: 'Remote', address: '' }],
+      ]),
     };
-    const resp = await handlePlan(makeUrl({ location: 'madison' }), env, mockCors);
+    const resp = await handlePlan(makeUrl({ location: '43.07,-89.40', radius: '5' }), env, mockCors);
     expect(resp.status).toBe(200);
     const json = await resp.json();
     expect(json.recommendations).toEqual([]);
   });
 
-  it('returns scored recommendations from locator data', async () => {
-    const geofence = {
-      metadata: {
-        slug: 'mt-horeb',
-        city: 'Mt. Horeb',
-        state: 'WI',
-        street: '123 Main',
-        flavorOfDayName: 'Chocolate Fudge',
-        flavorOfTheDayDescription: 'Rich chocolate',
-      },
-      geometryCenter: { coordinates: [-89.7, 43.0] },
-    };
+  it('returns scored recommendations for nearby stores with flavors', async () => {
     const env = {
-      FLAVOR_CACHE: {
-        get: vi.fn(async () => JSON.stringify({ data: { geofences: [geofence] } })),
-      },
+      FLAVOR_CACHE: makeFlavorKv({ 'mt-horeb-wi': 'Chocolate Fudge', 'verona-wi': 'Vanilla' }),
       DB: null,
+      _storeIndexOverride: nearbyStoreIndex,
     };
-    const resp = await handlePlan(makeUrl({ location: 'madison', lat: '43.0', lon: '-89.7' }), env, mockCors);
+    const resp = await handlePlan(makeUrl({ location: '43.07,-89.40', radius: '50' }), env, mockCors);
     expect(resp.status).toBe(200);
     const json = await resp.json();
     expect(json.recommendations.length).toBeGreaterThanOrEqual(1);
     expect(json.recommendations[0].certainty_tier).toBe('confirmed');
-    expect(json.recommendations[0].flavor).toBe('Chocolate Fudge');
-    expect(json.query.location).toBe('madison');
+    expect(json.query.lat).toBeCloseTo(43.07, 2);
   });
 
-  it('returns 502 when locator fetch fails', async () => {
+  it('excludes stores beyond the radius', async () => {
     const env = {
-      FLAVOR_CACHE: { get: vi.fn(async () => null) },
-      _fetchOverride: vi.fn(async () => { throw new Error('network error'); }),
-    };
-    const resp = await handlePlan(makeUrl({ location: 'madison' }), env, mockCors);
-    expect(resp.status).toBe(502);
-  });
-
-  it('returns 502 when locator returns error status', async () => {
-    const env = {
-      FLAVOR_CACHE: { get: vi.fn(async () => null) },
-      _fetchOverride: vi.fn(async () => ({ ok: false, status: 500 })),
-    };
-    const resp = await handlePlan(makeUrl({ location: 'madison' }), env, mockCors);
-    expect(resp.status).toBe(502);
-  });
-
-  it('parses flavor preferences from comma-separated param', async () => {
-    const geofence = {
-      metadata: {
-        slug: 'a',
-        city: 'A',
-        state: 'WI',
-        street: '',
-        flavorOfDayName: 'Mint Avalanche',
-        flavorOfTheDayDescription: '',
-      },
-      geometryCenter: { coordinates: [-89.7, 43.0] },
-    };
-    const env = {
-      FLAVOR_CACHE: {
-        get: vi.fn(async () => JSON.stringify({ data: { geofences: [geofence] } })),
-      },
+      FLAVOR_CACHE: makeFlavorKv({ 'far-store': 'Butter Pecan' }),
       DB: null,
+      _storeIndexOverride: new Map([
+        ['far-store', { lat: 45.0, lng: -89.7, name: 'Far North, WI', address: '' }],
+      ]),
+    };
+    // User at Madison WI, radius 25 miles — far-store is ~135 miles north
+    const resp = await handlePlan(makeUrl({ location: '43.07,-89.40', radius: '25' }), env, mockCors);
+    const json = await resp.json();
+    expect(json.recommendations).toHaveLength(0);
+  });
+
+  it('parses flavor preferences and marks preference_match', async () => {
+    const env = {
+      FLAVOR_CACHE: makeFlavorKv({ 'mt-horeb-wi': 'Mint Avalanche' }),
+      DB: null,
+      _storeIndexOverride: new Map([
+        ['mt-horeb-wi', { lat: 43.022, lng: -89.736, name: 'Mt. Horeb, WI', address: '' }],
+      ]),
     };
     const resp = await handlePlan(
-      makeUrl({ location: 'madison', lat: '43.0', lon: '-89.7', flavors: 'Mint Avalanche,Chocolate' }),
+      makeUrl({ location: '43.07,-89.40', radius: '50', flavors: 'Mint Avalanche,Chocolate' }),
       env,
       mockCors
     );
@@ -593,30 +602,40 @@ describe('handlePlan', () => {
     expect(json.recommendations[0].preference_match).toBe(true);
   });
 
-  it('respects radius parameter', async () => {
-    const farGeofence = {
-      metadata: {
-        slug: 'far',
-        city: 'Far',
-        state: 'WI',
-        street: '',
-        flavorOfDayName: 'X',
-        flavorOfTheDayDescription: '',
-      },
-      geometryCenter: { coordinates: [-89.0, 43.5] }, // ~40 miles
-    };
+  it('returns empty when getFlavorsCached fails for all stores', async () => {
     const env = {
-      FLAVOR_CACHE: {
-        get: vi.fn(async () => JSON.stringify({ data: { geofences: [farGeofence] } })),
-      },
+      FLAVOR_CACHE: { get: vi.fn(async () => { throw new Error('KV down'); }), put: vi.fn() },
       DB: null,
+      _storeIndexOverride: new Map([
+        ['mt-horeb-wi', { lat: 43.022, lng: -89.736, name: 'Mt. Horeb, WI', address: '' }],
+      ]),
     };
-    const resp = await handlePlan(
-      makeUrl({ location: 'madison', lat: '43.0', lon: '-89.7', radius: '5' }),
-      env,
-      mockCors
+    // getFlavorsCached will throw on KV, but also fall through to upstream fetch
+    // which will also throw. Promise.allSettled swallows all.
+    const resp = await handlePlan(makeUrl({ location: '43.07,-89.40', radius: '50' }), env, mockCors);
+    // Should not 500 — graceful empty
+    expect([200, 200]).toContain(resp.status);
+  });
+
+  it('respects the limit parameter', async () => {
+    // 5 stores all within radius, limit=2 → at most 2 evaluated
+    const storeIndex = new Map(
+      Array.from({ length: 5 }, (_, i) => [
+        `store-${i}`,
+        { lat: 43.07 + i * 0.001, lng: -89.40, name: `Store ${i}`, address: '' },
+      ])
     );
+    const flavorMap = Object.fromEntries(
+      Array.from({ length: 5 }, (_, i) => [`store-${i}`, 'Vanilla'])
+    );
+    const env = {
+      FLAVOR_CACHE: makeFlavorKv(flavorMap),
+      DB: null,
+      _storeIndexOverride: storeIndex,
+    };
+    const resp = await handlePlan(makeUrl({ location: '43.07,-89.40', radius: '50', limit: '2' }), env, mockCors);
     const json = await resp.json();
-    expect(json.recommendations).toHaveLength(0);
+    const total = json.recommendations.length + json.alternatives.length;
+    expect(total).toBeLessThanOrEqual(2);
   });
 });

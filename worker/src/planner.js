@@ -16,6 +16,8 @@ import { getReliability } from './reliability.js';
 import { getForecastData } from './forecast.js';
 import { normalize, matchesFlavor } from './flavor-matcher.js';
 import { TRIVIA_METRICS_SEED } from './trivia-metrics-seed.js';
+import { STORE_COORDS } from './store-coords.js';
+import { getFlavorsCached } from './kv-cache.js';
 
 // --- Geo utilities ---
 
@@ -392,15 +394,15 @@ export async function fetchForecastMap(env, slugs) {
 // --- API handler ---
 
 /**
- * Handle GET /api/plan requests.
+ * Handle GET /api/v1/plan requests.
  *
  * Required params:
- *   location - zip, city, or "lat,lon"
+ *   location - "lat,lon" coordinates (e.g. "43.07300,-89.38000")
  *
  * Optional params:
- *   radius   - miles (default 25, max 100)
+ *   radius   - search radius in miles (default 25, max 100)
  *   flavors  - comma-separated preferred flavors
- *   limit    - max stores from locator (default 25, max 50)
+ *   limit    - max nearby stores to evaluate (default 25, max 50)
  *
  * @param {URL} url
  * @param {Object} env
@@ -408,10 +410,21 @@ export async function fetchForecastMap(env, slugs) {
  * @returns {Promise<Response>}
  */
 export async function handlePlan(url, env, corsHeaders) {
-  const location = url.searchParams.get('location');
-  if (!location || !location.trim()) {
+  const location = (url.searchParams.get('location') || '').trim();
+  if (!location) {
     return Response.json(
-      { error: 'Missing required "location" parameter. Usage: /api/v1/plan?location=<zip|city|lat,lon>' },
+      { error: 'Missing required "location" parameter. Usage: /api/v1/plan?location=<lat,lon>' },
+      { status: 400, headers: corsHeaders }
+    );
+  }
+
+  // Parse lat,lon from location param
+  const parts = location.split(',');
+  const userLat = parseFloat(parts[0]);
+  const userLon = parseFloat(parts[1]);
+  if (!Number.isFinite(userLat) || !Number.isFinite(userLon)) {
+    return Response.json(
+      { error: 'Invalid "location" parameter. Expected format: "lat,lon" (e.g. "43.073,-89.380")' },
       { status: 400, headers: corsHeaders }
     );
   }
@@ -424,62 +437,50 @@ export async function handlePlan(url, env, corsHeaders) {
     .map((f) => f.trim())
     .filter(Boolean);
 
-  // Step 1: Get nearby stores from locator API (with today's confirmed flavor)
-  const kv = env.FLAVOR_CACHE;
-  const cacheKey = `locator:${location.trim().toLowerCase()}:${limit}`;
-  let locatorData;
-
-  const cached = kv ? await kv.get(cacheKey) : null;
-  if (cached) {
-    locatorData = JSON.parse(cached);
-  } else {
-    const locatorUrl = `https://www.culvers.com/api/locator/getLocations?location=${encodeURIComponent(location.trim())}&limit=${limit}`;
-    const fetchFn = env._fetchOverride || globalThis.fetch;
-    let resp;
-    try {
-      resp = await fetchFn(locatorUrl);
-    } catch {
-      return Response.json(
-        { error: 'Failed to reach upstream locator API' },
-        { status: 502, headers: corsHeaders }
-      );
-    }
-    if (!resp.ok) {
-      return Response.json(
-        { error: `Upstream locator returned ${resp.status}` },
-        { status: 502, headers: corsHeaders }
-      );
-    }
-    locatorData = await resp.json();
-
-    if (kv) {
-      try {
-        await kv.put(cacheKey, JSON.stringify(locatorData), { expirationTtl: 3600 });
-      } catch { /* best-effort */ }
+  // Step 1: Find nearby stores within radius from the coordinate index.
+  // env._storeIndexOverride allows tests to inject a small custom store list.
+  const coordSource = env._storeIndexOverride || STORE_COORDS;
+  const nearby = [];
+  for (const [slug, meta] of coordSource) {
+    const dist = haversine(userLat, userLon, meta.lat, meta.lng);
+    if (dist <= radius) {
+      nearby.push({ slug, dist, ...meta });
     }
   }
+  nearby.sort((a, b) => a.dist - b.dist);
+  const candidates = nearby.slice(0, limit);
 
-  // Transform into our store format
-  const stores = transformLocatorStores(locatorData);
-  if (stores.length === 0) {
-    return Response.json(
-      { query: { location: location.trim(), radius, flavors: preferredFlavors }, recommendations: [], alternatives: [] },
-      { headers: { ...corsHeaders, 'Cache-Control': 'public, max-age=300' } }
-    );
-  }
+  // Step 2: Batch-fetch today's flavor for each candidate store.
+  const kv = env.FLAVOR_CACHE || null;
+  const today = todayStr();
+  const flavorResults = await Promise.allSettled(
+    candidates.map(async (store) => {
+      const data = await getFlavorsCached(store.slug, kv, null, false, env);
+      const entry = (data.flavors || []).find((f) => f.date === today) || (data.flavors || [])[0];
+      return {
+        slug: store.slug,
+        name: store.name,
+        address: store.address || '',
+        lat: store.lat,
+        lon: store.lng,
+        flavor: entry?.title || '',
+        description: entry?.description || '',
+        rank: candidates.indexOf(store) + 1,
+      };
+    })
+  );
 
-  // Resolve user lat/lon from first store (locator returns by proximity)
-  const userLat = parseFloat(url.searchParams.get('lat')) || stores[0].lat;
-  const userLon = parseFloat(url.searchParams.get('lon')) || stores[0].lon;
+  const stores = flavorResults
+    .filter((r) => r.status === 'fulfilled')
+    .map((r) => r.value);
 
-  // Step 2: Enrich with reliability + forecast
+  // Step 3: Enrich with reliability + forecast, then score and rank.
   const slugs = stores.map((s) => s.slug);
   const [reliabilityMap, forecastMap] = await Promise.all([
     fetchReliabilityMap(env.DB, slugs),
     fetchForecastMap(env, slugs),
   ]);
 
-  // Step 3: Score and rank
   const result = buildRecommendations({
     stores,
     userLat,
@@ -492,7 +493,7 @@ export async function handlePlan(url, env, corsHeaders) {
 
   return Response.json(
     {
-      query: { location: location.trim(), radius, flavors: preferredFlavors, lat: userLat, lon: userLon },
+      query: { location, radius, flavors: preferredFlavors, lat: userLat, lon: userLon },
       ...result,
     },
     {
@@ -521,25 +522,3 @@ function forecastAgeInHours(generatedAt) {
   return ms / (1000 * 60 * 60);
 }
 
-/**
- * Transform locator API response into planner store format.
- * Same shape as index.js transformLocatorData but kept local to avoid coupling.
- */
-function transformLocatorStores(data) {
-  const geofences = data?.data?.geofences || [];
-  return geofences.map((g, i) => {
-    const meta = g.metadata || {};
-    const city = meta.city || '';
-    const state = meta.state || '';
-    return {
-      slug: meta.slug || '',
-      name: city && state ? `${city}, ${state}` : city || meta.slug || '',
-      address: meta.street || '',
-      lat: g.geometryCenter?.coordinates?.[1] || 0,
-      lon: g.geometryCenter?.coordinates?.[0] || 0,
-      flavor: meta.flavorOfDayName || '',
-      description: meta.flavorOfTheDayDescription || '',
-      rank: i + 1,
-    };
-  });
-}
