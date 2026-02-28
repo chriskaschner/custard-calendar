@@ -31,7 +31,7 @@ from pathlib import Path
 
 WORKER_BASE = "https://custard.chriskaschner.com"
 WORKLOG_PATH = Path(__file__).resolve().parent.parent / "WORKLOG.md"
-REPORT_FROM_EMAIL = "reports@custard-calendar.com"
+REPORT_FROM_EMAIL = os.environ.get("ALERT_FROM_EMAIL", "alerts@custard-calendar.com")
 
 
 def fetch_json(url: str, token: str) -> dict:

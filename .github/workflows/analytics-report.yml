@@ -25,6 +25,7 @@ jobs:
           WORKER_API_TOKEN: ${{ secrets.WORKER_API_TOKEN }}
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           REPORT_EMAIL_TO: ${{ secrets.REPORT_EMAIL_TO }}
+          ALERT_FROM_EMAIL: ${{ vars.ALERT_FROM_EMAIL }}
         run: |
           uv run python scripts/analytics_report.py \
             --days 7 \
