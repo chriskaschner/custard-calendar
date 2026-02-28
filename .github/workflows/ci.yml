@@ -38,6 +38,9 @@ jobs:
       - name: Install Python dependencies
         run: uv sync --all-extras
 
+      - name: Check security status docs consistency
+        run: python scripts/check_status_docs.py
+
       - name: Run Python tests
         env:
           SKIP_LIVE_API: '1'

@@ -118,7 +118,31 @@ PCA/category overlays + improved weather-motion aesthetics, tied directly to dec
 
 ## Later -- Security
 
-- [ ] **Endpoint access control** -- limit Worker API to requests from first-party surfaces (custard.chriskaschner.com, widget.html copy-paste scripts, GitHub Pages) so random third parties can't freely scrape the API. Approach options: (1) `ALLOWED_ORIGIN` CORS header already restricts browser XHR/fetch from other origins -- may be sufficient for casual abuse; (2) `ACCESS_TOKEN` bearer header support already exists for authenticated endpoints; (3) Cloudflare WAF rule or rate limiting at the network level. Review current exposure before building new auth infrastructure.
+- [x] **M2 endpoint access policy (Public Reads + Guardrails)** -- Worker now uses route classes: public-read, public-write, and admin-read. `ADMIN_ACCESS_TOKEN` bearer auth is enforced for `/api/v1/events/summary`, `/api/v1/quiz/personality-index`, `/api/v1/analytics/geo-eda`, `/api/v1/metrics/accuracy`, and `/api/v1/metrics/accuracy/{slug}`; `/health` remains public. (2026-02-28)
+- [x] **M2 browser-origin hardening for write paths** -- write endpoints remain public but browser `Origin` checks are enforced with env-driven allowlists (`PUBLIC_WRITE_ALLOWED_ORIGINS`, `ALERT_ALLOWED_ORIGINS`) including canonical domain `https://custard.chriskaschner.com`. (2026-02-28)
+- [x] **M4 abuse throttling for expensive reads/writes** -- centralized KV rate limiter now enforces per-IP limits on `/api/v1/metrics/*`, `/api/v1/forecast/*`, `/api/v1/plan`, `/api/v1/signals/*`, `/api/v1/flavor-stats/*`, `/v1/og/*`, plus public write telemetry endpoints. (2026-02-28)
+
+## Security/Observability Status Ledger
+
+Canonical status values: `Open | Partial | Resolved | Accepted`. Security status truth lives here.
+
+| ID | Status | Owner file(s) | Verification test(s) | Last verified | Reference commit |
+|---|---|---|---|---|---|
+| M1 | Resolved | `worker/src/route-nearby.js`, `worker/src/rate-limit.js` | `worker/test/rate-limit.test.js` | 2026-02-28 | fda5064 |
+| M2 | Resolved | `worker/src/index.js`, `worker/wrangler.toml` | `worker/test/integration.test.js`, `worker/test/rate-limit.test.js` | 2026-02-28 | working-tree |
+| M3 | Resolved | `worker/src/alert-routes.js` | `worker/test/alerts.test.js`, `worker/test/rate-limit.test.js` | 2026-02-28 | fda5064 |
+| M4 | Resolved | `worker/src/index.js`, `worker/src/rate-limit.js`, `worker/src/route-nearby.js` | `worker/test/rate-limit.test.js`, `worker/test/metrics.test.js` | 2026-02-28 | working-tree |
+| M5 | Resolved | `worker/src/index.js`, `worker/src/alert-routes.js`, `docs/*.html` | `worker/test/integration.test.js`, `tests/test_static_assets.py` | 2026-02-28 | working-tree |
+| M6 | Resolved | `docs/map.html`, `docs/forecast-map.html`, `docs/vendor/leaflet-heat-0.2.0.js`, `docs/widget.html` | `tests/test_static_assets.py` | 2026-02-28 | working-tree |
+| L1 | Resolved | `worker/src/index.js`, `worker/src/events.js`, `worker/src/quiz-routes.js`, `worker/src/metrics.js`, `worker/src/route-nearby.js` | `worker/test/integration.test.js`, `worker/test/metrics.test.js` | 2026-02-28 | working-tree |
+| L2 | Accepted | `worker/src/alert-routes.js` | `worker/test/alerts.test.js` | 2026-02-28 | accepted-risk |
+| L3 | Accepted | `worker/src/alert-routes.js` | `worker/test/alerts.test.js` | 2026-02-28 | accepted-risk |
+| L4 | Accepted | `worker/src/alert-routes.js`, `worker/src/index.js` | `worker/test/alerts.test.js` | 2026-02-28 | accepted-risk |
+| L5 | Resolved | `worker/src/index.js` | `worker/test/integration.test.js` | 2026-02-28 | working-tree |
+| L6 | Resolved | `src/calendar_sync.py` | `tests/test_calendar_sync.py` | 2026-02-28 | 8272007 |
+| X1 | Resolved | `worker/src/kv-cache.js`, `worker/src/index.js` | `worker/test/kv-cache.test.js`, `worker/test/health.test.js` | 2026-02-28 | working-tree |
+| X2 | Accepted | `apps/culversfotd/culvers_fotd.star` | `manual-review` | 2026-02-28 | accepted-risk |
+| X3 | Accepted | `config.yaml`, `apps/culversfotd/culvers_fotd.star` | `manual-review` | 2026-02-28 | accepted-risk |
 
 ## Later -- Refactor / Re-Architecture
 

@@ -1,11 +1,13 @@
 # Security & Observability Review
 
-Last reviewed: 2026-02-22
+Last reviewed: 2026-02-28
 Scope: custard-calendar (Worker, frontend, Python pipeline) + custard-tidbyt (Starlark app)
+Status is canonical in `TODO.md`; this document is explanatory.
 
 ## Summary
 
-No critical or high-severity vulnerabilities found. The codebase demonstrates strong security practices across input validation, HTML escaping, email security, and database query parameterization. Findings below are medium/low hardening recommendations and cross-repo trust boundary concerns.
+No critical or high-severity vulnerabilities found. In-scope open security findings from the 2026-02-22 review have now been remediated or explicitly accepted-risk with rationale.
+Verified against main commit `3ccbba7` on 2026-02-28 (plus uncommitted hardening changes tracked in TODO ledger).
 
 ---
 
@@ -28,8 +30,8 @@ Cloudflare Worker (worker/src/)
 ```
 
 Key trust boundaries:
-1. **Culver's → Worker**: Untrusted upstream. Flavor names/descriptions flow in without allowlist validation.
-2. **Worker → Frontend**: Public API with wildcard CORS. Any origin can read responses.
+1. **Culver's → Worker**: Untrusted upstream. Payload is now sanitized before KV/D1 persistence.
+2. **Worker → Frontend**: Public-read API model with route-class auth and per-IP throttles on expensive surfaces.
 3. **Worker → Email**: Flavor data renders in subscriber inboxes. HTML-escaped but content not validated.
 4. **Worker → Tidbyt**: HTTP API consumed by Starlark app. No authentication, relies on HTTPS.
 5. **Worker → Analytics**: Backfill script persists data to SQLite, which trains ML models.
@@ -40,7 +42,7 @@ Key trust boundaries:
 
 ### MEDIUM — M1: SSRF via `/api/nearby-flavors`
 
-**Location:** `worker/src/index.js:640`
+**Location:** `worker/src/route-nearby.js`, `worker/src/rate-limit.js`
 
 The `location` parameter flows into an outbound fetch to Culver's locator API:
 ```javascript
@@ -61,21 +63,19 @@ The Worker acts as an open proxy to Culver's locator. An attacker can:
 
 ### MEDIUM — M2: CORS wildcard allows cross-origin abuse
 
-**Location:** `worker/wrangler.toml:13`, `worker/src/index.js:271`
+**Location:** `worker/src/index.js`, `worker/wrangler.toml`
 
-`ALLOWED_ORIGIN = ""` defaults to `Access-Control-Allow-Origin: *`. Any website can:
-- Call `/api/v1/alerts/subscribe` (CSRF — see M3)
-- Read all API responses (flavor data, metrics, forecast, catalog)
-- Probe `/api/v1/alerts/status?token=X` for timing differences
+Prior risk: wildcard browser CORS allowed broad cross-origin reads.  
+Current behavior: default CORS origin is canonical first-party domain, public-write routes enforce origin allowlists, and admin-read analytics routes require bearer auth.
 
-**Status:** Open
-**Remediation:** Set `ALLOWED_ORIGIN = "https://custard.chriskaschner.com"` in production wrangler.toml (or via `wrangler secret put`). This is a one-line change.
+**Status:** Resolved (working-tree)
+**Implementation:** `ALLOWED_ORIGIN` defaults to `https://custard.chriskaschner.com` when unset, route-class policy enforces `ADMIN_ACCESS_TOKEN` on admin-read endpoints, and write-path origins are env-driven allowlists.
 
 ---
 
 ### MEDIUM — M3: No CSRF protection on POST subscribe
 
-**Location:** `worker/src/alert-routes.js:55`, `docs/alerts.html:416-425`
+**Location:** `worker/src/alert-routes.js`, `docs/alerts.html`
 
 The subscribe endpoint accepts `Content-Type: application/json` POST requests. While this triggers a CORS preflight (which is currently allowed by M2's wildcard), a malicious site could:
 1. Craft a POST with a victim's email
@@ -85,7 +85,7 @@ The subscribe endpoint accepts `Content-Type: application/json` POST requests. W
 The double opt-in requirement limits the impact (attacker can't activate the subscription), but the attacker can spam up to 3 confirmation emails per hour to any email address via the per-email rate limit.
 
 **Status:** Resolved (commit fda5064)
-**Implementation:** Server-side Origin check added to `handleSubscribe()`. Requests with an Origin not in ALLOWED_ORIGINS return 403. Empty Origin (curl, server-side) passes through. Existing per-email rate limit (3/hr) + double opt-in remain in place.
+**Implementation:** Server-side Origin check added to `handleSubscribe()`. Requests with an Origin not in allowlist return 403. Empty Origin (curl, server-side) passes through. Existing per-email rate limit (3/hr) + double opt-in remain in place. Allowlist now comes from `ALERT_ALLOWED_ORIGINS` env var with canonical first-party defaults.
 
 ---
 
@@ -93,85 +93,71 @@ The double opt-in requirement limits the impact (attacker can't activate the sub
 
 **Location:** `worker/src/index.js` (multiple routes)
 
-These endpoints have no per-IP throttling:
-- `/api/v1/flavors?slug=X` — triggers upstream fetch (budget-limited to 3/day/slug)
-- `/api/v1/today?slug=X` — same
-- `/api/v1/stores?q=X` — in-memory search, CPU-bound
-- `/api/v1/nearby-flavors` — proxies to Culver's (see M1)
-- `/api/v1/metrics/*` — D1 queries
-- `/api/v1/forecast/*` — KV reads
-- `/v1/og/*` — SVG generation
+Expensive routes are now throttled per IP:
+- `/api/v1/metrics/*`
+- `/api/v1/forecast/*`
+- `/api/v1/plan`
+- `/api/v1/signals/*`
+- `/api/v1/flavor-stats/*`
+- `/v1/og/*`
+- plus write telemetry (`POST /api/v1/events`, `POST /api/v1/quiz/events`)
 
-The fetch budget protects upstream Culver's from exhaustion, but the Worker itself absorbs unbounded load. An attacker can scrape the entire store manifest, all flavor data, and all metrics.
-
-**Status:** Partially resolved (commit fda5064)
-**Implementation:** `/og/*` rate limited at 60 req/hr per IP using KV counter `rl:og:{ip}:{hour}`. `/api/nearby-flavors` rate limited under M1. Remaining expensive endpoints (`/api/metrics/*`, `/api/forecast/*`) still unthrottled — accepted for now given auth gate and low traffic.
+**Status:** Resolved (working-tree)
+**Implementation:** centralized KV-backed limiter in `worker/src/rate-limit.js` applied from `worker/src/index.js`, plus nearby proxy limits under M1.
 
 ---
 
 ### MEDIUM — M5: Missing security headers
 
-**Location:** `worker/src/index.js` (all responses), GitHub Pages (docs/)
+**Location:** `worker/src/index.js`, `worker/src/alert-routes.js`, `docs/*.html`
 
-Neither the Worker nor GitHub Pages set standard security headers:
+Security headers are now set for Worker responses, and docs pages include meta-based defense-in-depth where server headers are unavailable.
 
-| Header | Current | Recommended |
-|--------|---------|-------------|
-| `X-Frame-Options` | Not set | `DENY` |
-| `Content-Security-Policy` | Not set | `default-src 'self'; script-src 'self' 'unsafe-inline' https://unpkg.com` |
-| `Strict-Transport-Security` | Not set | `max-age=31536000; includeSubDomains` |
-| `X-Content-Type-Options` | Not set | `nosniff` |
+| Header/Policy | Current |
+|---|---|
+| `X-Frame-Options` | `DENY` |
+| `X-Content-Type-Options` | `nosniff` |
+| `Strict-Transport-Security` | `max-age=31536000; includeSubDomains` |
+| `Referrer-Policy` | `strict-origin-when-cross-origin` |
+| `Permissions-Policy` | `geolocation=(), microphone=(), camera=()` |
+| `Content-Security-Policy` (API) | `default-src 'none'; base-uri 'none'; frame-ancestors 'none'` |
+| `Content-Security-Policy` (alert HTML) | dedicated policy in `alert-routes.js` |
 
-Without `X-Frame-Options`, pages can be iframed for clickjacking attacks. Without CSP, there's no defense-in-depth against XSS.
-
-**Status:** Open
-**Remediation:** Add a headers middleware to the Worker fetch handler. For GitHub Pages, add a `_headers` file in `docs/`.
+**Status:** Resolved (working-tree)
+**Implementation:** Worker header middleware plus CSP/referrer `<meta>` tags across docs pages.
 
 ---
 
 ### MEDIUM — M6: No SRI on CDN dependencies
 
-**Location:** `docs/map.html:16-17`
+**Location:** `docs/map.html`, `docs/forecast-map.html`, `docs/widget.html`, `docs/vendor/leaflet-heat-0.2.0.js`
 
-Leaflet is loaded from unpkg.com without Subresource Integrity hashes:
-```html
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
-```
+Leaflet core assets are SRI-pinned in map/fronts pages. `leaflet-heat` is now vendored locally (`docs/vendor/leaflet-heat-0.2.0.js`) and `raw.githubusercontent.com` runtime references were removed from frontend pages.
 
-Also loads marker icons from `raw.githubusercontent.com` (`docs/map.html:616-625`).
-
-If unpkg.com or the GitHub repo is compromised, malicious JavaScript executes in the context of the page with access to DOM, localStorage, and the ability to call our API.
-
-**Status:** Open
-**Remediation:** Add SRI hashes:
-```html
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-        integrity="sha384-<hash>" crossorigin=""></script>
-```
-Or self-host Leaflet in `docs/`.
+**Status:** Resolved (working-tree)
+**Implementation:** local vendoring for unpinned dependency + static test guard (`tests/test_static_assets.py`) that fails on raw GitHub runtime assets or non-SRI external scripts (except documented Cloudflare beacon exception).
 
 ---
 
 ### LOW — L1: Error messages leak internal details
 
-**Location:** `worker/src/index.js:647`, `worker/src/index.js:486`
+**Location:** `worker/src/index.js`, `worker/src/events.js`, `worker/src/quiz-routes.js`, `worker/src/metrics.js`, `worker/src/route-nearby.js`
 
-Raw `err.message` from network errors is returned to clients:
+Previously, raw `err.message` values from network failures were returned to clients:
 ```javascript
 { error: `Failed to reach Culver's locator API: ${err.message}` }
 ```
 
 Could expose DNS resolution failures, timeout specifics, or internal infrastructure details.
 
-**Status:** Open
-**Remediation:** Return generic error messages to clients. Log details server-side with `console.error()`.
+**Status:** Resolved (working-tree)
+**Implementation:** 5xx responses now return generic messages and include `request_id`; internal details remain server-side logs only.
 
 ---
 
 ### LOW — L2: KV race condition on rate limit counters
 
-**Location:** `worker/src/alert-routes.js:129-131`
+**Location:** `worker/src/alert-routes.js`
 
 Rate limit check is read-then-write, not atomic:
 ```javascript
@@ -189,7 +175,7 @@ Two concurrent requests could both read `ipCount = 9`, both pass the `>= 10` che
 
 ### LOW — L3: Subscription counter can drift
 
-**Location:** `worker/src/alert-routes.js:375-393`
+**Location:** `worker/src/alert-routes.js`
 
 The `incrementEmailCount` / `decrementEmailCount` pattern uses non-atomic read-increment-write on a KV counter (`alert:email-count:{email}`). Concurrent subscribe + unsubscribe could cause the counter to drift. Over time, a user could be locked out of creating new subscriptions (counter shows 5 but they have 3 active).
 
@@ -200,7 +186,7 @@ The `incrementEmailCount` / `decrementEmailCount` pattern uses non-atomic read-i
 
 ### LOW — L4: Confirm URL path coupling
 
-**Location:** `worker/src/alert-routes.js:188`, `worker/src/index.js:284`
+**Location:** `worker/src/alert-routes.js`, `worker/src/index.js`
 
 Confirmation emails link to `/api/v1/alerts/confirm?token=X`, but the route handler matches on the canonical path `/api/alerts/confirm` (after v1 stripping in `normalizePath()`). If the normalization logic changes, confirmation links in already-sent emails break silently.
 
@@ -211,28 +197,23 @@ Confirmation emails link to `/api/v1/alerts/confirm?token=X`, but the route hand
 
 ### LOW — L5: Token in query param (auth)
 
-**Location:** `worker/src/index.js:101-114`
+**Location:** `worker/src/index.js` (legacy global auth path, now removed)
 
-Bearer auth supports a `?token=` query param fallback. Query param tokens leak to:
-- Browser history
-- Referer headers
-- CDN/proxy logs
+Prior implementation supported a `?token=` query-param auth fallback. Query param tokens can leak via history, referrer headers, and intermediary logs.
 
-The header-based `Authorization: Bearer` path is preferred.
-
-**Status:** Accepted (legacy support, low risk for a flavor API)
-**Remediation:** Consider deprecating `?token=` once all clients use the header.
+**Status:** Resolved (working-tree)
+**Remediation:** None. Admin route auth is now header-only (`Authorization: Bearer`) and query-param token fallback was removed.
 
 ---
 
 ### LOW — L6: Unused pickle import
 
-**Location:** `src/calendar_sync.py:9`
+**Location:** `src/calendar_sync.py`
 
 `pickle` is imported but never used. Not a vulnerability, but importing a dangerous deserialization module is a code smell.
 
-**Status:** Open
-**Remediation:** Remove the import.
+**Status:** Resolved (commit 8272007)
+**Remediation:** None (import removed).
 
 ---
 
@@ -256,11 +237,8 @@ If Culver's website serves malicious `__NEXT_DATA__` (compromised or redesigned)
 
 `escapeHtml()` and RFC 5545 `escapeText()` prevent code execution everywhere. The risk is **content injection** — offensive flavor names, phishing text in descriptions — not XSS or code execution.
 
-**Status:** Open
-**Remediation:** Add a flavor name validation layer in the Worker scraper before persisting to KV/D1:
-- Length limit (max 100 chars for title, 500 for description)
-- Character allowlist (letters, numbers, spaces, common punctuation)
-- Optional: known-flavor allowlist (the pool is only ~42 names — anything new could be flagged rather than auto-persisted)
+**Status:** Resolved (working-tree)
+**Implementation:** upstream payload sanitizer in `getFlavorsCached()` enforces date format, title/description length bounds, and character profile before KV/D1 persistence; dropped rows increment anomaly counters and all-invalid payloads are rejected (no persistence).
 
 ---
 
@@ -339,7 +317,7 @@ These areas were reviewed and found to be properly implemented:
 
 ### Secrets Management
 - **`.gitignore`**: Excludes `.env`, `credentials/`, `token.json`, `config.yaml`, `*.json.secret`.
-- **Wrangler secrets**: `RESEND_API_KEY` and `ACCESS_TOKEN` configured via `wrangler secret put`, not in toml.
+- **Wrangler secrets**: `RESEND_API_KEY` and `ADMIN_ACCESS_TOKEN` configured via `wrangler secret put`, not in toml.
 - **No hardcoded credentials**: Verified across all Python, JavaScript, and Starlark files.
 
 ### Fetch Budget / Circuit Breaker
@@ -351,17 +329,7 @@ These areas were reviewed and found to be properly implemented:
 
 ## Security Remediation Priority
 
-| # | Finding | Severity | Effort | Action |
-|---|---------|----------|--------|--------|
-| 1 | M2: CORS wildcard | Medium | 1 min | Set `ALLOWED_ORIGIN` in wrangler.toml |
-| 2 | M6: No SRI on Leaflet | Medium | 5 min | Add integrity hashes to script/link tags |
-| 3 | M5: Missing security headers | Medium | 10 min | Add X-Frame-Options, X-Content-Type-Options |
-| 4 | L1: Error message leaks | Low | 15 min | Genericize error responses |
-| 5 | M1: SSRF via nearby-flavors | Medium | 30 min | Add per-IP rate limiting |
-| 6 | L6: Unused pickle import | Low | 1 min | Remove import |
-| 7 | X1: Data poisoning chain | Medium | 20 min | Add flavor name validation in scraper |
-| 8 | M4: No rate limiting on reads | Medium | 1 hour | Add per-IP limits to expensive endpoints |
-| 9 | M5: CSP header | Medium | 30 min | Define and deploy Content-Security-Policy |
+All previously open security findings (M2, M4 partial, M5, M6, L1, L6, X1) are now remediated and tracked in the canonical ledger in `TODO.md`.
 
 ---
 ---
