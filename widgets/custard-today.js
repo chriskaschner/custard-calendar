@@ -364,9 +364,9 @@ async function buildMultiStore(slugs) {
   var w = new ListWidget();
   w.backgroundColor = new Color("#1a1a1a");
   w.setPadding(0, 0, 0, 0);
-  w.url = "https://custard.chriskaschner.com";
+  w.url = "https://custard.chriskaschner.com/multi.html?stores=" + validSlugs.join(",");
 
-  // Branded header bar: "Today" LEFT only
+  // Branded header bar: "Today" LEFT, first store city RIGHT (mirrors buildMedium)
   var header = w.addStack();
   header.backgroundColor = new Color(style.bg);
   header.setPadding(6, 16, 6, 16);
@@ -376,6 +376,11 @@ async function buildMultiStore(slugs) {
   var todayLbl = header.addText("Today");
   todayLbl.font = Font.systemFont(10);
   todayLbl.textColor = new Color(style.text, 0.8);
+  header.addSpacer(null);
+  var firstCity = firstData ? cityFromStore(firstData.store) : (validSlugs[0] || "");
+  var headerCityEl = header.addText(firstCity);
+  headerCityEl.font = Font.semiboldSystemFont(11);
+  headerCityEl.textColor = new Color(style.text);
 
   // Content body: store rows matching buildMedium padding/spacing
   var body = w.addStack();
@@ -399,25 +404,12 @@ async function buildMultiStore(slugs) {
     textCol.layoutVertically();
     textCol.spacing = 1;
 
-    // Top line: city name LEFT, rarity RIGHT (mirrors date label in 3-day)
-    var topRow = textCol.addStack();
-    topRow.layoutHorizontally();
-    topRow.centerAlignContent();
-
+    // Store city as muted label (mirrors date label in buildMedium)
     var city = data ? cityFromStore(data.store) : storeSlug;
-    var cityEl = topRow.addText(city);
+    var cityEl = textCol.addText(city);
     cityEl.font = Font.mediumSystemFont(10);
     cityEl.textColor = new Color("#ffffff", 0.5);
     cityEl.lineLimit = 1;
-
-    topRow.addSpacer(null);
-
-    if (data && data.rarity && data.rarity.label) {
-      var rarityEl = topRow.addText(data.rarity.label.toUpperCase());
-      rarityEl.font = Font.boldMonospacedSystemFont(8);
-      var rarityColor = RARITY_COLORS[data.rarity.label] || RARITY_COLORS["Common"];
-      rarityEl.textColor = new Color(rarityColor);
-    }
 
     var flavorName = data ? (data.flavor || "TBD") : "\u2014";
     var flavorEl = textCol.addText(flavorName);
