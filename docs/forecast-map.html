@@ -4,6 +4,8 @@
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com https://unpkg.com; style-src 'self' 'unsafe-inline' https://unpkg.com; img-src 'self' data: https:; connect-src 'self' https:; font-src 'self' data:; base-uri 'self'; frame-ancestors 'none'">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
   <title>Flavor Fronts — Weather Map Forecast</title>
   <meta name="description" content="Weather-map style flavor forecast. See where your favorite custard flavors are strongest across nearby stores over the next 7 days.">
   <meta property="og:title" content="Flavor Fronts — Weather Map Forecast">
@@ -15,7 +17,7 @@
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha384-sHL9NAb7lN7rfvG5lfHpm643Xkcjzp4jFvuavGOndn6pjVqS6ny56CAt3nsEVT4H" crossorigin="">
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha384-cxOPjt7s7Iz04uaHJceBmS+qpjv2JkIHNVcuOrM+YHwZOmJGBXI00mdUXEq65HTH" crossorigin=""></script>
-  <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+  <script src="vendor/leaflet-heat-0.2.0.js"></script>
   <!-- Cloudflare Web Analytics --><script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "c050ff4e79d54b2abbb60587137d0bb2"}'></script><!-- End Cloudflare Web Analytics -->
 </head>
 <body>

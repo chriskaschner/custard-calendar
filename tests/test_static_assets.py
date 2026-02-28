@@ -5,11 +5,16 @@ a required static file is missing or malformed.
 """
 
 import json
+import re
 from pathlib import Path
 
 import pytest
 
 DOCS_DIR = Path(__file__).resolve().parents[1] / "docs"
+EXTERNAL_SCRIPT_RE = re.compile(r"<script[^>]+src=\"(https?://[^\"]+)\"([^>]*)>", re.IGNORECASE)
+ALLOWED_EXTERNAL_SCRIPTS_WITHOUT_SRI = {
+    "https://static.cloudflareinsights.com/beacon.min.js",
+}
 
 
 class TestFlavorsJson:
@@ -82,3 +87,45 @@ class TestStoresJson:
         for store in stores[:10]:  # spot-check first 10
             assert "slug" in store, f"Store entry missing 'slug': {store}"
             assert "state" in store, f"Store entry missing 'state': {store}"
+
+
+class TestFrontendScriptHardening:
+    """Static checks for frontend script supply-chain hardening."""
+
+    def _html_files(self):
+        return sorted(DOCS_DIR.glob("*.html"))
+
+    def test_no_raw_github_runtime_dependencies(self):
+        offenders = []
+        for html in self._html_files():
+            text = html.read_text()
+            if "raw.githubusercontent.com" in text:
+                offenders.append(html.name)
+        assert offenders == [], (
+            "raw.githubusercontent.com runtime dependencies are disallowed in docs pages. "
+            f"Found in: {offenders}"
+        )
+
+    def test_external_scripts_are_sri_pinned_or_allowlisted(self):
+        missing_sri = []
+        for html in self._html_files():
+            text = html.read_text()
+            for src, attrs in EXTERNAL_SCRIPT_RE.findall(text):
+                if src in ALLOWED_EXTERNAL_SCRIPTS_WITHOUT_SRI:
+                    continue
+                has_integrity = "integrity=" in attrs.lower()
+                if not has_integrity:
+                    missing_sri.append((html.name, src))
+
+        assert missing_sri == [], (
+            "External scripts must use SRI unless explicitly allowlisted. Missing integrity: "
+            f"{missing_sri}"
+        )
+
+    def test_leaflet_heat_is_vendored_locally(self):
+        vendor_file = DOCS_DIR / "vendor" / "leaflet-heat-0.2.0.js"
+        assert vendor_file.exists(), "Vendored Leaflet heat plugin missing: docs/vendor/leaflet-heat-0.2.0.js"
+
+        forecast_map = (DOCS_DIR / "forecast-map.html").read_text()
+        assert "vendor/leaflet-heat-0.2.0.js" in forecast_map
+        assert "unpkg.com/leaflet.heat" not in forecast_map

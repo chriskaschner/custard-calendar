@@ -4,6 +4,8 @@
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com https://unpkg.com; style-src 'self' 'unsafe-inline' https://unpkg.com; img-src 'self' data: https:; connect-src 'self' https:; font-src 'self' data:; base-uri 'self'; frame-ancestors 'none'">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
   <title>iOS Widget — Custard Calendar</title>
   <meta name="description" content="Add a Flavor of the Day widget to your iPhone home screen with Scriptable.">
   <meta property="og:title" content="iOS Widget — Custard Calendar">
@@ -433,7 +435,7 @@
         <p>This copies a script pre-configured for <strong id="script-store-label">your store</strong>. Open Scriptable, tap <strong>+</strong>, and paste.</p>
         <div class="script-actions">
           <button id="copy-script">Copy Script for My Store</button>
-          <a href="https://raw.githubusercontent.com/chriskaschner/custard-calendar/main/widgets/custard-today.js" target="_blank" rel="noopener">View Script</a>
+          <a href="assets/custard-today.js" target="_blank" rel="noopener">View Script</a>
         </div>
         <p style="font-size:0.75rem;color:#888;margin-top:0.5rem;">On iOS, if copy doesn't work, tap "View Script" and manually change the slug on line 16.</p>
       </div>
@@ -484,7 +486,7 @@
   <script>var WORKER_BASE = CustardPlanner.WORKER_BASE;</script>
   <script src="cone-renderer.js"></script>
   <script>
-    var SCRIPT_URL = 'https://raw.githubusercontent.com/chriskaschner/custard-calendar/main/widgets/custard-today.js';
+    var SCRIPT_URL = 'assets/custard-today.js';
     var allStores = [];
     var widgetType = 'small'; // 'small' | '3day' | '3store'
     var selectedSlug = null;  // for small/3day single-store previews
