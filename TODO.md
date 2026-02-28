@@ -36,6 +36,8 @@ Build one shared recommendation engine used by Forecast/Map/Radar/Fronts/Quiz: "
 - [x] **Shared planner engine** -- `worker/src/planner.js`: haversine distance, certainty-weighted scoring (40% certainty, 30% distance, 20% rarity, 10% preference), `/api/v1/plan` endpoint. 32 tests. (2026-02-26)
 - [x] **Certainty tiers** -- `worker/src/certainty.js`: Confirmed/Watch/Estimated/None with score caps (1.0/0.7/0.5/0). 21 tests. (2026-02-26)
 - [x] **Consistent action CTAs** -- `CustardPlanner.actionCTAsHTML()` shared renderer for Directions/Set Alert/Subscribe. Wired into index.html today card. Confirmed recs show all three; estimated omit Directions. (2026-02-26)
+- [x] **Fix The Scoop empty results** -- replaced broken `culvers.com/api/locator/getLocations` call with coordinate-based nearby search: generated `worker/src/store-coords.js` (Map<slug, {lat,lng,name,address}> for all 1,012 stores), rewrote `handlePlan()` to parse `lat,lon` from location param, find nearby stores by haversine, batch-fetch flavors via `getFlavorsCached`. Removed `transformLocatorStores()`. 8 new tests. 701 total pass. (2026-02-28)
+- [x] **Fix widget 3-store in-app preview** -- `config.widgetFamily` is null when running a Scriptable script in-app, causing `widgetSize` to default to "small" even when `MODE="multi"` is set. Fixed by defaulting to "medium" when `isMultiMode` is true, so the in-app preview correctly shows `buildMultiStore()`. (2026-02-28)
 
 ## Now -- Weather Brand Reframe
 
@@ -113,6 +115,10 @@ PCA/category overlays + improved weather-motion aesthetics, tied directly to dec
 
 - [x] **Decision-driven visuals** -- Map + Fronts popups now show Confirmed badges and Directions/Alert/Calendar CTAs via `CustardPlanner.actionCTAsHTML()`. Map result cards also have CTAs. Forecast-mode and confirmed-mode popups both enhanced. (2026-02-27)
 - [x] **Interaction-to-action metrics** -- D1 `interaction_events` table, `POST /api/v1/events` (sendBeacon), `GET /api/v1/events/summary`. Tracks CTA clicks (directions/alert/subscribe), signal card views (IntersectionObserver), and map/fronts popup opens. Anonymous (page_load_id + CF geo, no cookies). (2026-02-24)
+
+## Later -- Security
+
+- [ ] **Endpoint access control** -- limit Worker API to requests from first-party surfaces (custard.chriskaschner.com, widget.html copy-paste scripts, GitHub Pages) so random third parties can't freely scrape the API. Approach options: (1) `ALLOWED_ORIGIN` CORS header already restricts browser XHR/fetch from other origins -- may be sufficient for casual abuse; (2) `ACCESS_TOKEN` bearer header support already exists for authenticated endpoints; (3) Cloudflare WAF rule or rate limiting at the network level. Review current exposure before building new auth infrastructure.
 
 ## Later -- Refactor / Re-Architecture
 
