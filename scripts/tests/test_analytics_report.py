@@ -53,6 +53,54 @@ class TestFmtRow:
         assert row.startswith("  ")
 
 
+class TestFetchJson:
+    def _mock_response(self, response_data: dict):
+        """Return a context-manager mock for urllib.request.urlopen."""
+        import unittest.mock as mock
+        encoded = json.dumps(response_data).encode()
+        cm = mock.MagicMock()
+        cm.__enter__ = mock.Mock(return_value=cm)
+        cm.__exit__ = mock.Mock(return_value=False)
+        cm.read = mock.Mock(return_value=encoded)
+        return cm
+
+    def test_returns_mapped_json(self):
+        cm = self._mock_response({"ok": True, "count": 3})
+        with patch("urllib.request.urlopen", return_value=cm):
+            data = fetch_json("https://example.com/data", "token-123")
+        assert data["ok"] is True
+        assert data["count"] == 3
+
+    def test_sends_auth_and_user_agent_headers(self):
+        cm = self._mock_response({"ok": True})
+        with patch("urllib.request.urlopen", return_value=cm) as mock_open:
+            fetch_json("https://example.com/data", "token-abc")
+
+        req = mock_open.call_args[0][0]
+        headers = {k.lower(): v for k, v in req.header_items()}
+        assert headers["authorization"] == "Bearer token-abc"
+        assert headers["user-agent"] == "custard-analytics-report/1.0"
+
+    def test_raises_on_http_error(self):
+        from io import BytesIO
+        err = urllib.error.HTTPError(
+            url="https://example.com/data",
+            code=403,
+            msg="Forbidden",
+            hdrs={},
+            fp=BytesIO(b"error code: 1010"),
+        )
+        with patch("urllib.request.urlopen", side_effect=err):
+            with pytest.raises(RuntimeError, match="HTTP 403"):
+                fetch_json("https://example.com/data", "token")
+
+    def test_raises_on_url_error(self):
+        err = urllib.error.URLError("connection failed")
+        with patch("urllib.request.urlopen", side_effect=err):
+            with pytest.raises(RuntimeError, match="Network error"):
+                fetch_json("https://example.com/data", "token")
+
+
 class TestReportEvents:
     def _make_data(self, **overrides):
         base = {

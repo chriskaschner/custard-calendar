@@ -32,12 +32,16 @@ from pathlib import Path
 WORKER_BASE = "https://custard.chriskaschner.com"
 WORKLOG_PATH = Path(__file__).resolve().parent.parent / "WORKLOG.md"
 REPORT_FROM_EMAIL = os.environ.get("ALERT_FROM_EMAIL", "alerts@custard-calendar.com")
+REPORT_USER_AGENT = os.environ.get("ANALYTICS_REPORT_USER_AGENT", "custard-analytics-report/1.0")
 
 
 def fetch_json(url: str, token: str) -> dict:
     req = urllib.request.Request(
         url,
-        headers={"Authorization": f"Bearer {token}"},
+        headers={
+            "Authorization": f"Bearer {token}",
+            "User-Agent": REPORT_USER_AGENT,
+        },
     )
     try:
         with urllib.request.urlopen(req, timeout=15) as resp:
