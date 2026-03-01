@@ -1115,6 +1115,23 @@ describe('Admin route auth', () => {
     const body = await res.json();
     expect(body.error).toMatch(/not configured/i);
   });
+
+  it('60c: rejects operator alert test route without admin token', async () => {
+    const req = makeRequest('/api/v1/operator-alert/test');
+    const res = await handleRequest(req, env, mockFetchFlavors);
+    expect(res.status).toBe(403);
+  });
+
+  it('60d: allows operator alert test route with valid token', async () => {
+    const req = new Request('https://example.com/api/v1/operator-alert/test', {
+      headers: { 'Authorization': 'Bearer admin-secret-token' },
+    });
+    const res = await handleRequest(req, env, mockFetchFlavors);
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.ok).toBe(true);
+    expect(body.operator_alert?.reason).toBe('not_configured');
+  });
 });
 
 // --- /api/today endpoint ---

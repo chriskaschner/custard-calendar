@@ -51,6 +51,7 @@ const ADMIN_EXACT_ROUTES = new Set([
   '/api/quiz/personality-index',
   '/api/analytics/geo-eda',
   '/api/metrics/accuracy',
+  '/api/operator-alert/test',
 ]);
 const PARSE_FAILURE_BRAND_KEYS = ['culvers', 'kopps', 'oscars', 'gilles', 'hefners', 'kraverz'];
 
@@ -473,6 +474,8 @@ export async function handleRequest(request, env, fetchFlavorsFn = defaultFetchF
     response = await handlePlan(url, env, corsHeaders);
   } else if (canonical === '/api/drive') {
     response = await handleDrive(url, env, corsHeaders);
+  } else if (canonical === '/api/operator-alert/test') {
+    response = await handleOperatorAlertTest(env, corsHeaders);
   } else if (canonical.startsWith('/api/signals/')) {
     response = await handleSignals(url, env, corsHeaders);
   } else if (canonical.startsWith('/api/reliability')) {
@@ -506,6 +509,22 @@ export async function handleRequest(request, env, fetchFlavorsFn = defaultFetchF
       request_id: requestId,
     },
     { status: 404, headers: corsHeaders }
+  );
+}
+
+/**
+ * Admin-only diagnostic route to run operator alert checks on demand.
+ * Useful for validating notification wiring without waiting for daily cron.
+ */
+async function handleOperatorAlertTest(env, corsHeaders) {
+  const result = await maybeSendOperatorAlert({
+    env,
+    handler: 'daily_alerts',
+    result: { checked: 0, sent: 0, errors: [] },
+  });
+  return Response.json(
+    { ok: true, operator_alert: result },
+    { headers: corsHeaders }
   );
 }
 
