@@ -20,31 +20,47 @@ Analytics data has two strong non-prediction uses: **(1) flavor rarity as sharea
 
 Focus order for the next cycle: tighten production quality and measurement before expanding scope.
 
-1. **P0: Complete post-deploy UX verification in production**  
-   Source items: `Next -- Today’s Drive Comprehensive Plan (Packaged Brief)` phase 0 post-deploy checklist.  
-   Outcome: manual live validation for route edit flow, chip rerank/no-refetch behavior, mini-map pin/card sync, and URL/localStorage reproducibility on desktop + mobile.
+1. **P0: CI gate stability + rapid triage discipline**  
+   Source items: CI run `22531947153` (`Worker Tests` failure) + recurring release-gate reliability needs.  
+   Outcome: keep Worker/Python checks consistently green, harden date-sensitive tests, and treat CI red as stop-the-line until resolved.
 
-2. **P1: Card explainability standard**  
+2. **P0: Complete post-deploy UX verification in production (Phase 0 blocker)**  
+   Source items: `Next -- Today’s Drive Comprehensive Plan (Packaged Brief)` phase 0 post-deploy checklist.  
+   Outcome: close the only remaining Phase 0 blocker via manual live validation for route edit flow, chip rerank/no-refetch behavior, mini-map pin/card sync, and URL/localStorage reproducibility on desktop + mobile.
+
+3. **P0: Close mini-map synchronization acceptance criterion**  
+   Source items: unchecked acceptance criterion in Today’s Drive Phase 0 rollup.  
+   Outcome: demonstrate and document that mini-map pins remain synchronized with card buckets and focus/hover behavior.
+
+4. **P1: Public-readiness OG preview verification**  
+   Source items: dynamic `GET /og/page/{slug}.svg` endpoint + page-level `og:image` usage.  
+   Outcome: verify live social previews render correctly (Slack/X share spot-check) and confirm page metadata points at valid OG endpoints.
+
+5. **P1: Card explainability standard**  
    Source items: Today’s Drive phase 1 explainability item.  
    Outcome: every card shows a consistent “why this rank” explanation (boosts/penalties/rarity/novelty) to improve trust.
 
-3. **P1: Tomorrow-aware fallback behavior**  
+6. **P1: Tomorrow-aware fallback behavior**  
    Source items: Scoop/Drive tomorrow edge-case item.  
    Outcome: deterministic handling when today is missing but tomorrow exists (and vice versa), without blurring certainty tiers.
 
-4. **P1: Filter dictionary expansion + regression coverage**  
+7. **P1: Filter dictionary expansion + regression coverage**  
    Source items: Today’s Drive phase 1 filter pass.  
    Outcome: broader tag/allergen detection with explicit false-positive tests.
 
-5. **P1: Secondary-surface handoff polish**  
+8. **P1: Secondary-surface handoff polish**  
    Source items: Today’s Drive phase 1 handoff links.  
    Outcome: clearer transitions from decision cards into Map/Calendar/Radar without losing route context.
 
-6. **P2: Preference-model hardening**  
+9. **P2: Public-readiness cosmetic/meta polish**  
+   Source items: `siri.html` legacy `#003366` fragments, missing `og:image` on `scoop.html`/`privacy.html`, and alerts placeholder copy review.  
+   Outcome: low-risk visual/metadata cleanup after P0/P1 blockers, without changing core behavior.
+
+10. **P2: Preference-model hardening**  
    Source items: Today’s Drive phase 2 (`custard:v1:preferences`) governance items.  
    Outcome: debounced writes, reset/share controls, and schema migration tests to reduce drift/risk.
 
-7. **P2: Architecture debt paydown (time-boxed)**  
+11. **P2: Architecture debt paydown (time-boxed)**  
    Source items: flavor asset parity audit + canonical render spec.  
    Outcome: reduced cross-surface drift while keeping product delivery velocity.
 
@@ -94,7 +110,7 @@ Status baseline: core Drive API + index/scoop shared module are now in productio
 - [x] **Ship current Today’s Drive stack to production** -- completed with merged `main`, production deploy, and live smoke verification for `/api/v1/drive`, index Drive asset load, and scoop deep-link compatibility wiring. (2026-03-01)
 - [x] **Scoop dual-day context block** -- implemented via `include_tomorrow=1` on Scoop with confirmed-only tomorrow payload/fallback copy. (2026-02-28)
 - [x] **Widget 3-store/3-day visual parity** -- Scriptable widget now uses shared medium-row renderer for both 3-day and 3-store views (aligned hierarchy + right-aligned rarity tags) and widget preview copy/docs reflect parity contract. (2026-02-28)
-- [ ] **Post-deploy verification checklist** -- remaining manual live walkthroughs: route edit UX, chip rerank/no-refetch confirmation in prod network tab, map pin/card sync, and URL/localStorage reproducibility on mobile + desktop.
+- [ ] **Post-deploy verification checklist** -- remaining manual live walkthroughs: route edit UX, chip rerank/no-refetch confirmation in prod network tab, map pin/card sync, and URL/localStorage reproducibility on mobile + desktop. This is the only unchecked Phase 0 blocker.
 
 ### Phase 1 — UX completeness and trust signals (P1)
 
@@ -130,6 +146,13 @@ Status baseline: core Drive API + index/scoop shared module are now in productio
 - [ ] Mini-map pins stay synchronized with card buckets and focus/hover behavior.
 - [x] Preferences persist via `custard:v1:preferences` and URL state sharing works reliably.
 - [x] Widget 3-store view visually mirrors 3-day design language, including right-aligned rarity tags.
+
+### Public-readiness follow-ups (non-blocking unless noted)
+
+- [ ] **OG social card endpoint verification (P1)** -- confirm `og:image` tags resolve through the dynamic Worker endpoint (`/og/page/{slug}.svg`) rather than missing static assets, and run a real share-preview spot-check (Slack/X) on at least one docs URL.
+- [ ] **Meta consistency for Scoop + Privacy (P2)** -- add missing `og:image` tags to `docs/scoop.html` and `docs/privacy.html` to improve preview quality.
+- [ ] **Siri brand color token cleanup (P2)** -- replace remaining inline `#003366` occurrences in `docs/siri.html` with canonical brand token usage.
+- [ ] **Alerts placeholder copy review (P2)** -- decide whether `placeholder=\"you@example.com\"` remains intentional UX copy or should be revised to a less developer-toned variant.
 
 ## Now -- Weather Brand Reframe
 
