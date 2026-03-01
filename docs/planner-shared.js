@@ -15,8 +15,23 @@ var CustardPlanner = (function () {
 
   var WORKER_BASE = 'https://custard.chriskaschner.com';
   var PRIMARY_STORE_KEY = 'custard-primary';
+  var SECONDARY_STORES_KEY = 'custard-secondary';
   var FAVORITES_KEY = 'custard-favorites';
   var MAX_FAVORITES = 10;
+  var DRIVE_PREFERENCES_KEY = 'custard:v1:preferences';
+  var DRIVE_PREF_VERSION = 1;
+
+  var DRIVE_ALLOWED_EXCLUDES = { nuts: true, cheesecake: true };
+  var DRIVE_ALLOWED_TAGS = {
+    chocolate: true,
+    fruit: true,
+    caramel: true,
+    mint: true,
+    coffee: true,
+    seasonal: true,
+    kids: true,
+  };
+  var DRIVE_ALLOWED_SORTS = { match: true, detour: true, rarity: true, eta: true };
 
   // ---------------------------------------------------------------------------
   // Utilities
@@ -25,6 +40,321 @@ var CustardPlanner = (function () {
   function escapeHtml(str) {
     if (!str) return '';
     return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  function normalizeStringList(list) {
+    if (!Array.isArray(list)) return [];
+    var out = [];
+    var seen = {};
+    for (var i = 0; i < list.length; i++) {
+      var value = list[i];
+      if (value == null) continue;
+      var clean = String(value).trim();
+      if (!clean) continue;
+      if (seen[clean]) continue;
+      seen[clean] = true;
+      out.push(clean);
+    }
+    return out;
+  }
+
+  function parseLegacySecondaryStores() {
+    try {
+      if (typeof localStorage === 'undefined') return [];
+      var raw = localStorage.getItem(SECONDARY_STORES_KEY);
+      if (!raw) return [];
+      var parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return normalizeStringList(parsed);
+      if (typeof parsed === 'string') return normalizeStringList(parsed.split(','));
+      if (typeof raw === 'string' && raw.indexOf(',') !== -1) return normalizeStringList(raw.split(','));
+      return [];
+    } catch (_) {
+      try {
+        var fallbackRaw = localStorage.getItem(SECONDARY_STORES_KEY);
+        if (typeof fallbackRaw === 'string') return normalizeStringList(fallbackRaw.split(','));
+      } catch (_2) { /* ignore */ }
+      return [];
+    }
+  }
+
+  function buildStoreLookup(stores) {
+    var lookup = {};
+    if (!Array.isArray(stores)) return lookup;
+    for (var i = 0; i < stores.length; i++) {
+      var store = stores[i];
+      if (!store || !store.slug) continue;
+      lookup[String(store.slug)] = store;
+    }
+    return lookup;
+  }
+
+  function isCulversSlug(slug, storeLookup) {
+    if (!slug) return false;
+    if (brandFromSlug(slug) !== 'culvers') return false;
+    if (!storeLookup) return true;
+    var store = storeLookup[slug];
+    if (!store) return false;
+    if (!store.brand) return true;
+    return String(store.brand).toLowerCase() === 'culvers';
+  }
+
+  function sanitizeDriveStores(slugs, opts) {
+    opts = opts || {};
+    var list = normalizeStringList(Array.isArray(slugs) ? slugs : []);
+    var storeLookup = buildStoreLookup(opts.stores);
+    var useLookup = Object.keys(storeLookup).length > 0 ? storeLookup : null;
+    var clean = [];
+    for (var i = 0; i < list.length; i++) {
+      var slug = list[i];
+      if (!isCulversSlug(slug, useLookup)) continue;
+      clean.push(slug);
+      if (clean.length >= 5) break;
+    }
+    return clean;
+  }
+
+  function sanitizeDriveTagList(tags, allowMap) {
+    if (!Array.isArray(tags)) return [];
+    var out = [];
+    var seen = {};
+    for (var i = 0; i < tags.length; i++) {
+      var value = tags[i];
+      if (value == null) continue;
+      var clean = String(value).trim().toLowerCase();
+      if (!clean || seen[clean] || !allowMap[clean]) continue;
+      seen[clean] = true;
+      out.push(clean);
+    }
+    return out;
+  }
+
+  function parseCsvTagParam(raw, allowMap) {
+    if (typeof raw !== 'string') return [];
+    if (!raw.trim()) return [];
+    return sanitizeDriveTagList(raw.split(','), allowMap);
+  }
+
+  function sanitizeDriveSort(raw, fallback) {
+    var value = raw == null ? '' : String(raw).trim().toLowerCase();
+    if (DRIVE_ALLOWED_SORTS[value]) return value;
+    return fallback;
+  }
+
+  function sanitizeDriveRadius(raw, fallback) {
+    if (raw == null || raw === '') return fallback;
+    var num = Number.parseInt(raw, 10);
+    if (!Number.isFinite(num)) return fallback;
+    if (num < 1) return 1;
+    if (num > 100) return 100;
+    return num;
+  }
+
+  function pickDefaultDriveStores(opts) {
+    opts = opts || {};
+    var fromLegacy = [];
+    var primary = getPrimaryStoreSlug();
+    if (primary) fromLegacy.push(primary);
+    var secondary = parseLegacySecondaryStores();
+    for (var i = 0; i < secondary.length; i++) fromLegacy.push(secondary[i]);
+    var legacyClean = sanitizeDriveStores(fromLegacy, opts);
+    if (legacyClean.length >= 2) return legacyClean.slice(0, 5);
+
+    var storeLookup = buildStoreLookup(opts.stores);
+    var culvers = [];
+    var lookupKeys = Object.keys(storeLookup);
+    for (var ki = 0; ki < lookupKeys.length; ki++) {
+      var slug = lookupKeys[ki];
+      if (isCulversSlug(slug, storeLookup)) culvers.push(slug);
+      if (culvers.length >= 5) break;
+    }
+    if (legacyClean.length === 1) {
+      for (var ci = 0; ci < culvers.length; ci++) {
+        if (culvers[ci] !== legacyClean[0]) {
+          return [legacyClean[0], culvers[ci]];
+        }
+      }
+    }
+    if (culvers.length >= 2) return culvers.slice(0, 2);
+    return legacyClean.slice(0, 5);
+  }
+
+  function makeDefaultDrivePreferences(opts) {
+    var defaultStores = pickDefaultDriveStores(opts);
+    return {
+      version: DRIVE_PREF_VERSION,
+      favoriteStores: defaultStores.slice(0, 5),
+      activeRoute: {
+        id: 'default',
+        name: "Today's Drive",
+        stores: defaultStores,
+      },
+      filters: {
+        excludeTags: [],
+        includeOnlyTags: [],
+        avoidIngredients: [],
+      },
+      preferences: {
+        boostTags: [],
+        avoidTags: [],
+      },
+      ui: {
+        homeView: 'today_drive',
+        sortMode: 'match',
+        radiusMiles: 25,
+      },
+      updatedAt: new Date().toISOString(),
+    };
+  }
+
+  function sanitizeDrivePreferences(raw, opts) {
+    var defaults = makeDefaultDrivePreferences(opts);
+    var value = raw && typeof raw === 'object' ? raw : {};
+    var favoriteStores = sanitizeDriveStores(value.favoriteStores, opts);
+    var routeStores = sanitizeDriveStores(value.activeRoute && value.activeRoute.stores, opts);
+
+    if (routeStores.length < 2) routeStores = defaults.activeRoute.stores.slice();
+    if (routeStores.length > 5) routeStores = routeStores.slice(0, 5);
+
+    if (favoriteStores.length === 0) favoriteStores = routeStores.slice(0, 5);
+    if (favoriteStores.length > 5) favoriteStores = favoriteStores.slice(0, 5);
+
+    var sortMode = sanitizeDriveSort(value.ui && value.ui.sortMode, 'match') || 'match';
+    var radius = sanitizeDriveRadius(value.ui && value.ui.radiusMiles, 25);
+    if (!Number.isFinite(radius)) radius = 25;
+
+    return {
+      version: DRIVE_PREF_VERSION,
+      favoriteStores: favoriteStores,
+      activeRoute: {
+        id: 'default',
+        name: "Today's Drive",
+        stores: routeStores,
+      },
+      filters: {
+        excludeTags: sanitizeDriveTagList(value.filters && value.filters.excludeTags, DRIVE_ALLOWED_EXCLUDES),
+        includeOnlyTags: [],
+        avoidIngredients: [],
+      },
+      preferences: {
+        boostTags: sanitizeDriveTagList(value.preferences && value.preferences.boostTags, DRIVE_ALLOWED_TAGS),
+        avoidTags: sanitizeDriveTagList(value.preferences && value.preferences.avoidTags, DRIVE_ALLOWED_TAGS),
+      },
+      ui: {
+        homeView: 'today_drive',
+        sortMode: sortMode,
+        radiusMiles: radius,
+      },
+      updatedAt: value.updatedAt && String(value.updatedAt).trim() ? String(value.updatedAt) : new Date().toISOString(),
+    };
+  }
+
+  function parseDriveUrlState(search, opts) {
+    var rawSearch = typeof search === 'string'
+      ? search
+      : (typeof window !== 'undefined' && window.location ? window.location.search : '');
+    var params = new URLSearchParams(rawSearch || '');
+    var state = {};
+
+    if (params.has('stores')) {
+      var stores = sanitizeDriveStores(String(params.get('stores') || '').split(','), opts);
+      if (stores.length >= 2) state.stores = stores;
+    }
+
+    if (params.has('exclude')) {
+      state.excludeTags = parseCsvTagParam(params.get('exclude') || '', DRIVE_ALLOWED_EXCLUDES);
+    }
+    if (params.has('boost')) {
+      state.boostTags = parseCsvTagParam(params.get('boost') || '', DRIVE_ALLOWED_TAGS);
+    }
+    if (params.has('avoid')) {
+      state.avoidTags = parseCsvTagParam(params.get('avoid') || '', DRIVE_ALLOWED_TAGS);
+    }
+    if (params.has('sort')) {
+      state.sortMode = sanitizeDriveSort(params.get('sort'), 'match') || 'match';
+    }
+    if (params.has('radius')) {
+      var radius = sanitizeDriveRadius(params.get('radius'), 25);
+      state.radiusMiles = Number.isFinite(radius) ? radius : 25;
+    }
+
+    return state;
+  }
+
+  function applyDriveUrlState(prefs, state, opts) {
+    var merged = sanitizeDrivePreferences(prefs, opts);
+    if (!state || typeof state !== 'object') return merged;
+    if (Array.isArray(state.stores) && state.stores.length >= 2) {
+      merged.activeRoute.stores = sanitizeDriveStores(state.stores, opts);
+      if (merged.activeRoute.stores.length < 2) merged.activeRoute.stores = makeDefaultDrivePreferences(opts).activeRoute.stores.slice();
+      merged.favoriteStores = merged.activeRoute.stores.slice(0, 5);
+    }
+    if (Array.isArray(state.excludeTags)) merged.filters.excludeTags = sanitizeDriveTagList(state.excludeTags, DRIVE_ALLOWED_EXCLUDES);
+    if (Array.isArray(state.boostTags)) merged.preferences.boostTags = sanitizeDriveTagList(state.boostTags, DRIVE_ALLOWED_TAGS);
+    if (Array.isArray(state.avoidTags)) merged.preferences.avoidTags = sanitizeDriveTagList(state.avoidTags, DRIVE_ALLOWED_TAGS);
+    if (state.sortMode != null) merged.ui.sortMode = sanitizeDriveSort(state.sortMode, 'match') || 'match';
+    if (state.radiusMiles != null) {
+      var radius = sanitizeDriveRadius(state.radiusMiles, 25);
+      merged.ui.radiusMiles = Number.isFinite(radius) ? radius : 25;
+    }
+    merged.updatedAt = new Date().toISOString();
+    return merged;
+  }
+
+  function getDrivePreferences(opts) {
+    opts = opts || {};
+    var defaults = makeDefaultDrivePreferences(opts);
+    var parsed = defaults;
+
+    try {
+      if (typeof localStorage !== 'undefined') {
+        var raw = localStorage.getItem(DRIVE_PREFERENCES_KEY);
+        if (raw) {
+          parsed = sanitizeDrivePreferences(JSON.parse(raw), opts);
+        }
+      }
+    } catch (_) {
+      parsed = defaults;
+    }
+
+    // Legacy migration fallback for first-time drive users.
+    if (!parsed.activeRoute || !Array.isArray(parsed.activeRoute.stores) || parsed.activeRoute.stores.length < 2) {
+      parsed = defaults;
+    }
+
+    var urlState = parseDriveUrlState(opts.search, opts);
+    parsed = applyDriveUrlState(parsed, urlState, opts);
+    return sanitizeDrivePreferences(parsed, opts);
+  }
+
+  function saveDrivePreferences(prefs, opts) {
+    var clean = sanitizeDrivePreferences(prefs, opts);
+    clean.updatedAt = new Date().toISOString();
+    try {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem(DRIVE_PREFERENCES_KEY, JSON.stringify(clean));
+        if (clean.activeRoute && Array.isArray(clean.activeRoute.stores) && clean.activeRoute.stores.length > 0) {
+          setPrimaryStoreSlug(clean.activeRoute.stores[0]);
+          localStorage.setItem(SECONDARY_STORES_KEY, JSON.stringify(clean.activeRoute.stores.slice(1, 5)));
+        }
+      }
+    } catch (_) {
+      return clean;
+    }
+    return clean;
+  }
+
+  function buildDriveUrlState(prefs, opts) {
+    var clean = sanitizeDrivePreferences(prefs, opts);
+    var params = new URLSearchParams();
+    if (clean.activeRoute && Array.isArray(clean.activeRoute.stores) && clean.activeRoute.stores.length > 0) {
+      params.set('stores', clean.activeRoute.stores.join(','));
+    }
+    params.set('sort', clean.ui.sortMode || 'match');
+    params.set('radius', String(clean.ui.radiusMiles || 25));
+    if (clean.filters.excludeTags.length > 0) params.set('exclude', clean.filters.excludeTags.join(','));
+    if (clean.preferences.boostTags.length > 0) params.set('boost', clean.preferences.boostTags.join(','));
+    if (clean.preferences.avoidTags.length > 0) params.set('avoid', clean.preferences.avoidTags.join(','));
+    return params.toString();
   }
 
   /**
@@ -223,6 +553,13 @@ var CustardPlanner = (function () {
     return _ALLOWED_CERTAINTY[lower] ? lower : null;
   }
 
+  function cleanTelemetryDeviceType(value) {
+    var t = cleanTelemetryText(value, 16);
+    if (!t) return null;
+    var lower = t.toLowerCase();
+    return (lower === 'mobile' || lower === 'desktop' || lower === 'tablet') ? lower : null;
+  }
+
   function emitInteractionEvent(raw) {
     if (!raw || typeof raw !== 'object') return false;
     var eventType = cleanTelemetryEventType(raw.event_type);
@@ -236,6 +573,8 @@ var CustardPlanner = (function () {
       flavor: cleanTelemetryText(raw.flavor, 96),
       certainty_tier: cleanTelemetryCertainty(raw.certainty_tier),
       page_load_id: cleanTelemetryText(raw.page_load_id, 80) || _pageLoadId,
+      referrer: cleanTelemetryText(raw.referrer, 200),
+      device_type: cleanTelemetryDeviceType(raw.device_type),
     };
 
     var body = JSON.stringify(payload);
@@ -265,13 +604,16 @@ var CustardPlanner = (function () {
    * Emit a page_view event with referrer and device_type.
    * Call once per page load: CustardPlanner.emitPageView('scoop')
    */
+  var _pageViewEmitted = false;
   function emitPageView(pageName) {
+    if (_pageViewEmitted) return false;
+    _pageViewEmitted = true;
     var referrer = '';
     try { referrer = document.referrer || ''; } catch (_) {}
     var ua = '';
     try { ua = navigator.userAgent || ''; } catch (_) {}
-    var deviceType = /Mobile|Android|iPhone|iPad|iPod/i.test(ua) ? 'mobile' : 'desktop';
-    emitInteractionEvent({
+    var deviceType = /iPad|Tablet/i.test(ua) ? 'tablet' : (/Mobile|Android|iPhone|iPod/i.test(ua) ? 'mobile' : 'desktop');
+    return emitInteractionEvent({
       event_type: 'page_view',
       page: pageName || 'unknown',
       referrer: referrer,
@@ -311,6 +653,16 @@ var CustardPlanner = (function () {
   }
 
   bindInteractionTelemetry();
+
+  if (typeof document !== 'undefined') {
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', function () {
+        emitPageView(inferPageKey());
+      }, { once: true });
+    } else {
+      setTimeout(function () { emitPageView(inferPageKey()); }, 0);
+    }
+  }
 
   // ---------------------------------------------------------------------------
   // Brand constants
@@ -1013,6 +1365,11 @@ var CustardPlanner = (function () {
     getFavorites: getFavorites,
     addFavorite: addFavorite,
     removeFavorite: removeFavorite,
+    getDrivePreferences: getDrivePreferences,
+    saveDrivePreferences: saveDrivePreferences,
+    parseDriveUrlState: parseDriveUrlState,
+    buildDriveUrlState: buildDriveUrlState,
+    DRIVE_PREFERENCES_KEY: DRIVE_PREFERENCES_KEY,
     rarityLabelFromGapDays: rarityLabelFromGapDays,
     rarityLabelFromPercentile: rarityLabelFromPercentile,
     rarityLabelFromRank: rarityLabelFromRank,

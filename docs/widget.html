@@ -141,33 +141,62 @@
       flex-shrink: 0;
     }
     /* -- Medium card: Cell style, 3 rows -- */
-    .size-card.medium .card-body { padding: 6px 16px 10px; }
-    .size-card.medium .flavor-card {
+    .size-card.medium .card-body,
+    .size-card.multi .card-body { padding: 6px 16px 10px; }
+    .size-card.medium .flavor-card,
+    .size-card.multi .flavor-card {
       display: flex;
       align-items: center;
       gap: 8px;
       flex: 1;
       min-height: 0;
     }
-    .size-card.medium .flavor-card + .flavor-card {
+    .size-card.medium .flavor-card + .flavor-card,
+    .size-card.multi .flavor-card + .flavor-card {
       border-top: 1px solid rgba(255,255,255,0.08);
       padding-top: 4px;
     }
-    .size-card.medium .flavor-card .cone-icon svg { display: block; }
-    .size-card.medium .flavor-card .card-text {
+    .size-card.medium .flavor-card .cone-icon svg,
+    .size-card.multi .flavor-card .cone-icon svg { display: block; }
+    .size-card.medium .flavor-card .card-text,
+    .size-card.multi .flavor-card .card-text {
       flex: 1;
       min-width: 0;
     }
-    .size-card.medium .flavor-card .day {
+    .size-card.medium .flavor-card .meta-row,
+    .size-card.multi .flavor-card .meta-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      min-width: 0;
+    }
+    .size-card.medium .flavor-card .day,
+    .size-card.multi .flavor-card .day {
       font-size: 10px;
       opacity: 0.5;
+      min-width: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
-    .size-card.medium .flavor-card .fname {
+    .size-card.medium .flavor-card .rarity,
+    .size-card.multi .flavor-card .rarity {
+      font-size: 8px;
+      font-weight: 700;
+      color: #90CAF9;
+      letter-spacing: 0.05em;
+      flex-shrink: 0;
+      text-transform: uppercase;
+    }
+    .size-card.medium .flavor-card .fname,
+    .size-card.multi .flavor-card .fname {
       font-size: 13px;
       font-weight: 700;
       line-height: 1.2;
     }
-    .size-card.medium .flavor-card .fdesc {
+    .size-card.medium .flavor-card .fdesc,
+    .size-card.multi .flavor-card .fdesc {
       font-size: 10px;
       opacity: 0.55;
       line-height: 1.25;
@@ -175,28 +204,6 @@
       overflow: hidden;
       text-overflow: ellipsis;
     }
-    /* -- Multi card: 3 store rows -- */
-    .size-card.multi .card-body { padding: 0 16px 6px; }
-    .multi-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex: 1;
-      min-height: 0;
-    }
-    .multi-row + .multi-row { border-top: 1px solid rgba(255,255,255,0.08); }
-    .multi-row .mr-city { font-size: 9px; opacity: 0.45; flex-shrink: 0; }
-    .multi-row .mr-flavor {
-      font-size: 12px;
-      font-weight: 700;
-      line-height: 1.2;
-      flex: 1;
-      min-width: 0;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .multi-row .mr-rarity { font-size: 8px; font-weight: 700; color: #90CAF9; flex-shrink: 0; }
     /* -- Rotated cones on medium and multi cards -- */
     .size-card.medium .cone-icon,
     .size-card.multi .cone-icon {
@@ -335,6 +342,7 @@
       <a href="forecast-map.html">Fronts</a>
       <a href="quiz.html">Quiz</a>
       <a href="widget.html" class="nav-active">Widget</a>
+      <a href="scoop.html">The Scoop</a>
     </nav>
   </header>
 
@@ -342,6 +350,7 @@
     <section>
       <h2>Widget Preview</h2>
       <p style="color:#666;font-size:0.875rem;margin-bottom:0.75rem;">What you'll see on your home screen.</p>
+      <p style="color:#666;font-size:0.8125rem;margin-top:-0.25rem;margin-bottom:0.75rem;">Design rule: medium 3-store uses the same row structure and typography hierarchy as medium 3-day, with rarity tags right-aligned on both.</p>
       <div class="widget-sizes">
         <!-- Small 1x1 -->
         <div class="size-card small selected" id="preview-small">
@@ -788,6 +797,25 @@
       return fallback || storeName;
     }
 
+    function rarityLabel(rarity) {
+      return rarity && rarity.label ? String(rarity.label).toUpperCase() : '';
+    }
+
+    function renderMediumRowHtml(metaLabel, flavorName, description, rarity) {
+      var descHtml = description
+        ? '<div class="fdesc">' + escapeHtml(truncateDesc(description, 70)) + '</div>'
+        : '';
+      var rarityHtml = rarity
+        ? '<span class="rarity">' + escapeHtml(rarity) + '</span>'
+        : '';
+      return '<div class="meta-row">'
+        + '<span class="day">' + escapeHtml(metaLabel || '') + '</span>'
+        + rarityHtml
+        + '</div>'
+        + '<div class="fname">' + escapeHtml(flavorName || 'TBD') + '</div>'
+        + descHtml;
+    }
+
     async function loadPreview(slug) {
       if (typeof loadFlavorColors === 'function') {
         try { await loadFlavorColors(); } catch (e) { /* best effort */ }
@@ -795,23 +823,24 @@
 
       try {
         var todayResp = await fetch(WORKER_BASE + '/api/v1/today?slug=' + encodeURIComponent(slug));
+        var todayData = null;
         if (todayResp.ok) {
-          var today = await todayResp.json();
-          document.getElementById('preview-flavor').textContent = today.flavor || 'No flavor';
-          document.getElementById('preview-date').textContent = formatDateLabel(today.date);
+          todayData = await todayResp.json();
+          document.getElementById('preview-flavor').textContent = todayData.flavor || 'No flavor';
+          document.getElementById('preview-date').textContent = formatDateLabel(todayData.date);
 
           var descEl = document.getElementById('preview-desc');
-          descEl.textContent = truncateDesc(today.description, 80);
+          descEl.textContent = truncateDesc(todayData.description, 80);
 
           var coneEl = document.getElementById('preview-cone');
-          if (typeof renderMiniConeSVG === 'function' && today.flavor) {
-            coneEl.innerHTML = renderMiniConeSVG(today.flavor, 6);
+          if (typeof renderMiniConeSVG === 'function' && todayData.flavor) {
+            coneEl.innerHTML = renderMiniConeSVG(todayData.flavor, 6);
           }
 
           var rarityEl = document.getElementById('preview-rarity');
-          rarityEl.textContent = (today.rarity && today.rarity.label) ? today.rarity.label.toUpperCase() : '';
+          rarityEl.textContent = rarityLabel(todayData.rarity);
 
-          var brandKey = today.brand || "Culver's";
+          var brandKey = todayData.brand || "Culver's";
           var brandColors = {
             "Culver's": { bg: '#005696', text: '#fff' },
             "Kopp's":   { bg: '#1a1a1a', text: '#fff' },
@@ -821,7 +850,7 @@
             "Oscar's":  { bg: '#BC272C', text: '#fff' }
           };
           var bc = brandColors[brandKey] || brandColors["Culver's"];
-          var city = cityFromStoreName(today.store, slug);
+          var city = cityFromStoreName(todayData.store, slug);
 
           var smallHeader = document.getElementById('small-header');
           smallHeader.style.background = bc.bg;
@@ -832,6 +861,12 @@
           medHeader.style.background = bc.bg;
           medHeader.style.color = bc.text;
           document.getElementById('preview-location-med').textContent = city;
+
+          var multiHeader = document.getElementById('multi-header');
+          if (multiHeader) {
+            multiHeader.style.background = bc.bg;
+            multiHeader.style.color = bc.text;
+          }
         }
 
         var flavorsResp = await fetch(WORKER_BASE + '/api/v1/flavors?slug=' + encodeURIComponent(slug));
@@ -845,14 +880,18 @@
             var card = document.createElement('div');
             card.className = 'flavor-card';
             var coneSvg = (typeof renderMiniConeSVG === 'function') ? renderMiniConeSVG(upcoming[i].title, 4) : '';
-            var descHtml = upcoming[i].description
-              ? '<div class="fdesc">' + escapeHtml(truncateDesc(upcoming[i].description, 70)) + '</div>'
-              : '';
+            var rarity = '';
+            if (todayData && upcoming[i].date === todayData.date && upcoming[i].title === todayData.flavor) {
+              rarity = rarityLabel(todayData.rarity);
+            }
             card.innerHTML = '<span class="cone-icon">' + coneSvg + '</span>'
               + '<div class="card-text">'
-              + '<div class="day">' + formatDateLabel(upcoming[i].date) + '</div>'
-              + '<div class="fname">' + escapeHtml(upcoming[i].title) + '</div>'
-              + descHtml
+              + renderMediumRowHtml(
+                formatDateLabel(upcoming[i].date),
+                upcoming[i].title,
+                upcoming[i].description || '',
+                rarity
+              )
               + '</div>';
             rowsEl.appendChild(card);
           }
@@ -881,25 +920,40 @@
       }));
 
       rowsEl.innerHTML = '';
+      var primaryData = results.find(function(r) { return !!r; });
+      if (primaryData && primaryData.brand) {
+        var headerColors = {
+          "Culver's": { bg: '#005696', text: '#fff' },
+          "Kopp's":   { bg: '#1a1a1a', text: '#fff' },
+          "Gille's":  { bg: '#EBCC35', text: '#1a1a1a' },
+          "Hefner's": { bg: '#93BE46', text: '#1a1a1a' },
+          "Kraverz":  { bg: '#CE742D', text: '#fff' },
+          "Oscar's":  { bg: '#BC272C', text: '#fff' }
+        };
+        var hc = headerColors[primaryData.brand] || headerColors["Culver's"];
+        var multiHeader = document.getElementById('multi-header');
+        if (multiHeader) {
+          multiHeader.style.background = hc.bg;
+          multiHeader.style.color = hc.text;
+        }
+      }
       for (var i = 0; i < 3; i++) {
         var data = results[i];
         var rowSlug = slugs[i];
         var row = document.createElement('div');
-        row.className = 'multi-row';
+        row.className = 'flavor-card';
 
-        var city = data ? cityFromStoreName(data.store, rowSlug) : (rowSlug ? rowSlug.replace(/-/g, ' ') : '');
+        var city = data ? cityFromStoreName(data.store, rowSlug) : (rowSlug ? rowSlug.replace(/-/g, ' ') : 'Store');
         var coneSvg = (typeof renderMiniConeSVG === 'function' && data && data.flavor)
           ? renderMiniConeSVG(data.flavor, 4)
           : '';
         var flavorName = data ? (data.flavor || 'TBD') : (rowSlug ? 'Loading\u2026' : '\u2014');
-        var rarityHtml = (data && data.rarity && data.rarity.label)
-          ? '<span class="mr-rarity">' + escapeHtml(data.rarity.label.toUpperCase()) + '</span>'
-          : '';
-
+        var description = data ? (data.description || '') : '';
+        var rarity = rarityLabel(data ? data.rarity : null);
         row.innerHTML = '<span class="cone-icon">' + coneSvg + '</span>'
-          + '<span class="mr-city">' + escapeHtml(city) + '</span>'
-          + '<span class="mr-flavor">' + escapeHtml(flavorName) + '</span>'
-          + rarityHtml;
+          + '<div class="card-text">'
+          + renderMediumRowHtml(city, flavorName, description, rarity)
+          + '</div>';
         rowsEl.appendChild(row);
       }
     }

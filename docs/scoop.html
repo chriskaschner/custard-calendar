@@ -7,276 +7,20 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com https://unpkg.com; style-src 'self' 'unsafe-inline' https://unpkg.com; img-src 'self' data: https:; connect-src 'self' https:; font-src 'self' data:; base-uri 'self'; frame-ancestors 'none'">
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <title>The Scoop — Custard Calendar</title>
-  <meta name="description" content="Today's best custard options near you. Filter by flavor category, see confirmed schedules, tap for directions.">
+  <meta name="description" content="Compatibility view for Today’s Drive route ranking and widget deep links.">
   <meta property="og:title" content="The Scoop — Custard Calendar">
-  <meta property="og:description" content="Today's best custard near you. Confirmed flavors, filtered to what you actually want.">
+  <meta property="og:description" content="Route-first flavor ranking for your stores today.">
   <meta property="og:url" content="https://custard.chriskaschner.com/scoop.html">
   <meta property="og:type" content="website">
   <meta name="theme-color" content="#005696">
   <link rel="stylesheet" href="style.css">
-  <style>
-    /* ── Filter bar ─────────────────────────────────────────── */
-    .scoop-filter-bar {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.5rem;
-      align-items: center;
-      margin-bottom: 1.25rem;
-      padding-bottom: 0.75rem;
-      border-bottom: 1px solid var(--border);
-    }
-    .scoop-chips {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.375rem;
-      flex: 1;
-    }
-    .chip {
-      padding: 0.3rem 0.75rem;
-      border: 1px solid var(--border);
-      border-radius: 999px;
-      font-size: 0.8125rem;
-      font-weight: 500;
-      cursor: pointer;
-      background: white;
-      color: var(--text);
-      transition: background 0.12s, color 0.12s, border-color 0.12s;
-      line-height: 1.4;
-    }
-    .chip:hover { border-color: var(--brand); color: var(--brand); }
-    .chip.active {
-      background: var(--brand);
-      color: white;
-      border-color: var(--brand);
-    }
-    .chip-exclude {
-      background: white;
-      border-color: #d32f2f;
-      color: #d32f2f;
-    }
-    .chip-exclude:hover { background: #fdecea; }
-    .chip-exclude.active {
-      background: #d32f2f;
-      color: white;
-      border-color: #d32f2f;
-    }
-    .scoop-filter-right {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      flex-shrink: 0;
-    }
-    .radius-select {
-      padding: 0.3rem 0.5rem;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      font-size: 0.8125rem;
-      background: white;
-      color: var(--text);
-      cursor: pointer;
-    }
-
-    /* ── Section headings ───────────────────────────────────── */
-    .scoop-section { margin-bottom: 1.5rem; }
-    .scoop-section-head {
-      display: flex;
-      align-items: baseline;
-      gap: 0.5rem;
-      margin-bottom: 0.75rem;
-    }
-    .scoop-section-head h2 {
-      font-size: 0.9375rem;
-      font-weight: 700;
-      color: var(--text);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-    .scoop-section-meta {
-      font-size: 0.8125rem;
-      color: var(--text-muted);
-    }
-
-    /* ── Cards ──────────────────────────────────────────────── */
-    .scoop-cards { display: flex; flex-direction: column; gap: 0.75rem; }
-
-    .scoop-card {
-      background: white;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      overflow: hidden;
-    }
-    .scoop-card[hidden] { display: none; }
-
-    .scoop-card-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0.4rem 0.875rem;
-      font-size: 0.8125rem;
-    }
-    .scoop-card-header .scoop-city {
-      font-weight: 700;
-      font-size: 0.875rem;
-    }
-    .scoop-card-header .scoop-brand {
-      font-size: 0.75rem;
-      opacity: 0.85;
-    }
-
-    .scoop-card-body {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      padding: 0.75rem 0.875rem;
-    }
-    .scoop-cone {
-      flex-shrink: 0;
-      width: 44px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .scoop-cone svg { display: block; }
-
-    .scoop-info { flex: 1; min-width: 0; }
-    .scoop-flavor-name {
-      font-size: 1rem;
-      font-weight: 700;
-      line-height: 1.25;
-      color: var(--text);
-    }
-    .scoop-flavor-desc {
-      font-size: 0.8125rem;
-      color: var(--text-muted);
-      margin-top: 0.15rem;
-      line-height: 1.4;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-    }
-    .scoop-card-meta {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      margin-top: 0.35rem;
-      flex-wrap: wrap;
-    }
-    .scoop-certainty {
-      font-size: 0.6875rem;
-      font-weight: 700;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-    }
-    .scoop-confirmed { color: #2E7D32; }
-    .scoop-watch     { color: #E65100; }
-    .scoop-estimated { color: #757575; }
-    .scoop-distance  { font-size: 0.75rem; color: var(--text-muted); }
-
-    .scoop-card .cta-row {
-      display: flex;
-      gap: 0.5rem;
-      flex-wrap: wrap;
-      margin-top: 0.5rem;
-    }
-    .scoop-card .cta-link {
-      font-size: 0.8125rem;
-      font-weight: 600;
-      padding: 0.25rem 0.625rem;
-      border: 1px solid var(--brand);
-      border-radius: var(--radius);
-      color: var(--brand);
-      text-decoration: none;
-      white-space: nowrap;
-    }
-    .scoop-card .cta-link:hover { background: var(--brand); color: white; }
-
-    /* ── States ─────────────────────────────────────────────── */
-    .scoop-geo-prompt {
-      text-align: center;
-      padding: 1.5rem;
-      background: white;
-      border: 1px dashed var(--border);
-      border-radius: var(--radius);
-      color: var(--text-muted);
-    }
-    .scoop-geo-prompt p { margin-bottom: 0.75rem; font-size: 0.9375rem; }
-    .btn-geo {
-      padding: 0.5rem 1.25rem;
-      background: var(--brand);
-      color: white;
-      border: none;
-      border-radius: var(--radius);
-      font-size: 0.9375rem;
-      font-weight: 600;
-      cursor: pointer;
-    }
-    .btn-geo:hover { background: var(--brand-dark); }
-
-    .scoop-loading-cards { display: flex; flex-direction: column; gap: 0.75rem; }
-    .scoop-skeleton {
-      background: white;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      overflow: hidden;
-    }
-    .scoop-skeleton-bar { height: 32px; background: #e8ecef; }
-    .scoop-skeleton-body {
-      padding: 0.75rem 0.875rem;
-      display: flex;
-      gap: 0.75rem;
-      align-items: center;
-    }
-    .scoop-skeleton-circle {
-      width: 44px;
-      height: 44px;
-      border-radius: 50%;
-      background: #e8ecef;
-      flex-shrink: 0;
-    }
-    .scoop-skeleton-lines { flex: 1; }
-    .scoop-skeleton-line {
-      height: 11px;
-      border-radius: 6px;
-      background: #e8ecef;
-      margin-bottom: 7px;
-    }
-    .scoop-skeleton-line.short { width: 35%; }
-    .scoop-skeleton-line.long  { width: 70%; }
-    .scoop-skeleton-line.med   { width: 55%; }
-
-    .scoop-empty {
-      text-align: center;
-      padding: 1.25rem;
-      color: var(--text-muted);
-      font-size: 0.9375rem;
-    }
-
-    /* ── Pinned badge ───────────────────────────────────────── */
-    .pinned-badge {
-      display: inline-block;
-      font-size: 0.6875rem;
-      font-weight: 600;
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
-      color: var(--brand);
-      border: 1px solid currentColor;
-      border-radius: 4px;
-      padding: 0.1rem 0.35rem;
-      margin-left: 0.4rem;
-      vertical-align: middle;
-    }
-  </style>
   <!-- Cloudflare Web Analytics --><script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "c050ff4e79d54b2abbb60587137d0bb2"}'></script><!-- End Cloudflare Web Analytics -->
 </head>
 <body>
-  <script src="planner-shared.js"></script>
-  <script src="cone-renderer.js"></script>
-
   <header>
     <h1>The Scoop</h1>
-    <p id="scoop-date" style="color:#666;margin-top:0.25rem;font-size:0.875rem;">Today's confirmed flavors near you</p>
-    <nav class="nav-links">
+    <p style="color:#666;margin-top:0.25rem;font-size:0.875rem;">Compatibility alias for Today's Drive links</p>
+    <nav class="nav-links" style="margin-top:0.75rem;">
       <a href="index.html">Forecast</a>
       <a href="calendar.html">Calendar</a>
       <a href="map.html">Map</a>
@@ -291,406 +35,53 @@
   </header>
 
   <main>
-    <!-- Filter bar -->
-    <div class="scoop-filter-bar">
-      <div class="scoop-chips" role="group" aria-label="Flavor filters">
-        <button class="chip" data-filter="chocolate">Chocolate</button>
-        <button class="chip" data-filter="caramel">Caramel</button>
-        <button class="chip" data-filter="cookies">Cookies</button>
-        <button class="chip" data-filter="fruit">Fruit</button>
-        <button class="chip" data-filter="peanutbutter">Peanut Butter</button>
-        <button class="chip" data-filter="mint">Mint</button>
-      </div>
-      <div class="scoop-filter-right">
-        <button class="chip chip-exclude" id="no-nuts-btn" aria-pressed="false">No Nuts</button>
-        <select class="radius-select" id="radius-select" aria-label="Radius">
-          <option value="10">10 mi</option>
-          <option value="25" selected>25 mi</option>
-          <option value="50">50 mi</option>
-          <option value="100">100 mi</option>
-        </select>
-      </div>
-    </div>
-
-    <!-- Pinned stores (from ?stores= widget tap) -->
-    <section class="scoop-section" id="pinned-section" hidden>
-      <div class="scoop-section-head">
-        <h2>Your Stores</h2>
-        <span class="scoop-section-meta" id="pinned-meta"></span>
-      </div>
-      <div class="scoop-cards" id="pinned-cards"></div>
+    <section>
+      <div id="todays-drive-root"></div>
     </section>
-
-    <!-- Nearby results -->
-    <section class="scoop-section" id="nearby-section">
-      <div class="scoop-section-head">
-        <h2>Near You</h2>
-        <span class="scoop-section-meta" id="nearby-meta"></span>
+    <section class="calendar-cta">
+      <div class="calendar-cta-card">
+        <div class="calendar-cta-content">
+          <strong>Primary home moved to Forecast</strong>
+          <p>Use <a href="index.html">index.html</a> for the full decision-first homepage with Today’s Drive plus forecast modules below.</p>
+        </div>
       </div>
-
-      <div id="geo-prompt" class="scoop-geo-prompt" hidden>
-        <p>Enable location to see confirmed flavors nearby</p>
-        <button class="btn-geo" id="geo-btn">Use my location</button>
-      </div>
-
-      <div id="nearby-loading" class="scoop-loading-cards" hidden></div>
-      <div class="scoop-cards" id="nearby-cards"></div>
-      <p class="scoop-empty" id="no-results" hidden>No results match your filters. Try clearing a chip or widening the radius.</p>
     </section>
   </main>
 
   <footer>
-    <p>Not affiliated with any restaurant. Flavor data sourced from restaurant websites.</p>
+    <div class="footer-brands">Culver's / Kopp's / Gille's / Hefner's / Kraverz / Oscar's</div>
+    <div class="footer-links">
+      <a href="https://github.com/chriskaschner/custard-calendar">GitHub</a>
+      <a href="privacy.html">Privacy</a>
+    </div>
+    <p style="margin-top:0.5rem;">Not affiliated with any restaurant. Flavor data sourced from restaurant websites.</p>
     <div class="page-share-mount" id="page-share"></div>
   </footer>
 
+  <script src="planner-shared.js"></script>
+  <script src="todays-drive.js"></script>
   <script>
-    var WORKER_BASE = CustardPlanner.WORKER_BASE;
-    var escapeHtml = CustardPlanner.escapeHtml;
-    var BRAND_COLORS = CustardPlanner.BRAND_COLORS;
-    var brandFromSlug = CustardPlanner.brandFromSlug;
-    var brandDisplayName = CustardPlanner.brandDisplayName;
-    var actionCTAsHTML = CustardPlanner.actionCTAsHTML;
+    CustardPlanner.emitPageView('scoop');
+    CustardPlanner.initShareButton('page-share');
 
-    // ── Filter config ───────────────────────────────────────────
-    var FILTER_MATCHERS = {
-      chocolate:   /chocolate|fudge|cocoa|mocha|dark.choc/i,
-      caramel:     /caramel|butterscotch|dulce/i,
-      cookies:     /cookie|oreo|brownie|graham|dough/i,
-      fruit:       /strawberry|raspberry|cherry|peach|lemon|blueberry|apple|blackberry|mango|banana/i,
-      peanutbutter:/peanut.?butter|\bpb\b|reese/i,
-      mint:        /\bmint\b|peppermint/i,
-    };
-    var NUTS_PATTERN = /\bpecan|cashew|almond|walnut|hazelnut|pistachio/i;
-
-    var LIGHT_BRANDS = { gilles: true, hefners: true };
-
-    // ── State ───────────────────────────────────────────────────
-    var activeFilters = new Set();
-    var noNutsActive = false;
-    var currentRadius = 25;
-    var userLat = null;
-    var userLng = null;
-    var pinnedSlugs = [];
-
-    // ── DOM refs ────────────────────────────────────────────────
-    var pinnedSection  = document.getElementById('pinned-section');
-    var pinnedCards    = document.getElementById('pinned-cards');
-    var pinnedMeta     = document.getElementById('pinned-meta');
-    var nearbySection  = document.getElementById('nearby-section');
-    var nearbyMeta     = document.getElementById('nearby-meta');
-    var geoPrompt      = document.getElementById('geo-prompt');
-    var nearbyLoading  = document.getElementById('nearby-loading');
-    var nearbyCards    = document.getElementById('nearby-cards');
-    var noResults      = document.getElementById('no-results');
-    var radiusSelect   = document.getElementById('radius-select');
-    var noNutsBtn      = document.getElementById('no-nuts-btn');
-    var scoopDate      = document.getElementById('scoop-date');
-
-    // ── Utilities ───────────────────────────────────────────────
-    function brandHeaderStyle(slug) {
-      var key = brandFromSlug(slug);
-      var bg  = BRAND_COLORS[key] || '#005696';
-      var txt = LIGHT_BRANDS[key] ? '#1a1a1a' : '#ffffff';
-      return { bg: bg, text: txt };
-    }
-
-    function cityFromName(storeName, fallback) {
-      if (!storeName) return fallback || '';
-      var m = storeName.match(/of\s+(.+?)(?:,|\s*-)/);
-      if (m) return m[1].trim();
-      var c = storeName.match(/^(.+?),/);
-      if (c) return c[1].trim();
-      return storeName;
-    }
-
-    function formatDate(dateStr) {
-      if (!dateStr) return '';
-      var d = new Date(dateStr + 'T12:00:00');
-      var today = new Date(); today.setHours(12, 0, 0, 0);
-      if (d.toDateString() === today.toDateString()) return 'Today';
-      var days   = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-      var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-      return days[d.getDay()] + ', ' + months[d.getMonth()] + ' ' + d.getDate();
-    }
-
-    function coneHtml(flavorName) {
-      try { return renderMiniConeHDSVG(flavorName || '', 4); } catch (_) { return ''; }
-    }
-
-    // ── Card renderers ──────────────────────────────────────────
-    function renderPlanCard(rec, pinned) {
-      var style = brandHeaderStyle(rec.slug);
-      var city  = cityFromName(rec.name, rec.slug);
-      var brand = brandDisplayName(rec.slug);
-      var tier  = (rec.certainty_tier || '').toLowerCase();
-      var tierLabel = rec.certainty_label || tier.toUpperCase();
-      var distLabel = (rec.distance_miles != null && !pinned)
-        ? rec.distance_miles.toFixed(1) + ' mi' : '';
-
-      var metaHtml = '';
-      if (tier && tier !== 'none') {
-        metaHtml += '<span class="scoop-certainty scoop-' + tier + '">' + escapeHtml(tierLabel) + '</span>';
-      }
-      if (distLabel) {
-        metaHtml += '<span class="scoop-distance">' + escapeHtml(distLabel) + '</span>';
-      }
-      if (pinned) {
-        metaHtml += '<span class="pinned-badge">Pinned</span>';
-      }
-      if (metaHtml) metaHtml = '<div class="scoop-card-meta">' + metaHtml + '</div>';
-
-      var ctaOpts = {
-        slug: rec.slug,
-        flavor: rec.flavor,
-        certainty_tier: tier || 'confirmed',
-        lat: rec.lat,
-        lon: rec.lon,
-        storeName: rec.name,
-        workerBase: WORKER_BASE,
-        actions: rec.actions || ['alert', 'calendar'],
-      };
-
-      return '<div class="scoop-card"' +
-        ' data-flavor="' + escapeHtml(rec.flavor || '') + '"' +
-        ' data-desc="' + escapeHtml(rec.description || '') + '">' +
-        '<div class="scoop-card-header" style="background:' + escapeHtml(style.bg) + ';color:' + escapeHtml(style.text) + '">' +
-          '<span class="scoop-city">' + escapeHtml(city) + '</span>' +
-          '<span class="scoop-brand">' + escapeHtml(brand) + '</span>' +
-        '</div>' +
-        '<div class="scoop-card-body">' +
-          '<div class="scoop-cone" aria-hidden="true">' + coneHtml(rec.flavor) + '</div>' +
-          '<div class="scoop-info">' +
-            '<div class="scoop-flavor-name">' + escapeHtml(rec.flavor || 'TBD') + '</div>' +
-            (rec.description ? '<div class="scoop-flavor-desc">' + escapeHtml(rec.description) + '</div>' : '') +
-            metaHtml +
-            actionCTAsHTML(ctaOpts) +
-          '</div>' +
-        '</div>' +
-      '</div>';
-    }
-
-    function renderTodayCard(data, slug) {
-      // Adapter: /api/v1/today response → plan-card shape
-      return renderPlanCard({
-        slug: slug,
-        name: data.store || slug,
-        flavor: data.flavor,
-        description: data.description,
-        date: data.date,
-        certainty_tier: 'confirmed',
-        certainty_label: 'Confirmed',
-        actions: ['directions', 'alert', 'calendar'],
-        lat: null,
-        lon: null,
-      }, true /* pinned */);
-    }
-
-    function renderSkeletons(n) {
-      var html = '';
-      for (var i = 0; i < n; i++) {
-        html += '<div class="scoop-skeleton">' +
-          '<div class="scoop-skeleton-bar"></div>' +
-          '<div class="scoop-skeleton-body">' +
-            '<div class="scoop-skeleton-circle"></div>' +
-            '<div class="scoop-skeleton-lines">' +
-              '<div class="scoop-skeleton-line short"></div>' +
-              '<div class="scoop-skeleton-line long"></div>' +
-              '<div class="scoop-skeleton-line med"></div>' +
-            '</div>' +
-          '</div>' +
-        '</div>';
-      }
-      return html;
-    }
-
-    // ── Filtering ───────────────────────────────────────────────
-    function applyFilters() {
-      var includeKeys = Array.from(activeFilters);
-      var allCards = document.querySelectorAll('.scoop-card');
-      var visible = 0;
-
-      allCards.forEach(function(card) {
-        var text = ((card.dataset.flavor || '') + ' ' + (card.dataset.desc || '')).toLowerCase();
-
-        if (noNutsActive && NUTS_PATTERN.test(text)) {
-          card.hidden = true;
-          return;
-        }
-        if (includeKeys.length > 0) {
-          var matched = includeKeys.some(function(k) { return FILTER_MATCHERS[k].test(text); });
-          if (!matched) { card.hidden = true; return; }
-        }
-        card.hidden = false;
-        visible++;
-      });
-
-      noResults.hidden = visible > 0 || allCards.length === 0;
-    }
-
-    // ── Metrics helpers ─────────────────────────────────────────
-    function emitFilterEvent(filterName, isOn) {
-      CustardPlanner.emitInteractionEvent({
-        event_type: 'filter_toggle',
-        page: 'scoop',
-        action: filterName + ':' + (isOn ? 'on' : 'off'),
+    async function initScoop() {
+      var storesResp = await fetch('stores.json?v=' + new Date().toISOString().slice(0, 10));
+      var storesJson = await storesResp.json();
+      CustardDrive.mount({
+        root: 'todays-drive-root',
+        stores: storesJson.stores || [],
+        pageKey: 'scoop',
+        includeTomorrow: true,
+        workerBase: CustardPlanner.WORKER_BASE,
       });
     }
 
-    // ── Nearby fetch ────────────────────────────────────────────
-    async function fetchNearby(lat, lng, radius) {
-      var url = WORKER_BASE + '/api/v1/plan?location=' +
-        encodeURIComponent(lat.toFixed(5) + ',' + lng.toFixed(5)) +
-        '&radius=' + radius + '&limit=20';
-      var resp = await fetch(url);
-      if (!resp.ok) throw new Error('HTTP ' + resp.status);
-      var data = await resp.json();
-      return (data.recommendations || []).concat(data.alternatives || []);
-    }
-
-    async function loadNearby() {
-      nearbyLoading.innerHTML = renderSkeletons(3);
-      nearbyLoading.hidden = false;
-      nearbyCards.innerHTML = '';
-
-      try {
-        var results = await fetchNearby(userLat, userLng, currentRadius);
-        nearbyLoading.hidden = true;
-        if (results.length === 0) {
-          nearbyMeta.textContent = 'No confirmed flavors found within ' + currentRadius + ' mi';
-          nearbyCards.innerHTML = '';
-          noResults.hidden = false;
-        } else {
-          nearbyMeta.textContent = results.length + ' stores within ' + currentRadius + ' mi';
-          nearbyCards.innerHTML = results.map(function(r) { return renderPlanCard(r, false); }).join('');
-          applyFilters();
-        }
-      } catch (err) {
-        nearbyLoading.hidden = true;
-        nearbyMeta.textContent = 'Could not load nearby results';
-        nearbyCards.innerHTML = '<div class="scoop-empty">Unable to load nearby flavors. Try again.</div>';
+    initScoop().catch(function () {
+      var mount = document.getElementById('todays-drive-root');
+      if (mount) {
+        mount.innerHTML = '<div class="drive-shell"><p class="drive-empty">Unable to load store list for Today\'s Drive.</p></div>';
       }
-    }
-
-    function requestGeo() {
-      if (!navigator.geolocation) {
-        geoPrompt.hidden = false;
-        nearbyMeta.textContent = 'Geolocation not supported';
-        return;
-      }
-      nearbyLoading.innerHTML = renderSkeletons(3);
-      nearbyLoading.hidden = false;
-      geoPrompt.hidden = true;
-
-      navigator.geolocation.getCurrentPosition(
-        function(pos) {
-          userLat = pos.coords.latitude;
-          userLng = pos.coords.longitude;
-          loadNearby();
-        },
-        function() {
-          nearbyLoading.hidden = true;
-          geoPrompt.hidden = false;
-        },
-        { timeout: 8000, maximumAge: 300000 }
-      );
-    }
-
-    // ── Pinned stores ───────────────────────────────────────────
-    async function loadPinned(slugs) {
-      pinnedSection.hidden = false;
-      pinnedMeta.textContent = 'Loading...';
-      pinnedCards.innerHTML = renderSkeletons(slugs.length);
-
-      var results = await Promise.allSettled(slugs.map(function(s) {
-        return fetch(WORKER_BASE + '/api/v1/today?slug=' + encodeURIComponent(s))
-          .then(function(r) { return r.ok ? r.json() : null; })
-          .catch(function() { return null; });
-      }));
-
-      var html = '';
-      var ok = 0;
-      for (var i = 0; i < slugs.length; i++) {
-        var data = results[i].status === 'fulfilled' ? results[i].value : null;
-        if (data && data.flavor) {
-          html += renderTodayCard(data, slugs[i]);
-          ok++;
-        }
-      }
-      pinnedCards.innerHTML = html || '<div class="scoop-empty">Could not load your stores.</div>';
-      pinnedMeta.textContent = ok + ' of ' + slugs.length + ' loaded';
-      applyFilters();
-    }
-
-    // ── Init ────────────────────────────────────────────────────
-    function init() {
-      // Date header
-      scoopDate.textContent = new Date().toLocaleDateString('en-US', {
-        weekday: 'long', month: 'long', day: 'numeric',
-      });
-
-      // Page view metric
-      CustardPlanner.emitPageView('scoop');
-
-      // Pinned stores from ?stores= URL param
-      var params = new URLSearchParams(window.location.search);
-      var storesParam = params.get('stores') || '';
-      pinnedSlugs = storesParam.split(',').map(function(s) { return s.trim(); }).filter(Boolean).slice(0, 3);
-
-      if (pinnedSlugs.length > 0) {
-        // Widget tap detected — emit attribution event
-        CustardPlanner.emitInteractionEvent({
-          event_type: 'widget_tap',
-          page: 'scoop',
-          action: pinnedSlugs.join(','),
-        });
-        loadPinned(pinnedSlugs);
-      }
-
-      // Filter chip interactions
-      document.querySelectorAll('.chip[data-filter]').forEach(function(btn) {
-        btn.addEventListener('click', function() {
-          var key = btn.dataset.filter;
-          var isNowActive = !btn.classList.contains('active');
-          btn.classList.toggle('active', isNowActive);
-          btn.setAttribute('aria-pressed', isNowActive ? 'true' : 'false');
-          if (isNowActive) {
-            activeFilters.add(key);
-          } else {
-            activeFilters.delete(key);
-          }
-          applyFilters();
-          emitFilterEvent(key, isNowActive);
-        });
-      });
-
-      // No Nuts toggle
-      noNutsBtn.addEventListener('click', function() {
-        noNutsActive = !noNutsActive;
-        noNutsBtn.classList.toggle('active', noNutsActive);
-        noNutsBtn.setAttribute('aria-pressed', noNutsActive ? 'true' : 'false');
-        applyFilters();
-        emitFilterEvent('no_nuts', noNutsActive);
-      });
-
-      // Radius change
-      radiusSelect.addEventListener('change', function() {
-        currentRadius = parseInt(radiusSelect.value, 10);
-        if (userLat !== null) {
-          loadNearby();
-        }
-      });
-
-      // Geo button in prompt
-      document.getElementById('geo-btn').addEventListener('click', requestGeo);
-
-      // Auto-request geo
-      requestGeo();
-
-      CustardPlanner.initShareButton('page-share');
-    }
-
-    init();
+    });
   </script>
 </body>
 </html>

@@ -482,6 +482,14 @@
 
         const data = await resp.json();
         if (resp.ok && data.ok) {
+          if (CustardPlanner && typeof CustardPlanner.emitInteractionEvent === 'function') {
+            CustardPlanner.emitInteractionEvent({
+              event_type: 'alert_subscribe_success',
+              page: 'alerts',
+              action: frequency || 'daily',
+              store_slug: selectedSlug,
+            });
+          }
           showStatus('Check your email to confirm your subscription!', 'success');
         } else {
           showStatus(data.error || 'Something went wrong. Please try again.', 'error');
@@ -518,6 +526,13 @@
     });
 
     // Initialize
+    if (CustardPlanner && typeof CustardPlanner.emitInteractionEvent === 'function') {
+      CustardPlanner.emitInteractionEvent({
+        event_type: 'alert_form_view',
+        page: 'alerts',
+        action: 'load',
+      });
+    }
     loadStores();
     loadCatalog();
   </script>

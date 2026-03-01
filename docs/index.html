@@ -59,6 +59,10 @@
   </header>
 
   <main>
+    <section id="todays-drive-section">
+      <div id="todays-drive-root"></div>
+    </section>
+
     <!-- Empty state: no store selected -->
     <section id="empty-state">
       <div class="hero-empty">
@@ -221,6 +225,7 @@
   <script>CustardPlanner.initShareButton('page-share');</script>
   <script>var WORKER_BASE = CustardPlanner.WORKER_BASE;</script>
   <script src="cone-renderer.js"></script>
+  <script src="todays-drive.js"></script>
   <script>
     var BRAND_COLORS = CustardPlanner.BRAND_COLORS;
     var BRAND_DISPLAY = CustardPlanner.BRAND_DISPLAY;
@@ -232,6 +237,7 @@
     let userLng = null;
     let dropdownStores = [];
     let dropdownActiveIndex = -1;
+    let driveController = null;
 
     // DOM refs
     const storeSearch = document.getElementById('store-search');
@@ -521,6 +527,15 @@
       const store = allStores.find(s => s.slug === slug);
       if (!store) return;
 
+      if (CustardPlanner && typeof CustardPlanner.emitInteractionEvent === 'function') {
+        CustardPlanner.emitInteractionEvent({
+          event_type: 'store_select',
+          page: 'index',
+          action: 'legacy_dropdown_select',
+          store_slug: slug,
+        });
+      }
+
       // Save to localStorage (shared with calendar page)
       try { localStorage.setItem('custard-primary', slug); } catch (e) {}
 
@@ -570,6 +585,9 @@
         }
       }
       geoBtn.disabled = false;
+      if (driveController && typeof driveController.setLocation === 'function' && userLat !== null && userLng !== null) {
+        driveController.setLocation({ lat: userLat, lon: userLng });
+      }
       // If we got coords, show sorted results immediately
       if (userLat !== null && allStores.length > 0) {
         const sorted = allStores.map(s => {
@@ -1007,14 +1025,29 @@
       await Promise.all([loadStores(), loadFlavorColors()]);
       renderQuickStartStores();
       updateCalendarPreview(null, null, '#005696');
+      driveController = CustardDrive.mount({
+        root: 'todays-drive-root',
+        stores: allStores,
+        pageKey: 'index',
+        workerBase: WORKER_BASE,
+        onPrimaryStoreChange: function(slug) {
+          if (!slug || currentSlug === slug) return;
+          selectStore(slug);
+        },
+      });
 
       // Check localStorage for a saved store
       let savedSlug = null;
-      try { savedSlug = localStorage.getItem('custard-primary'); } catch (e) {}
+      if (driveController && typeof driveController.getPrimaryStoreSlug === 'function') {
+        savedSlug = driveController.getPrimaryStoreSlug();
+      }
+      if (!savedSlug) {
+        try { savedSlug = localStorage.getItem('custard-primary'); } catch (e) {}
+      }
 
-      if (savedSlug && allStores.find(s => s.slug === savedSlug)) {
+      if (savedSlug && allStores.find(s => s.slug === savedSlug) && currentSlug !== savedSlug) {
         selectStore(savedSlug);
-      } else {
+      } else if (!currentSlug) {
         emptyState.hidden = false;
         todaySection.hidden = true;
         weekSection.hidden = true;

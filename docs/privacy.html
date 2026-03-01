@@ -32,7 +32,7 @@
       <p style="margin-bottom:1rem;">Custard Calendar is a free tool for checking frozen custard schedules. Here is what the site does and does not collect.</p>
 
       <h3 style="font-size:1rem;margin-bottom:0.5rem;margin-top:1.5rem;">No accounts, no cookies</h3>
-      <p style="margin-bottom:1rem;">There is no login, no registration, and no persistent cookies. Each visit is independent. Nothing is stored in your browser except the store you selected (saved to <code>localStorage</code> on your device only, never sent to a server).</p>
+      <p style="margin-bottom:1rem;">There is no login, no registration, and no persistent cookies. Each visit is independent. Preference state is saved in <code>localStorage</code> on your device only (never sent to a server), including your selected stores, active route, filter chips, sort mode, and radius under <code>custard:v1:preferences</code>. Legacy keys like <code>custard-primary</code> are still written for cross-page compatibility.</p>
 
       <h3 style="font-size:1rem;margin-bottom:0.5rem;margin-top:1.5rem;">Anonymous usage telemetry</h3>
       <p style="margin-bottom:1rem;">To understand which features are useful, the site sends anonymous interaction signals when you click certain buttons (Directions, Set Alert, Subscribe to Calendar) or complete a quiz. Each signal includes:</p>

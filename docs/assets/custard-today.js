@@ -155,6 +155,57 @@ function brandStyle(brandName) {
   return BRAND_COLORS[brandName] || BRAND_COLORS["Culver's"];
 }
 
+function rarityTextColor(label) {
+  if (!label) return new Color("#90CAF9");
+  return new Color(RARITY_COLORS[label] || "#90CAF9");
+}
+
+// Shared medium-row renderer so 3-day and 3-store views stay in visual sync.
+function addMediumRow(body, row) {
+  var card = body.addStack();
+  card.layoutHorizontally();
+  card.centerAlignContent();
+  card.spacing = 8;
+
+  var coneImg = drawConeIcon(row.flavor, 28);
+  var coneEl = card.addImage(coneImg);
+  coneEl.imageSize = new Size(28, 28);
+
+  var textCol = card.addStack();
+  textCol.layoutVertically();
+  textCol.spacing = 1;
+
+  var metaRow = textCol.addStack();
+  metaRow.layoutHorizontally();
+  metaRow.centerAlignContent();
+
+  var labelEl = metaRow.addText(row.label || "");
+  labelEl.font = Font.mediumSystemFont(10);
+  labelEl.textColor = new Color("#ffffff", 0.5);
+  labelEl.lineLimit = 1;
+
+  metaRow.addSpacer(null);
+  if (row.rarityLabel) {
+    var rarityEl = metaRow.addText(String(row.rarityLabel).toUpperCase());
+    rarityEl.font = Font.boldMonospacedSystemFont(8);
+    rarityEl.textColor = rarityTextColor(row.rarityLabel);
+    rarityEl.lineLimit = 1;
+  }
+
+  var flavorEl = textCol.addText(row.flavor || "TBD");
+  flavorEl.font = Font.boldSystemFont(13);
+  flavorEl.textColor = Color.white();
+  flavorEl.lineLimit = 1;
+  flavorEl.minimumScaleFactor = 0.7;
+
+  if (row.description) {
+    var descEl = textCol.addText(truncateDesc(row.description, 65));
+    descEl.font = Font.systemFont(10);
+    descEl.textColor = new Color("#ffffff", 0.55);
+    descEl.lineLimit = 1;
+  }
+}
+
 function truncateDesc(desc, maxLen) {
   if (!desc) return "";
   if (desc.length <= maxLen) return desc;
@@ -301,39 +352,19 @@ async function buildMedium() {
     noData.font = Font.systemFont(13);
     noData.textColor = new Color("#ffffff", 0.6);
   } else {
+    var todayRarity = todayData && todayData.rarity ? todayData.rarity.label : null;
     for (var i = 0; i < upcoming.length; i++) {
       var f = upcoming[i];
-
-      var card = body.addStack();
-      card.layoutHorizontally();
-      card.centerAlignContent();
-      card.spacing = 8;
-
-      var coneImg = drawConeIcon(f.title, 28);
-      var coneEl = card.addImage(coneImg);
-      coneEl.imageSize = new Size(28, 28);
-
-      var textCol = card.addStack();
-      textCol.layoutVertically();
-      textCol.spacing = 1;
-
-      var dateCol = textCol.addText(formatDate(f.date));
-      dateCol.font = Font.mediumSystemFont(10);
-      dateCol.textColor = new Color("#ffffff", 0.5);
-      dateCol.lineLimit = 1;
-
-      var flavorCol = textCol.addText(f.title || "TBD");
-      flavorCol.font = Font.boldSystemFont(13);
-      flavorCol.textColor = Color.white();
-      flavorCol.lineLimit = 1;
-      flavorCol.minimumScaleFactor = 0.7;
-
-      if (f.description) {
-        var desc = textCol.addText(truncateDesc(f.description, 65));
-        desc.font = Font.systemFont(10);
-        desc.textColor = new Color("#ffffff", 0.55);
-        desc.lineLimit = 1;
+      var rarityLabel = null;
+      if (todayData && f.date === todayData.date && f.title === todayData.flavor) {
+        rarityLabel = todayRarity;
       }
+      addMediumRow(body, {
+        label: formatDate(f.date),
+        flavor: f.title || "TBD",
+        description: f.description || "",
+        rarityLabel: rarityLabel,
+      });
 
       if (i < upcoming.length - 1) body.addSpacer(4);
     }
@@ -366,7 +397,7 @@ async function buildMultiStore(slugs) {
   w.setPadding(0, 0, 0, 0);
   w.url = "https://custard.chriskaschner.com/scoop.html?stores=" + validSlugs.join(",");
 
-  // Branded header bar: "Today" LEFT, first store city RIGHT (mirrors buildMedium)
+  // Branded header bar: "Today" LEFT, "Your Stores" RIGHT
   var header = w.addStack();
   header.backgroundColor = new Color(style.bg);
   header.setPadding(6, 16, 6, 16);
@@ -377,8 +408,7 @@ async function buildMultiStore(slugs) {
   todayLbl.font = Font.systemFont(10);
   todayLbl.textColor = new Color(style.text, 0.8);
   header.addSpacer(null);
-  var firstCity = firstData ? cityFromStore(firstData.store) : (validSlugs[0] || "");
-  var headerCityEl = header.addText(firstCity);
+  var headerCityEl = header.addText("Your Stores");
   headerCityEl.font = Font.semiboldSystemFont(11);
   headerCityEl.textColor = new Color(style.text);
 
@@ -390,40 +420,15 @@ async function buildMultiStore(slugs) {
   for (var i = 0; i < validSlugs.length; i++) {
     var data = results[i];
     var storeSlug = validSlugs[i];
-
-    var row = body.addStack();
-    row.layoutHorizontally();
-    row.centerAlignContent();
-    row.spacing = 8;
-
-    var coneImg = drawConeIcon(data ? data.flavor : null, 28);
-    var coneEl = row.addImage(coneImg);
-    coneEl.imageSize = new Size(28, 28);
-
-    var textCol = row.addStack();
-    textCol.layoutVertically();
-    textCol.spacing = 1;
-
-    // Store city as muted label (mirrors date label in buildMedium)
-    var city = data ? cityFromStore(data.store) : storeSlug;
-    var cityEl = textCol.addText(city);
-    cityEl.font = Font.mediumSystemFont(10);
-    cityEl.textColor = new Color("#ffffff", 0.5);
-    cityEl.lineLimit = 1;
-
+    var city = data ? cityFromStore(data.store) : (storeSlug || "Store");
     var flavorName = data ? (data.flavor || "TBD") : "\u2014";
-    var flavorEl = textCol.addText(flavorName);
-    flavorEl.font = Font.boldSystemFont(13);
-    flavorEl.textColor = Color.white();
-    flavorEl.lineLimit = 1;
-    flavorEl.minimumScaleFactor = 0.7;
-
-    if (data && data.description) {
-      var desc = textCol.addText(truncateDesc(data.description, 65));
-      desc.font = Font.systemFont(10);
-      desc.textColor = new Color("#ffffff", 0.55);
-      desc.lineLimit = 1;
-    }
+    var rarityLabel = data && data.rarity ? data.rarity.label : null;
+    addMediumRow(body, {
+      label: city,
+      flavor: flavorName,
+      description: data ? (data.description || "") : "",
+      rarityLabel: rarityLabel,
+    });
 
     if (i < validSlugs.length - 1) body.addSpacer(4);
   }
