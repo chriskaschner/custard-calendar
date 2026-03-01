@@ -39,7 +39,10 @@ export function parseOscarsHtml(html) {
 
     // Match month names in headings like "February FLAVORS" or "March FLAVOR FORECAST"
     for (const [name, num] of Object.entries(MONTH_NAMES)) {
-      const pattern = new RegExp(name, 'i');
+      // Some Oscar's headings use letter-spaced month text (e.g. "M A R C H"),
+      // so allow optional whitespace between month letters.
+      const spaced = name.split('').join('\\s*');
+      const pattern = new RegExp(`\\b${spaced}\\b`, 'i');
       if (pattern.test(preceding.slice(-500))) { // Check last 500 chars before table
         month = num;
       }
