@@ -202,3 +202,11 @@ class TestMain:
         monkeypatch.setattr("scripts.check_backfill_coverage.d1_count", lambda slug: 0)
         monkeypatch.setattr("sys.argv", ["check", "--stores", "mt-horeb"])
         assert main() == 0  # no local data -> nothing to compare -> pass
+
+    def test_fails_fast_in_github_actions_when_cloudflare_secrets_missing(self, monkeypatch, tmp_path):
+        """In CI, missing Cloudflare secrets is an infra/config failure, not a coverage failure."""
+        monkeypatch.setenv("GITHUB_ACTIONS", "true")
+        monkeypatch.delenv("CLOUDFLARE_API_TOKEN", raising=False)
+        monkeypatch.delenv("CLOUDFLARE_ACCOUNT_ID", raising=False)
+        monkeypatch.setattr("sys.argv", ["check", "--stores", "mt-horeb"])
+        assert main() == 2

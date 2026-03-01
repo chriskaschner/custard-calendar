@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sqlite3
 import subprocess
 import sys
@@ -68,6 +69,8 @@ def d1_query(sql: str) -> list[dict] | None:
     )
 
     if result.returncode != 0:
+        if result.stderr:
+            print(f"D1 query failed: {result.stderr.strip()}", file=sys.stderr)
         return None
     try:
         data = json.loads(result.stdout)
@@ -107,6 +110,25 @@ def main() -> int:
         help=f"Minimum D1/local coverage percentage to pass (default: {DEFAULT_MIN_COVERAGE_PCT})",
     )
     args = parser.parse_args()
+
+    # In GitHub Actions, coverage checks require explicit Cloudflare secrets.
+    # Local runs can rely on existing Wrangler auth and should not be blocked.
+    if os.getenv("GITHUB_ACTIONS") == "true":
+        missing = []
+        if not os.getenv("CLOUDFLARE_API_TOKEN"):
+            missing.append("CLOUDFLARE_API_TOKEN")
+        if not os.getenv("CLOUDFLARE_ACCOUNT_ID"):
+            missing.append("CLOUDFLARE_ACCOUNT_ID")
+        if missing:
+            print(
+                "ERROR: Missing required GitHub Actions secrets for D1 coverage check: "
+                + ", ".join(missing)
+            )
+            print(
+                "Set repository secrets and re-run Data Quality Gate; this is an infra/config failure, "
+                "not a backfill coverage gap."
+            )
+            return 2
 
     slugs = [s.strip() for s in args.stores.split(",") if s.strip()]
     failures = []
