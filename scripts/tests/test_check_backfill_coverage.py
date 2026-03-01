@@ -135,6 +135,11 @@ class TestD1Query:
 # ---------------------------------------------------------------------------
 
 class TestMain:
+    @pytest.fixture(autouse=True)
+    def _clear_github_actions(self, monkeypatch):
+        """Default test path is local-mode behavior, not CI-mode guardrails."""
+        monkeypatch.delenv("GITHUB_ACTIONS", raising=False)
+
     def _make_env(self, local_rows, d1_rows, monkeypatch, tmp_path):
         """Wire local DB and mock D1 to return specific counts."""
         db = tmp_path / "flavors.sqlite"
