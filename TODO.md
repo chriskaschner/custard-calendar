@@ -18,35 +18,35 @@ Analytics data has two strong non-prediction uses: **(1) flavor rarity as sharea
 
 ## Priority Queue (Prod Refinement First)
 
-Focus order for the next cycle: ship and stabilize what is already built before expanding scope.
+Focus order for the next cycle: tighten production quality and measurement before expanding scope.
 
-1. **P0: Ship Today’s Drive to production**  
-   Source items: `Now -- Today's Drive (Index-first) Rollout` + `Next -- Today’s Drive Comprehensive Plan (Packaged Brief)` phase 0 items.  
-   Outcome: index-first decision UX live, scoop deep-link compatibility preserved, smoke checks complete.
+1. **P0: Complete post-deploy UX verification in production**  
+   Source items: `Next -- Today’s Drive Comprehensive Plan (Packaged Brief)` phase 0 post-deploy checklist.  
+   Outcome: manual live validation for route edit flow, chip rerank/no-refetch behavior, mini-map pin/card sync, and URL/localStorage reproducibility on desktop + mobile.
 
-2. **P0: Scoop dual-day card refinement (today + tomorrow context)**  
-   Source items: `Now -- Today's Drive (Index-first) Rollout` (Scoop tomorrow preview card).
-   Outcome: Scoop shows today’s FOTD card plus a clear tomorrow subheading/description for faster next-day planning.
+2. **P1: Card explainability standard**  
+   Source items: Today’s Drive phase 1 explainability item.  
+   Outcome: every card shows a consistent “why this rank” explanation (boosts/penalties/rarity/novelty) to improve trust.
 
-3. **P0: Widget layout parity (3-store must mirror 3-day design language)**  
-   Source items: `Sister Repos` / Scriptable widget UX parity item.
-   Outcome: 3-store widget view uses the same visual structure, spacing, header treatment, typography hierarchy, and metadata placement as the 3-day view.
+3. **P1: Tomorrow-aware fallback behavior**  
+   Source items: Scoop/Drive tomorrow edge-case item.  
+   Outcome: deterministic handling when today is missing but tomorrow exists (and vice versa), without blurring certainty tiers.
 
-4. **P0: Close telemetry blind spots on shipped surfaces**  
-   Source items: `Next -- Page Metrics and Usage Visibility` (`page_view` completion, `store_select` parity, alert funnel events).  
-   Outcome: passive traffic + conversion funnel visibility is reliable for Forecast/Scoop/Alerts.
+4. **P1: Filter dictionary expansion + regression coverage**  
+   Source items: Today’s Drive phase 1 filter pass.  
+   Outcome: broader tag/allergen detection with explicit false-positive tests.
 
-5. **P1: Reporting parity for operations**  
-   Source items: summary/report parity + weekly digest (`analytics_report.py` upgrade, `--weekly`).  
-   Outcome: one command answers weekly product-health questions without manual querying.
+5. **P1: Secondary-surface handoff polish**  
+   Source items: Today’s Drive phase 1 handoff links.  
+   Outcome: clearer transitions from decision cards into Map/Calendar/Radar without losing route context.
 
-6. **P2: Architecture debt paydown (time-boxed)**  
-   Source items: flavor asset parity audit, canonical render spec, greenfield layer discipline.  
-   Outcome: reduced drift risk and clearer future change boundaries, without blocking product delivery.
+6. **P2: Preference-model hardening**  
+   Source items: Today’s Drive phase 2 (`custard:v1:preferences`) governance items.  
+   Outcome: debounced writes, reset/share controls, and schema migration tests to reduce drift/risk.
 
-7. **P3: Someday/Maybe backlog remains parked**  
-   Source items: flavor modification recommendations, catalog browser, Alexa/Android/chatbot/prediction expansions.  
-   Outcome: avoid scope creep until P0/P1 are stable and measured in production.
+7. **P2: Architecture debt paydown (time-boxed)**  
+   Source items: flavor asset parity audit + canonical render spec.  
+   Outcome: reduced cross-surface drift while keeping product delivery velocity.
 
 ## Now -- Historical Metrics Activation Strategy
 
@@ -73,7 +73,7 @@ Build one shared recommendation engine used by Forecast/Map/Radar/Fronts/Quiz: "
 
 ## Now -- Today's Drive (Index-first) Rollout
 
-Status note: implemented in the current worktree and test-verified locally; pending release-branch commit/merge/deploy before counting as production-shipped.
+Status note: production-shipped on 2026-03-01 (PR #7 merge commit `d240a83`, Worker version `28f29b1f-afed-4d65-ba47-a760971d6031`).
 
 - [x] **New decision API surface** -- `GET /api/v1/drive` shipped in Worker with deterministic tagging, hard constraints, score buckets, sort modes (`match|detour|rarity|eta`), nearby leaderboard, and include-estimated fallback behavior. Covered by `worker/test/drive.test.js` + integration coverage. (2026-02-28)
 - [x] **Shared local-first preference contract** -- `custard:v1:preferences` added in `docs/planner-shared.js` with defaults + legacy migration (`custard-primary`, `custard-secondary`) + URL merge precedence + save/build helpers. (2026-02-28)
@@ -81,20 +81,20 @@ Status note: implemented in the current worktree and test-verified locally; pend
 - [x] **Scoop compatibility alias** -- `docs/scoop.html` now serves as compatibility/deep-link surface for `?stores=` (widget flows) using the same shared Today’s Drive module. (2026-02-28)
 - [x] **Drive browser + nav regression coverage** -- added Playwright specs for index Today’s Drive and scoop deep-link compatibility; nav click-through expectations updated to include The Scoop. (2026-02-28)
 - [x] **Scoop dual-day card detail** -- `/api/v1/drive` now supports `include_tomorrow=1` (confirmed-only) and Scoop renders an in-card Tomorrow block with fallback copy ("No confirmed flavor posted yet") when no confirmed tomorrow exists. Browser coverage added in `scoop-compat.spec.mjs`. (2026-02-28)
-- [ ] **Production rollout + validation gate** -- stage/commit scoped files, merge to `main`, deploy Worker/docs, and run live smoke checks (`/api/v1/drive`, widget `?stores=` deep links, pin/card interactions, 429/auth behavior unchanged for existing routes).
+- [x] **Production rollout + validation gate** -- release branch cut, CI fixed/green, merged to `main`, deployed to production, and live smoke checks run for `/health`, `/api/v1/drive` (including `include_tomorrow=1`), Scoop compatibility wiring, and analytics report modes (`--days`, `--weekly`). (2026-03-01)
 
 ## Next -- Today’s Drive Comprehensive Plan (Packaged Brief)
 
 Goal: make the route-first decision experience the default product behavior while keeping discovery surfaces (map/calendar/radar) as secondary paths.
 
-Status baseline: core Drive API + index/scoop shared module are implemented in worktree and locally test-green; production rollout and a few UX parity items remain open.
+Status baseline: core Drive API + index/scoop shared module are now in production; remaining work is refinement + deeper post-deploy UX validation.
 
 ### Phase 0 — Production hardening and parity (P0)
 
-- [ ] **Ship current Today’s Drive stack to production** -- complete release branch, merge, deploy, and smoke verification for `/api/v1/drive`, index Drive render, and scoop deep links.
+- [x] **Ship current Today’s Drive stack to production** -- completed with merged `main`, production deploy, and live smoke verification for `/api/v1/drive`, index Drive asset load, and scoop deep-link compatibility wiring. (2026-03-01)
 - [x] **Scoop dual-day context block** -- implemented via `include_tomorrow=1` on Scoop with confirmed-only tomorrow payload/fallback copy. (2026-02-28)
 - [x] **Widget 3-store/3-day visual parity** -- Scriptable widget now uses shared medium-row renderer for both 3-day and 3-store views (aligned hierarchy + right-aligned rarity tags) and widget preview copy/docs reflect parity contract. (2026-02-28)
-- [ ] **Post-deploy verification checklist** -- live checks for route edit, chip rerank (no refetch), map pin/card sync, and URL/localStorage persistence reproducibility.
+- [ ] **Post-deploy verification checklist** -- remaining manual live walkthroughs: route edit UX, chip rerank/no-refetch confirmation in prod network tab, map pin/card sync, and URL/localStorage reproducibility on mobile + desktop.
 
 ### Phase 1 — UX completeness and trust signals (P1)
 
@@ -124,12 +124,12 @@ Status baseline: core Drive API + index/scoop shared module are implemented in w
 
 ### Acceptance criteria (rollup)
 
-- [ ] Homepage remains route-first and performant with 2-5 store ranking cards.
-- [ ] Scoop shows today card plus tomorrow context block when tomorrow data exists.
-- [ ] Chips/sort rerank instantly with no unnecessary network calls.
+- [x] Homepage remains route-first and performant with 2-5 store ranking cards.
+- [x] Scoop shows today card plus tomorrow context block when tomorrow data exists.
+- [x] Chips/sort rerank instantly with no unnecessary network calls.
 - [ ] Mini-map pins stay synchronized with card buckets and focus/hover behavior.
-- [ ] Preferences persist via `custard:v1:preferences` and URL state sharing works reliably.
-- [ ] Widget 3-store view visually mirrors 3-day design language, including right-aligned rarity tags.
+- [x] Preferences persist via `custard:v1:preferences` and URL state sharing works reliably.
+- [x] Widget 3-store view visually mirrors 3-day design language, including right-aligned rarity tags.
 
 ## Now -- Weather Brand Reframe
 
