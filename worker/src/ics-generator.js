@@ -138,10 +138,11 @@ export function generateIcs({ calendarName, stores, flavorsBySlug }) {
     addLine(`TRANSP:TRANSPARENT`);
     addLine('X-APPLE-DEFAULT-ALARM:FALSE');
 
-    // Build description: flavor description + restaurant link + backup options
-    let desc = flavor.description || '';
+    // Build description: flavor description → backup options → URL.
+    // Order matters: Apple Calendar and Google Calendar both clip long
+    // descriptions in list/widget views. Backup options appear before the
+    // URL so they're visible without scrolling.
     const primaryUrl = primary.url || `https://www.culvers.com/restaurants/${primary.slug}`;
-    desc += `\nMore info: ${primaryUrl}`;
 
     const backupLines = [];
     let backupIndex = 0;
@@ -153,14 +154,19 @@ export function generateIcs({ calendarName, stores, flavorsBySlug }) {
         backupIndex++;
       }
     }
+
+    const descParts = [];
+    if (flavor.description) {
+      descParts.push(flavor.description);
+    }
     if (backupLines.length > 0) {
       const header = backupLines.length === 1 ? 'Backup Option' : 'Backup Options';
-      desc += `\n\n\n${header}\n${backupLines.join('\n')}`;
+      descParts.push(`${header}\n${backupLines.join('\n')}`);
     }
+    descParts.push(`More info: ${primaryUrl}`);
+    const desc = descParts.join('\n\n');
 
-    if (desc) {
-      addLine(`DESCRIPTION:${escapeText(desc)}`);
-    }
+    addLine(`DESCRIPTION:${escapeText(desc)}`);
 
     addLine('END:VEVENT');
   }

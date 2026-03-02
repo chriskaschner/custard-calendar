@@ -171,6 +171,26 @@ describe('generateIcs', () => {
     expect(ics).not.toContain('BEGIN:VEVENT');
   });
 
+  it('15: backup options appear before the URL in DESCRIPTION', () => {
+    const ics = generateIcs(makeOpts({
+      stores: [PRIMARY_STORE, SECONDARY_STORE_1],
+      flavorsBySlug: {
+        'mt-horeb': FLAVORS_BY_SLUG['mt-horeb'],
+        'madison-todd-drive': FLAVORS_BY_SLUG['madison-todd-drive'],
+      },
+    }));
+
+    const unfolded = ics.replace(/\r\n[ \t]/g, '');
+    const descMatch = unfolded.match(/DESCRIPTION:(.*?)(?:\r\n[A-Z])/s);
+    expect(descMatch).not.toBeNull();
+    const descValue = descMatch[1];
+    const backupPos = descValue.indexOf('Backup Option');
+    const urlPos = descValue.indexOf('More info:');
+    expect(backupPos).toBeGreaterThan(-1);
+    expect(urlPos).toBeGreaterThan(-1);
+    expect(backupPos).toBeLessThan(urlPos);
+  });
+
   it('14: DTSTAMP is deterministic (derived from event date)', () => {
     const opts = makeOpts();
     const ics1 = generateIcs(opts);
