@@ -52,16 +52,18 @@ Focus order for the next cycle: tighten production quality and measurement befor
    Source items: Today’s Drive phase 1 handoff links.  
    Outcome: clearer transitions from decision cards into Map/Calendar/Radar without losing route context.
 
-9. **P2: Public-readiness cosmetic/meta polish**  
-   Source items: `siri.html` legacy `#003366` fragments, missing `og:image` on `scoop.html`/`privacy.html`, and alerts placeholder copy review.  
+9. ~~**P1: .ics event body layout for Apple Calendar truncation**~~ -- fixed 2026-03-01. Reordered DESCRIPTION: flavor description → Backup Options → URL. Reduced 3-blank-line gap to 1. Test 15 added. Worker `f0f7c880`.
+
+10. **P2: Public-readiness cosmetic/meta polish**
+   Source items: `siri.html` legacy `#003366` fragments, missing `og:image` on `scoop.html`/`privacy.html`, and alerts placeholder copy review.
    Outcome: low-risk visual/metadata cleanup after P0/P1 blockers, without changing core behavior.
 
-10. **P2: Preference-model hardening**  
-   Source items: Today’s Drive phase 2 (`custard:v1:preferences`) governance items.  
+11. **P2: Preference-model hardening**
+   Source items: Today’s Drive phase 2 (`custard:v1:preferences`) governance items.
    Outcome: debounced writes, reset/share controls, and schema migration tests to reduce drift/risk.
 
-11. **P2: Architecture debt paydown (time-boxed)**  
-   Source items: flavor asset parity audit + canonical render spec.  
+12. **P2: Architecture debt paydown (time-boxed)**
+   Source items: flavor asset parity audit + canonical render spec.
    Outcome: reduced cross-surface drift while keeping product delivery velocity.
 
 ## Now -- Historical Metrics Activation Strategy
