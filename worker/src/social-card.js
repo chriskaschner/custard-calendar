@@ -121,6 +121,16 @@ const PAGE_CARD_DEFS = {
     subhead: 'Regional flavor patterns visualized as weather fronts.',
     flavorName: 'Blackberry Cobbler',
   },
+  scoop: {
+    headline: "Today's Top Picks",
+    subhead: 'Route-first flavor ranking for your stores, right now.',
+    flavorName: 'Lemon Berry Crisp',
+  },
+  group: {
+    headline: 'Where Are We Going?',
+    subhead: 'Group vote on today\'s flavors. Let the car decide.',
+    flavorName: 'Vanilla',
+  },
 };
 
 function renderPageCard({ headline, subhead, flavorName }) {
