@@ -556,10 +556,7 @@ var CustardDrive = (function () {
           +   '<div>'
           +     '<h4>' + escapeHtml(getStoreLabel(bySlug[card.slug] || { name: card.name, slug: card.slug })) + '</h4>'
           +     flavorKicker
-          +     '<p class="drive-flavor">'
-          +       (typeof renderMiniConeSVG === 'function' ? renderMiniConeSVG(card.flavor) : '')
-          +       escapeHtml(card.flavor || 'Flavor unavailable')
-          +     '</p>'
+          +     '<p class="drive-flavor">' + escapeHtml(card.flavor || 'Flavor unavailable') + '</p>'
           +   '</div>'
           +   '<div class="drive-score drive-bucket-' + escapeHtml(card.mapBucket) + '">' + escapeHtml(scoreLabel) + '</div>'
           + '</header>'
@@ -1008,11 +1005,20 @@ var CustardDrive = (function () {
         .then(function (resp) { return resp.json(); })
         .then(function (geo) {
           if (!geo || !geo.lat || !geo.lon) return;
-          state.location = { lat: Number(geo.lat), lon: Number(geo.lon) };
-          var nearest = planner.pickDefaultDriveStores({
-            stores: culversStores,
-            location: state.location,
+          var gLat = Number(geo.lat);
+          var gLon = Number(geo.lon);
+          if (!Number.isFinite(gLat) || !Number.isFinite(gLon)) return;
+          state.location = { lat: gLat, lon: gLon };
+          // Sort all Culver's stores by distance to geoIP (bypass legacy keys)
+          var sorted = culversStores.slice().sort(function (a, b) {
+            var da = (a.lat != null && a.lng != null) ? planner.haversineMiles(gLat, gLon, a.lat, a.lng) : Infinity;
+            var db = (b.lat != null && b.lng != null) ? planner.haversineMiles(gLat, gLon, b.lat, b.lng) : Infinity;
+            return da - db;
           });
+          var nearest = [];
+          for (var i = 0; i < sorted.length && nearest.length < 2; i++) {
+            nearest.push(sorted[i].slug);
+          }
           if (nearest.length >= 2) {
             state.prefs.activeRoute.stores = nearest;
             state.prefs.favoriteStores = nearest.slice(0, 5);
@@ -1024,7 +1030,7 @@ var CustardDrive = (function () {
             }
           }
         })
-        .catch(function () { /* geoIP unavailable, keep WI defaults */ });
+        .catch(function () { /* geoIP unavailable */ });
     }
 
     function init() {

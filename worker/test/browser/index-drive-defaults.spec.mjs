@@ -141,52 +141,38 @@ test("geoIP defaults: first-visit stores are nearest to user, not alphabetical",
   // Wait for drive cards to render (geoIP may re-pick stores async)
   await expect(page.locator(".drive-card").first()).toBeVisible();
 
-  // The geoIP fetch + savePrefs debounce (300ms) need time to settle.
-  // Poll localStorage until prefs appear (geoIP resolves and debounce flushes).
-  const prefs = await expect.poll(async () => {
-    return page.evaluate(() => {
+  // Poll until geoIP auto-pick resolves and debounced savePrefs flushes.
+  // The initial prefs may contain alphabetical defaults; wait until
+  // the stores no longer start with an Alabama slug.
+  await expect.poll(async () => {
+    const prefs = await page.evaluate(() => {
       const raw = localStorage.getItem("custard:v1:preferences");
       return raw ? JSON.parse(raw) : null;
     });
-  }, { timeout: 5000 }).toBeTruthy();
+    if (!prefs || !prefs.activeRoute || !prefs.activeRoute.stores) return false;
+    // Once geoIP re-pick fires, first store should NOT be Alabama
+    return !prefs.activeRoute.stores[0].startsWith("albertville");
+  }, { timeout: 8000, message: "Expected geoIP to re-pick non-Alabama stores" }).toBe(true);
 
-  // Read the final stored prefs
   const finalPrefs = await page.evaluate(() => {
     const raw = localStorage.getItem("custard:v1:preferences");
     return raw ? JSON.parse(raw) : null;
   });
 
-  // The saved stores should NOT start with Alabama slugs
-  expect(finalPrefs).toBeTruthy();
   const stores = finalPrefs.activeRoute.stores;
   expect(stores.length).toBeGreaterThanOrEqual(2);
-  // Alphabetical first Culver's would be Alabama (e.g. "albertville")
-  // With geoIP near Madison WI, stores should be WI-area
   for (const slug of stores) {
     expect(slug).not.toContain("albertville");
     expect(slug).not.toContain("auburn");
   }
 });
 
-test("drive cards include cone SVG icons next to flavor names", async ({ page }) => {
-  await setupRoutes(page);
-  await page.goto("/index.html?stores=mt-horeb,madison-todd-drive");
-
-  await expect(page.locator(".drive-card").first()).toBeVisible();
-
-  // Each drive-flavor paragraph should contain an SVG element (the cone icon)
-  const flavors = page.locator(".drive-flavor");
-  const count = await flavors.count();
-  expect(count).toBeGreaterThanOrEqual(2);
-
-  for (let i = 0; i < count; i++) {
-    const svg = flavors.nth(i).locator("svg");
-    await expect(svg).toBeVisible();
-  }
-});
-
 test("minimap renders pins for all route stores", async ({ page }) => {
-  await setupRoutes(page);
+  await setupRoutes(page, { preservePrefs: true });
+  // Seed prefs so geoIP auto-pick doesn't override the URL stores
+  await page.addInitScript(() => {
+    localStorage.setItem("custard-primary", "mt-horeb");
+  });
   await page.goto("/index.html?stores=mt-horeb,madison-todd-drive");
 
   await expect(page.locator(".drive-card").first()).toBeVisible();

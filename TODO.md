@@ -116,6 +116,21 @@ Status baseline: core Drive API + index/scoop shared module are now in productio
 - [ ] **Route profile roadmap** -- keep one active route now, but define migration path to optional named multi-route profiles (`work/weekend`) without breaking existing keys.
 - [x] **State schema governance** -- legacy migration covered by browser tests (corrupt v1 JSON fallback, corrupt legacy key fallback, legacy-to-v1 migration). Version field validated in sanitizeDrivePreferences. (2026-03-03)
 
+### P0 -- Homepage visual coherence audit
+
+The homepage is a mess of disconnected visual elements. Drive cards, hero flavor card, minimap, week-ahead row, cone icons, and score badges all use different sizing, spacing, and styling conventions. Nothing looks like it belongs together.
+
+Specific issues observed (2026-03-03):
+- [ ] **Cone icon sizing in Drive cards** -- renderMiniConeSVG renders at pixel-art scale that doesn't match card text; needs either a constrained CSS size or a purpose-built inline icon tier
+- [ ] **Drive card vs hero card inconsistency** -- the hero "Today's Flavor" card below the Drive section uses completely different layout, typography, and cone rendering (HD cone) than the Drive cards above it; looks like two different products
+- [ ] **Minimap mostly blank** -- when route stores are far apart, pins sit at opposite corners of an empty light-blue rectangle; needs either a real tile background or tighter bounds padding
+- [ ] **Score badge styling** -- orange "68" circles float with no visual connection to the card content; unclear what the number means without reading documentation
+- [ ] **Week Ahead row cones** -- different scale/rendering tier than Drive card cones; another visual register that doesn't match
+- [ ] **Overall card/section hierarchy** -- Drive cards, hero card, overdue alert, calendar CTA, and week-ahead all stack with inconsistent borders, backgrounds, and spacing; needs a unified card system
+- [ ] **Rarity/overdue copy fails sniff test** -- "Pumpkin Pecan usually appears every 19 days but hasn't been seen in 97 days" is absurd. Pumpkin Pecan is a seasonal flavor that barely appears outside fall. The avg_gap_days calculation doesn't account for seasonality, so it produces misleading cadence claims. Overdue alerts need a seasonal filter or the cadence copy needs to be suppressed for flavors with strong seasonal concentration.
+
+Goal: a single visual language across all homepage sections so it reads as one product, not six widgets duct-taped together.
+
 ### Phase 3 — Optional sync architecture (P2+)
 
 - [ ] **Anonymous sync design spike** -- evaluate Level 2 sync model (random local user_id + tokenized sync link) with explicit KV vs D1 tradeoff and write-rate constraints.

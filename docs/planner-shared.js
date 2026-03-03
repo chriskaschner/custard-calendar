@@ -166,7 +166,7 @@ var CustardPlanner = (function () {
       var slug = lookupKeys[ki];
       if (isCulversSlug(slug, storeLookup)) culvers.push(slug);
     }
-    // Sort by proximity to geoIP location when available, WI-first fallback
+    // Sort by proximity to geoIP location
     if (opts.location && Number.isFinite(opts.location.lat) && Number.isFinite(opts.location.lon)) {
       var gLat = opts.location.lat;
       var gLon = opts.location.lon;
@@ -176,12 +176,6 @@ var CustardPlanner = (function () {
         var da = (sa && sa.lat != null && sa.lng != null) ? haversineMiles(gLat, gLon, sa.lat, sa.lng) : Infinity;
         var db = (sb && sb.lat != null && sb.lng != null) ? haversineMiles(gLat, gLon, sb.lat, sb.lng) : Infinity;
         return da - db;
-      });
-    } else {
-      culvers.sort(function (a, b) {
-        var aWI = storeLookup[a] && storeLookup[a].state === 'WI' ? 0 : 1;
-        var bWI = storeLookup[b] && storeLookup[b].state === 'WI' ? 0 : 1;
-        return aWI - bWI;
       });
     }
     culvers = culvers.slice(0, 5);

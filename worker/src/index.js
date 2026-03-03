@@ -627,7 +627,11 @@ function handleApiStores(url, env, corsHeaders) {
  */
 function handleApiGeolocate(request, corsHeaders) {
   const cf = request.cf || {};
+  const lat = cf.latitude != null ? Number(cf.latitude) : null;
+  const lon = cf.longitude != null ? Number(cf.longitude) : null;
   return Response.json({
+    lat: Number.isFinite(lat) ? lat : null,
+    lon: Number.isFinite(lon) ? lon : null,
     state: cf.regionCode || null,   // ISO 3166-2 code, e.g. "WI"
     stateName: cf.region || null,   // Full name, e.g. "Wisconsin"
     city: cf.city || null,          // e.g. "Madison"
