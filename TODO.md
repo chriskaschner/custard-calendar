@@ -123,6 +123,7 @@ Status baseline: core Drive API + index/scoop shared module are now in productio
 - [x] **Scoop dual-day context block** -- implemented via `include_tomorrow=1` on Scoop with confirmed-only tomorrow payload/fallback copy. (2026-02-28)
 - [x] **Widget 3-store/3-day visual parity** -- Scriptable widget now uses shared medium-row renderer for both 3-day and 3-store views (aligned hierarchy + right-aligned rarity tags) and widget preview copy/docs reflect parity contract. (2026-02-28)
 - [ ] **Post-deploy verification checklist** -- remaining manual live walkthroughs: route edit UX, chip rerank/no-refetch confirmation in prod network tab, map pin/card sync, and URL/localStorage reproducibility on mobile + desktop. This is the only unchecked Phase 0 blocker.
+- [ ] **Drive retry + SW cache smoke check** -- hard-refresh custard.chriskaschner.com, confirm SW upgrades to custard-v7 (DevTools > Application > Service Workers), confirm "Try again" retry button is present in Drive section DOM. Worker version b1773578. (2026-03-03)
 
 ### Phase 1 — UX completeness and trust signals (P1)
 
@@ -396,6 +397,7 @@ Not active. Only promote if they clearly improve core decision KPIs.
 - [ ] **Madison-area brand expansion** -- selection methodology for adding new brands beyond MKE geo
 - [ ] **Flavor chatbot** -- conversational Q&A for flavor info via web chat UI
 - [x] **Group vote: "where are we going?" session** -- promoted from Someday/Maybe; shipped 2026-03-01. See "Now -- Group Vote" section above. KV-backed ephemeral sessions (4h TTL), join code + QR, yes/meh/no voting, minimize-misery winner algorithm, flavor similarity note, 15 tests. `docs/group.html` + `worker/src/group-routes.js` + nav link on all 12 pages.
+- [ ] **Tidbyt cone animation** -- add sparkle or other animation to the Tidbyt cone render.
 - [ ] **Ensemble predictor** -- combine FR (40%), Markov (40%), PCA-collaborative (20%). Current 3.2% top-1 -> maybe 5-6%. Prediction-only; no surface value without forecast headline.
 - [ ] **Confidence intervals in forecast output** -- P95 uncertainty bands on predictions.
 - [ ] **Cluster-based transfer learning** -- PCA cluster centroid as prior for sparse stores. Prediction infrastructure only.
