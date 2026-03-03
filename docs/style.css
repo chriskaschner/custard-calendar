@@ -2652,6 +2652,12 @@ textarea:focus-visible {
   cursor: not-allowed;
 }
 
+.drive-btn-muted {
+  border-color: var(--border);
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
 .drive-controls {
   margin-top: 0.9rem;
   display: grid;

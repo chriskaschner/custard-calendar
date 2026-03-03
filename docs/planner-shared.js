@@ -326,9 +326,11 @@ var CustardPlanner = (function () {
     return sanitizeDrivePreferences(parsed, opts);
   }
 
-  function saveDrivePreferences(prefs, opts) {
-    var clean = sanitizeDrivePreferences(prefs, opts);
-    clean.updatedAt = new Date().toISOString();
+  var DRIVE_DEBOUNCE_MS = 300;
+  var _debounceSaveTimer = null;
+  var _lastSavedPrefs = null;
+
+  function _writeDrivePrefsToStorage(clean) {
     try {
       if (typeof localStorage !== 'undefined') {
         localStorage.setItem(DRIVE_PREFERENCES_KEY, JSON.stringify(clean));
@@ -337,10 +339,52 @@ var CustardPlanner = (function () {
           localStorage.setItem(SECONDARY_STORES_KEY, JSON.stringify(clean.activeRoute.stores.slice(1, 5)));
         }
       }
-    } catch (_) {
-      return clean;
+    } catch (_) { /* storage full or unavailable */ }
+  }
+
+  function saveDrivePreferences(prefs, opts) {
+    var clean = sanitizeDrivePreferences(prefs, opts);
+    clean.updatedAt = new Date().toISOString();
+    _lastSavedPrefs = clean;
+    if (typeof clearTimeout === 'function' && _debounceSaveTimer) {
+      clearTimeout(_debounceSaveTimer);
+    }
+    if (typeof setTimeout === 'function') {
+      _debounceSaveTimer = setTimeout(function () {
+        _debounceSaveTimer = null;
+        if (_lastSavedPrefs) _writeDrivePrefsToStorage(_lastSavedPrefs);
+      }, DRIVE_DEBOUNCE_MS);
+    } else {
+      _writeDrivePrefsToStorage(clean);
     }
     return clean;
+  }
+
+  function flushDrivePreferences() {
+    if (_debounceSaveTimer) {
+      if (typeof clearTimeout === 'function') clearTimeout(_debounceSaveTimer);
+      _debounceSaveTimer = null;
+    }
+    if (_lastSavedPrefs) {
+      _writeDrivePrefsToStorage(_lastSavedPrefs);
+      _lastSavedPrefs = null;
+    }
+  }
+
+  function resetDrivePreferences(opts) {
+    if (typeof clearTimeout === 'function' && _debounceSaveTimer) {
+      clearTimeout(_debounceSaveTimer);
+      _debounceSaveTimer = null;
+    }
+    _lastSavedPrefs = null;
+    try {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.removeItem(DRIVE_PREFERENCES_KEY);
+        localStorage.removeItem(PRIMARY_STORE_KEY);
+        localStorage.removeItem(SECONDARY_STORES_KEY);
+      }
+    } catch (_) { /* storage unavailable */ }
+    return makeDefaultDrivePreferences(opts);
   }
 
   function buildDriveUrlState(prefs, opts) {
@@ -1328,6 +1372,13 @@ var CustardPlanner = (function () {
   }
 
   // ---------------------------------------------------------------------------
+  // Flush debounced preferences on page unload
+  // ---------------------------------------------------------------------------
+  if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+    window.addEventListener('beforeunload', flushDrivePreferences);
+  }
+
+  // ---------------------------------------------------------------------------
   // Public API
   // ---------------------------------------------------------------------------
 
@@ -1367,9 +1418,12 @@ var CustardPlanner = (function () {
     removeFavorite: removeFavorite,
     getDrivePreferences: getDrivePreferences,
     saveDrivePreferences: saveDrivePreferences,
+    flushDrivePreferences: flushDrivePreferences,
+    resetDrivePreferences: resetDrivePreferences,
     parseDriveUrlState: parseDriveUrlState,
     buildDriveUrlState: buildDriveUrlState,
     DRIVE_PREFERENCES_KEY: DRIVE_PREFERENCES_KEY,
+    DRIVE_DEBOUNCE_MS: DRIVE_DEBOUNCE_MS,
     rarityLabelFromGapDays: rarityLabelFromGapDays,
     rarityLabelFromPercentile: rarityLabelFromPercentile,
     rarityLabelFromRank: rarityLabelFromRank,

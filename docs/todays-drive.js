@@ -142,6 +142,7 @@ var CustardDrive = (function () {
       +       '<label class="drive-label" for="drive-add-store">Add store</label>'
       +       '<select id="drive-add-store" class="drive-select"></select>'
       +       '<button type="button" id="drive-add-store-btn" class="drive-btn">Add</button>'
+      +       '<button type="button" id="drive-reset-btn" class="drive-btn drive-btn-muted" title="Reset route and preferences to defaults">Reset</button>'
       +     '</div>'
       +   '</div>'
       +   '<div class="drive-controls">'
@@ -247,6 +248,7 @@ var CustardDrive = (function () {
       routeStores: root.querySelector('#drive-route-stores'),
       addStore: root.querySelector('#drive-add-store'),
       addStoreBtn: root.querySelector('#drive-add-store-btn'),
+      resetBtn: root.querySelector('#drive-reset-btn'),
       excludeChips: root.querySelector('#drive-exclude-chips'),
       boostChips: root.querySelector('#drive-boost-chips'),
       avoidChips: root.querySelector('#drive-avoid-chips'),
@@ -942,6 +944,16 @@ var CustardDrive = (function () {
       dom.retry.addEventListener('click', function () {
         dom.retry.hidden = true;
         dom.empty.hidden = true;
+        fetchDrive();
+      });
+
+      dom.resetBtn.addEventListener('click', function () {
+        state.prefs = planner.resetDrivePreferences({ stores: culversStores });
+        if (config.syncUrl !== false && window.history && typeof window.history.replaceState === 'function') {
+          window.history.replaceState({}, '', window.location.pathname);
+        }
+        renderRouteStores();
+        renderControls();
         fetchDrive();
       });
 

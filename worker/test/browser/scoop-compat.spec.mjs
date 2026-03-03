@@ -91,6 +91,9 @@ test("scoop compatibility preserves ?stores deep link and persists drive route",
   expect(routeStores.join(" ")).toContain("Mt. Horeb");
   expect(routeStores.join(" ")).toContain("Madison");
 
+  // Wait for debounced preference write to flush (300ms debounce + margin)
+  await page.waitForTimeout(500);
+
   const savedStores = await page.evaluate(() => {
     const raw = localStorage.getItem("custard:v1:preferences");
     if (!raw) return [];
