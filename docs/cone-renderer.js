@@ -209,13 +209,24 @@ function renderMiniConeSVG(flavorName, scale) {
     }
   }
 
-  // Fixed topping slots T1-T4: distributed across rows 1-4 so toppings span
-  // the full scoop height. T1:(3,1) T2:(6,2) T3:(3,3) T4:(5,4)
-  var tSlots = [[3,1],[6,2],[3,3],[5,4]];
-  for (var ti = 0; ti < tSlotKeys.length && ti < tSlots.length; ti++) {
-    var tColor = toppingColors[tSlotKeys[ti]] || FALLBACK_TOPPING_COLORS[tSlotKeys[ti]];
-    if (!tColor) continue;
-    rects.push('<rect x="' + (tSlots[ti][0]*s) + '" y="' + (tSlots[ti][1]*s) + '" width="' + s + '" height="' + s + '" fill="' + tColor + '"/>');
+  // Topping placement: use per-flavor l2_toppings override when present (precise
+  // per-pixel layout), otherwise fall back to 4 fixed slots across rows 1-4.
+  if (profile && profile.l2_toppings) {
+    for (var li = 0; li < profile.l2_toppings.length; li++) {
+      var lt = profile.l2_toppings[li];
+      var lColor = toppingColors[lt[2]] || FALLBACK_TOPPING_COLORS[lt[2]];
+      if (!lColor) continue;
+      rects.push('<rect x="' + (lt[0]*s) + '" y="' + (lt[1]*s) + '" width="' + s + '" height="' + s + '" fill="' + lColor + '"/>');
+    }
+  } else {
+    // Fixed topping slots T1-T4: distributed across rows 1-4 so toppings span
+    // the full scoop height. T1:(3,1) T2:(6,2) T3:(3,3) T4:(5,4)
+    var tSlots = [[3,1],[6,2],[3,3],[5,4]];
+    for (var ti = 0; ti < tSlotKeys.length && ti < tSlots.length; ti++) {
+      var tColor = toppingColors[tSlotKeys[ti]] || FALLBACK_TOPPING_COLORS[tSlotKeys[ti]];
+      if (!tColor) continue;
+      rects.push('<rect x="' + (tSlots[ti][0]*s) + '" y="' + (tSlots[ti][1]*s) + '" width="' + s + '" height="' + s + '" fill="' + tColor + '"/>');
+    }
   }
 
   // Fixed ribbon slots: R1(3,0) R2(4,1) R3(5,2)
