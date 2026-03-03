@@ -211,7 +211,7 @@ async function buildCard({
   const distanceMiles = location && coord ? haversine(location.lat, location.lon, coord.lat, coord.lng) : null;
   const etaMinutes = formatEtaMinutes(distanceMiles);
 
-  const flavorData = await getFlavorsCached(slug, env.FLAVOR_CACHE, null, false, env);
+  const flavorData = await getFlavorsCached(slug, env.FLAVOR_CACHE, undefined, false, env);
   const today = new Date().toISOString().slice(0, 10);
   const tomorrow = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
   const todayEntry = (flavorData.flavors || []).find((entry) => entry.date === today) || null;

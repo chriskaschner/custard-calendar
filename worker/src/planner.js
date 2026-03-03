@@ -455,7 +455,7 @@ export async function handlePlan(url, env, corsHeaders) {
   const today = todayStr();
   const flavorResults = await Promise.allSettled(
     candidates.map(async (store) => {
-      const data = await getFlavorsCached(store.slug, kv, null, false, env);
+      const data = await getFlavorsCached(store.slug, kv, undefined, false, env);
       const entry = (data.flavors || []).find((f) => f.date === today) || (data.flavors || [])[0];
       return {
         slug: store.slug,
