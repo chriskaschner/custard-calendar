@@ -32,9 +32,7 @@ Focus order for the next cycle: tighten production quality and measurement befor
    Source items: unchecked acceptance criterion in Today’s Drive Phase 0 rollup.  
    Outcome: demonstrate and document that mini-map pins remain synchronized with card buckets and focus/hover behavior.
 
-4. **P1: Public-readiness OG preview verification**  
-   Source items: dynamic `GET /og/page/{slug}.svg` endpoint + page-level `og:image` usage.  
-   Outcome: verify live social previews render correctly (Slack/X share spot-check) and confirm page metadata points at valid OG endpoints.
+4. ~~**P1: Public-readiness OG preview verification**~~ -- closed 2026-03-03. Added scoop + group to PAGE_CARD_DEFS; /og/page/scoop.svg and /og/page/group.svg return 200. og:image added to scoop.html and group.html; full OG block added to privacy.html. Worker 75c13e21.
 
 5. **P1: Card explainability standard**  
    Source items: Today’s Drive phase 1 explainability item.  
@@ -54,9 +52,7 @@ Focus order for the next cycle: tighten production quality and measurement befor
 
 9. ~~**P1: .ics event body layout for Apple Calendar truncation**~~ -- fixed 2026-03-01. Reordered DESCRIPTION: flavor description → Backup Options → URL. Reduced 3-blank-line gap to 1. Test 15 added. Worker `f0f7c880`.
 
-10. **P2: Public-readiness cosmetic/meta polish**
-   Source items: `siri.html` legacy `#003366` fragments, missing `og:image` on `scoop.html`/`privacy.html`, and alerts placeholder copy review.
-   Outcome: low-risk visual/metadata cleanup after P0/P1 blockers, without changing core behavior.
+10. ~~**P2: Public-readiness cosmetic/meta polish**~~ -- closed 2026-03-03. siri.html already uses #005696 (no legacy tokens found). og:image gaps on scoop/group/privacy resolved in item 4. Alerts placeholder copy ("you@example.com") retained as intentional UX.
 
 11. **P2: Preference-model hardening**
    Source items: Today’s Drive phase 2 (`custard:v1:preferences`) governance items.
