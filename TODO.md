@@ -58,9 +58,7 @@ Focus order for the next cycle: tighten production quality and measurement befor
    Source items: Today’s Drive phase 2 (`custard:v1:preferences`) governance items.
    Outcome: debounced writes, reset/share controls, and schema migration tests to reduce drift/risk.
 
-12. **P2: Architecture debt paydown (time-boxed)**
-   Source items: flavor asset parity audit + canonical render spec.
-   Outcome: reduced cross-surface drift while keeping product delivery velocity.
+12. ~~**P2: Architecture debt paydown (time-boxed)**~~ -- closed 2026-03-03. Parity audit: cone-renderer.js now handles l2_toppings (Blackberry Cobbler now renders identically client/server). Removed dead cone-renderer.js script tag from quiz.html. ASSET_SPEC.md updated with canonical surface→tier table, l2_toppings parity rule, blackberry_drupe color.
 
 ## Now -- Historical Metrics Activation Strategy
 
