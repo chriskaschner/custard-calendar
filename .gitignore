@@ -24,6 +24,7 @@ ENV/
 # Claude Code
 CLAUDE.md
 .claude/worktrees/
+.claude/checkpoints/
 
 # Credentials and secrets
 credentials/
@@ -56,6 +57,7 @@ tools/osm_cache.json
 test-results/
 analytics/executed_review.html
 analytics/executed_review.ipynb
+analytics/status/
 data/forecasts/
 TODO.md
 WORKLOG.md
@@ -65,4 +67,25 @@ worker/node_modules/
 worker/.wrangler/
 worker/test-results/
 worker/playwright-report/
+worker/coverage/
 data/backfill/
+
+# Data pipeline artifacts (local DB files, additional backfill dirs)
+data/backfill-national/
+data/backfill-wayback/
+data/*.db
+data/*.sqlite
+
+# Cloudflare Wrangler local state (root level)
+.wrangler/
+
+# Temporary working directories
+tmp/
+output/
+
+# Generated sprite and asset artifacts (regenerate via tools/)
+docs/assets/sprites/
+docs/assets/blackberry-cobbler/
+docs/assets/masterlock-*
+docs/masterlock-audit.html
+docs/Custard_Arcade_Sprite_System_Guide.md
