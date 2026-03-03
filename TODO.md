@@ -127,10 +127,10 @@ Status baseline: core Drive API + index/scoop shared module are now in productio
 
 ### Phase 1 — UX completeness and trust signals (P1)
 
-- [ ] **Card explainability standard** -- normalize “why this rank” copy format so each card consistently shows matched boosts, exclusions, and rarity/novelty rationale.
-- [ ] **Tomorrow-aware fallback behavior** -- define and implement fallback rules when today is missing but tomorrow is present (and vice versa), without collapsing certainty semantics.
-- [ ] **Filter dictionary expansion pass** -- extend rule-based tags/allergen detection safely (`nuts`, `cheesecake`, core profile tags) with regression coverage for false positives.
-- [ ] **Secondary-surface handoff polish** -- keep explicit links/entry points from Drive cards into Map/Calendar/Radar for exploration without breaking route-first focus.
+- [x] **Card explainability standard** -- replaced single-line drive-rec with structured drive-explain block: matched boost tags as [Chip] chips, avoid tags as muted chips, rarity sentence (“Rare: ~Xd apart”) or novelty (“First time recently”), fallback “Familiar pick” when no signals. (2026-03-03)
+- [x] **Tomorrow-aware fallback behavior** -- when today has no confirmed flavor and include_tomorrow=0, drive uses tomorrow's confirmed schedule as fallback (source=confirmed_tomorrow, certainty=confirmed, “Tomorrow's flavor” kicker, no Directions CTA). Scoop mode (include_tomorrow=1) suppresses fallback. 2 new tests. (2026-03-03)
+- [x] **Filter dictionary expansion pass** -- added praline to NUTS_PATTERN; 8 false-positive regression tests covering word boundaries, multi-tag flavors, and non-match cases (Peachy Keen != nuts, Chocolate Lava Cake != cheesecake, Mint Chocolate Chip != coffee). (2026-03-03)
+- [x] **Secondary-surface handoff polish** -- Map, Subscribe, Radar links added inside every drive card's Details section. URLs: /map.html?focus=slug, /calendar.html?slug=slug, /radar.html?store=slug. (2026-03-03)
 
 ### Phase 2 — Preference model evolution (P1/P2)
 
