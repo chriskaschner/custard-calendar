@@ -185,9 +185,15 @@ var SharedNav = (function () {
     var nameText = escapeHtml(store.name);
     var cityState = '';
     if (store.city && store.state) {
-      cityState = ', ' + escapeHtml(store.city) + ', ' + escapeHtml(store.state);
+      var suffix = store.city + ', ' + store.state;
+      // Only append city/state if name does not already contain it
+      if (store.name.indexOf(suffix) === -1) {
+        cityState = ', ' + escapeHtml(store.city) + ', ' + escapeHtml(store.state);
+      }
     } else if (store.city) {
-      cityState = ', ' + escapeHtml(store.city);
+      if (store.name.indexOf(store.city) === -1) {
+        cityState = ', ' + escapeHtml(store.city);
+      }
     }
     return '<div class="store-indicator">'
       + '<span class="store-name">' + nameText + '<span class="store-city">' + cityState + '</span></span>'
