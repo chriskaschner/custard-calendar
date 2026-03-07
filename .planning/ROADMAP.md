@@ -13,7 +13,7 @@ This project restructures the Custard Calendar presentation layer from 11 loosel
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [ ] **Phase 1: Foundation** - Shared nav component, persistent store indicator, and service worker update discipline
-- [ ] **Phase 2: Today Page** - Radical simplification of the today view to answer "what's the flavor?" above the fold
+- [x] **Phase 2: Today Page** - Radical simplification of the today view to answer "what's the flavor?" above the fold
 - [ ] **Phase 3: Compare Page** - Store-by-day comparison grid for families deciding where to go
 - [ ] **Phase 4: Supporting Pages + Nav Activation** - Fun page, Get Updates page, and 4-item nav goes live across all pages
 - [ ] **Phase 5: Visual Polish** - Unified card system, cone rendering consistency, and cross-page coherence
@@ -51,9 +51,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 02-01-PLAN.md -- Extract inline JS to today-page.js IIFE, simplify HTML (remove Drive/calendar preview/predictions), create Playwright test scaffolds for all TDAY requirements
-- [ ] 02-02-PLAN.md -- Add CSS for multi-store row and CTA card, polish hero card layout, verify interactive flows (tap-to-switch, details expand)
-- [ ] 02-03-PLAN.md -- Update service worker (add today-page.js, bump cache version), run full test suites, visual verification checkpoint
+- [x] 02-01-PLAN.md -- Extract inline JS to today-page.js IIFE, simplify HTML (remove Drive/calendar preview/predictions), create Playwright test scaffolds for all TDAY requirements
+- [x] 02-02-PLAN.md -- Add CSS for multi-store row and CTA card, polish hero card layout, verify interactive flows (tap-to-switch, details expand)
+- [x] 02-03-PLAN.md -- Update service worker (add today-page.js, bump cache version), run full test suites, visual verification checkpoint
 
 Note: Phase 2 and Phase 3 can be built in parallel -- both depend only on Phase 1.
 
@@ -119,7 +119,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation | 4/4 | Complete | - |
-| 2. Today Page | 2/3 | In Progress|  |
+| 2. Today Page | 3/3 | Complete | 2026-03-07 |
 | 3. Compare Page | 0/3 | Not started | - |
 | 4. Supporting Pages + Nav Activation | 0/4 | Not started | - |
 | 5. Visual Polish | 0/2 | Not started | - |
