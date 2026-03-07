@@ -17,7 +17,7 @@ const NAV_LINKS = [
 test("nav click-through across all docs pages", async ({ page }) => {
   await page.goto("/index.html");
 
-  const nav = page.locator("header nav.nav-links");
+  const nav = page.locator("#shared-nav nav.nav-links");
   await expect(nav).toBeVisible();
 
   const labels = await nav.locator("a").allTextContents();
@@ -60,7 +60,7 @@ for (const pagePath of ALL_PAGES) {
 
   test(`${pageName} has complete nav with all ${EXPECTED_LABELS.length} links`, async ({ page }) => {
     await page.goto(pagePath);
-    const nav = page.locator("header nav.nav-links");
+    const nav = page.locator("#shared-nav nav.nav-links");
     await expect(nav).toBeVisible();
     const labels = await nav.locator("a").allTextContents();
     expect(labels.map((x) => x.trim())).toEqual(EXPECTED_LABELS);
