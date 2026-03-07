@@ -12,7 +12,7 @@ This project restructures the Custard Calendar presentation layer from 11 loosel
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [x] **Phase 1: Foundation** - Shared nav component, persistent store indicator, and service worker update discipline
+- [ ] **Phase 1: Foundation** - Shared nav component, persistent store indicator, and service worker update discipline
 - [ ] **Phase 2: Today Page** - Radical simplification of the today view to answer "what's the flavor?" above the fold
 - [ ] **Phase 3: Compare Page** - Store-by-day comparison grid for families deciding where to go
 - [ ] **Phase 4: Supporting Pages + Nav Activation** - Fun page, Get Updates page, and 4-item nav goes live across all pages
@@ -30,11 +30,13 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. User can tap "change" on the store indicator and select a different store
   4. Store selection made on one page persists when navigating to another page
   5. After a deployment with page changes, returning users receive updated content within one page load cycle (no permanently stale pages)
-**Plans**: 2 plans
+**Plans**: 4 plans
 
 Plans:
 - [x] 01-01-PLAN.md -- Build shared-nav.js IIFE module (nav rendering, store indicator, geolocation, store picker) with Playwright tests
 - [x] 01-02-PLAN.md -- Deploy shared-nav.js across all 12 HTML pages, update service worker, visual verification
+- [ ] 01-03-PLAN.md -- Fix first-visit geolocation race condition and flavor data loading error (gap closure)
+- [ ] 01-04-PLAN.md -- Add street addresses to store picker and fix mobile nav overflow (gap closure)
 
 ### Phase 2: Today Page
 **Goal**: User can see today's flavor at their store instantly -- cone, name, description above the fold at 375px with progressive disclosure for deeper data
@@ -116,7 +118,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 2/2 | Complete | 2026-03-07 |
+| 1. Foundation | 2/4 | Gap closure | - |
 | 2. Today Page | 0/3 | Not started | - |
 | 3. Compare Page | 0/3 | Not started | - |
 | 4. Supporting Pages + Nav Activation | 0/4 | Not started | - |
