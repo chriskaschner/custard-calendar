@@ -24,13 +24,13 @@ Requirements for the presentation-layer restructure. Each maps to roadmap phases
 
 ### Today Page
 
-- [ ] **TDAY-01**: User sees today's flavor at their store above the fold at 375px (cone image, flavor name, description)
-- [ ] **TDAY-02**: Rarity tag displays on today's flavor card when the flavor is rare
+- [x] **TDAY-01**: User sees today's flavor at their store above the fold at 375px (cone image, flavor name, description)
+- [x] **TDAY-02**: Rarity tag displays on today's flavor card when the flavor is rare
 - [ ] **TDAY-03**: Week-ahead section is a collapsed `<details>` element, not visible by default
 - [ ] **TDAY-04**: If user has multiple stores saved, a compact multi-store row shows today's flavor at each
-- [ ] **TDAY-05**: One contextual flavor signal displays inline when relevant (e.g., "peaks on Sundays")
-- [ ] **TDAY-06**: "Want this every day?" CTA links to Get Updates page
-- [ ] **TDAY-07**: Page does not contain Drive ranking cards, hero card duplication, calendar preview, mini-map, or score badges
+- [x] **TDAY-05**: One contextual flavor signal displays inline when relevant (e.g., "peaks on Sundays")
+- [x] **TDAY-06**: "Want this every day?" CTA links to Get Updates page
+- [x] **TDAY-07**: Page does not contain Drive ranking cards, hero card duplication, calendar preview, mini-map, or score badges
 
 ### Compare Page
 
@@ -111,13 +111,13 @@ Deferred to future release. Tracked but not in current roadmap.
 | STOR-03 | Phase 1 | Complete (01-01) |
 | STOR-04 | Phase 1 | Complete (01-01) |
 | STOR-05 | Phase 1 | Complete (01-01) |
-| TDAY-01 | Phase 2 | Pending |
-| TDAY-02 | Phase 2 | Pending |
+| TDAY-01 | Phase 2 | Complete |
+| TDAY-02 | Phase 2 | Complete |
 | TDAY-03 | Phase 2 | Pending |
 | TDAY-04 | Phase 2 | Pending |
-| TDAY-05 | Phase 2 | Pending |
-| TDAY-06 | Phase 2 | Pending |
-| TDAY-07 | Phase 2 | Pending |
+| TDAY-05 | Phase 2 | Complete |
+| TDAY-06 | Phase 2 | Complete |
+| TDAY-07 | Phase 2 | Complete |
 | COMP-01 | Phase 3 | Pending |
 | COMP-02 | Phase 3 | Pending |
 | COMP-03 | Phase 3 | Pending |

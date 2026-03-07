@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: completed
-stopped_at: Phase 2 context gathered
-last_updated: "2026-03-07T19:31:32.153Z"
-last_activity: 2026-03-07 -- Completed Plan 01-03 (First-visit geolocation race fix, selectStore error recovery, store indicator dedup)
+status: executing
+stopped_at: Completed 02-01-PLAN.md
+last_updated: "2026-03-07T20:08:33.842Z"
+last_activity: 2026-03-07 -- Completed Plan 02-01 (Extract inline JS to today-page.js IIFE, simplify index.html, add TDAY test scaffolds)
 progress:
   total_phases: 5
   completed_phases: 1
-  total_plans: 4
-  completed_plans: 4
+  total_plans: 7
+  completed_plans: 5
   percent: 29
 ---
 
@@ -25,10 +25,10 @@ See: .planning/PROJECT.md (updated 2026-03-07)
 
 ## Current Position
 
-Phase: 1 of 5 (Foundation) -- COMPLETE
-Plan: 4 of 4 in current phase (done)
-Status: Phase 1 complete, ready for Phase 2/3
-Last activity: 2026-03-07 -- Completed Plan 01-03 (First-visit geolocation race fix, selectStore error recovery, store indicator dedup)
+Phase: 2 of 5 (Today Page)
+Plan: 1 of 3 in current phase (done)
+Status: Executing Phase 2
+Last activity: 2026-03-07 -- Completed Plan 02-01 (Extract inline JS to today-page.js IIFE, simplify index.html, add TDAY test scaffolds)
 
 Progress: [###.......] 29%
 
@@ -51,6 +51,7 @@ Progress: [###.......] 29%
 
 *Updated after each plan completion*
 | Phase 01 P03 | 6 | 2 tasks | 4 files |
+| Phase 02 P01 | 15 | 2 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -72,6 +73,9 @@ Recent decisions affecting current work:
 - [01-04]: Left inline margin-top:0.75rem on nav element as it does not conflict with flex layout
 - [01-03]: Removed onPrimaryStoreChange from autoGeoPickStores entirely (SharedNav owns first-visit geolocation)
 - [01-03]: Bumped CACHE_VERSION to v11 (v10 was from plan 01-04) to ensure patched files served fresh
+- [Phase 02]: Read raw localStorage for multi-store row instead of getDrivePreferences() defaults
+- [Phase 02]: Preserved global var WORKER_BASE for cone-renderer.js compatibility
+- [Phase 02]: Skipped 5 obsolete browser tests for removed features instead of deleting
 
 ### Pending Todos
 
@@ -85,6 +89,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-07T19:31:32.151Z
-Stopped at: Phase 2 context gathered
-Resume file: .planning/phases/02-today-page/02-CONTEXT.md
+Last session: 2026-03-07T20:08:33.840Z
+Stopped at: Completed 02-01-PLAN.md
+Resume file: None
