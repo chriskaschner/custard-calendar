@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'custard-v11';
+const CACHE_VERSION = 'custard-v12';
 const STATIC_ASSETS = [
   './',
   './index.html',
@@ -14,6 +14,7 @@ const STATIC_ASSETS = [
   './planner-shared.js',
   './shared-nav.js',
   './cone-renderer.js',
+  './today-page.js',
   './todays-drive.js',
   './style.css',
   './manifest.json',
