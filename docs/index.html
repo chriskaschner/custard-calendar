@@ -511,9 +511,15 @@
     }
 
     function selectStore(slug) {
-      currentSlug = slug;
+      errorState.hidden = true;
       const store = allStores.find(s => s.slug === slug);
-      if (!store) return;
+      if (!store) {
+        // Still attempt forecast load -- slug may be valid even if not in local manifest
+        loadForecast(slug);
+        currentSlug = slug;
+        return;
+      }
+      currentSlug = slug;
 
       if (CustardPlanner && typeof CustardPlanner.emitInteractionEvent === 'function') {
         CustardPlanner.emitInteractionEvent({
@@ -1028,19 +1034,24 @@
       await Promise.all([loadStores(), loadFlavorColors()]);
       renderQuickStartStores();
       updateCalendarPreview(null, null, '#005696');
-      driveController = CustardDrive.mount({
-        root: 'todays-drive-root',
-        stores: allStores,
-        pageKey: 'index',
-        compact: true,
-        workerBase: WORKER_BASE,
-        onPrimaryStoreChange: function(slug) {
-          if (!slug || currentSlug === slug) return;
-          selectStore(slug);
-        },
-      });
+      try {
+        driveController = CustardDrive.mount({
+          root: 'todays-drive-root',
+          stores: allStores,
+          pageKey: 'index',
+          compact: true,
+          workerBase: WORKER_BASE,
+          onPrimaryStoreChange: function(slug) {
+            if (!slug || currentSlug === slug) return;
+            selectStore(slug);
+          },
+        });
+      } catch (err) {
+        console.error('CustardDrive.mount failed:', err);
+      }
 
-      // Listen for SharedNav store changes (picker selection, first-visit confirm)
+      // Listen for SharedNav store changes (picker selection, first-visit confirm).
+      // Registered outside try/catch so it always runs even if mount fails.
       document.addEventListener('sharednav:storechange', function(e) {
         var slug = e.detail && e.detail.slug;
         if (slug && slug !== currentSlug) {

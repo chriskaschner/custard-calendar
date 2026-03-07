@@ -126,6 +126,7 @@ var CustardDrive = (function () {
       +       '<p class="drive-kicker">Decision First</p>'
       +       '<h2 id="drive-title">Today\'s Drive</h2>'
       +       '<p class="drive-sub">Rank your usual 2-5 stops based on today\'s flavor, constraints, and detour.</p>'
+      +       '<p class="drive-compact-link"><a href="scoop.html">Customize filters</a></p>'
       +     '</div>'
       +     '<div class="drive-head-actions">'
       +       '<button type="button" id="drive-use-location" class="drive-btn">Use Location</button>'
@@ -207,6 +208,12 @@ var CustardDrive = (function () {
     var root = typeof config.root === 'string' ? document.getElementById(config.root) : config.root;
     if (!root) throw new Error('CustardDrive root element not found');
     root.innerHTML = buildShellHtml();
+
+    // Compact mode: hide controls/minimap, show only heading + ranked cards
+    var shell = root.querySelector('.drive-shell');
+    if (config.compact && shell) {
+      shell.classList.add('drive-compact');
+    }
 
     var allStores = asArray(config.stores);
     var culversStores = allStores.filter(function (store) {
@@ -801,7 +808,10 @@ var CustardDrive = (function () {
       renderMap(sorted, mergedExcluded);
 
       if (sorted.length > 0) {
-        dom.status.textContent = sorted.length + ' ranked stores. Chips rerank instantly without refetching.';
+        var isCompact = shell && shell.classList.contains('drive-compact');
+        dom.status.textContent = isCompact
+          ? sorted.length + ' stores nearby'
+          : sorted.length + ' ranked stores. Chips rerank instantly without refetching.';
       } else if (mergedExcluded.length > 0) {
         dom.status.textContent = 'All route stores are excluded by current hard constraints.';
       } else {
@@ -1038,9 +1048,10 @@ var CustardDrive = (function () {
             savePrefs({ routeChanged: true });
             renderRouteStores();
             fetchDrive();
-            if (typeof config.onPrimaryStoreChange === 'function') {
-              config.onPrimaryStoreChange(nearest[0]);
-            }
+            // Do NOT fire onPrimaryStoreChange here -- autoGeoPickStores only
+            // runs for first-visit users (_hadSavedPrefs === false), and SharedNav
+            // handles the first-visit geolocation flow independently. Firing here
+            // would race with SharedNav and poison localStorage with Drive defaults.
           }
         })
         .catch(function () { /* geoIP unavailable */ });
@@ -1060,7 +1071,7 @@ var CustardDrive = (function () {
       bindEvents();
       savePrefs();
       fetchDrive();
-      if (typeof config.onPrimaryStoreChange === 'function' && state.prefs.activeRoute.stores.length > 0) {
+      if (_hadSavedPrefs && typeof config.onPrimaryStoreChange === 'function' && state.prefs.activeRoute.stores.length > 0) {
         config.onPrimaryStoreChange(state.prefs.activeRoute.stores[0]);
       }
       autoGeoPickStores();
