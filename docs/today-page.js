@@ -492,11 +492,11 @@ var CustardToday = (function () {
     Promise.all(fetchPromises).then(function (results) {
       multiStoreRow.innerHTML = '';
       var cellCount = 0;
+      var anySuccess = false;
 
       for (var i = 0; i < storeSlugs.length; i++) {
         var slug = storeSlugs[i];
         var data = results[i];
-        if (!data || !data.flavor) continue;
 
         var store = _allStores.find(function (s) { return s.slug === slug; });
         var storeName = store ? (store.city + ', ' + store.state) : slug;
@@ -504,16 +504,34 @@ var CustardToday = (function () {
         var cell = document.createElement('button');
         cell.type = 'button';
         cell.className = 'multi-store-cell';
+        if (slug === _currentSlug) {
+          cell.className += ' active';
+        }
         cell.dataset.slug = slug;
 
-        var coneSvg = (typeof renderMiniConeSVG === 'function') ? renderMiniConeSVG(data.flavor) : '';
-        cell.innerHTML =
-          '<div class="multi-store-cone">' + coneSvg + '</div>'
-          + '<div class="multi-store-flavor">' + escapeHtml(data.flavor) + '</div>'
-          + '<div class="multi-store-name">' + escapeHtml(storeName) + '</div>';
+        if (data && data.flavor) {
+          anySuccess = true;
+          var coneSvg = (typeof renderMiniConeSVG === 'function') ? renderMiniConeSVG(data.flavor) : '';
+          cell.innerHTML =
+            '<div class="multi-store-cone">' + coneSvg + '</div>'
+            + '<div class="multi-store-flavor">' + escapeHtml(data.flavor) + '</div>'
+            + '<div class="multi-store-name">' + escapeHtml(storeName) + '</div>';
+        } else {
+          cell.innerHTML =
+            '<div class="multi-store-cone"></div>'
+            + '<div class="multi-store-flavor" style="color:#999;font-style:italic;">No data</div>'
+            + '<div class="multi-store-name">' + escapeHtml(storeName) + '</div>';
+        }
 
         cell.addEventListener('click', (function (storeSlug) {
           return function () {
+            // Move .active class to the tapped cell
+            var cells = multiStoreRow.querySelectorAll('.multi-store-cell');
+            for (var c = 0; c < cells.length; c++) {
+              cells[c].classList.remove('active');
+            }
+            this.classList.add('active');
+
             document.dispatchEvent(new CustomEvent('sharednav:storechange', {
               detail: { slug: storeSlug },
             }));
@@ -525,7 +543,7 @@ var CustardToday = (function () {
         cellCount++;
       }
 
-      if (cellCount >= 2) {
+      if (cellCount >= 2 && anySuccess) {
         multiStoreSection.hidden = false;
       } else {
         multiStoreSection.hidden = true;
