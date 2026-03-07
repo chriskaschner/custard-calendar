@@ -35,7 +35,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 Plans:
 - [x] 01-01-PLAN.md -- Build shared-nav.js IIFE module (nav rendering, store indicator, geolocation, store picker) with Playwright tests
 - [x] 01-02-PLAN.md -- Deploy shared-nav.js across all 12 HTML pages, update service worker, visual verification
-- [ ] 01-03-PLAN.md -- Fix first-visit geolocation race condition and flavor data loading error (gap closure)
+- [x] 01-03-PLAN.md -- Fix first-visit geolocation race condition and flavor data loading error (gap closure)
 - [x] 01-04-PLAN.md -- Add street addresses to store picker and fix mobile nav overflow (gap closure)
 
 ### Phase 2: Today Page
@@ -118,7 +118,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 3/4 | Gap closure (01-03 remaining) | - |
+| 1. Foundation | 4/4 | Complete | - |
 | 2. Today Page | 0/3 | Not started | - |
 | 3. Compare Page | 0/3 | Not started | - |
 | 4. Supporting Pages + Nav Activation | 0/4 | Not started | - |
