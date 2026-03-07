@@ -25,7 +25,8 @@
     <h1 style="color:#005696;font-size:1.5rem;">Custard Forecast</h1>
     <p style="color:#666;margin-top:0.25rem;font-size:0.875rem;">Today's flavor and the week ahead</p>
 
-    <div class="location-bar">
+    <!-- Legacy location-bar hidden: shared-nav.js now handles store selection -->
+    <div class="location-bar" hidden>
       <div class="location-bar-inner">
         <div class="location-input-wrap">
           <input type="text" id="store-search" placeholder="Find your store..." autocomplete="off">
@@ -1007,8 +1008,10 @@
     changeStoreBtn.addEventListener('click', showStorePicker);
 
     findStoreBtn.addEventListener('click', () => {
-      document.querySelector('.location-bar').scrollIntoView({ behavior: 'smooth', block: 'center' });
-      storeSearch.focus();
+      // Open SharedNav's store picker instead of the hidden legacy location bar
+      if (typeof SharedNav !== 'undefined' && SharedNav.showStorePicker) {
+        SharedNav.showStorePicker();
+      }
     });
 
     geoBtn.addEventListener('click', geolocateAndSort);
@@ -1037,6 +1040,14 @@
         },
       });
 
+      // Listen for SharedNav store changes (picker selection, first-visit confirm)
+      document.addEventListener('sharednav:storechange', function(e) {
+        var slug = e.detail && e.detail.slug;
+        if (slug && slug !== currentSlug) {
+          selectStore(slug);
+        }
+      });
+
       // Check localStorage for a saved store
       let savedSlug = null;
       if (driveController && typeof driveController.getPrimaryStoreSlug === 'function') {
@@ -1053,8 +1064,10 @@
         todaySection.hidden = true;
         weekSection.hidden = true;
         hideCalendarCTA();
-        // Auto-geolocate to populate "Near you now" cards
-        geolocateAndSort();
+        // SharedNav handles first-visit geolocation via IP.
+        // Do NOT call geolocateAndSort() here -- it triggers browser
+        // geolocation permission prompt which violates the locked decision:
+        // "No browser geolocation permission prompt on load."
       }
     }
 
