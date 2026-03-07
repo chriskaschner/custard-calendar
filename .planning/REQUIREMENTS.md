@@ -16,11 +16,11 @@ Requirements for the presentation-layer restructure. Each maps to roadmap phases
 
 ### Store Experience
 
-- [ ] **STOR-01**: First-time visitor is geolocated to nearest store automatically on page load
-- [ ] **STOR-02**: First-visit geolocation shows confirmation prompt ("Showing flavors for [store] -- change?")
-- [ ] **STOR-03**: User sees compact store indicator in header showing current store name and city
-- [ ] **STOR-04**: User can tap "change" on store indicator to open full store picker on demand
-- [ ] **STOR-05**: Store selection persists across pages via existing localStorage mechanism
+- [x] **STOR-01**: First-time visitor is geolocated to nearest store automatically on page load
+- [x] **STOR-02**: First-visit geolocation shows confirmation prompt ("Showing flavors for [store] -- change?")
+- [x] **STOR-03**: User sees compact store indicator in header showing current store name and city
+- [x] **STOR-04**: User can tap "change" on store indicator to open full store picker on demand
+- [x] **STOR-05**: Store selection persists across pages via existing localStorage mechanism
 
 ### Today Page
 
@@ -106,11 +106,11 @@ Deferred to future release. Tracked but not in current roadmap.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| STOR-01 | Phase 1 | Pending |
-| STOR-02 | Phase 1 | Pending |
-| STOR-03 | Phase 1 | Pending |
-| STOR-04 | Phase 1 | Pending |
-| STOR-05 | Phase 1 | Pending |
+| STOR-01 | Phase 1 | Complete (01-01) |
+| STOR-02 | Phase 1 | Complete (01-01) |
+| STOR-03 | Phase 1 | Complete (01-01) |
+| STOR-04 | Phase 1 | Complete (01-01) |
+| STOR-05 | Phase 1 | Complete (01-01) |
 | TDAY-01 | Phase 2 | Pending |
 | TDAY-02 | Phase 2 | Pending |
 | TDAY-03 | Phase 2 | Pending |

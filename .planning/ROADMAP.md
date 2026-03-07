@@ -33,7 +33,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: 2 plans
 
 Plans:
-- [ ] 01-01-PLAN.md -- Build shared-nav.js IIFE module (nav rendering, store indicator, geolocation, store picker) with Playwright tests
+- [x] 01-01-PLAN.md -- Build shared-nav.js IIFE module (nav rendering, store indicator, geolocation, store picker) with Playwright tests
 - [ ] 01-02-PLAN.md -- Deploy shared-nav.js across all 12 HTML pages, update service worker, visual verification
 
 ### Phase 2: Today Page
@@ -116,7 +116,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 0/2 | Planned | - |
+| 1. Foundation | 1/2 | In Progress | - |
 | 2. Today Page | 0/3 | Not started | - |
 | 3. Compare Page | 0/3 | Not started | - |
 | 4. Supporting Pages + Nav Activation | 0/4 | Not started | - |
