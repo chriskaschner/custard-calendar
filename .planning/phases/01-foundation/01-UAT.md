@@ -1,5 +1,5 @@
 ---
-status: complete
+status: diagnosed
 phase: 01-foundation
 source: [01-01-SUMMARY.md, 01-02-SUMMARY.md]
 started: 2026-03-07T17:30:00Z
@@ -63,37 +63,69 @@ skipped: 0
   reason: "User reported: I see a non geoip result (AL stores instead of WI), no 'showing flavors' prompt, legacy store indicator format, and flavor data error"
   severity: major
   test: 1
-  root_cause: ""
-  artifacts: []
-  missing: []
-  debug_session: ""
+  root_cause: "Race condition: todays-drive.js defaults to culversStores.slice(0,2) (Albertville, AL first alphabetically) and saves to localStorage via selectStore() before SharedNav DOMContentLoaded fires. SharedNav then finds existing localStorage and skips IP geolocation. Also buildStoreIndicatorHTML() duplicates city/state when store.name already contains them."
+  artifacts:
+    - path: "custard-calendar/docs/todays-drive.js"
+      issue: "Lines 232-237, 1059-1077: defaults to alphabetical first stores and saves to localStorage before SharedNav can initialize"
+    - path: "custard-calendar/docs/shared-nav.js"
+      issue: "Lines 503-541: renderNav() trusts localStorage without distinguishing user-chosen vs auto-defaulted stores"
+    - path: "custard-calendar/docs/shared-nav.js"
+      issue: "Lines 175-196: buildStoreIndicatorHTML() duplicates city/state when store.name already contains them"
+  missing:
+    - "Gate todays-drive.js onPrimaryStoreChange on _hadSavedPrefs check so auto-defaults don't write to custard-primary"
+    - "Fix buildStoreIndicatorHTML() to not duplicate city/state from store.name"
+  debug_session: ".planning/debug/first-visit-geolocation.md"
 
 - truth: "Store picker list items distinguish stores in same city by street address"
   status: failed
   reason: "User reported: All Madison WI stores show identically as 'Madison, WI' with no street address (Mineral Point, Todd Dr, etc.) to tell them apart"
   severity: major
   test: 3
-  root_cause: ""
-  artifacts: []
-  missing: []
-  debug_session: ""
+  root_cause: "buildStorePickerHTML() in shared-nav.js (lines 368-378) uses only s.name and s.city+s.state for labels, never reads s.address field. stores.json has address on every store but it is omitted from rendering and data attributes."
+  artifacts:
+    - path: "custard-calendar/docs/shared-nav.js"
+      issue: "Lines 368-378: buildStorePickerHTML() omits s.address from label and data-* attributes"
+    - path: "custard-calendar/docs/shared-nav.js"
+      issue: "Lines 386-403: filterStoreList() does not match against address"
+  missing:
+    - "Append s.address to picker list item labels"
+    - "Add data-address attribute to each li"
+    - "Include address in filterStoreList() search matching"
+  debug_session: ".planning/debug/store-picker-addresses.md"
 
 - truth: "Flavor data loads for the selected store after changing store via SharedNav picker"
   status: failed
   reason: "User reported: fail, there's a red error and it says 'Something went wrong loading the flavor data'"
   severity: blocker
   test: 4
-  root_cause: ""
-  artifacts: []
-  missing: []
-  debug_session: ""
+  root_cause: "selectStore() in index.html sets currentSlug BEFORE allStores.find() check. If find fails, returns without calling loadForecast() and currentSlug is poisoned preventing retry. CustardDrive.mount() not wrapped in try/catch so listener registration can fail. loadForecast catch block too broad, obscures actual error source."
+  artifacts:
+    - path: "custard-calendar/docs/index.html"
+      issue: "Line 513-516: selectStore guard sets currentSlug before check, preventing retry"
+    - path: "custard-calendar/docs/index.html"
+      issue: "Line 1031-1048: CustardDrive.mount() not in try/catch; listener registration depends on it"
+    - path: "custard-calendar/docs/index.html"
+      issue: "Line 605-668: loadForecast catch too broad, obscures actual throw"
+  missing:
+    - "Move currentSlug assignment after allStores.find() check"
+    - "Wrap CustardDrive.mount() in try/catch"
+    - "Call loadForecast(slug) even when store object not found in allStores"
+    - "Clear error state at start of selectStore()"
+  debug_session: ".planning/debug/flavor-data-error.md"
 
 - truth: "Nav links are usable at 375px mobile viewport width"
   status: failed
   reason: "User reported: nav links function, but the overflow is weird and makes the page wider at 375px"
   severity: minor
   test: 7
-  root_cause: ""
-  artifacts: []
-  missing: []
-  debug_session: ""
+  root_cause: ".nav-links has no flex/grid layout and no overflow containment. 11 inline <a> elements with margin 0 0.5rem each overflow at 375px. No @media breakpoint targets .nav-links at any width."
+  artifacts:
+    - path: "custard-calendar/docs/style.css"
+      issue: "Lines 399-411: Missing flex layout, flex-wrap, and overflow rules on .nav-links"
+    - path: "custard-calendar/docs/shared-nav.js"
+      issue: "Line 160: buildNavLinksHTML() renders plain inline links with no scroll wrapper"
+  missing:
+    - "Add display:flex; flex-wrap:wrap; gap:0.25rem 0.5rem to .nav-links"
+    - "Add max-width:100% to .nav-links"
+    - "Remove per-link margin, use gap instead"
+  debug_session: ".planning/debug/mobile-nav-overflow.md"
