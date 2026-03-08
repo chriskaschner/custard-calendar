@@ -214,7 +214,7 @@ test("TDAY-05: flavor signal displays when relevant", async ({ page }) => {
 // ---------------------------------------------------------------------------
 // TDAY-06: "Want this every day?" CTA links to calendar
 // ---------------------------------------------------------------------------
-test("TDAY-06: want this every day CTA links to calendar", async ({ page }) => {
+test("TDAY-06: want this every day CTA links to updates", async ({ page }) => {
   await setupTodayPage(page);
 
   // Look for the CTA text
@@ -224,9 +224,9 @@ test("TDAY-06: want this every day CTA links to calendar", async ({ page }) => {
   var ctaText = await ctaSection.textContent();
   expect(ctaText).toMatch(/Want this every day/);
 
-  // Find link to calendar
-  var calLink = ctaSection.locator("a[href*='calendar']");
-  await expect(calLink).toBeVisible();
+  // Find link to updates page (changed from calendar.html to updates.html)
+  var updatesLink = ctaSection.locator("a[href*='updates']");
+  await expect(updatesLink).toBeVisible();
 });
 
 // ---------------------------------------------------------------------------
