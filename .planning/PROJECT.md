@@ -1,115 +1,82 @@
-# Custard Calendar — Site Restructuring
+# Custard Calendar -- Site Restructuring
 
 ## What This Is
 
-Custard Calendar tracks daily "Flavor of the Day" schedules across 1,000+ frozen custard stores — primarily Culver's nationwide, plus Milwaukee-area independents (Kopp's, Gille's, Hefner's, Kraverz, Oscar's). It uses a weather forecast metaphor ("Custard Forecast") as its design concept. The site has confirmed flavor data ~30 days out and a deep historical dataset (observations back to 2015-08-02 across 971+ stores with 176+ distinct flavors) powering rarity scores, day-of-week patterns, and other analytics.
-
-The backend/API layer is feature-complete. This project restructures the presentation layer from 11 loosely connected pages to a focused product organized around 4 real use cases, with clear navigation (Today, Compare, Map, Fun) and progressive disclosure.
+Custard Calendar tracks daily "Flavor of the Day" schedules across 1,000+ frozen custard stores -- primarily Culver's nationwide, plus Milwaukee-area independents (Kopp's, Gille's, Hefner's, Kraverz, Oscar's). The backend/API layer is feature-complete. The presentation layer has been restructured from 11 loosely connected pages to a focused product organized around 4 use cases with clear navigation (Today, Compare, Map, Fun), persistent store selection, and progressive disclosure.
 
 ## Core Value
 
-A family in the car (or on the couch) can instantly see what flavors are at their nearby stores and decide where to go — no friction, no hunting through pages.
+A family in the car (or on the couch) can instantly see what flavors are at their nearby stores and decide where to go -- no friction, no hunting through pages.
 
 ## Requirements
 
 ### Validated
 
-<!-- Shipped and confirmed valuable. Inferred from existing codebase. -->
-
-- [x] Flavor data ingestion from 6 brands via Cloudflare Worker (scraping, KV/D1 caching) — existing
-- [x] JSON API v1 serving flavor data, forecasts, signals, rarity, enrichment — existing
-- [x] .ics calendar feed (multi-store, RFC 5545 compliant) — existing
-- [x] iOS Scriptable widgets in 3 sizes (1 store/1 day, 1 store/3 days, 3 stores/1 day) — existing
-- [x] Siri Shortcut integration via /api/v1/today — existing
-- [x] Email alerts with daily + weekly digest, double opt-in, rarity spotlight — existing
-- [x] Map page with Leaflet, cone markers, brand filter, store specialty — existing
-- [x] Quiz engine with 6 modes, archetype-to-flavor matching, nearby flavor CTAs — existing
-- [x] Today's Drive scoring (ranks 2-5 stores by certainty, distance, rarity, preference) — existing
-- [x] Persistent store selection via localStorage with URL param override — existing
-- [x] Certainty tiers (Confirmed/Watch/Estimated/None) replacing prediction confidence — existing
-- [x] Flavor enrichment: rarity tags, day-of-week patterns, seasonality, streaks, signals — existing
-- [x] Group vote with KV-backed sessions, QR join, minimize-misery algorithm — existing
-- [x] Tidbyt display app (separate repo, production, 29 flavor profiles) — existing
-- [x] 810+ Worker tests, 32 Playwright tests, 179 Python tests — existing
+- Store indicator with geolocation and persistent store selection -- v1.0
+- Today page: flavor above the fold at 375px, rarity tags, multi-store row, progressive disclosure -- v1.0
+- Compare page: store-by-day grid, accordion expand, exclusion filters, mobile card stack -- v1.0
+- Fun page: quiz mode cards, Mad Libs, Group Vote, Fronts -- v1.0
+- Get Updates page: consolidated Calendar/Widget/Siri/Alerts setup, inline alert signup -- v1.0
+- 4-item nav (Today, Compare, Map, Fun) with functional labels on every page -- v1.0
+- Unified card system with design tokens and seasonal rarity suppression -- v1.0
+- Hero cone PNG pipeline with SVG fallback -- v1.0
 
 ### Active
 
-<!-- Current scope. Presentation-layer restructuring across 3 phases. -->
-
-- [ ] Persistent store indicator in header (compact, set-once, "change" link)
-- [ ] First-visit geolocation auto-selects nearest store with confirmation prompt
-- [ ] Today page radical simplification (cone + flavor + description above fold, progressive disclosure)
-- [ ] Week-ahead as collapsed section, not default-visible
-- [ ] Multi-store glance row for today (if multiple stores saved)
-- [ ] Contextual "Want this every day?" CTA linking to Get Updates
-- [ ] Compare page: store x day grid (2-4 stores x 2-3 days) with rarity highlights
-- [ ] Compare cell expansion (description, directions, historical pattern)
-- [ ] Flavor family exclusion filter on Compare (no nuts, no mint, etc.)
-- [ ] Nav consolidation from 11+ items to 4 (Today, Compare, Map, Fun)
-- [ ] Clear nav labels replacing weather metaphor names
-- [ ] Get Updates page consolidating Calendar/Widget/Siri/Alerts setup flows
-- [ ] Map flavor family exclusion filter (toggle chips, exclude semantics)
-- [ ] Fun page: quiz mode visual cards (not dropdown), image-based answers on mobile
-- [ ] Mad Libs word selection UI (3 pre-populated + 1 write-in per blank)
-- [ ] Old page redirects preserving query params (scoop, radar, calendar, widget, siri, alerts)
-- [ ] Homepage visual coherence (consistent cone rendering, unified card system)
-- [ ] Fronts accessible from Fun page as delight feature (no nav link)
+- [ ] Old page redirects preserving query params (scoop, radar, calendar, widget, siri, alerts) -- RDIR-01..03
+- [ ] Map flavor family exclusion filter -- MAPE-01..02
+- [ ] Quiz image-based answer options on mobile -- FUNP-01
+- [ ] Quiz mode visual differentiation -- FUNP-02
+- [ ] Design token consumption across all CSS rules (tech debt from v1.0)
+- [ ] Hero cone PNGs for remaining ~136 flavors (tech debt from v1.0)
 
 ### Out of Scope
 
-<!-- Explicit boundaries. -->
-
-- Worker/API layer changes — feature-complete for all four use cases, no new endpoints needed
-- Store persistence mechanism changes — localStorage + URL override is correct, just needs UX polish
-- Enrichment data pipeline changes — rarity, signals, patterns all working
-- Quiz engine logic changes — archetype matching, trivia API, Mad Libs engine all work
-- .ics feed endpoint changes — working, don't touch
-- Widget/Siri/Alert integration changes — all functional, only consolidating setup pages
-- Tidbyt app changes — separate repo, production, complete
-- Analytics pipeline changes — ML models, batch forecasts, backfill scripts stable
-- Test infrastructure restructuring — add tests for new pages, don't restructure existing
-- User accounts/authentication — not needed, localStorage is sufficient
-- Mobile native app — web-first
+- Worker/API layer changes -- feature-complete for all four use cases
+- User accounts/authentication -- localStorage sufficient, accounts add friction
+- Mobile native app -- web-first, PWA works well
+- Push notifications -- email alerts and calendar subs already serve this
+- Dark mode toggle -- ship light, respect prefers-color-scheme later
+- Hamburger menu -- 4 items fit at 375px, visible nav outperforms hidden
+- Analytics/stats dashboard -- enrichment as contextual nudges, not dashboards
+- Social features/sharing/reviews -- no transaction layer
+- Distance radius slider on map -- users think in "stores I'd drive to" not miles
 
 ## Context
 
-The codebase has evolved significantly — deep backend infrastructure was built (planner engine, certainty model, signals system, enrichment layer, 810+ Worker tests, 45 API modules) while the presentation layer remained largely unchanged from its original 11-page structure.
+Shipped v1.0 with 12,592 lines across 63 files. Static HTML/CSS/JS on GitHub Pages.
+Tech stack: Cloudflare Worker (API), vanilla JS (IIFE pattern), Playwright (browser tests), GitHub Pages (hosting).
+810+ Worker tests, 32+ Playwright tests, 179 Python tests.
 
-**Result:** The APIs and data layer are ready to support all four use cases. The work is almost entirely presentation-layer restructuring in the `docs/` directory (static HTML/CSS/JS served via GitHub Pages).
-
-**Four use cases driving the restructure:**
-1. **UC1 "Where should we go?"** — Family comparing 2-4 nearby stores across a few days (Compare page)
-2. **UC2 "What's the flavor right now?"** — Quick glance at today's flavor (Today page + delivery channels)
-3. **UC3 "What can I eat nearby?"** — Filtered discovery with dietary constraints (Map + Compare filters)
-4. **UC4 "Make it fun"** — Quizzes, Mad Libs, games for family entertainment (Fun page)
-
-**Design principles:**
-1. Start with the answer (no blank pages, geolocate immediately)
-2. Progressive disclosure (answer, then next question, then automation)
-3. Delivery channels are setup flows, not features
-4. Clarity over cleverness (functional nav labels, weather metaphor in branding only)
-5. Mobile-first for decisions (Compare must work at 375px in the car)
-6. Enrichment as contextual nudges, not dashboards
-7. Store picker must get out of the way
-8. Keep the personality (pixel art, weather metaphor branding, Milwaukee Easter eggs)
+**Current state:**
+- 15 HTML pages with shared navigation and store indicator
+- 4 primary nav destinations (Today, Compare, Map, Fun)
+- Get Updates accessible via footer and contextual CTAs
+- Unified .card component system with design tokens defined
+- Hero cone PNG pipeline for 40 profiled flavors with SVG fallback
 
 ## Constraints
 
 - **Hosting**: GitHub Pages for frontend (no build step, no SSR, static HTML/CSS/JS only)
-- **API**: Cloudflare Worker — no changes to Worker code in this project
+- **API**: Cloudflare Worker -- no changes to Worker code
 - **Mobile**: All decision-making views must work at 375px width
 - **Compatibility**: Old URLs must redirect to new locations (no broken bookmarks)
-- **No frameworks**: Vanilla JS with `window.CustardPlanner` global pattern, no React/Vue/etc.
+- **No frameworks**: Vanilla JS with `window.CustardPlanner` global pattern
 
 ## Key Decisions
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Presentation-layer only | Backend is feature-complete; all gaps are UX/structure | -- Pending |
-| Compare grid mobile layout | Leave to implementation — try and iterate | -- Pending |
-| Get Updates as page vs drawer | Start simple (page), revisit if needed | -- Pending |
-| 4-item nav (Today/Compare/Map/Fun) | Clarity over cleverness; weather metaphor stays in branding | -- Pending |
-| No prediction/accuracy UI | Data is confirmed ~30 days out; prediction solves a non-problem | -- Pending |
+| Presentation-layer only | Backend is feature-complete; all gaps are UX/structure | Good -- 15 plans, 2 hours, zero API changes |
+| IIFE module pattern | No build step on GitHub Pages, matches codebase conventions | Good -- shared-nav.js, today-page.js, compare-page.js, fun-page.js, updates-page.js all IIFE |
+| Day-first card stack for Compare | Mobile-first at 375px, better than table columns | Good -- usable, tested at 375px |
+| Get Updates as page (not drawer) | Simple, one URL, consolidates 4 setup flows | Good -- 5 UPDT requirements satisfied |
+| 4-item nav (Today/Compare/Map/Fun) | Clarity over cleverness; fits 375px without hamburger | Good -- tested on all 15 pages |
+| Worker /api/v1/geolocate proxy | Mixed-content and browser intercept issues with direct ip-api.com | Good -- clean HTTPS path |
+| CustomEvent bridge (sharednav:storechange) | Cross-component communication without coupling | Good -- used by Today, Compare, index |
+| SVG-to-PNG hero cone pipeline | Higher fidelity hero images, SVG fallback for unknowns | Good -- 40 PNGs, works well |
+| Seasonal rarity suppression | Prevent misleading "overdue!" claims for seasonal flavors | Good -- isSeasonalFlavor() guard |
+| Phase 2+3 parallel execution | Both depend only on Phase 1, no interdependency | Good -- saved time |
 
 ---
-*Last updated: 2026-03-07 after initialization*
+*Last updated: 2026-03-08 after v1.0 milestone*
