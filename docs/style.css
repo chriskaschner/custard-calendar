@@ -3136,11 +3136,11 @@ textarea:focus-visible {
   color: #fff;
   border: none;
   border-radius: 4px;
-  padding: 0.5rem 1rem;
-  font-size: 0.875rem;
+  padding: 0.375rem 0.75rem;
+  font-size: 0.8125rem;
   font-weight: 600;
   cursor: pointer;
-  min-height: 44px;
+  min-height: 36px;
 }
 
 .first-visit-confirm:hover,
