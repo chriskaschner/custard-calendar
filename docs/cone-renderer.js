@@ -8,6 +8,7 @@
  * Sets globals: flavorColorData, loadFlavorColors, normalizeFlavorKey,
  *   getFlavorProfileLocal, getFlavorBaseColor, resolveToppingSlots,
  *   resolveHDToppingSlots, lightenHex, renderMiniConeSVG, renderMiniConeHDSVG,
+ *   heroConeSrc, renderHeroCone,
  *   FALLBACK_BASE_COLORS, FALLBACK_CONE_COLORS, FALLBACK_TOPPING_COLORS,
  *   FALLBACK_RIBBON_COLORS
  */
@@ -321,4 +322,45 @@ function renderMiniConeHDSVG(flavorName, scale) {
   rects.push('<rect x="' + (9*s) + '" y="' + (20*s) + '" width="' + s + '" height="' + s + '" fill="' + CONE_TIP + '"/>');
 
   return '<svg class="mini-cone" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + (18*s) + ' ' + (21*s) + '" width="' + (18*s) + '" height="' + (21*s) + '" shape-rendering="crispEdges">' + rects.join('') + '</svg>';
+}
+
+// ---------------------------------------------------------------------------
+// Hero cone PNG lookup + fallback
+// ---------------------------------------------------------------------------
+
+/**
+ * Return the relative path to a hero cone PNG for a given flavor name.
+ * Slug: lowercase, non-alphanumeric replaced with hyphens, trimmed.
+ * Returns null if flavorName is empty/null.
+ */
+function heroConeSrc(flavorName) {
+  if (!flavorName) return null;
+  var slug = String(flavorName).toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+  if (!slug) return null;
+  return 'assets/cones/' + slug + '.png';
+}
+
+/**
+ * Render a hero cone into a container: tries PNG first, falls back to HD SVG.
+ * @param {string} flavorName
+ * @param {HTMLElement} container - DOM element to render into
+ * @param {number} [fallbackScale] - scale for HD SVG fallback (default 6)
+ */
+function renderHeroCone(flavorName, container, fallbackScale) {
+  var src = heroConeSrc(flavorName);
+  if (!src) {
+    container.innerHTML = renderMiniConeHDSVG(flavorName, fallbackScale || 6);
+    return;
+  }
+  var img = new Image();
+  img.alt = flavorName + ' cone';
+  img.className = 'hero-cone-img';
+  img.src = src;
+  img.onerror = function() {
+    container.innerHTML = renderMiniConeHDSVG(flavorName, fallbackScale || 6);
+  };
+  container.innerHTML = '';
+  container.appendChild(img);
 }

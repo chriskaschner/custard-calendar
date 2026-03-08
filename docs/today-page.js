@@ -357,8 +357,8 @@ var CustardToday = (function () {
 
     if (day.type === 'confirmed') {
       todayCard.style.borderLeftColor = color;
-      // Use HD cone for hero (~120px target, scale 6 = ~108x126px)
-      todayCone.innerHTML = renderMiniConeHDSVG(day.flavor, 6);
+      // Use hero cone PNG with HD SVG fallback
+      renderHeroCone(day.flavor, todayCone, 6);
       todayCone.hidden = false;
       todayFlavor.textContent = day.flavor;
       todayFlavor.style.color = '';
@@ -367,7 +367,7 @@ var CustardToday = (function () {
       renderRarity(todayData && todayData.rarity, day.flavor);
     } else if (day.type === 'predicted') {
       todayCard.style.borderLeftColor = '#bdbdbd';
-      todayCone.innerHTML = renderMiniConeHDSVG(day.flavor, 6);
+      renderHeroCone(day.flavor, todayCone, 6);
       todayCone.hidden = false;
       todayFlavor.textContent = day.flavor;
       todayFlavor.style.color = '';

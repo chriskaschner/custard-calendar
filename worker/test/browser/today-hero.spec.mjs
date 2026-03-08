@@ -14,12 +14,30 @@ const MOCK_STORES = [
   { slug: "madison-east", name: "Madison East", city: "Madison", state: "WI", lat: 43.0731, lng: -89.3012, brand: "culvers" },
 ];
 
+// Compute date strings matching page logic (same pattern as other test files)
+var _today = new Date();
+_today.setHours(12, 0, 0, 0);
+var TODAY_STR = _today.toISOString().slice(0, 10);
+var _tomorrow = new Date(_today);
+_tomorrow.setDate(_tomorrow.getDate() + 1);
+var TOMORROW_STR = _tomorrow.toISOString().slice(0, 10);
+var _day2 = new Date(_today); _day2.setDate(_day2.getDate() + 2);
+var DAY2_STR = _day2.toISOString().slice(0, 10);
+var _day3 = new Date(_today); _day3.setDate(_day3.getDate() + 3);
+var DAY3_STR = _day3.toISOString().slice(0, 10);
+var _day4 = new Date(_today); _day4.setDate(_day4.getDate() + 4);
+var DAY4_STR = _day4.toISOString().slice(0, 10);
+var _day5 = new Date(_today); _day5.setDate(_day5.getDate() + 5);
+var DAY5_STR = _day5.toISOString().slice(0, 10);
+var _day6 = new Date(_today); _day6.setDate(_day6.getDate() + 6);
+var DAY6_STR = _day6.toISOString().slice(0, 10);
+
 // Mock today response with rarity
 const MOCK_TODAY = {
   slug: "mt-horeb",
   flavor: "Chocolate Eclair",
   description: "Rich chocolate custard with eclair pieces",
-  date: "2026-03-07",
+  date: TODAY_STR,
   rarity: { appearances: 3, avg_gap_days: 120, label: "Rare" },
 };
 
@@ -27,15 +45,15 @@ const MOCK_TODAY = {
 const MOCK_FORECAST = {
   slug: "mt-horeb",
   forecast: [
-    { date: "2026-03-07", flavor: "Chocolate Eclair", description: "Rich chocolate custard with eclair pieces", type: "confirmed" },
-    { date: "2026-03-08", flavor: "Butter Pecan", description: "Buttery pecan custard", type: "confirmed" },
-    { date: "2026-03-09", flavor: "Vanilla", description: "Classic vanilla", type: "confirmed" },
-    { date: "2026-03-10", flavor: "Mint Chip", description: "Cool mint with chocolate chips", type: "confirmed" },
-    { date: "2026-03-11", flavor: "Caramel Cashew", description: "Caramel swirl with cashews", type: "confirmed" },
-    { date: "2026-03-12", flavor: "Cookie Dough", description: "Vanilla with cookie dough", type: "confirmed" },
-    { date: "2026-03-13", flavor: "Strawberry", description: "Fresh strawberry", type: "confirmed" },
+    { date: TODAY_STR, flavor: "Chocolate Eclair", description: "Rich chocolate custard with eclair pieces", type: "confirmed" },
+    { date: TOMORROW_STR, flavor: "Butter Pecan", description: "Buttery pecan custard", type: "confirmed" },
+    { date: DAY2_STR, flavor: "Vanilla", description: "Classic vanilla", type: "confirmed" },
+    { date: DAY3_STR, flavor: "Mint Chip", description: "Cool mint with chocolate chips", type: "confirmed" },
+    { date: DAY4_STR, flavor: "Caramel Cashew", description: "Caramel swirl with cashews", type: "confirmed" },
+    { date: DAY5_STR, flavor: "Cookie Dough", description: "Vanilla with cookie dough", type: "confirmed" },
+    { date: DAY6_STR, flavor: "Strawberry", description: "Fresh strawberry", type: "confirmed" },
   ],
-  fetchedAt: "2026-03-07T12:00:00Z",
+  fetchedAt: new Date().toISOString(),
 };
 
 // Mock flavors response
@@ -43,15 +61,15 @@ const MOCK_FLAVORS = {
   slug: "mt-horeb",
   name: "Mt. Horeb",
   flavors: [
-    { date: "2026-03-07", title: "Chocolate Eclair", description: "Rich chocolate custard with eclair pieces" },
-    { date: "2026-03-08", title: "Butter Pecan", description: "Buttery pecan custard" },
-    { date: "2026-03-09", title: "Vanilla", description: "Classic vanilla" },
-    { date: "2026-03-10", title: "Mint Chip", description: "Cool mint with chocolate chips" },
-    { date: "2026-03-11", title: "Caramel Cashew", description: "Caramel swirl with cashews" },
-    { date: "2026-03-12", title: "Cookie Dough", description: "Vanilla with cookie dough" },
-    { date: "2026-03-13", title: "Strawberry", description: "Fresh strawberry" },
+    { date: TODAY_STR, title: "Chocolate Eclair", description: "Rich chocolate custard with eclair pieces" },
+    { date: TOMORROW_STR, title: "Butter Pecan", description: "Buttery pecan custard" },
+    { date: DAY2_STR, title: "Vanilla", description: "Classic vanilla" },
+    { date: DAY3_STR, title: "Mint Chip", description: "Cool mint with chocolate chips" },
+    { date: DAY4_STR, title: "Caramel Cashew", description: "Caramel swirl with cashews" },
+    { date: DAY5_STR, title: "Cookie Dough", description: "Vanilla with cookie dough" },
+    { date: DAY6_STR, title: "Strawberry", description: "Fresh strawberry" },
   ],
-  fetched_at: "2026-03-07T12:00:00Z",
+  fetched_at: new Date().toISOString(),
 };
 
 // Mock signals response
@@ -165,11 +183,12 @@ test("TDAY-01: hero card shows cone, flavor name, and description", async ({ pag
   var todaySection = page.locator("#today-section");
   await expect(todaySection).toBeVisible();
 
-  // Cone should contain SVG
+  // Cone should contain SVG or hero PNG <img>
   var todayCone = page.locator("#today-cone");
   await expect(todayCone).toBeVisible();
   var coneHtml = await todayCone.innerHTML();
-  expect(coneHtml).toContain("svg");
+  // After VIZP-01, hero card may render a PNG <img> or fall back to SVG
+  expect(coneHtml).toMatch(/svg|img/);
 
   // Flavor name should be "Chocolate Eclair"
   var todayFlavor = page.locator("#today-flavor");

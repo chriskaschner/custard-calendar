@@ -1012,6 +1012,13 @@ details ol {
   flex-shrink: 0;
 }
 
+/* Hero cone PNG image (pixel art preserved at scale) */
+.hero-cone-img {
+  width: 120px;
+  height: auto;
+  image-rendering: pixelated;
+}
+
 /* Certainty strip at top of day cards */
 .confidence-strip {
   height: 4px;

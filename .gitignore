@@ -48,6 +48,8 @@ Thumbs.db
 !docs/og-*.png
 # Exception: README screenshots
 !docs/screenshots/*.png
+# Exception: Hero cone PNG assets served by GitHub Pages
+!docs/assets/cones/*.png
 
 # Status and cache
 status.json
