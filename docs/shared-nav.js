@@ -21,17 +21,10 @@ var SharedNav = (function () {
   var MANIFEST_CACHE_KEY = 'custard:store-manifest';
 
   var NAV_ITEMS = [
-    { href: 'index.html', label: 'Forecast' },
-    { href: 'calendar.html', label: 'Calendar' },
+    { href: 'index.html', label: 'Today' },
+    { href: 'compare.html', label: 'Compare' },
     { href: 'map.html', label: 'Map' },
-    { href: 'radar.html', label: 'Radar' },
-    { href: 'alerts.html', label: 'Alerts' },
-    { href: 'siri.html', label: 'Siri' },
-    { href: 'forecast-map.html', label: 'Fronts' },
-    { href: 'quiz.html', label: 'Quiz' },
-    { href: 'widget.html', label: 'Widget' },
-    { href: 'scoop.html', label: 'The Scoop' },
-    { href: 'group.html', label: 'Group' }
+    { href: 'fun.html', label: 'Fun' }
   ];
 
   // -------------------------------------------------------------------------
@@ -166,6 +159,17 @@ var SharedNav = (function () {
     }
     html += '</nav>';
     return html;
+  }
+
+  // -------------------------------------------------------------------------
+  // Shared footer
+  // -------------------------------------------------------------------------
+
+  function buildFooterHTML() {
+    return '<footer class="shared-footer" style="text-align:center;padding:1.5rem 0 1rem;margin-top:2rem;border-top:1px solid #e5e5e5;font-size:0.8125rem;">'
+      + '<a href="updates.html" style="color:#005696;text-decoration:none;margin:0 0.75rem;">Get Updates</a>'
+      + '<a href="privacy.html" style="color:#666;text-decoration:none;margin:0 0.75rem;">Privacy</a>'
+      + '</footer>';
   }
 
   // -------------------------------------------------------------------------
@@ -550,6 +554,11 @@ var SharedNav = (function () {
     } else {
       // No saved store -- first-time visitor flow (STOR-01, STOR-02)
       doIPGeolocation();
+    }
+
+    // Render shared footer at page bottom (guard against double-render)
+    if (!document.querySelector('.shared-footer')) {
+      document.body.insertAdjacentHTML('beforeend', buildFooterHTML());
     }
   }
 
