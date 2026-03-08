@@ -26,7 +26,43 @@ var CustardCompare = (function () {
   var _storeData = {};       // slug -> { flavors: {...}, today: {...} }
   var _storeManifest = {};   // slug -> store object from stores.json
   var _allStoresArr = [];    // full stores array from stores.json
-  var _expandedRow = null;   // currently expanded DOM element (Plan 02)
+  var _expandedRow = null;   // currently expanded DOM element
+
+  // ---------------------------------------------------------------------------
+  // Exclusion filter constants and state
+  // ---------------------------------------------------------------------------
+
+  var EXCLUSION_CHIPS = [
+    { key: 'mint', label: 'No Mint' },
+    { key: 'chocolate', label: 'No Chocolate' },
+    { key: 'caramel', label: 'No Caramel' },
+    { key: 'cheesecake', label: 'No Cheesecake' },
+    { key: 'peanutButter', label: 'No Peanut Butter' },
+    { key: 'pecan', label: 'No Nuts' },
+  ];
+
+  var _exclusions = new Set();
+
+  // Restore exclusion state from localStorage
+  function restoreExclusions() {
+    try {
+      var raw = localStorage.getItem('custard-exclusions');
+      if (raw) {
+        var arr = JSON.parse(raw);
+        if (Array.isArray(arr)) {
+          _exclusions = new Set(arr);
+        }
+      }
+    } catch (e) {}
+  }
+
+  function saveExclusions() {
+    try {
+      var arr = [];
+      _exclusions.forEach(function (key) { arr.push(key); });
+      localStorage.setItem('custard-exclusions', JSON.stringify(arr));
+    } catch (e) {}
+  }
 
   // ---------------------------------------------------------------------------
   // DOM refs
@@ -300,6 +336,80 @@ var CustardCompare = (function () {
   }
 
   // ---------------------------------------------------------------------------
+  // Exclusion filter chips
+  // ---------------------------------------------------------------------------
+
+  function applyExclusions() {
+    var rows = document.querySelectorAll('.compare-store-row');
+    for (var i = 0; i < rows.length; i++) {
+      var flavor = rows[i].getAttribute('data-flavor');
+      var family = CustardPlanner.getFamilyForFlavor(flavor);
+      var excluded = family ? _exclusions.has(family) : false;
+      rows[i].classList.toggle('compare-excluded', excluded);
+
+      // Collapse if excluded row is currently expanded
+      if (excluded && _expandedRow === rows[i]) {
+        var detailEl = rows[i].nextElementSibling;
+        if (detailEl && detailEl.classList.contains('compare-store-detail')) {
+          detailEl.hidden = true;
+        }
+        _expandedRow = null;
+      }
+    }
+  }
+
+  function toggleExclusion(familyKey) {
+    if (_exclusions.has(familyKey)) {
+      _exclusions.delete(familyKey);
+    } else {
+      _exclusions.add(familyKey);
+    }
+
+    // Toggle active class on the chip button
+    var chip = document.querySelector('.compare-filter-chip[data-family="' + familyKey + '"]');
+    if (chip) {
+      chip.classList.toggle('active', _exclusions.has(familyKey));
+    }
+
+    saveExclusions();
+    applyExclusions();
+  }
+
+  function renderFilterChips() {
+    // Remove existing filter bar if any
+    var existing = document.querySelector('.compare-filter-bar');
+    if (existing) existing.parentNode.removeChild(existing);
+
+    if (!compareGrid) return;
+
+    var bar = document.createElement('div');
+    bar.className = 'compare-filter-bar';
+
+    for (var i = 0; i < EXCLUSION_CHIPS.length; i++) {
+      var chipData = EXCLUSION_CHIPS[i];
+      var btn = document.createElement('button');
+      btn.className = 'compare-filter-chip';
+      btn.setAttribute('data-family', chipData.key);
+      btn.textContent = chipData.label;
+
+      // Restore active state from _exclusions
+      if (_exclusions.has(chipData.key)) {
+        btn.classList.add('active');
+      }
+
+      // Wire click handler
+      btn.addEventListener('click', (function (key) {
+        return function () { toggleExclusion(key); };
+      })(chipData.key));
+
+      bar.appendChild(btn);
+    }
+
+    // Insert filter bar above the grid
+    compareGrid.parentNode.insertBefore(bar, compareGrid);
+  }
+
+  // ---------------------------------------------------------------------------
   // Grid rendering
   // ---------------------------------------------------------------------------
 
@@ -440,6 +550,8 @@ var CustardCompare = (function () {
 
       showState('grid');
       renderGrid();
+      renderFilterChips();
+      applyExclusions();
       buildRarityNudge();
     }).catch(function (err) {
       console.error('Compare data load error:', err);
@@ -478,6 +590,7 @@ var CustardCompare = (function () {
 
   function init() {
     cacheDomRefs();
+    restoreExclusions();
     bindEvents();
     loadAndRender();
 

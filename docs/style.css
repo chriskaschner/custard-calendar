@@ -3409,6 +3409,11 @@ textarea:focus-visible {
   border-color: #EF5350;
 }
 
+.compare-filter-chip:focus-visible {
+  outline: 2px solid #005696;
+  outline-offset: 2px;
+}
+
 .compare-skeleton {
   display: flex;
   flex-direction: column;

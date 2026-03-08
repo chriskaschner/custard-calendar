@@ -61,6 +61,16 @@ var MOCK_TODAY_VERONA = { slug: "verona", flavor: "Mint Chip", description: "Coo
 var MOCK_TODAY_MADISON = { slug: "madison-east", flavor: "Turtle Sundae", description: "Turtle sundae custard", date: TODAY_STR, rarity: null };
 var MOCK_GEO = { lat: 43.0, lon: -89.4, city: "Madison", regionName: "Wisconsin" };
 
+// Flavor config that extends families to include test flavor names
+var MOCK_FLAVOR_CONFIG = {
+  flavor_families: {
+    mint: { color: "#2ECC71", members: ["andes mint avalanche", "mint cookie", "mint explosion", "mint chip"] },
+    chocolate: { color: "#6F4E37", members: ["chocolate caramel twist", "chocolate heath crunch", "chocolate volcano", "dark chocolate decadence", "dark chocolate pb crunch", "chocolate oreo volcano", "chocolate eclair"] },
+    caramel: { color: "#D4A056", members: ["caramel cashew", "caramel fudge cookie dough", "caramel pecan", "caramel turtle", "salted caramel pecan pie", "chocolate caramel twist", "caramel swirl"] },
+    peanutButter: { color: "#C4852F", members: ["peanut butter cup", "peanut butter cookie dough", "peanut butter brownie"] },
+  },
+};
+
 async function setupComparePage(page) {
   var context = page.context();
 
@@ -98,7 +108,7 @@ async function setupComparePage(page) {
     route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({}) });
   });
   await context.route("**/api/v1/flavor-config*", function (route) {
-    route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({}) });
+    route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(MOCK_FLAVOR_CONFIG) });
   });
 
   await page.goto("/compare.html");
