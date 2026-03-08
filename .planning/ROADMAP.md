@@ -70,7 +70,7 @@ Note: Phase 2 and Phase 3 can be built in parallel -- both depend only on Phase 
 **Plans**: 3 plans
 
 Plans:
-- [ ] 03-01-PLAN.md -- Create compare.html, compare-page.js IIFE with day-first card stack grid, Playwright test scaffolds for all COMP requirements
+- [x] 03-01-PLAN.md -- Create compare.html, compare-page.js IIFE with day-first card stack grid, Playwright test scaffolds for all COMP requirements
 - [ ] 03-02-PLAN.md -- Add accordion expand for store row details and exclusion filter chips with dimming
 - [ ] 03-03-PLAN.md -- Update service worker (add compare assets, bump cache version), run full test suites, visual verification checkpoint
 
@@ -118,6 +118,6 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 |-------|----------------|--------|-----------|
 | 1. Foundation | 4/4 | Complete | - |
 | 2. Today Page | 3/3 | Complete | 2026-03-07 |
-| 3. Compare Page | 0/3 | Not started | - |
+| 3. Compare Page | 1/3 | In progress | - |
 | 4. Supporting Pages + Nav Activation | 0/4 | Not started | - |
 | 5. Visual Polish | 0/2 | Not started | - |
