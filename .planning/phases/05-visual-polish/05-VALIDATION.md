@@ -2,7 +2,7 @@
 phase: 5
 slug: visual-polish
 status: draft
-nyquist_compliant: false
+nyquist_compliant: true
 wave_0_complete: false
 created: 2026-03-08
 ---
@@ -39,11 +39,9 @@ created: 2026-03-08
 | Task ID | Plan | Wave | Requirement | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|-----------|-------------------|-------------|--------|
 | 05-01-01 | 01 | 1 | VIZP-02 | browser | `npx playwright test test/browser/vizp-card-system.spec.mjs` | No -- W0 | pending |
-| 05-01-02 | 01 | 1 | VIZP-02 | browser | `npx playwright test test/browser/vizp-card-system.spec.mjs` | No -- W0 | pending |
-| 05-02-01 | 02 | 2 | VIZP-03 | browser | `npx playwright test test/browser/vizp-seasonal-rarity.spec.mjs` | No -- W0 | pending |
-| 05-02-02 | 02 | 2 | VIZP-03 | browser | `npx playwright test test/browser/vizp-seasonal-rarity.spec.mjs` | No -- W0 | pending |
-| 05-03-01 | 03 | 2 | VIZP-01, VIZP-04 | browser | `npx playwright test test/browser/vizp-cone-tiers.spec.mjs` | No -- W0 | pending |
-| 05-03-02 | 03 | 2 | VIZP-04 | browser | `npx playwright test test/browser/vizp-cone-tiers.spec.mjs` | No -- W0 | pending |
+| 05-01-02 | 01 | 1 | VIZP-03 | browser | `npx playwright test test/browser/vizp-seasonal-rarity.spec.mjs` | No -- W0 | pending |
+| 05-02-01 | 02 | 2 | VIZP-01, VIZP-04 | browser | `npx playwright test test/browser/vizp-cone-tiers.spec.mjs` | No -- W0 | pending |
+| 05-02-02 | 02 | 2 | VIZP-01, VIZP-04 | browser | `npx playwright test test/browser/ --workers=1` | No -- W0 | pending |
 
 *Status: pending / green / red / flaky*
 
