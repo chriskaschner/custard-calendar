@@ -36,10 +36,10 @@ Requirements for the presentation-layer restructure. Each maps to roadmap phases
 
 - [x] **COMP-01**: User sees a grid of their saved stores (2-4) across next 2-3 days
 - [x] **COMP-02**: Each grid cell shows cone image, flavor name, and rarity tag if rare
-- [ ] **COMP-03**: User can tap any grid cell to expand it showing full description, directions link, and historical pattern
+- [x] **COMP-03**: User can tap any grid cell to expand it showing full description, directions link, and historical pattern
 - [x] **COMP-04**: Rare flavor cells have a visual highlight ("only every 400 days!")
-- [ ] **COMP-05**: Flavor family exclusion filter chips above grid (No Nuts, No Mint, etc.)
-- [ ] **COMP-06**: Toggling an exclusion chip hides stores/cells with matching flavors
+- [x] **COMP-05**: Flavor family exclusion filter chips above grid (No Nuts, No Mint, etc.)
+- [x] **COMP-06**: Toggling an exclusion chip hides stores/cells with matching flavors
 - [x] **COMP-07**: Grid is usable at 375px width (scroll-snap, swipeable cards, or equivalent mobile pattern)
 - [x] **COMP-08**: Data comes from existing `/api/v1/drive` endpoint (no new API endpoints)
 
@@ -120,10 +120,10 @@ Deferred to future release. Tracked but not in current roadmap.
 | TDAY-07 | Phase 2 | Complete |
 | COMP-01 | Phase 3 | Complete |
 | COMP-02 | Phase 3 | Complete |
-| COMP-03 | Phase 3 | Pending |
+| COMP-03 | Phase 3 | Complete |
 | COMP-04 | Phase 3 | Complete |
-| COMP-05 | Phase 3 | Pending |
-| COMP-06 | Phase 3 | Pending |
+| COMP-05 | Phase 3 | Complete |
+| COMP-06 | Phase 3 | Complete |
 | COMP-07 | Phase 3 | Complete |
 | COMP-08 | Phase 3 | Complete |
 | FUN-01 | Phase 4 | Pending |
