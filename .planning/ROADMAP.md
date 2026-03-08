@@ -118,4 +118,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | 2. Today Page | 3/3 | Complete | 2026-03-07 |
 | 3. Compare Page | 3/3 | Complete | 2026-03-08 |
 | 4. Supporting Pages + Nav Activation | 3/4 | In Progress|  |
-| 5. Visual Polish | 0/2 | Not started | - |
+| 5. Visual Polish | 1/2 | In Progress|  |
