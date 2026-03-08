@@ -452,7 +452,7 @@ details ol {
 
 .nav-links a {
   color: #005696;
-  font-size: 0.875rem;
+  font-size: var(--text-base);
   text-decoration: none;
 }
 
@@ -482,7 +482,7 @@ details ol {
 .flavor-option {
   padding: 0.5rem;
   cursor: pointer;
-  font-size: 0.875rem;
+  font-size: var(--text-base);
 }
 
 .flavor-option:hover {
@@ -595,7 +595,7 @@ details ol {
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 0.875rem;
+  font-size: var(--text-base);
   font-weight: 600;
 }
 
@@ -688,7 +688,7 @@ details ol {
   border-radius: 8px;
   padding: 0.75rem 1rem;
   margin-bottom: 1rem;
-  font-size: 0.875rem;
+  font-size: var(--text-base);
 }
 
 .suggestion-link {
@@ -697,7 +697,7 @@ details ol {
   color: #005696;
   cursor: pointer;
   text-decoration: underline;
-  font-size: 0.875rem;
+  font-size: var(--text-base);
   padding: 0;
   margin: 0 0.25rem;
 }
@@ -757,13 +757,13 @@ details ol {
 
 .store-card-name {
   font-weight: 600;
-  color: #1a1a1a;
+  color: var(--text-primary);
   font-size: 0.9375rem;
 }
 
 .store-card-rank {
-  font-size: 0.75rem;
-  color: #999;
+  font-size: var(--text-sm);
+  color: var(--text-subtle);
 }
 
 .store-card-address {
@@ -773,21 +773,21 @@ details ol {
 }
 
 .store-card-flavor {
-  font-size: 0.875rem;
+  font-size: var(--text-base);
   color: #005696;
   font-weight: 500;
   margin-top: 0.25rem;
 }
 
 .store-card-description {
-  font-size: 0.75rem;
+  font-size: var(--text-sm);
   color: #666;
   margin-top: 0.25rem;
   line-height: 1.4;
 }
 
 .store-card-link {
-  font-size: 0.75rem;
+  font-size: var(--text-sm);
   color: #005696;
   margin-top: 0.25rem;
   text-decoration: none;
@@ -852,7 +852,7 @@ details ol {
 
 .popup-specialty {
   display: block;
-  font-size: 0.75rem;
+  font-size: var(--text-sm);
   color: #555;
   margin-top: 0.2rem;
 }
@@ -3123,7 +3123,7 @@ textarea:focus-visible {
   justify-content: space-between;
   gap: 0.5rem;
   padding: 0.375rem 0;
-  font-size: 0.875rem;
+  font-size: var(--text-base);
   max-width: 100%;
 }
 
@@ -3148,7 +3148,7 @@ textarea:focus-visible {
   border: none;
   color: var(--brand);
   text-decoration: underline;
-  font-size: 0.875rem;
+  font-size: var(--text-base);
   cursor: pointer;
   min-height: 44px;
   min-width: 44px;
@@ -3339,7 +3339,7 @@ textarea:focus-visible {
 
 .store-picker-address {
   display: block;
-  font-size: 0.75rem;
+  font-size: var(--text-sm);
   color: #666;
   margin-top: 0.125rem;
 }
@@ -3361,7 +3361,7 @@ textarea:focus-visible {
   font-weight: 600;
   color: #005696;
   border-bottom: 1px solid #eee;
-  font-size: 1rem;
+  font-size: var(--text-md);
   margin: 0;
 }
 
