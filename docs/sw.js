@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'custard-v13';
+const CACHE_VERSION = 'custard-v14';
 const STATIC_ASSETS = [
   './',
   './index.html',
@@ -17,6 +17,10 @@ const STATIC_ASSETS = [
   './today-page.js',
   './compare.html',
   './compare-page.js',
+  './fun.html',
+  './fun-page.js',
+  './updates.html',
+  './updates-page.js',
   './todays-drive.js',
   './style.css',
   './manifest.json',
