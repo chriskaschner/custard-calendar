@@ -53,11 +53,11 @@ Requirements for the presentation-layer restructure. Each maps to roadmap phases
 
 ### Get Updates
 
-- [ ] **UPDT-01**: Single page consolidates setup flows for Calendar, Widget, Siri, and Alerts
-- [ ] **UPDT-02**: Each channel shows brief description and setup instructions
-- [ ] **UPDT-03**: Alert signup form works inline on the page (not a redirect)
-- [ ] **UPDT-04**: Store context carries from referring page (pre-fills store if user came from Today)
-- [ ] **UPDT-05**: Contextual "Want this every day?" CTAs on Today and Compare link to this page
+- [x] **UPDT-01**: Single page consolidates setup flows for Calendar, Widget, Siri, and Alerts
+- [x] **UPDT-02**: Each channel shows brief description and setup instructions
+- [x] **UPDT-03**: Alert signup form works inline on the page (not a redirect)
+- [x] **UPDT-04**: Store context carries from referring page (pre-fills store if user came from Today)
+- [x] **UPDT-05**: Contextual "Want this every day?" CTAs on Today and Compare link to this page
 
 ### Visual Polish
 
@@ -131,11 +131,11 @@ Deferred to future release. Tracked but not in current roadmap.
 | FUN-03 | Phase 4 | Complete |
 | FUN-04 | Phase 4 | Complete |
 | FUN-05 | Phase 4 | Complete |
-| UPDT-01 | Phase 4 | Pending |
-| UPDT-02 | Phase 4 | Pending |
-| UPDT-03 | Phase 4 | Pending |
-| UPDT-04 | Phase 4 | Pending |
-| UPDT-05 | Phase 4 | Pending |
+| UPDT-01 | Phase 4 | Complete |
+| UPDT-02 | Phase 4 | Complete |
+| UPDT-03 | Phase 4 | Complete |
+| UPDT-04 | Phase 4 | Complete |
+| UPDT-05 | Phase 4 | Complete |
 | NAV-01 | Phase 4 | Complete |
 | NAV-02 | Phase 4 | Complete |
 | NAV-03 | Phase 4 | Complete |
