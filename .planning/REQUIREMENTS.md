@@ -9,10 +9,10 @@ Requirements for the presentation-layer restructure. Each maps to roadmap phases
 
 ### Navigation
 
-- [ ] **NAV-01**: User sees 4 clear nav items (Today, Compare, Map, Fun) on every page
-- [ ] **NAV-02**: Nav labels are functional words, not weather metaphor names
-- [ ] **NAV-03**: "Get Updates" is accessible via footer link or contextual CTA, not primary nav
-- [ ] **NAV-04**: Nav fits at 375px width without hamburger menu or overflow
+- [x] **NAV-01**: User sees 4 clear nav items (Today, Compare, Map, Fun) on every page
+- [x] **NAV-02**: Nav labels are functional words, not weather metaphor names
+- [x] **NAV-03**: "Get Updates" is accessible via footer link or contextual CTA, not primary nav
+- [x] **NAV-04**: Nav fits at 375px width without hamburger menu or overflow
 
 ### Store Experience
 
@@ -136,10 +136,10 @@ Deferred to future release. Tracked but not in current roadmap.
 | UPDT-03 | Phase 4 | Pending |
 | UPDT-04 | Phase 4 | Pending |
 | UPDT-05 | Phase 4 | Pending |
-| NAV-01 | Phase 4 | Pending |
-| NAV-02 | Phase 4 | Pending |
-| NAV-03 | Phase 4 | Pending |
-| NAV-04 | Phase 4 | Pending |
+| NAV-01 | Phase 4 | Complete |
+| NAV-02 | Phase 4 | Complete |
+| NAV-03 | Phase 4 | Complete |
+| NAV-04 | Phase 4 | Complete |
 | VIZP-01 | Phase 5 | Pending |
 | VIZP-02 | Phase 5 | Pending |
 | VIZP-03 | Phase 5 | Pending |
