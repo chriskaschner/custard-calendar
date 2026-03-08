@@ -15,14 +15,16 @@ var MOCK_STORES = [
   { slug: "madison-east", name: "Madison East", city: "Madison", state: "WI", address: "300 Oak Ave", lat: 43.0731, lng: -89.3012, brand: "culvers" },
 ];
 
-// Today's date string for mock data
-var TODAY_STR = new Date().toISOString().slice(0, 10);
-var TOMORROW = new Date();
-TOMORROW.setDate(TOMORROW.getDate() + 1);
-var TOMORROW_STR = TOMORROW.toISOString().slice(0, 10);
-var DAY2 = new Date();
-DAY2.setDate(DAY2.getDate() + 2);
-var DAY2_STR = DAY2.toISOString().slice(0, 10);
+// Compute date strings matching the page's logic: setHours(12,0,0,0) then toISOString()
+var _today = new Date();
+_today.setHours(12, 0, 0, 0);
+var TODAY_STR = _today.toISOString().slice(0, 10);
+var _tomorrow = new Date(_today);
+_tomorrow.setDate(_tomorrow.getDate() + 1);
+var TOMORROW_STR = _tomorrow.toISOString().slice(0, 10);
+var _day2 = new Date(_today);
+_day2.setDate(_day2.getDate() + 2);
+var DAY2_STR = _day2.toISOString().slice(0, 10);
 
 // Mock flavors responses per store (3 days each)
 var MOCK_FLAVORS_MT_HOREB = {
@@ -141,6 +143,11 @@ async function setupComparePage(page, opts) {
     route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({}) });
   });
 
+  // Mock flavor-config endpoint (used by planner-shared.js)
+  await context.route("**/api/v1/flavor-config*", function (route) {
+    route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({}) });
+  });
+
   // Navigate to compare.html
   await page.goto("/compare.html");
 
@@ -154,8 +161,8 @@ async function setupComparePage(page, opts) {
   // Reload so the page picks up saved stores
   await page.reload();
 
-  // Wait for grid to render
-  await page.waitForSelector("#compare-grid", { timeout: 10000 });
+  // Wait for day cards to render (not just the empty container)
+  await page.waitForSelector(".compare-day-card", { timeout: 10000 });
 }
 
 // ---------------------------------------------------------------------------
@@ -282,8 +289,8 @@ test("COMP-08: only existing endpoints are used (no new API endpoints)", async (
     return url.indexOf("/api/") !== -1;
   });
 
-  // Should only use known existing endpoints
-  var allowedPatterns = ["/api/v1/flavors", "/api/v1/today", "/api/v1/geolocate", "/api/v1/flavor-colors"];
+  // Should only use known existing endpoints (includes shared module endpoints)
+  var allowedPatterns = ["/api/v1/flavors", "/api/v1/today", "/api/v1/geolocate", "/api/v1/flavor-colors", "/api/v1/flavor-config", "/api/v1/stores", "/api/v1/events"];
   for (var i = 0; i < apiRequests.length; i++) {
     var url = apiRequests[i];
     var matchesAllowed = allowedPatterns.some(function (pattern) {
