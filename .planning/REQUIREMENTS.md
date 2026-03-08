@@ -45,11 +45,11 @@ Requirements for the presentation-layer restructure. Each maps to roadmap phases
 
 ### Fun Page
 
-- [ ] **FUN-01**: Quiz modes displayed as visual cards with name and one-line description, not a dropdown
-- [ ] **FUN-02**: Mad Libs mode offers 3 pre-populated word choices + 1 write-in option per blank
-- [ ] **FUN-03**: Quiz results map to actually-available nearby flavors with store CTAs
-- [ ] **FUN-04**: Group Vote is accessible from Fun page as a card or section
-- [ ] **FUN-05**: Fronts (flavor weather map) is accessible from Fun page, no primary nav link
+- [x] **FUN-01**: Quiz modes displayed as visual cards with name and one-line description, not a dropdown
+- [x] **FUN-02**: Mad Libs mode offers 3 pre-populated word choices + 1 write-in option per blank
+- [x] **FUN-03**: Quiz results map to actually-available nearby flavors with store CTAs
+- [x] **FUN-04**: Group Vote is accessible from Fun page as a card or section
+- [x] **FUN-05**: Fronts (flavor weather map) is accessible from Fun page, no primary nav link
 
 ### Get Updates
 
@@ -126,11 +126,11 @@ Deferred to future release. Tracked but not in current roadmap.
 | COMP-06 | Phase 3 | Complete |
 | COMP-07 | Phase 3 | Complete |
 | COMP-08 | Phase 3 | Complete |
-| FUN-01 | Phase 4 | Pending |
-| FUN-02 | Phase 4 | Pending |
-| FUN-03 | Phase 4 | Pending |
-| FUN-04 | Phase 4 | Pending |
-| FUN-05 | Phase 4 | Pending |
+| FUN-01 | Phase 4 | Complete |
+| FUN-02 | Phase 4 | Complete |
+| FUN-03 | Phase 4 | Complete |
+| FUN-04 | Phase 4 | Complete |
+| FUN-05 | Phase 4 | Complete |
 | UPDT-01 | Phase 4 | Pending |
 | UPDT-02 | Phase 4 | Pending |
 | UPDT-03 | Phase 4 | Pending |
