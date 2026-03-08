@@ -84,15 +84,13 @@ Plans:
   3. Fun page displays quiz modes as visual cards (not a dropdown), with Group Vote and Fronts accessible as sections
   4. Mad Libs mode offers 3 pre-populated word choices plus 1 write-in option per blank
   5. Get Updates page consolidates Calendar, Widget, Siri, and Alerts setup flows on a single page with inline alert signup
-**Plans**: TBD
+**Plans**: 4 plans
 
 Plans:
-- [ ] 04-01: TBD
-- [ ] 04-02: TBD
-- [ ] 04-03: TBD
-- [ ] 04-04: TBD
-
-Research flag: Quiz image assets are undefined. Mode card design needs mockups. Mad Libs word selection UI is a new interaction pattern.
+- [ ] 04-01-PLAN.md -- Consolidate nav from 11 to 4 items (Today, Compare, Map, Fun), add shared footer with Get Updates and Privacy links
+- [ ] 04-02-PLAN.md -- Create Fun hub page with quiz mode cards, Mad Libs section, Group Vote and Fronts link-out cards, quiz engine ?mode param support
+- [ ] 04-03-PLAN.md -- Create Get Updates page with Calendar, Alerts, Widget, Siri sections and inline alert signup, update Today/Compare CTAs
+- [ ] 04-04-PLAN.md -- Update service worker (add fun/updates assets, bump cache version), run full test suites, visual verification checkpoint
 
 ### Phase 5: Visual Polish
 **Goal**: All pages share a consistent visual language -- unified card system, cone rendering tiers, and rarity copy that accounts for seasonality
