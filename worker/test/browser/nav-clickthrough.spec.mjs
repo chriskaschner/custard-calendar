@@ -1,20 +1,13 @@
 import { expect, test } from "@playwright/test";
 
 const NAV_LINKS = [
-  { label: "Forecast", href: /\/index\.html$/ },
-  { label: "Calendar", href: /\/calendar\.html$/ },
+  { label: "Today", href: /\/index\.html$/ },
+  { label: "Compare", href: /\/compare\.html$/ },
   { label: "Map", href: /\/map\.html$/ },
-  { label: "Radar", href: /\/radar\.html$/ },
-  { label: "Alerts", href: /\/alerts\.html$/ },
-  { label: "Siri", href: /\/siri\.html$/ },
-  { label: "Fronts", href: /\/forecast-map\.html$/ },
-  { label: "Quiz", href: /\/quiz\.html$/ },
-  { label: "Widget", href: /\/widget\.html$/ },
-  { label: "The Scoop", href: /\/scoop\.html$/ },
-  { label: "Group", href: /\/group\.html$/ },
+  { label: "Fun", href: /\/fun\.html$/ },
 ];
 
-test("nav click-through across all docs pages", async ({ page }) => {
+test("nav click-through across existing pages", async ({ page }) => {
   await page.goto("/index.html");
 
   const nav = page.locator("#shared-nav nav.nav-links");
@@ -23,7 +16,8 @@ test("nav click-through across all docs pages", async ({ page }) => {
   const labels = await nav.locator("a").allTextContents();
   expect(labels.map((x) => x.trim())).toEqual(NAV_LINKS.map((x) => x.label));
 
-  const sequence = ["Calendar", "Map", "Radar", "Alerts", "Siri", "Fronts", "Quiz", "Widget", "The Scoop", "Group", "Forecast"];
+  // Only click through pages that currently exist (fun.html not yet created)
+  const sequence = ["Compare", "Map", "Today"];
   for (const label of sequence) {
     const target = NAV_LINKS.find((x) => x.label === label);
     expect(target).toBeTruthy();
@@ -39,16 +33,14 @@ test("nav click-through across all docs pages", async ({ page }) => {
   }
 });
 
+// Test nav consistency on pages that currently exist
+// TODO: Add fun.html and updates.html after Plan 02 and 03 create them
 const ALL_PAGES = [
   "/index.html",
-  "/calendar.html",
+  "/compare.html",
   "/map.html",
-  "/radar.html",
-  "/alerts.html",
-  "/siri.html",
-  "/forecast-map.html",
+  "/calendar.html",
   "/quiz.html",
-  "/widget.html",
   "/scoop.html",
   "/group.html",
 ];
