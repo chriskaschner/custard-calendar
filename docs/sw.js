@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'custard-v14';
+const CACHE_VERSION = 'custard-v15';
 const STATIC_ASSETS = [
   './',
   './index.html',
@@ -57,6 +57,23 @@ self.addEventListener('fetch', (event) => {
     || url.pathname.startsWith('/v1/')
     || url.pathname.endsWith('.ics')) {
     event.respondWith(fetch(event.request));
+    return;
+  }
+
+  // Runtime cache for hero cone PNGs (stale-while-revalidate, not pre-cached)
+  if (url.pathname.includes('/assets/cones/') && url.pathname.endsWith('.png')) {
+    event.respondWith(
+      caches.match(event.request).then(function(cached) {
+        var fetched = fetch(event.request).then(function(response) {
+          if (response.ok) {
+            var clone = response.clone();
+            caches.open(CACHE_VERSION).then(function(cache) { cache.put(event.request, clone); });
+          }
+          return response;
+        }).catch(function() { return cached; });
+        return cached || fetched;
+      })
+    );
     return;
   }
 
