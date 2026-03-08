@@ -435,7 +435,7 @@ var CustardCompare = (function () {
 
       // Day card
       var dayCard = document.createElement('div');
-      dayCard.className = 'compare-day-card';
+      dayCard.className = 'card card--compare-day compare-day-card';
 
       // Day header
       var header = document.createElement('h3');

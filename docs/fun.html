@@ -45,35 +45,7 @@
         grid-template-columns: repeat(3, 1fr);
       }
     }
-    .quiz-mode-card {
-      display: block;
-      padding: 0.875rem;
-      border: 1.5px solid #ddd;
-      border-radius: 0.75rem;
-      background: #f8f9fa;
-      text-decoration: none;
-      color: inherit;
-      transition: border-color 0.15s, box-shadow 0.15s;
-    }
-    .quiz-mode-card:hover {
-      border-color: #005696;
-      box-shadow: 0 2px 8px rgba(0, 86, 150, 0.12);
-    }
-    .quiz-mode-card:active {
-      background: #eef4fb;
-    }
-    .quiz-mode-card strong {
-      display: block;
-      color: #005696;
-      font-size: 0.9375rem;
-      margin-bottom: 0.25rem;
-    }
-    .quiz-mode-card p {
-      margin: 0;
-      color: #555;
-      font-size: 0.8125rem;
-      line-height: 1.4;
-    }
+    /* Quiz mode card styles moved to style.css .card--quiz */
 
     /* Mad Libs featured card */
     .madlibs-card {
@@ -155,27 +127,27 @@
     <section id="quiz-modes" class="fun-section">
       <h2>Pick a Quiz</h2>
       <div class="quiz-card-grid">
-        <a href="quiz.html?mode=classic-v1" class="quiz-mode-card">
+        <a href="quiz.html?mode=classic-v1" class="card card--quiz quiz-mode-card">
           <strong>Classic</strong>
           <p>Which flavor are you? Classic personality quiz.</p>
         </a>
-        <a href="quiz.html?mode=weather-v1" class="quiz-mode-card">
+        <a href="quiz.html?mode=weather-v1" class="card card--quiz quiz-mode-card">
           <strong>Weather</strong>
           <p>Your vibe today mapped to a flavor forecast.</p>
         </a>
-        <a href="quiz.html?mode=trivia-v1" class="quiz-mode-card">
+        <a href="quiz.html?mode=trivia-v1" class="card card--quiz quiz-mode-card">
           <strong>Trivia</strong>
           <p>Test your custard knowledge with real flavor facts.</p>
         </a>
-        <a href="quiz.html?mode=date-night-v1" class="quiz-mode-card">
+        <a href="quiz.html?mode=date-night-v1" class="card card--quiz quiz-mode-card">
           <strong>Date Night</strong>
           <p>Find the perfect flavor for two.</p>
         </a>
-        <a href="quiz.html?mode=build-scoop-v1" class="quiz-mode-card">
+        <a href="quiz.html?mode=build-scoop-v1" class="card card--quiz quiz-mode-card">
           <strong>Build-a-Scoop</strong>
           <p>Design your ideal scoop from the ground up.</p>
         </a>
-        <a href="quiz.html?mode=compatibility-v1" class="quiz-mode-card">
+        <a href="quiz.html?mode=compatibility-v1" class="card card--quiz quiz-mode-card">
           <strong>Compatibility</strong>
           <p>How well do your flavor personalities match?</p>
         </a>

@@ -151,11 +151,15 @@ async function setupComparePage(page) {
   await context.route("**/api/v1/flavor-colors*", function (route) {
     route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({}) });
   });
+  await context.route("**/api/v1/flavor-config*", function (route) {
+    route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({}) });
+  });
 
   await page.goto("/compare.html");
   await page.evaluate(function () {
-    localStorage.setItem("custard-primary", "mt-horeb");
-    localStorage.setItem("custard-secondary", JSON.stringify(["verona"]));
+    localStorage.setItem("custard:v1:preferences", JSON.stringify({
+      activeRoute: { stores: ["mt-horeb", "verona"] },
+    }));
   });
   await page.reload();
   await page.waitForSelector(".compare-day-card", { timeout: 10000 });
