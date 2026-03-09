@@ -63,18 +63,13 @@
         <button class="brand-chip" data-brand="kraverz">Kraverz</button>
         <button class="brand-chip" data-brand="oscars">Oscar's</button>
       </div>
-      <div class="flavor-family-chips" id="flavor-family-chips" role="group" aria-label="Filter by flavor family" hidden>
-        <span class="chips-label">Flavor family:</span>
-        <button class="flavor-chip active" data-family="all">All</button>
-        <button class="flavor-chip" data-family="mint">Mint</button>
-        <button class="flavor-chip" data-family="chocolate">Chocolate</button>
-        <button class="flavor-chip" data-family="caramel">Caramel</button>
-        <button class="flavor-chip" data-family="cheesecake">Cheesecake</button>
-        <button class="flavor-chip" data-family="turtle">Turtle</button>
-        <button class="flavor-chip" data-family="cookie">Cookie</button>
-        <button class="flavor-chip" data-family="peanut-butter">Peanut Butter</button>
-        <button class="flavor-chip" data-family="berry">Berry</button>
-        <button class="flavor-chip" data-family="pecan">Pecan</button>
+      <div class="compare-filter-bar" id="map-exclusion-chips" role="group" aria-label="Exclude flavor families" hidden>
+        <button class="compare-filter-chip" data-family="mint">No Mint</button>
+        <button class="compare-filter-chip" data-family="chocolate">No Chocolate</button>
+        <button class="compare-filter-chip" data-family="caramel">No Caramel</button>
+        <button class="compare-filter-chip" data-family="cheesecake">No Cheesecake</button>
+        <button class="compare-filter-chip" data-family="peanutButter">No Peanut Butter</button>
+        <button class="compare-filter-chip" data-family="pecan">No Nuts</button>
       </div>
     </section>
 
@@ -171,10 +166,7 @@
     const ALL_BRANDS = ['culvers', 'kopps', 'gilles', 'hefners', 'kraverz', 'oscars'];
 
     // Flavor family filter data -- sourced from CustardPlanner.
-    // map.html uses 'peanut-butter' (kebab) as the chip data attribute; build
-    // a local lookup that maps both 'peanutButter' and 'peanut-butter' keys.
     var FLAVOR_FAMILIES = CustardPlanner.FLAVOR_FAMILY_MEMBERS;
-    FLAVOR_FAMILIES['peanut-butter'] = FLAVOR_FAMILIES['peanut-butter'] || FLAVOR_FAMILIES.peanutButter;
 
     // Build reverse lookup: normalized flavor -> set of families
     var flavorToFamilies = {};
@@ -189,8 +181,38 @@
       }
     }
 
-    let activeFamily = 'all';
-    const familyChipsContainer = document.getElementById('flavor-family-chips');
+    var _mapExclusions = new Set();
+    var MAP_EXCLUSIONS_KEY = 'custard:map:exclusions';
+
+    function restoreMapExclusions() {
+      try {
+        var raw = localStorage.getItem(MAP_EXCLUSIONS_KEY);
+        if (raw) {
+          var arr = JSON.parse(raw);
+          if (Array.isArray(arr)) _mapExclusions = new Set(arr);
+        }
+      } catch (e) {}
+    }
+
+    function saveMapExclusions() {
+      try {
+        var arr = [];
+        _mapExclusions.forEach(function(key) { arr.push(key); });
+        localStorage.setItem(MAP_EXCLUSIONS_KEY, JSON.stringify(arr));
+      } catch (e) {}
+    }
+
+    restoreMapExclusions();
+
+    function syncExclusionChipStyles() {
+      document.querySelectorAll('#map-exclusion-chips .compare-filter-chip').forEach(function(chip) {
+        chip.classList.toggle('selected', _mapExclusions.has(chip.dataset.family));
+      });
+    }
+
+    syncExclusionChipStyles();
+
+    const familyChipsContainer = document.getElementById('map-exclusion-chips');
 
     var haversine = CustardPlanner.haversineMiles;
 
@@ -284,43 +306,40 @@
       });
     });
 
-    // Wire up flavor family chips
-    document.querySelectorAll('.flavor-chip').forEach(function(chip) {
+    // Wire up exclusion chips
+    document.querySelectorAll('#map-exclusion-chips .compare-filter-chip').forEach(function(chip) {
       chip.addEventListener('click', function() {
-        activeFamily = this.dataset.family;
-        document.querySelectorAll('.flavor-chip').forEach(function(c) {
-          c.classList.toggle('active', c.dataset.family === activeFamily);
-        });
+        var family = this.dataset.family;
+        if (_mapExclusions.has(family)) {
+          _mapExclusions.delete(family);
+          this.classList.remove('selected');
+        } else {
+          _mapExclusions.add(family);
+          this.classList.add('selected');
+        }
+        saveMapExclusions();
         applyFamilyFilter();
       });
     });
 
-    function storeMatchesFamily(store) {
-      if (activeFamily === 'all') return true;
+    function isStoreExcluded(store) {
+      if (_mapExclusions.size === 0) return false;
       if (!store.flavor) return false;
       var normalized = CustardPlanner.normalize(store.flavor);
       var families = flavorToFamilies[normalized];
-      return families && families.includes(activeFamily);
+      if (!families) return false;
+      for (var i = 0; i < families.length; i++) {
+        if (_mapExclusions.has(families[i])) return true;
+      }
+      return false;
     }
 
     function applyFamilyFilter() {
       if (!window._allMarkers) return;
-
-      var visibleCount = 0;
       for (var i = 0; i < window._allMarkers.length; i++) {
         var entry = window._allMarkers[i];
-        var matches = storeMatchesFamily(entry.store);
-        if (matches) {
-          entry.marker.setOpacity(1);
-          visibleCount++;
-        } else {
-          entry.marker.setOpacity(0.15);
-        }
-      }
-
-      var countEl = document.getElementById('results-count');
-      if (countEl && activeFamily !== 'all') {
-        countEl.textContent = visibleCount + ' ' + activeFamily + ' stores';
+        var excluded = isStoreExcluded(entry.store);
+        entry.marker.setOpacity(excluded ? 0.15 : 1);
       }
     }
 
@@ -329,12 +348,6 @@
 
     async function refreshResults(skipFitBounds = false) {
       await flavorColorsReady;
-
-      // Reset flavor family filter on each refresh
-      activeFamily = 'all';
-      document.querySelectorAll('.flavor-chip').forEach(function(c) {
-        c.classList.toggle('active', c.dataset.family === 'all');
-      });
 
       const hasPrimary = activeBrands.has('culvers');
       const secondaryBrands = [...activeBrands].filter(b => b !== 'culvers');
@@ -424,6 +437,9 @@
         markers.addLayer(marker);
         window._allMarkers.push({ store: store, marker: marker });
       }
+
+      // Re-apply exclusion dimming after markers refresh
+      applyFamilyFilter();
 
       // Suggestions
       if (primaryData && hasFlavorFilter && primaryData.matches.length === 0 && primaryData.suggestions.length > 0) {
