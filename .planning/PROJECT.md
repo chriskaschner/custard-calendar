@@ -38,6 +38,16 @@ A family in the car (or on the couch) can instantly see what flavors are at thei
 ### Active
 
 - [ ] Hero cone PNGs for remaining ~136 flavors via existing sharp pipeline
+- [ ] Consistent cone rendering tier across all flavors (no mixed Hero/HD display)
+
+## Current Milestone: v1.3 Asset Parity
+
+**Goal:** Every flavor renders at the same quality tier with a proper profile -- no more mixed Hero PNG vs HD SVG fallback on the same page.
+
+**Target features:**
+- Profile all ~136 unprofiled flavors in FLAVOR_PROFILES
+- Regenerate hero cone PNGs for full catalog via sharp pipeline
+- Fix quality issues on existing profiles that look off at Hero tier
 
 ### Out of Scope
 
@@ -107,4 +117,4 @@ Tech stack: Cloudflare Worker (API), vanilla JS (4-file IIFE pattern), Playwrigh
 | Page-scoped localStorage keys | Separate keys per page prevent cross-page state leaks | Good -- compare/map/preferences isolated |
 
 ---
-*Last updated: 2026-03-09 after v1.2 milestone*
+*Last updated: 2026-03-09 after v1.3 milestone started*
