@@ -700,6 +700,33 @@ details ol {
   border-color: transparent;
 }
 
+/* Mad Libs chip (quiz engine fill_in_madlib questions) */
+.madlib-chip {
+  padding: 0.375rem 0.875rem;
+  border: 1.5px solid var(--border-input);
+  border-radius: var(--radius-full);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+
+.madlib-chip.selected {
+  background: var(--quiz-accent, var(--brand));
+  color: var(--bg-surface);
+  border-color: var(--quiz-accent, var(--brand));
+}
+
+.madlib-chip-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+
 /* Suggestions panel */
 #suggestions-panel {
   background: #fff8e1;
