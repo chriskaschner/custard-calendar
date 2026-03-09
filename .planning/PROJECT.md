@@ -8,6 +8,23 @@ Custard Calendar tracks daily "Flavor of the Day" schedules across 1,000+ frozen
 
 A family in the car (or on the couch) can instantly see what flavors are at their nearby stores and decide where to go -- no friction, no hunting through pages.
 
+## Current Milestone: v1.2 Feature Completion & Cleanup
+
+**Goal:** Ship all carried-forward active requirements and resolve accumulated tech debt from v1.0/v1.1.
+
+**Target features:**
+- Old page redirects preserving query params
+- Map flavor family exclusion filter with persistent state
+- Quiz image-based answer options on mobile
+- Hero cone PNGs for remaining ~136 flavors
+- SW registered on fun.html and updates.html
+- planner-shared.js refactored from monolith
+- Compare page multi-store side-by-side comparison
+- Push unpushed phase 8 commits and verify deployment
+- Fix CI repo structure check
+- Mad Libs chip CSS definitions
+- stores.json in SW pre-cache
+
 ## Requirements
 
 ### Validated
@@ -34,6 +51,10 @@ A family in the car (or on the couch) can instantly see what flavors are at thei
 - [ ] SW registered on fun.html and updates.html
 - [ ] planner-shared.js refactored from 1,624-line monolith
 - [ ] Compare page multi-store comparison (currently switches stores instead of side-by-side)
+- [ ] Push phase 8 commits to origin/main and verify deployment
+- [ ] Fix CI Repo Structure Check (.planning/ in REPO_CONTRACT.md)
+- [ ] Mad Libs chip CSS classes need actual CSS definitions
+- [ ] stores.json added to SW pre-cache list
 
 ### Out of Scope
 
@@ -89,4 +110,4 @@ Tech stack: Cloudflare Worker (API), vanilla JS (IIFE pattern), Playwright (brow
 | CSS color-mix for derived accents | Project already uses modern CSS features | Good -- clean derived shades |
 
 ---
-*Last updated: 2026-03-09 after v1.1 milestone*
+*Last updated: 2026-03-09 after v1.2 milestone start*
