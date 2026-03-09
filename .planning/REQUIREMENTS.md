@@ -39,7 +39,7 @@ Requirements for v1.2 Feature Completion & Cleanup. Each maps to roadmap phases.
 
 ### Compare
 
-- [ ] **CMPR-01**: User can compare flavors across multiple stores side-by-side
+- [x] **CMPR-01**: User can compare flavors across multiple stores side-by-side
 
 ## Future Requirements
 
@@ -80,7 +80,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | MAP-01 | Phase 12 | Pending |
 | MAP-02 | Phase 12 | Pending |
 | QUIZ-01 | Phase 12 | Pending |
-| CMPR-01 | Phase 12 | Pending |
+| CMPR-01 | Phase 12 | Complete |
 
 **Coverage:**
 - v1.2 requirements: 13 total

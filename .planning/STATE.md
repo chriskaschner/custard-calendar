@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Feature Completion & Cleanup
-status: completed
-stopped_at: Phase 12 context gathered
-last_updated: "2026-03-09T19:39:59.966Z"
-last_activity: 2026-03-09 -- Completed 11-02-PLAN.md (HTML wiring + SW update)
+status: in-progress
+stopped_at: Completed 12-03-PLAN.md
+last_updated: "2026-03-09T22:30:44Z"
+last_activity: 2026-03-09 -- Completed 12-03-PLAN.md (compare localStorage isolation)
 progress:
   total_phases: 4
   completed_phases: 3
-  total_plans: 6
-  completed_plans: 6
-  percent: 100
+  total_plans: 9
+  completed_plans: 7
+  percent: 78
 ---
 
 # Project State
@@ -21,25 +21,29 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-09)
 
 **Core value:** A family can instantly see what flavors are at their nearby stores and decide where to go
-**Current focus:** Phase 11 complete -- monolith refactoring done (both plans complete)
+**Current focus:** Phase 12 in progress -- feature development (compare localStorage isolation complete)
 
 ## Current Position
 
 Milestone: v1.2 Feature Completion & Cleanup
-Phase: 11 of 12 (Monolith Refactoring)
-Plan: 2 of 2 complete
-Status: Phase 11 Complete
-Last activity: 2026-03-09 -- Completed 11-02-PLAN.md (HTML wiring + SW update)
+Phase: 12 of 12 (Feature Development)
+Plan: 1 of 3 complete
+Status: Phase 12 In Progress
+Last activity: 2026-03-09 -- Completed 12-03-PLAN.md (compare localStorage isolation)
 
-Progress: [██████████] 100%
+Progress: [███████░░░] 78%
 
 ## Performance Metrics
 
 **Velocity:**
 - v1.0: 15 plans in ~2 hours (~8 min/plan)
 - v1.1: 4 plans in ~28 min (~7 min/plan)
-- v1.2: 6 plans completed (~11 min avg)
-- Total: 25 plans across 3 milestones
+- v1.2: 7 plans completed (~10 min avg)
+- Total: 26 plans across 3 milestones
+
+| Phase | Plan | Duration | Tasks | Files |
+|-------|------|----------|-------|-------|
+| 12-03 | compare-localstorage-isolation | 7min | 2 | 9 |
 
 ## Accumulated Context
 
@@ -48,6 +52,9 @@ Progress: [██████████] 100%
 Full decision log in PROJECT.md Key Decisions table.
 
 Recent decisions affecting current work:
+- [Phase 12]: Compare page uses plain JSON array in custard:compare:stores (not nested under activeRoute.stores)
+- [Phase 12]: Clean start for existing users -- no migration from old key
+- [Phase 12]: Primary store fallback preserved for first-time compare visitors
 - [Phase 11]: IIFE + Object.assign sub-module pattern; underscore-prefixed internal helpers (_normalizeStringList etc.)
 - [Phase 11]: cleanTelemetrySlug duplicated in domain module to avoid cross-module load-time dependency
 - [Phase 11]: test-api-surface.html harness for split verification; production HTML updated in Plan 02
@@ -80,6 +87,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-09T19:39:59.963Z
-Stopped at: Phase 12 context gathered
-Resume file: .planning/phases/12-feature-development/12-CONTEXT.md
+Last session: 2026-03-09T22:30:44Z
+Stopped at: Completed 12-03-PLAN.md
+Resume file: .planning/phases/12-feature-development/12-03-SUMMARY.md
