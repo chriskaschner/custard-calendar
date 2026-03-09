@@ -432,23 +432,19 @@ async function renderQuestions(quiz) {
       if (Array.isArray(question.options) && question.options.length >= 3) {
         const chipContainer = document.createElement('div');
         chipContainer.className = 'madlib-chip-group';
-        chipContainer.style.cssText = 'display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:0.5rem;';
         for (let ci = 0; ci < 3; ci++) {
           const chip = document.createElement('button');
           chip.type = 'button';
           chip.className = 'madlib-chip';
           chip.textContent = question.options[ci].label;
           chip.dataset.optionId = question.options[ci].id;
-          chip.style.cssText = 'padding:0.375rem 0.875rem;border:1.5px solid #ccc;border-radius:999px;background:white;color:#444;font-size:0.8125rem;font-weight:600;cursor:pointer;';
           chip.addEventListener('click', (function(idx) {
             return function() {
               // Deselect siblings
               chipContainer.querySelectorAll('.madlib-chip').forEach(function(s) {
-                s.style.background = 'white'; s.style.color = '#444'; s.style.borderColor = '#ccc';
                 s.classList.remove('selected');
               });
               // Select this chip
-              chip.style.background = '#005696'; chip.style.color = 'white'; chip.style.borderColor = '#005696';
               chip.classList.add('selected');
               // Fill the text input with the chip's label for scoring
               textInput.value = question.options[idx].label;
@@ -470,7 +466,6 @@ async function renderQuestions(quiz) {
       textInput.addEventListener('input', function() {
         const chips = fieldset.querySelectorAll('.madlib-chip');
         chips.forEach(function(s) {
-          s.style.background = 'white'; s.style.color = '#444'; s.style.borderColor = '#ccc';
           s.classList.remove('selected');
         });
       });
