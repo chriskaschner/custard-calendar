@@ -20,6 +20,7 @@ This file is authoritative. New top-level directories require an update here bef
 | `archive/` | Inactive code preserved for reference | @chriskaschner | No |
 | `.claude/` | Claude Code project settings (`settings.json`) | @chriskaschner | No |
 | `.github/` | CI workflows and issue templates | @chriskaschner | Yes |
+| `.planning/` | GSD planning documents (phases, research, plans) | @chriskaschner | No |
 
 ## Forbidden at Root
 
