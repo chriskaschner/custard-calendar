@@ -3,7 +3,7 @@
 ## Milestones
 
 - Shipped **v1.0 MVP** -- Phases 1-5 (shipped 2026-03-08)
-- In progress **v1.1 Production Launch + Polish** -- Phases 6-7
+- Shipped **v1.1 Production Launch + Polish** -- Phases 6-7 (shipped 2026-03-09)
 
 ## Phases
 
@@ -18,12 +18,12 @@
 
 </details>
 
-### v1.1 Production Launch + Polish (In Progress)
+### v1.1 Production Launch + Polish (SHIPPED 2026-03-09)
 
 **Milestone Goal:** Ship the v1.0 build to production and close out remaining active requirements (design token consumption, quiz visual differentiation).
 
 - [x] **Phase 6: CSS + Quiz Polish** - Consume design tokens across all CSS and add visual differentiation to quiz modes
-- [ ] **Phase 7: Production Deploy** - Push site and Worker to production, verify everything works end-to-end
+- [x] **Phase 7: Production Deploy** - Push site and Worker to production, verify everything works end-to-end
 
 ## Phase Details
 
@@ -53,7 +53,7 @@ Plans:
 **Plans:** 1 plan
 
 Plans:
-- [ ] 07-01-PLAN.md -- Push 49 commits to origin/main, verify GitHub Pages rebuild, smoke test live site
+- [x] 07-01-PLAN.md -- Push 49 commits to origin/main, verify GitHub Pages rebuild, smoke test live site
 
 ## Progress
 
@@ -68,6 +68,6 @@ Phases execute in numeric order: 6 -> 7
 | 4. Supporting Pages + Nav | v1.0 | 3/3 | Complete | 2026-03-08 |
 | 5. Visual Polish | v1.0 | 2/2 | Complete | 2026-03-08 |
 | 6. CSS + Quiz Polish | v1.1 | 2/2 | Complete | 2026-03-08 |
-| 7. Production Deploy | v1.1 | 0/1 | Not started | - |
+| 7. Production Deploy | v1.1 | 1/1 | Complete | 2026-03-09 |
 
 Full v1.0 phase details archived: `.planning/milestones/v1.0-ROADMAP.md`
