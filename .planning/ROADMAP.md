@@ -3,7 +3,7 @@
 ## Milestones
 
 - Shipped **v1.0 MVP** -- Phases 1-5 (shipped 2026-03-08)
-- Shipped **v1.1 Production Launch + Polish** -- Phases 6-7 (shipped 2026-03-09)
+- **v1.1 Production Launch + Polish** -- Phases 6-8 (in progress)
 
 ## Phases
 
@@ -18,12 +18,13 @@
 
 </details>
 
-### v1.1 Production Launch + Polish (SHIPPED 2026-03-09)
+### v1.1 Production Launch + Polish (IN PROGRESS)
 
 **Milestone Goal:** Ship the v1.0 build to production and close out remaining active requirements (design token consumption, quiz visual differentiation).
 
 - [x] **Phase 6: CSS + Quiz Polish** - Consume design tokens across all CSS and add visual differentiation to quiz modes
 - [x] **Phase 7: Production Deploy** - Push site and Worker to production, verify everything works end-to-end
+- [ ] **Phase 8: Quiz Mode Visual Differentiation** - Implement distinct visual styling per quiz mode (QUIZ-01 gap closure)
 
 ## Phase Details
 
@@ -55,10 +56,21 @@ Plans:
 Plans:
 - [x] 07-01-PLAN.md -- Push 49 commits to origin/main, verify GitHub Pages rebuild, smoke test live site
 
+### Phase 8: Quiz Mode Visual Differentiation
+**Goal**: Each quiz mode has distinct visual styling so users can instantly tell which mode they're in
+**Depends on**: Phase 6 (design tokens), Phase 7 (production deploy)
+**Requirements**: QUIZ-01
+**Gap Closure:** Closes gaps from v1.1 audit (requirement, integration, and flow gaps all traced to QUIZ-01)
+**Success Criteria** (what must be TRUE):
+  1. engine.js sets a `data-quiz-mode` attribute on the body element corresponding to the active quiz mode
+  2. quiz.html contains `[data-quiz-mode]` CSS selectors with distinct styling per mode
+  3. A user opening each quiz mode sees visually distinct treatment (colors, borders, or accents) that makes the current mode obvious
+**Plans:** TBD
+
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 6 -> 7
+Phases execute in numeric order: 6 -> 7 -> 8
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
@@ -69,5 +81,6 @@ Phases execute in numeric order: 6 -> 7
 | 5. Visual Polish | v1.0 | 2/2 | Complete | 2026-03-08 |
 | 6. CSS + Quiz Polish | v1.1 | 2/2 | Complete | 2026-03-08 |
 | 7. Production Deploy | v1.1 | 1/1 | Complete | 2026-03-09 |
+| 8. Quiz Mode Visual Differentiation | v1.1 | 0/0 | Not Started | - |
 
 Full v1.0 phase details archived: `.planning/milestones/v1.0-ROADMAP.md`
