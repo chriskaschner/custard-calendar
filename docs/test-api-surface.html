@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>API Surface Test Harness</title>
+</head>
+<body>
+  <!-- Minimal test harness that loads all 4 planner scripts in correct order.
+       Used by api-surface.spec.mjs to verify the module split is correct.
+       This file is NOT linked from any production page. -->
+  <script src="planner-shared.js"></script>
+  <script src="planner-data.js"></script>
+  <script src="planner-domain.js"></script>
+  <script src="planner-ui.js"></script>
+</body>
+</html>
