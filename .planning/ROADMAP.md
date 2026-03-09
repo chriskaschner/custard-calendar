@@ -32,7 +32,7 @@
 
 **Milestone Goal:** Ship all carried-forward active requirements and resolve accumulated tech debt from v1.0/v1.1.
 
-- [ ] **Phase 9: Infrastructure & Deployment** - Fix CI, push commits, register SW on remaining pages, add stores.json to pre-cache
+- [x] **Phase 9: Infrastructure & Deployment** - Fix CI, push commits, register SW on remaining pages, add stores.json to pre-cache
 - [ ] **Phase 10: Redirects & CSS Cleanup** - Old page redirects preserving query params, Mad Libs chip CSS definitions
 - [ ] **Phase 11: Monolith Refactoring** - Split planner-shared.js into focused modules preserving public API
 - [ ] **Phase 12: Feature Development** - Map exclusion filter, quiz image answers, compare multi-store verification
@@ -51,8 +51,8 @@
 **Plans**: 2 plans
 
 Plans:
-- [ ] 09-01-PLAN.md -- CI fix, push commits, smoke test script, deploy verification
-- [ ] 09-02-PLAN.md -- Cache-bust cleanup, SW registration on remaining pages, stores.json pre-cache
+- [x] 09-01-PLAN.md -- CI fix, push commits, smoke test script, deploy verification
+- [x] 09-02-PLAN.md -- Cache-bust cleanup, SW registration on remaining pages, stores.json pre-cache
 
 ### Phase 10: Redirects & CSS Cleanup
 **Goal**: Users with old bookmarks land on the correct new page with their query params intact, and Mad Libs chips render from CSS classes instead of inline styles
@@ -115,7 +115,7 @@ Phases execute in numeric order: 9 -> 10 -> 11 -> 12
 | 6. CSS + Quiz Polish | v1.1 | 2/2 | Complete | 2026-03-08 |
 | 7. Production Deploy | v1.1 | 1/1 | Complete | 2026-03-09 |
 | 8. Quiz Mode Visual Differentiation | v1.1 | 1/1 | Complete | 2026-03-09 |
-| 9. Infrastructure & Deployment | v1.2 | 1/2 | In Progress | - |
+| 9. Infrastructure & Deployment | v1.2 | 2/2 | Complete | 2026-03-09 |
 | 10. Redirects & CSS Cleanup | v1.2 | 0/? | Not started | - |
 | 11. Monolith Refactoring | v1.2 | 0/? | Not started | - |
 | 12. Feature Development | v1.2 | 0/? | Not started | - |
