@@ -441,3 +441,57 @@ def test_quiz_mode_visual_differentiation():
         f"fun.html must contain >= 6 border-left accent declarations for quiz cards, "
         f"found {len(border_left_lines)}"
     )
+
+
+# ---------------------------------------------------------------------------
+# Mad Libs chip CSS compliance (DSGN-01)
+# ---------------------------------------------------------------------------
+
+
+def test_madlib_chip_class_exists():
+    """style.css defines a .madlib-chip class (chip element styling)."""
+    text = STYLE_CSS.read_text()
+    assert re.search(r"\.madlib-chip\s*\{", text), (
+        ".madlib-chip class definition not found in style.css"
+    )
+
+
+def test_madlib_chip_selected_uses_quiz_accent():
+    """style.css .madlib-chip.selected block uses --quiz-accent token."""
+    text = STYLE_CSS.read_text()
+    # Find the .madlib-chip.selected block
+    match = re.search(
+        r"\.madlib-chip\.selected\s*\{([^}]+)\}", text, re.DOTALL
+    )
+    assert match, ".madlib-chip.selected class not found in style.css"
+    block_content = match.group(1)
+    assert "--quiz-accent" in block_content, (
+        ".madlib-chip.selected must use --quiz-accent token for per-mode "
+        f"theming, but block contains: {block_content.strip()}"
+    )
+
+
+def test_madlib_chip_group_class_exists():
+    """style.css defines a .madlib-chip-group class with flex layout."""
+    text = STYLE_CSS.read_text()
+    match = re.search(
+        r"\.madlib-chip-group\s*\{([^}]+)\}", text, re.DOTALL
+    )
+    assert match, ".madlib-chip-group class definition not found in style.css"
+    block_content = match.group(1)
+    assert "display" in block_content, (
+        ".madlib-chip-group must have a display property (flex layout)"
+    )
+
+
+def test_madlib_chip_uses_design_tokens():
+    """style.css .madlib-chip class uses design tokens (at least 2 var(--) refs)."""
+    text = STYLE_CSS.read_text()
+    match = re.search(r"\.madlib-chip\s*\{([^}]+)\}", text, re.DOTALL)
+    assert match, ".madlib-chip class definition not found in style.css"
+    block_content = match.group(1)
+    token_refs = re.findall(r"var\(--", block_content)
+    assert len(token_refs) >= 2, (
+        f".madlib-chip must use at least 2 design tokens (var(--...)), "
+        f"found {len(token_refs)} in: {block_content.strip()}"
+    )
