@@ -62,19 +62,19 @@ Deferred from v1.1. Tracked for future milestones.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DEPL-01 | Pending | Pending |
-| DEPL-02 | Pending | Pending |
-| DEPL-03 | Pending | Pending |
-| TOKN-01 | Pending | Pending |
-| TOKN-02 | Pending | Pending |
-| TOKN-03 | Pending | Pending |
-| QUIZ-01 | Pending | Pending |
+| DEPL-01 | Phase 7 | Pending |
+| DEPL-02 | Phase 7 | Pending |
+| DEPL-03 | Phase 7 | Pending |
+| TOKN-01 | Phase 6 | Pending |
+| TOKN-02 | Phase 6 | Pending |
+| TOKN-03 | Phase 6 | Pending |
+| QUIZ-01 | Phase 6 | Pending |
 
 **Coverage:**
 - v1.1 requirements: 7 total
-- Mapped to phases: 0
-- Unmapped: 7 (pending roadmap)
+- Mapped to phases: 7
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-08*
-*Last updated: 2026-03-08 after initial definition*
+*Last updated: 2026-03-08 after roadmap creation*
