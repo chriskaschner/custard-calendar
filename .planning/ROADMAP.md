@@ -22,7 +22,7 @@
 
 **Milestone Goal:** Ship the v1.0 build to production and close out remaining active requirements (design token consumption, quiz visual differentiation).
 
-- [ ] **Phase 6: CSS + Quiz Polish** - Consume design tokens across all CSS and add visual differentiation to quiz modes
+- [x] **Phase 6: CSS + Quiz Polish** - Consume design tokens across all CSS and add visual differentiation to quiz modes
 - [ ] **Phase 7: Production Deploy** - Push site and Worker to production, verify everything works end-to-end
 
 ## Phase Details
@@ -40,7 +40,7 @@
 
 Plans:
 - [x] 06-01-PLAN.md -- Extend :root tokens, create test scaffold, tokenize style.css colors and spacing
-- [ ] 06-02-PLAN.md -- Tokenize inline styles in fun.html/updates.html/quiz.html, add quiz mode visual differentiation
+- [x] 06-02-PLAN.md -- Tokenize inline styles in fun.html/updates.html/quiz.html, add quiz mode visual differentiation
 
 ### Phase 7: Production Deploy
 **Goal**: The site is live at custard.chriskaschner.com and verified working
@@ -67,7 +67,7 @@ Phases execute in numeric order: 6 -> 7
 | 3. Compare Page | v1.0 | 3/3 | Complete | 2026-03-08 |
 | 4. Supporting Pages + Nav | v1.0 | 3/3 | Complete | 2026-03-08 |
 | 5. Visual Polish | v1.0 | 2/2 | Complete | 2026-03-08 |
-| 6. CSS + Quiz Polish | v1.1 | 1/2 | In progress | - |
+| 6. CSS + Quiz Polish | v1.1 | 2/2 | Complete | 2026-03-08 |
 | 7. Production Deploy | v1.1 | 0/0 | Not started | - |
 
 Full v1.0 phase details archived: `.planning/milestones/v1.0-ROADMAP.md`
