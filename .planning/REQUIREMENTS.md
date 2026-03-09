@@ -16,8 +16,8 @@ Requirements for v1.2 Feature Completion & Cleanup. Each maps to roadmap phases.
 
 ### Redirects
 
-- [ ] **RDIR-01**: Old pages (scoop, radar, calendar, widget, siri, alerts) redirect to correct destinations
-- [ ] **RDIR-02**: Redirects preserve query parameters and hash fragments from bookmarked URLs
+- [x] **RDIR-01**: Old pages (scoop, radar, calendar, widget, siri, alerts) redirect to correct destinations
+- [x] **RDIR-02**: Redirects preserve query parameters and hash fragments from bookmarked URLs
 
 ### Design System
 
@@ -72,8 +72,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | INFR-02 | Phase 9 | Complete |
 | INFR-03 | Phase 9 | Complete |
 | INFR-04 | Phase 9 | Complete |
-| RDIR-01 | Phase 10 | Pending |
-| RDIR-02 | Phase 10 | Pending |
+| RDIR-01 | Phase 10 | Complete |
+| RDIR-02 | Phase 10 | Complete |
 | DSGN-01 | Phase 10 | Complete |
 | ARCH-01 | Phase 11 | Pending |
 | ARCH-02 | Phase 11 | Pending |

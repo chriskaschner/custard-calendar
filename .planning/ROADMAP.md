@@ -33,7 +33,7 @@
 **Milestone Goal:** Ship all carried-forward active requirements and resolve accumulated tech debt from v1.0/v1.1.
 
 - [x] **Phase 9: Infrastructure & Deployment** - Fix CI, push commits, register SW on remaining pages, add stores.json to pre-cache
-- [ ] **Phase 10: Redirects & CSS Cleanup** - Old page redirects preserving query params, Mad Libs chip CSS definitions
+- [x] **Phase 10: Redirects & CSS Cleanup** - Old page redirects preserving query params, Mad Libs chip CSS definitions (completed 2026-03-09)
 - [ ] **Phase 11: Monolith Refactoring** - Split planner-shared.js into focused modules preserving public API
 - [ ] **Phase 12: Feature Development** - Map exclusion filter, quiz image answers, compare multi-store verification
 
@@ -116,7 +116,7 @@ Phases execute in numeric order: 9 -> 10 -> 11 -> 12
 | 7. Production Deploy | v1.1 | 1/1 | Complete | 2026-03-09 |
 | 8. Quiz Mode Visual Differentiation | v1.1 | 1/1 | Complete | 2026-03-09 |
 | 9. Infrastructure & Deployment | v1.2 | 2/2 | Complete | 2026-03-09 |
-| 10. Redirects & CSS Cleanup | 1/2 | In Progress|  | - |
+| 10. Redirects & CSS Cleanup | 2/2 | Complete   | 2026-03-09 | - |
 | 11. Monolith Refactoring | v1.2 | 0/? | Not started | - |
 | 12. Feature Development | v1.2 | 0/? | Not started | - |
 
