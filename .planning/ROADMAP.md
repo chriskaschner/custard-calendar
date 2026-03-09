@@ -39,7 +39,7 @@
 **Plans:** 2 plans
 
 Plans:
-- [ ] 06-01-PLAN.md -- Extend :root tokens, create test scaffold, tokenize style.css colors and spacing
+- [x] 06-01-PLAN.md -- Extend :root tokens, create test scaffold, tokenize style.css colors and spacing
 - [ ] 06-02-PLAN.md -- Tokenize inline styles in fun.html/updates.html/quiz.html, add quiz mode visual differentiation
 
 ### Phase 7: Production Deploy
@@ -67,7 +67,7 @@ Phases execute in numeric order: 6 -> 7
 | 3. Compare Page | v1.0 | 3/3 | Complete | 2026-03-08 |
 | 4. Supporting Pages + Nav | v1.0 | 3/3 | Complete | 2026-03-08 |
 | 5. Visual Polish | v1.0 | 2/2 | Complete | 2026-03-08 |
-| 6. CSS + Quiz Polish | v1.1 | 0/2 | Not started | - |
+| 6. CSS + Quiz Polish | v1.1 | 1/2 | In progress | - |
 | 7. Production Deploy | v1.1 | 0/0 | Not started | - |
 
 Full v1.0 phase details archived: `.planning/milestones/v1.0-ROADMAP.md`

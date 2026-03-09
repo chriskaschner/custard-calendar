@@ -15,8 +15,8 @@ Requirements for production launch and polish. Each maps to roadmap phases.
 
 ### Design Tokens
 
-- [ ] **TOKN-01**: All CSS color values use design token variables
-- [ ] **TOKN-02**: All CSS spacing values use design token variables
+- [x] **TOKN-01**: All CSS color values use design token variables
+- [x] **TOKN-02**: All CSS spacing values use design token variables
 - [ ] **TOKN-03**: Inline styles in fun.html and updates.html converted to token variables
 
 ### Quiz Polish
@@ -65,8 +65,8 @@ Deferred from v1.1. Tracked for future milestones.
 | DEPL-01 | Phase 7 | Pending |
 | DEPL-02 | Phase 7 | Pending |
 | DEPL-03 | Phase 7 | Pending |
-| TOKN-01 | Phase 6 | Pending |
-| TOKN-02 | Phase 6 | Pending |
+| TOKN-01 | Phase 6 | Complete (06-01) |
+| TOKN-02 | Phase 6 | Complete (06-01) |
 | TOKN-03 | Phase 6 | Pending |
 | QUIZ-01 | Phase 6 | Pending |
 
@@ -77,4 +77,4 @@ Deferred from v1.1. Tracked for future milestones.
 
 ---
 *Requirements defined: 2026-03-08*
-*Last updated: 2026-03-08 after roadmap creation*
+*Last updated: 2026-03-09 after 06-01 completion (TOKN-01, TOKN-02 complete)*
