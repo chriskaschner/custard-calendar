@@ -25,7 +25,7 @@ Requirements for v1.2 Feature Completion & Cleanup. Each maps to roadmap phases.
 
 ### Architecture
 
-- [ ] **ARCH-01**: planner-shared.js split into focused modules preserving window.CustardPlanner public API
+- [x] **ARCH-01**: planner-shared.js split into focused modules preserving window.CustardPlanner public API
 - [ ] **ARCH-02**: All existing Playwright tests pass after refactoring with no regressions
 
 ### Map
@@ -75,7 +75,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | RDIR-01 | Phase 10 | Complete |
 | RDIR-02 | Phase 10 | Complete |
 | DSGN-01 | Phase 10 | Complete |
-| ARCH-01 | Phase 11 | Pending |
+| ARCH-01 | Phase 11 | Complete |
 | ARCH-02 | Phase 11 | Pending |
 | MAP-01 | Phase 12 | Pending |
 | MAP-02 | Phase 12 | Pending |

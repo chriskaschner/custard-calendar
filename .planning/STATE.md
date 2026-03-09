@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Feature Completion & Cleanup
 status: executing
-stopped_at: Phase 11 context gathered
-last_updated: "2026-03-09T18:24:40.249Z"
-last_activity: 2026-03-09 -- Completed 10-01-PLAN.md (redirect stubs)
+stopped_at: Completed 11-01-PLAN.md (monolith split)
+last_updated: "2026-03-09T18:49:29Z"
+last_activity: 2026-03-09 -- Completed 11-01-PLAN.md (monolith split)
 progress:
   total_phases: 4
   completed_phases: 2
-  total_plans: 4
-  completed_plans: 4
-  percent: 100
+  total_plans: 6
+  completed_plans: 5
+  percent: 83
 ---
 
 # Project State
@@ -21,25 +21,25 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-09)
 
 **Core value:** A family can instantly see what flavors are at their nearby stores and decide where to go
-**Current focus:** Phase 10 complete -- ready for Phase 11
+**Current focus:** Phase 11 in progress -- monolith split (Plan 01 complete, Plan 02 pending)
 
 ## Current Position
 
 Milestone: v1.2 Feature Completion & Cleanup
-Phase: 10 of 12 (Redirects & CSS Cleanup) -- COMPLETE
-Plan: 2 of 2 complete (Phase 10 done)
+Phase: 11 of 12 (Monolith Refactoring)
+Plan: 1 of 2 complete
 Status: Executing
-Last activity: 2026-03-09 -- Completed 10-01-PLAN.md (redirect stubs)
+Last activity: 2026-03-09 -- Completed 11-01-PLAN.md (monolith split)
 
-Progress: [██████████] 100%
+Progress: [████████░░] 83%
 
 ## Performance Metrics
 
 **Velocity:**
 - v1.0: 15 plans in ~2 hours (~8 min/plan)
 - v1.1: 4 plans in ~28 min (~7 min/plan)
-- v1.2: 4 plans completed (~11 min avg)
-- Total: 23 plans across 3 milestones
+- v1.2: 5 plans completed (~11 min avg)
+- Total: 24 plans across 3 milestones
 
 ## Accumulated Context
 
@@ -48,6 +48,9 @@ Progress: [██████████] 100%
 Full decision log in PROJECT.md Key Decisions table.
 
 Recent decisions affecting current work:
+- [Phase 11]: IIFE + Object.assign sub-module pattern; underscore-prefixed internal helpers (_normalizeStringList etc.)
+- [Phase 11]: cleanTelemetrySlug duplicated in domain module to avoid cross-module load-time dependency
+- [Phase 11]: test-api-surface.html harness for split verification; production HTML updated in Plan 02
 - [v1.2]: Hero cone PNGs deferred to future release (CONE-01 not in v1.2 scope)
 - [v1.2]: Monolith refactor isolated in own phase (highest-risk change)
 - [v1.2]: Compare localStorage state leak must be fixed before multi-store work (Phase 12)
@@ -74,6 +77,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-09T18:24:40.247Z
-Stopped at: Phase 11 context gathered
-Resume file: .planning/phases/11-monolith-refactoring/11-CONTEXT.md
+Last session: 2026-03-09T18:49:29Z
+Stopped at: Completed 11-01-PLAN.md (monolith split)
+Resume file: .planning/phases/11-monolith-refactoring/11-01-SUMMARY.md
