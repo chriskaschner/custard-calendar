@@ -67,62 +67,49 @@ const MOCK_ARCHETYPES = {
   ],
 };
 
+// Minimal stub for any non-classic quiz
+function makeStubQuiz(name) {
+  const id = name.replace('quiz-', '').replace('.json', '');
+  return {
+    id,
+    name: id,
+    title: id,
+    description: 'test',
+    question_count: 2,
+    questions: [
+      { id: 'q1', prompt: 'Placeholder?', options: [
+        { id: 'a', label: 'A', traits: { calm: 1 } },
+        { id: 'b', label: 'B', traits: { bold: 1 } },
+      ]},
+      { id: 'q2', prompt: 'Another?', options: [
+        { id: 'c', label: 'C', traits: { calm: 1 } },
+        { id: 'd', label: 'D', traits: { bold: 1 } },
+      ]},
+    ],
+  };
+}
+
 /**
  * Set up route mocks shared by all tests.
  * Intercepts quiz JSON fetches so we control the question set.
  */
 async function setupRoutes(page) {
-  // Mock the classic-v1 quiz JSON to serve our controlled 2-question set
-  await page.route('**/quizzes/quiz-classic-v1.json', async (route) => {
+  // Intercept ALL quiz JSON fetches with a single handler to avoid race conditions
+  await page.route('**/quizzes/quiz-*.json', async (route) => {
+    const url = route.request().url();
+    let body;
+    if (url.includes('quiz-classic-v1.json')) {
+      body = MOCK_QUIZ_CLASSIC;
+    } else {
+      const filename = url.split('/').pop();
+      body = makeStubQuiz(filename);
+    }
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify(MOCK_QUIZ_CLASSIC),
+      body: JSON.stringify(body),
     });
   });
-
-  // Let other quiz JSONs through but return minimal data so they don't break loading
-  const otherQuizzes = [
-    'quiz-weather-v1.json',
-    'quiz-date-night-v1.json',
-    'quiz-build-scoop-v1.json',
-    'quiz-compatibility-v1.json',
-    'quiz-trivia-v1.json',
-    'quiz-mad-libs-v1.json',
-  ];
-  for (const name of otherQuizzes) {
-    await page.route(`**/quizzes/${name}`, async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          id: name.replace('quiz-', '').replace('.json', ''),
-          name: name,
-          title: name,
-          description: 'test',
-          question_count: 2,
-          questions: [
-            {
-              id: 'q1',
-              prompt: 'Placeholder?',
-              options: [
-                { id: 'a', label: 'A', traits: { calm: 1 } },
-                { id: 'b', label: 'B', traits: { bold: 1 } },
-              ],
-            },
-            {
-              id: 'q2',
-              prompt: 'Another?',
-              options: [
-                { id: 'c', label: 'C', traits: { calm: 1 } },
-                { id: 'd', label: 'D', traits: { bold: 1 } },
-              ],
-            },
-          ],
-        }),
-      });
-    });
-  }
 
   // Mock the archetypes JSON
   await page.route('**/quizzes/flavor-archetypes.json', async (route) => {
@@ -234,8 +221,9 @@ test.describe('QUIZ-01: Image grid for icon-bearing quiz options', () => {
 
     for (let i = 0; i < count; i++) {
       const box = await iconElements.nth(i).boundingBox();
-      expect(box.width).toBeGreaterThanOrEqual(48);
-      expect(box.height).toBeGreaterThanOrEqual(48);
+      // Round to handle sub-pixel rendering (e.g. 47.9999 -> 48)
+      expect(Math.round(box.width)).toBeGreaterThanOrEqual(48);
+      expect(Math.round(box.height)).toBeGreaterThanOrEqual(48);
     }
   });
 });

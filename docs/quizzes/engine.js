@@ -474,6 +474,15 @@ async function renderQuestions(quiz) {
       // Default: multiple_choice
       const grid = document.createElement('div');
       grid.className = 'quiz-options-grid';
+
+      // QUIZ-01: detect if ALL options have icons for image grid layout
+      const allHaveIcons = question.options.every(function(opt) {
+        return opt.icon && window.QuizSprites;
+      });
+      if (allHaveIcons) {
+        grid.classList.add('quiz-image-grid');
+      }
+
       fieldset.appendChild(grid);
 
       question.options.forEach((option) => {
@@ -485,8 +494,9 @@ async function renderQuestions(quiz) {
         input.name = question.id;
         input.value = option.id;
 
+        const iconScale = allHaveIcons ? 6 : 4;
         const iconSvg = option.icon && window.QuizSprites
-          ? window.QuizSprites.resolve(option.icon, 4) : '';
+          ? window.QuizSprites.resolve(option.icon, iconScale) : '';
 
         label.appendChild(input);
 
