@@ -63,11 +63,11 @@ Plans:
   2. A bookmarked URL like /scoop.html?store=1234 arrives at the new page with ?store=1234 preserved
   3. Redirect pages are minimal stubs (no full JS stack loaded)
   4. Mad Libs chip elements display correct colors and spacing using CSS classes with design tokens (no inline style attributes)
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 10-01: TBD
-- [ ] 10-02: TBD
+- [ ] 10-01-PLAN.md -- Redirect stubs for 6 legacy pages, SW cache update, browser test fixes
+- [ ] 10-02-PLAN.md -- Mad Libs chip CSS classes, engine.js inline style removal
 
 ### Phase 11: Monolith Refactoring
 **Goal**: planner-shared.js is split into focused modules with the same public API, enabling targeted browser caching and maintainable code
@@ -116,7 +116,7 @@ Phases execute in numeric order: 9 -> 10 -> 11 -> 12
 | 7. Production Deploy | v1.1 | 1/1 | Complete | 2026-03-09 |
 | 8. Quiz Mode Visual Differentiation | v1.1 | 1/1 | Complete | 2026-03-09 |
 | 9. Infrastructure & Deployment | v1.2 | 2/2 | Complete | 2026-03-09 |
-| 10. Redirects & CSS Cleanup | v1.2 | 0/? | Not started | - |
+| 10. Redirects & CSS Cleanup | v1.2 | 0/2 | Not started | - |
 | 11. Monolith Refactoring | v1.2 | 0/? | Not started | - |
 | 12. Feature Development | v1.2 | 0/? | Not started | - |
 
