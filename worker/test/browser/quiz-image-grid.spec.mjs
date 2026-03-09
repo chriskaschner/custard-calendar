@@ -148,8 +148,10 @@ test.describe('QUIZ-01: Image grid for icon-bearing quiz options', () => {
     // Use mode query param so engine auto-selects classic-v1 on init
     await page.goto('/quiz.html?mode=classic-v1');
 
-    // Wait for both questions to render (our mock has exactly 2)
-    await expect(page.locator('.quiz-question')).toHaveCount(2);
+    // Wait for the mood-color question to render (always selected since it is Q0)
+    await expect(page.locator('.quiz-question', {
+      has: page.locator('legend', { hasText: 'What color best describes your mood?' }),
+    })).toBeVisible();
   });
 
   test('QUIZ-01 Test 1: all-icon question gets .quiz-image-grid class on grid container', async ({ page }) => {
@@ -198,16 +200,33 @@ test.describe('QUIZ-01: Image grid for icon-bearing quiz options', () => {
   });
 
   test('QUIZ-01 Test 4: non-icon question does NOT get .quiz-image-grid class', async ({ page }) => {
-    // The snack question has NO icons
-    const noIconQuestion = page.locator('.quiz-question', {
-      has: page.locator('legend', { hasText: 'What is your go-to snack?' }),
+    // Check every quiz-options-grid on the page: grids WITHOUT all-icon options
+    // should NOT have the quiz-image-grid class. The mood-color question is the
+    // only one guaranteed to have all icons, so any other grid must lack the class.
+    const results = await page.evaluate(() => {
+      const grids = document.querySelectorAll('.quiz-options-grid');
+      return Array.from(grids).map((grid) => {
+        const icons = grid.querySelectorAll('.quiz-option-icon');
+        const options = grid.querySelectorAll('.quiz-option');
+        return {
+          hasImageGridClass: grid.classList.contains('quiz-image-grid'),
+          allHaveIcons: options.length > 0 && icons.length === options.length,
+        };
+      });
     });
-    await expect(noIconQuestion).toBeVisible();
 
-    const grid = noIconQuestion.locator('.quiz-options-grid');
-    // Should NOT have quiz-image-grid class
-    const classes = await grid.getAttribute('class');
-    expect(classes).not.toContain('quiz-image-grid');
+    // Every grid that does NOT have all icons must NOT have quiz-image-grid
+    const nonIconGrids = results.filter((r) => !r.allHaveIcons);
+    expect(nonIconGrids.length).toBeGreaterThan(0);
+    for (const grid of nonIconGrids) {
+      expect(grid.hasImageGridClass).toBe(false);
+    }
+
+    // Every grid that DOES have all icons must have quiz-image-grid
+    const iconGrids = results.filter((r) => r.allHaveIcons);
+    for (const grid of iconGrids) {
+      expect(grid.hasImageGridClass).toBe(true);
+    }
   });
 
   test('QUIZ-01 Test 5: icon images in grid are rendered at larger size (min 48px)', async ({ page }) => {
