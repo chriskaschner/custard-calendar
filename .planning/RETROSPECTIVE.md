@@ -48,6 +48,49 @@
 
 ---
 
+## Milestone: v1.1 -- Production Launch + Polish
+
+**Shipped:** 2026-03-09
+**Phases:** 3 | **Plans:** 4 | **Sessions:** ~4
+
+### What Was Built
+- Extended design token system to 37 tokens with 419 systematic replacements across all CSS
+- Eliminated all inline style attributes from fun.html, updates.html, quiz.html
+- Shipped 49 commits to production at custard.chriskaschner.com
+- Per-mode visual differentiation for all 7 quiz modes via data-quiz-mode attribute theming
+- Static analysis test suite (test_design_tokens.py) preventing token and quiz mode regression
+
+### What Worked
+- Gap closure phase (Phase 8) was fast and focused -- 2 minutes to implement what Phase 6 couldn't fully deliver
+- Static analysis tests for CSS token compliance caught real issues and prevented regression
+- Selector-context-aware test parsing solved false-positive problem that would have made tests useless
+- Production deploy plan with human verification checkpoint caught 5 real issues for future work
+- Audit-driven gap closure: milestone audit identified QUIZ-01 gap, Phase 8 closed it cleanly
+
+### What Was Inefficient
+- Phase 6 Plan 02 SUMMARY incorrectly claimed QUIZ-01 completion when it only prepared infrastructure -- required a separate Phase 8 to actually deliver
+- Mad Libs chip CSS classes were assigned in engine.js but no CSS rules were written -- inline styles still handle rendering
+- The CLI milestone tools ran in the wrong directory (custard-calendar submodule instead of root), requiring manual archive work
+
+### Patterns Established
+- data-quiz-mode attribute pattern: JS sets attribute on body, CSS responds with custom property overrides
+- CSS class replacement of JS inline styles: prefer .classList.add/remove over style.cssText
+- Curl-based production smoke testing to bypass service worker cache
+- Milestone audit before completion catches deployment and integration gaps
+
+### Key Lessons
+1. Audit before completing milestones -- the v1.1 audit caught the Phase 8 deployment gap and Mad Libs tech debt
+2. Gap closure phases should be budgeted -- Phase 8 was needed because Phase 6 couldn't fully deliver QUIZ-01
+3. SUMMARY frontmatter must accurately reflect what was delivered, not what was attempted
+4. Production deploy plans should include automated smoke tests AND human verification checkpoints
+
+### Cost Observations
+- Model mix: 100% opus (quality profile)
+- Sessions: ~4 across 2 days
+- Notable: 28 min total execution time for 4 plans, ~7 min average per plan
+
+---
+
 ## Cross-Milestone Trends
 
 ### Process Evolution
@@ -55,13 +98,17 @@
 | Milestone | Sessions | Phases | Key Change |
 |-----------|----------|--------|------------|
 | v1.0 | ~8 | 5 | Baseline: IIFE pattern, Playwright scaffolds, SW bump discipline |
+| v1.1 | ~4 | 3 | Audit-driven gap closure, CSS static analysis tests, production deploy with human verification |
 
 ### Cumulative Quality
 
-| Milestone | Playwright Tests | Worker Tests | Notes |
-|-----------|-----------------|--------------|-------|
-| v1.0 | 32+ | 810+ | All 38 requirements verified 3 ways (VERIFICATION + SUMMARY + REQUIREMENTS) |
+| Milestone | Playwright Tests | Worker Tests | Python Tests | Notes |
+|-----------|-----------------|--------------|--------------|-------|
+| v1.0 | 32+ | 810+ | 179 | All 38 requirements verified 3 ways |
+| v1.1 | 32+ | 810+ | 179+ | 7/7 requirements satisfied, 5 static analysis tests added |
 
 ### Top Lessons (Verified Across Milestones)
 
-1. (First milestone -- cross-validation starts at v1.1)
+1. Audit before completing milestones -- caught deployment gap in v1.1, caught unused tokens in v1.0
+2. Gap closure plans are high-value and fast -- budget 1-2 per milestone
+3. Static analysis tests for CSS/token compliance prevent silent regression

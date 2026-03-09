@@ -2,23 +2,11 @@
 
 ## What This Is
 
-Custard Calendar tracks daily "Flavor of the Day" schedules across 1,000+ frozen custard stores -- primarily Culver's nationwide, plus Milwaukee-area independents (Kopp's, Gille's, Hefner's, Kraverz, Oscar's). The backend/API layer is feature-complete. The presentation layer has been restructured from 11 loosely connected pages to a focused product organized around 4 use cases with clear navigation (Today, Compare, Map, Fun), persistent store selection, and progressive disclosure.
+Custard Calendar tracks daily "Flavor of the Day" schedules across 1,000+ frozen custard stores -- primarily Culver's nationwide, plus Milwaukee-area independents (Kopp's, Gille's, Hefner's, Kraverz, Oscar's). The presentation layer has been restructured from 11 loosely connected pages to a focused product organized around 4 use cases (Today, Compare, Map, Fun), with persistent store selection, progressive disclosure, a 37-token design system consumed across all CSS, and per-mode quiz theming. The site is live at custard.chriskaschner.com.
 
 ## Core Value
 
 A family in the car (or on the couch) can instantly see what flavors are at their nearby stores and decide where to go -- no friction, no hunting through pages.
-
-## Current Milestone: v1.1 Production Launch + Polish
-
-**Goal:** Ship the v1.0 build to production and close out remaining active requirements (redirects, map filter, quiz polish, tech debt).
-
-**Target features:**
-- Production deployment (push 46 commits, deploy Worker)
-- Old page redirects preserving query params
-- Map flavor family exclusion filter
-- Quiz image-based answers + visual differentiation
-- Design token consumption across CSS
-- Hero cone PNGs for remaining flavors
 
 ## Requirements
 
@@ -32,15 +20,20 @@ A family in the car (or on the couch) can instantly see what flavors are at thei
 - 4-item nav (Today, Compare, Map, Fun) with functional labels on every page -- v1.0
 - Unified card system with design tokens and seasonal rarity suppression -- v1.0
 - Hero cone PNG pipeline with SVG fallback -- v1.0
+- All CSS color and spacing values use design token variables -- v1.1
+- Inline styles eliminated from fun.html, updates.html, quiz.html -- v1.1
+- Site deployed and verified at custard.chriskaschner.com -- v1.1
+- Quiz modes visually distinct with per-mode accent theming -- v1.1
 
 ### Active
 
-- [ ] Old page redirects preserving query params (scoop, radar, calendar, widget, siri, alerts) -- RDIR-01..03
-- [ ] Map flavor family exclusion filter -- MAPE-01..02
-- [ ] Quiz image-based answer options on mobile -- FUNP-01
-- [ ] Quiz mode visual differentiation -- FUNP-02
-- [ ] Design token consumption across all CSS rules (tech debt from v1.0)
-- [ ] Hero cone PNGs for remaining ~136 flavors (tech debt from v1.0)
+- [ ] Old page redirects preserving query params (scoop, radar, calendar, widget, siri, alerts)
+- [ ] Map flavor family exclusion filter with persistent state
+- [ ] Quiz image-based answer options on mobile
+- [ ] Hero cone PNGs for remaining ~136 flavors
+- [ ] SW registered on fun.html and updates.html
+- [ ] planner-shared.js refactored from 1,624-line monolith
+- [ ] Compare page multi-store comparison (currently switches stores instead of side-by-side)
 
 ### Out of Scope
 
@@ -56,7 +49,7 @@ A family in the car (or on the couch) can instantly see what flavors are at thei
 
 ## Context
 
-Shipped v1.0 with 12,592 lines across 63 files. Static HTML/CSS/JS on GitHub Pages.
+Shipped v1.1 with 22,741 lines across HTML/CSS/JS files. Static HTML/CSS/JS on GitHub Pages.
 Tech stack: Cloudflare Worker (API), vanilla JS (IIFE pattern), Playwright (browser tests), GitHub Pages (hosting).
 810+ Worker tests, 32+ Playwright tests, 179 Python tests.
 
@@ -64,8 +57,10 @@ Tech stack: Cloudflare Worker (API), vanilla JS (IIFE pattern), Playwright (brow
 - 15 HTML pages with shared navigation and store indicator
 - 4 primary nav destinations (Today, Compare, Map, Fun)
 - Get Updates accessible via footer and contextual CTAs
-- Unified .card component system with design tokens defined
+- 37-token design system fully consumed across all CSS (no hardcoded colors/spacing)
+- Per-mode quiz theming via data-quiz-mode attribute selectors (7 modes)
 - Hero cone PNG pipeline for 40 profiled flavors with SVG fallback
+- Live at custard.chriskaschner.com
 
 ## Constraints
 
@@ -79,8 +74,8 @@ Tech stack: Cloudflare Worker (API), vanilla JS (IIFE pattern), Playwright (brow
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Presentation-layer only | Backend is feature-complete; all gaps are UX/structure | Good -- 15 plans, 2 hours, zero API changes |
-| IIFE module pattern | No build step on GitHub Pages, matches codebase conventions | Good -- shared-nav.js, today-page.js, compare-page.js, fun-page.js, updates-page.js all IIFE |
+| Presentation-layer only | Backend is feature-complete; all gaps are UX/structure | Good -- 19 plans, ~2.5 hours, zero API changes |
+| IIFE module pattern | No build step on GitHub Pages, matches codebase conventions | Good -- all page modules use IIFE |
 | Day-first card stack for Compare | Mobile-first at 375px, better than table columns | Good -- usable, tested at 375px |
 | Get Updates as page (not drawer) | Simple, one URL, consolidates 4 setup flows | Good -- 5 UPDT requirements satisfied |
 | 4-item nav (Today/Compare/Map/Fun) | Clarity over cleverness; fits 375px without hamburger | Good -- tested on all 15 pages |
@@ -88,7 +83,10 @@ Tech stack: Cloudflare Worker (API), vanilla JS (IIFE pattern), Playwright (brow
 | CustomEvent bridge (sharednav:storechange) | Cross-component communication without coupling | Good -- used by Today, Compare, index |
 | SVG-to-PNG hero cone pipeline | Higher fidelity hero images, SVG fallback for unknowns | Good -- 40 PNGs, works well |
 | Seasonal rarity suppression | Prevent misleading "overdue!" claims for seasonal flavors | Good -- isSeasonalFlavor() guard |
-| Phase 2+3 parallel execution | Both depend only on Phase 1, no interdependency | Good -- saved time |
+| Selector-context-aware CSS testing | Line-only pattern matching produces false positives | Good -- accurate detection of domain-specific sections |
+| data-quiz-mode attribute theming | JS sets attribute, CSS responds with per-mode overrides | Good -- 7 modes, clean separation |
+| Curl-based production smoke tests | Bypass service worker cache for reliable deploy verification | Good -- all 5 pages verified |
+| CSS color-mix for derived accents | Project already uses modern CSS features | Good -- clean derived shades |
 
 ---
-*Last updated: 2026-03-08 after v1.1 milestone started*
+*Last updated: 2026-03-09 after v1.1 milestone*

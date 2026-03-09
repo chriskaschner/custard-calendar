@@ -3,7 +3,7 @@
 ## Milestones
 
 - Shipped **v1.0 MVP** -- Phases 1-5 (shipped 2026-03-08)
-- **v1.1 Production Launch + Polish** -- Phases 6-8 (in progress)
+- Shipped **v1.1 Production Launch + Polish** -- Phases 6-8 (shipped 2026-03-09)
 
 ## Phases
 
@@ -18,62 +18,16 @@
 
 </details>
 
-### v1.1 Production Launch + Polish (IN PROGRESS)
+<details>
+<summary>Shipped v1.1 Production Launch + Polish (Phases 6-8) -- SHIPPED 2026-03-09</summary>
 
-**Milestone Goal:** Ship the v1.0 build to production and close out remaining active requirements (design token consumption, quiz visual differentiation).
+- [x] Phase 6: CSS + Quiz Polish (2/2 plans) -- completed 2026-03-08
+- [x] Phase 7: Production Deploy (1/1 plan) -- completed 2026-03-09
+- [x] Phase 8: Quiz Mode Visual Differentiation (1/1 plan) -- completed 2026-03-09
 
-- [x] **Phase 6: CSS + Quiz Polish** - Consume design tokens across all CSS and add visual differentiation to quiz modes
-- [x] **Phase 7: Production Deploy** - Push site and Worker to production, verify everything works end-to-end
-- [x] **Phase 8: Quiz Mode Visual Differentiation** - Implement distinct visual styling per quiz mode (QUIZ-01 gap closure)
-
-## Phase Details
-
-### Phase 6: CSS + Quiz Polish
-**Goal**: Every CSS rule uses the design token system and quiz modes are visually distinct
-**Depends on**: Phase 5 (design tokens defined in v1.0)
-**Requirements**: TOKN-01, TOKN-02, TOKN-03, QUIZ-01
-**Success Criteria** (what must be TRUE):
-  1. No hardcoded color hex values remain in any CSS file -- all colors reference token variables
-  2. No hardcoded spacing magic numbers remain in any CSS file -- all spacing uses token variables
-  3. fun.html and updates.html contain zero inline style attributes with hardcoded values
-  4. A user opening each quiz mode (Classic, Timed, Streak, Challenge) sees distinct visual treatment that makes the current mode obvious
-**Plans:** 2 plans
-
-Plans:
-- [x] 06-01-PLAN.md -- Extend :root tokens, create test scaffold, tokenize style.css colors and spacing
-- [x] 06-02-PLAN.md -- Tokenize inline styles in fun.html/updates.html/quiz.html, add quiz mode visual differentiation
-
-### Phase 7: Production Deploy
-**Goal**: The site is live at custard.chriskaschner.com and verified working
-**Depends on**: Phase 6
-**Requirements**: DEPL-01, DEPL-02, DEPL-03
-**Success Criteria** (what must be TRUE):
-  1. custard.chriskaschner.com serves the current site with all v1.0 and v1.1 changes
-  2. Cloudflare Worker responds to API requests from the live site
-  3. A user can navigate Today, Compare, Map, Fun, and Get Updates on the live site without errors
-**Plans:** 1 plan
-
-Plans:
-- [x] 07-01-PLAN.md -- Push 49 commits to origin/main, verify GitHub Pages rebuild, smoke test live site
-
-### Phase 8: Quiz Mode Visual Differentiation
-**Goal**: Each quiz mode has distinct visual styling so users can instantly tell which mode they're in
-**Depends on**: Phase 6 (design tokens), Phase 7 (production deploy)
-**Requirements**: QUIZ-01
-**Gap Closure:** Closes gaps from v1.1 audit (requirement, integration, and flow gaps all traced to QUIZ-01)
-**Success Criteria** (what must be TRUE):
-  1. engine.js sets a `data-quiz-mode` attribute on the body element corresponding to the active quiz mode
-  2. quiz.html contains `[data-quiz-mode]` CSS selectors with distinct styling per mode
-  3. A user opening each quiz mode sees visually distinct treatment (colors, borders, or accents) that makes the current mode obvious
-**Plans:** 1 plan
-
-Plans:
-- [x] 08-01-PLAN.md -- Implement data-quiz-mode JS/CSS wiring, per-mode accent colors, fun.html card accents, static analysis test
+</details>
 
 ## Progress
-
-**Execution Order:**
-Phases execute in numeric order: 6 -> 7 -> 8
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
@@ -87,3 +41,4 @@ Phases execute in numeric order: 6 -> 7 -> 8
 | 8. Quiz Mode Visual Differentiation | v1.1 | 1/1 | Complete | 2026-03-09 |
 
 Full v1.0 phase details archived: `.planning/milestones/v1.0-ROADMAP.md`
+Full v1.1 phase details archived: `.planning/milestones/v1.1-ROADMAP.md`
