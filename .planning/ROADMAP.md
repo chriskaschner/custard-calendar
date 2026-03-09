@@ -50,10 +50,10 @@ Plans:
   1. custard.chriskaschner.com serves the current site with all v1.0 and v1.1 changes
   2. Cloudflare Worker responds to API requests from the live site
   3. A user can navigate Today, Compare, Map, Fun, and Get Updates on the live site without errors
-**Plans**: TBD
+**Plans:** 1 plan
 
 Plans:
-- [ ] 07-01: TBD
+- [ ] 07-01-PLAN.md -- Push 49 commits to origin/main, verify GitHub Pages rebuild, smoke test live site
 
 ## Progress
 
@@ -68,6 +68,6 @@ Phases execute in numeric order: 6 -> 7
 | 4. Supporting Pages + Nav | v1.0 | 3/3 | Complete | 2026-03-08 |
 | 5. Visual Polish | v1.0 | 2/2 | Complete | 2026-03-08 |
 | 6. CSS + Quiz Polish | v1.1 | 2/2 | Complete | 2026-03-08 |
-| 7. Production Deploy | v1.1 | 0/0 | Not started | - |
+| 7. Production Deploy | v1.1 | 0/1 | Not started | - |
 
 Full v1.0 phase details archived: `.planning/milestones/v1.0-ROADMAP.md`
