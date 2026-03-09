@@ -118,7 +118,7 @@ Phases execute in numeric order: 9 -> 10 -> 11 -> 12
 | 8. Quiz Mode Visual Differentiation | v1.1 | 1/1 | Complete | 2026-03-09 |
 | 9. Infrastructure & Deployment | v1.2 | 2/2 | Complete | 2026-03-09 |
 | 10. Redirects & CSS Cleanup | 2/2 | Complete    | 2026-03-09 | - |
-| 11. Monolith Refactoring | 2/2 | Complete   | 2026-03-09 | - |
+| 11. Monolith Refactoring | 2/2 | Complete    | 2026-03-09 | - |
 | 12. Feature Development | v1.2 | 0/? | Not started | - |
 
 Full v1.0 phase details archived: `.planning/milestones/v1.0-ROADMAP.md`
