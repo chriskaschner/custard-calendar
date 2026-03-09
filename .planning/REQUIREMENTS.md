@@ -35,7 +35,7 @@ Requirements for v1.2 Feature Completion & Cleanup. Each maps to roadmap phases.
 
 ### Quiz
 
-- [ ] **QUIZ-01**: User sees image-based answer options for quiz questions on mobile
+- [x] **QUIZ-01**: User sees image-based answer options for quiz questions on mobile
 
 ### Compare
 
@@ -79,7 +79,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ARCH-02 | Phase 11 | Complete |
 | MAP-01 | Phase 12 | Pending |
 | MAP-02 | Phase 12 | Pending |
-| QUIZ-01 | Phase 12 | Pending |
+| QUIZ-01 | Phase 12 | Complete |
 | CMPR-01 | Phase 12 | Complete |
 
 **Coverage:**
