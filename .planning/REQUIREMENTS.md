@@ -30,8 +30,8 @@ Requirements for v1.2 Feature Completion & Cleanup. Each maps to roadmap phases.
 
 ### Map
 
-- [ ] **MAP-01**: User can filter map markers by flavor family using exclusion chips
-- [ ] **MAP-02**: Map exclusion filter state persists across page loads via localStorage
+- [x] **MAP-01**: User can filter map markers by flavor family using exclusion chips
+- [x] **MAP-02**: Map exclusion filter state persists across page loads via localStorage
 
 ### Quiz
 
@@ -77,8 +77,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DSGN-01 | Phase 10 | Complete |
 | ARCH-01 | Phase 11 | Complete |
 | ARCH-02 | Phase 11 | Complete |
-| MAP-01 | Phase 12 | Pending |
-| MAP-02 | Phase 12 | Pending |
+| MAP-01 | Phase 12 | Complete |
+| MAP-02 | Phase 12 | Complete |
 | QUIZ-01 | Phase 12 | Complete |
 | CMPR-01 | Phase 12 | Complete |
 

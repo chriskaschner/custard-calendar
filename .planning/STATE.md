@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Feature Completion & Cleanup
-status: executing
-stopped_at: Completed 12-02-PLAN.md
-last_updated: "2026-03-09T22:35:01.786Z"
-last_activity: 2026-03-09 -- Completed 12-02-PLAN.md (quiz image grid layout)
+status: completed
+stopped_at: Completed 12-01-PLAN.md (map exclusion filter)
+last_updated: "2026-03-09T22:50:37Z"
+last_activity: 2026-03-09 -- Completed 12-01-PLAN.md (map exclusion filter with localStorage persistence)
 progress:
   total_phases: 4
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 9
-  completed_plans: 8
-  percent: 78
+  completed_plans: 9
+  percent: 100
 ---
 
 # Project State
@@ -21,30 +21,31 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-09)
 
 **Core value:** A family can instantly see what flavors are at their nearby stores and decide where to go
-**Current focus:** Phase 12 in progress -- feature development (compare localStorage isolation complete)
+**Current focus:** Phase 12 complete -- all feature development plans done
 
 ## Current Position
 
 Milestone: v1.2 Feature Completion & Cleanup
 Phase: 12 of 12 (Feature Development)
-Plan: 2 of 3 complete
-Status: Phase 12 In Progress
-Last activity: 2026-03-09 -- Completed 12-02-PLAN.md (quiz image grid layout)
+Plan: 3 of 3 complete
+Status: Phase 12 Complete
+Last activity: 2026-03-09 -- Completed 12-01-PLAN.md (map exclusion filter)
 
-Progress: [███████░░░] 78%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
 **Velocity:**
 - v1.0: 15 plans in ~2 hours (~8 min/plan)
 - v1.1: 4 plans in ~28 min (~7 min/plan)
-- v1.2: 7 plans completed (~10 min avg)
-- Total: 26 plans across 3 milestones
+- v1.2: 8 plans completed (~11 min avg)
+- Total: 27 plans across 3 milestones
 
 | Phase | Plan | Duration | Tasks | Files |
 |-------|------|----------|-------|-------|
+| 12-01 | map-exclusion-filter | 27min | 2 | 4 |
+| 12-02 | quiz-image-grid | 10min | 2 | 3 |
 | 12-03 | compare-localstorage-isolation | 7min | 2 | 9 |
-| Phase 12 P02 | 10min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -53,6 +54,9 @@ Progress: [███████░░░] 78%
 Full decision log in PROJECT.md Key Decisions table.
 
 Recent decisions affecting current work:
+- [Phase 12]: Map exclusion chips use .selected class (distinct from Compare .active) and peanutButter camelCase key
+- [Phase 12]: Map exclusion persistence uses custard:map:exclusions key (separate from Compare custard-exclusions)
+- [Phase 12]: Excluded map markers dimmed to 0.15 opacity rather than hidden
 - [Phase 12]: Compare page uses plain JSON array in custard:compare:stores (not nested under activeRoute.stores)
 - [Phase 12]: Clean start for existing users -- no migration from old key
 - [Phase 12]: Primary store fallback preserved for first-time compare visitors
@@ -90,6 +94,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-09T22:35:01.784Z
-Stopped at: Completed 12-02-PLAN.md
+Last session: 2026-03-09T22:50:37Z
+Stopped at: Completed 12-01-PLAN.md (map exclusion filter)
 Resume file: None
