@@ -137,6 +137,24 @@ export const FLAVOR_PROFILES = {
   'salted caramel pecan pie': { base: 'caramel', ribbon: null, toppings: ['pecan', 'salt', 'pie_crust'], density: 'explosion' },
   'strawberry cheesecake': { base: 'cheesecake', ribbon: null, toppings: ['strawberry_bits'], density: 'double' },
   'vanilla': { base: 'vanilla', ribbon: null, toppings: [], density: 'pure' },
+  // Phase 16-01: Chocolate-family batch (chocolate, dark_chocolate, espresso bases)
+  'bonfire s\'mores': { base: 'chocolate', ribbon: 'marshmallow', toppings: ['graham_cracker'], density: 'standard' },
+  'brownie batter overload': { base: 'chocolate', ribbon: null, toppings: ['brownie'], density: 'overload' },
+  'brownie explosion': { base: 'chocolate', ribbon: 'marshmallow', toppings: ['brownie', 'brownie', 'dove'], density: 'explosion' },
+  'cappuccino almond fudge': { base: 'espresso', ribbon: 'fudge', toppings: ['cashew'], density: 'standard' },
+  'cappuccino cookie crumble': { base: 'espresso', ribbon: null, toppings: ['cookie_crumbs'], density: 'standard' },
+  'death by chocolate': { base: 'dark_chocolate', ribbon: 'chocolate_syrup', toppings: ['brownie', 'dove'], density: 'explosion' },
+  'double marshmallow oreo': { base: 'chocolate', ribbon: 'marshmallow', toppings: ['oreo'], density: 'double' },
+  'm&m cookie dough': { base: 'chocolate', ribbon: null, toppings: ['m_and_m', 'cookie_dough'], density: 'standard' },
+  'm&m swirl': { base: 'chocolate', ribbon: null, toppings: ['m_and_m'], density: 'standard' },
+  'midnight toffee': { base: 'dark_chocolate', ribbon: null, toppings: ['heath'], density: 'standard' },
+  'mooey gooey twist': { base: 'chocolate', ribbon: 'caramel', toppings: ['cookie_dough'], density: 'standard' },
+  'mudd pie': { base: 'espresso', ribbon: 'fudge', toppings: ['oreo', 'cookie_crumbs'], density: 'standard' },
+  'pb brownie': { base: 'chocolate', ribbon: 'peanut_butter', toppings: ['brownie'], density: 'standard' },
+  'rocky road': { base: 'chocolate', ribbon: 'marshmallow', toppings: ['cashew', 'chocolate_chip'], density: 'standard' },
+  'tiramisu': { base: 'espresso', ribbon: 'marshmallow', toppings: ['cake', 'dove'], density: 'standard' },
+  'triple chocolate kiss': { base: 'dark_chocolate', ribbon: 'chocolate_syrup', toppings: ['dove'], density: 'standard' },
+  'twix mix': { base: 'chocolate', ribbon: 'caramel', toppings: ['cookie_crumbs'], density: 'standard' },
 };
 
 export const CONE_TIP_COLOR = '#8B5A2B';
@@ -211,6 +229,11 @@ export const FLAVOR_ALIASES = {
 
   // Heath bar variant
   'heath bar crunch': 'chocolate heath crunch',
+
+  // Phase 16-01: Chocolate-family variant aliases
+  'choc m&m': 'm&m swirl',
+  "bonfire smores": "bonfire s'mores",
+  "s'mores": "bonfire s'mores",
 };
 
 const DEFAULT_PROFILE = { base: 'vanilla', ribbon: null, toppings: [], density: 'standard' };

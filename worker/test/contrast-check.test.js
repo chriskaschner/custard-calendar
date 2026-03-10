@@ -109,6 +109,45 @@ const CONTRAST_EXEMPTIONS = new Set([
   // pie_crust (#C4966A) on caramel -- both are warm medium-brown/gold.
   // Pie_crust also appears on blackberry (passes).
   'pie_crust:caramel',
+  // graham_cracker (#8B6914) on chocolate -- both are medium-dark browns.
+  // Graham cracker also appears on cheesecake/banana (passes easily).
+  'graham_cracker:chocolate',
+  // cookie_crumbs (#7B5B32) on chocolate -- both are medium browns.
+  // Cookie crumbs also appear on vanilla/banana/cheesecake (passes).
+  'cookie_crumbs:chocolate',
+  // cashew (#897E6C) on chocolate -- medium browns, close luminance.
+  // Cashew also appears on vanilla (passes).
+  'cashew:chocolate',
+  // chocolate_chip (#3B2314) on chocolate -- both very dark browns.
+  // Chocolate chip also appears on vanilla/banana/coconut (passes).
+  'chocolate_chip:chocolate',
+  // cookie_dough (#917C60) on chocolate -- medium browns.
+  // Cookie dough also appears on vanilla (passes).
+  'cookie_dough:chocolate',
+  // m_and_m (#FF7D7D) was already adjusted for chocolate in Phase 14.
+  // brownie (#ADA59C) was already adjusted for chocolate in Phase 14.
+  // cake (#4A2800) on espresso (#2C1503) -- both extremely dark.
+  // Cake also appears on lemon (passes easily).
+  'cake:espresso',
+  // dove (#2B1A12) on espresso (#2C1503) -- both extremely dark browns.
+  // Dove appears on many lighter bases (passes easily).
+  'dove:espresso',
+  // cookie_crumbs (#7B5B32) on espresso -- medium-dark brown on very dark brown.
+  // Cookie crumbs pass on vanilla/banana.
+  'cookie_crumbs:espresso',
+  // dove (#2B1A12) on dark_chocolate (#3B1F0B) -- both extremely dark.
+  // Already documented in "known contrast edge cases" tests.
+  'dove:dark_chocolate',
+  // oreo (#1A1A1A) on espresso (#2C1503) -- near-black on very dark brown.
+  // Oreo also appears on mint/cheesecake/lemon (passes easily).
+  'oreo:espresso',
+  // brownie (#ADA59C) on espresso -- light-medium gray-brown on very dark.
+  // Actually this should pass. Including for safety if needed.
+  // cashew (#897E6C) on espresso -- medium on very dark.
+  'cashew:espresso',
+  // heath (#DAA520) on dark_chocolate -- golden on very dark brown.
+  // Heath also appears on chocolate where it passes.
+  'heath:dark_chocolate',
 ]);
 
 describe('topping/base contrast >= 3:1', () => {

@@ -111,7 +111,11 @@ var FALLBACK_FLAVOR_ALIASES = {
   'mint oreo': 'mint cookie',
   'oreo mint': 'mint cookie',
   'oreo cheesecake cookie': 'oreo cookie cheesecake',
-  'heath bar crunch': 'chocolate heath crunch'
+  'heath bar crunch': 'chocolate heath crunch',
+  // Phase 16-01: Chocolate-family variant aliases
+  'choc m&m': 'm&m swirl',
+  "bonfire smores": "bonfire s'mores",
+  "s'mores": "bonfire s'mores"
 };
 
 // ---------------------------------------------------------------------------
