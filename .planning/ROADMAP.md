@@ -145,7 +145,7 @@ Phases execute in numeric order: 13 -> 14 -> 15 -> 16 -> 17
 | 13. Rendering Quality Fixes | v1.3 | 2/2 | Complete | 2026-03-10 |
 | 14. Validation Tooling | v1.3 | 2/2 | Complete | 2026-03-10 |
 | 15. Palette Expansion & Aliases | v1.3 | 2/2 | Complete | 2026-03-10 |
-| 16. Bulk Profile Authoring | v1.3 | 3/3 | Complete | 2026-03-10 |
+| 16. Bulk Profile Authoring | v1.3 | Complete    | 2026-03-10 | 2026-03-10 |
 | 17. PNG Generation & Deployment | v1.3 | 0/0 | Not started | - |
 
 Full v1.0 phase details archived: `.planning/milestones/v1.0-ROADMAP.md`
