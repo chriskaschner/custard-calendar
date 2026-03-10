@@ -142,7 +142,7 @@ Phases execute in numeric order: 13 -> 14 -> 15 -> 16 -> 17
 | 11. Monolith Refactoring | v1.2 | 2/2 | Complete | 2026-03-09 |
 | 12. Feature Development | v1.2 | 3/3 | Complete | 2026-03-09 |
 | 13. Rendering Quality Fixes | v1.3 | 2/2 | Complete | 2026-03-10 |
-| 14. Validation Tooling | 2/2 | Complete   | 2026-03-10 | - |
+| 14. Validation Tooling | 2/2 | Complete    | 2026-03-10 | - |
 | 15. Palette Expansion & Aliases | v1.3 | 0/0 | Not started | - |
 | 16. Bulk Profile Authoring | v1.3 | 0/0 | Not started | - |
 | 17. PNG Generation & Deployment | v1.3 | 0/0 | Not started | - |
