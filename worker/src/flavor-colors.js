@@ -32,26 +32,26 @@ export const RIBBON_COLORS = {
 
 export const TOPPING_COLORS = {
   oreo: '#1A1A1A',
-  andes: '#1FAE7A',
+  andes: '#0A3726',             // contrast-adjusted: 3:1 on mint_andes (was #1FAE7A)
   dove: '#2B1A12',
   pecan: '#8B5A2B',
-  cashew: '#D4C4A8',
+  cashew: '#897E6C',             // contrast-adjusted: 3:1 on vanilla (was #D4C4A8)
   heath: '#DAA520',
   butterfinger: '#E6A817',
-  cookie_dough: '#C4A882',
-  strawberry_bits: '#FF1744',
+  cookie_dough: '#917C60',       // contrast-adjusted: 3:1 on vanilla (was #C4A882)
+  strawberry_bits: '#A10E2B',    // contrast-adjusted: 3:1 on strawberry (was #FF1744)
   raspberry: '#E91E63',
-  peach_bits: '#FF9800',
-  salt: '#FFFFFF',
+  peach_bits: '#BF7200',         // contrast-adjusted: 3:1 on peach (was #FF9800)
+  salt: '#4B4B4B',               // contrast-adjusted: 3:1 on caramel (was #FFFFFF)
   snickers: '#C4A060',
   cake: '#4A2800',
   cheesecake_bits: '#FFF8DC',
-  m_and_m: '#FF4444',
+  m_and_m: '#FF7D7D',           // contrast-adjusted: 3:1 on chocolate (was #FF4444)
   reeses: '#D4A017',
-  brownie: '#2D1700',
+  brownie: '#ADA59C',           // contrast-adjusted: 3:1 on chocolate (was #2D1700)
   blueberry: '#3B1F6B',
-  pie_crust: '#C4966A',
-  blackberry_drupe: '#3D1F5C',  // darker purple for blackberry inclusions at small tiers
+  pie_crust: '#C99E76',           // contrast-adjusted: 3:1 on blackberry (was #C4966A)
+  blackberry_drupe: '#AEA1BB',  // contrast-adjusted: 3:1 on blackberry (was #3D1F5C)
 };
 
 export const CONE_COLORS = {
