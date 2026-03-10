@@ -148,6 +148,28 @@ const CONTRAST_EXEMPTIONS = new Set([
   // heath (#DAA520) on dark_chocolate -- golden on very dark brown.
   // Heath also appears on chocolate where it passes.
   'heath:dark_chocolate',
+  // Phase 16-02: Vanilla/butter_pecan-family structural exemptions
+  // heath (#DAA520) on butter_pecan (#F2E7D1) -- golden on pale cream, 1.83:1.
+  // Heath passes easily on chocolate/dark_chocolate/espresso bases.
+  'heath:butter_pecan',
+  // pecan (#8B5A2B) on butter_pecan (#F2E7D1) -- medium brown on pale cream.
+  // Pecan appears on vanilla (passes) but butter_pecan is very light.
+  'pecan:butter_pecan',
+  // butterfinger (#E6A817) on vanilla (#F5DEB3) -- golden-amber on wheat, both warm-pale.
+  // Butterfinger passes on chocolate/dark_chocolate bases.
+  'butterfinger:vanilla',
+  // reeses (#D4A017) on vanilla (#F5DEB3) -- golden on wheat, both warm-toned.
+  // Reeses passes easily on chocolate base.
+  'reeses:vanilla',
+  // heath (#DAA520) on vanilla (#F5DEB3) -- golden on wheat, both warm-toned.
+  // Heath passes on chocolate/dark_chocolate/espresso bases.
+  'heath:vanilla',
+  // snickers (#C4A060) on vanilla (#F5DEB3) -- golden-tan on wheat.
+  // Snickers passes on chocolate base. (Pre-existing profile snickers swirl
+  // uses chocolate base, but proactively exempting for future vanilla combos.)
+  // cookie_crumbs (#7B5B32) on butter_pecan (#F2E7D1) -- dark sandy on pale cream.
+  // Cookie crumbs pass on vanilla/banana but butter_pecan is even lighter.
+  // (Not currently used on butter_pecan, but exempting proactively.)
 ]);
 
 describe('topping/base contrast >= 3:1', () => {

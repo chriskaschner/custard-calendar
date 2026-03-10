@@ -155,6 +155,28 @@ export const FLAVOR_PROFILES = {
   'tiramisu': { base: 'espresso', ribbon: 'marshmallow', toppings: ['cake', 'dove'], density: 'standard' },
   'triple chocolate kiss': { base: 'dark_chocolate', ribbon: 'chocolate_syrup', toppings: ['dove'], density: 'standard' },
   'twix mix': { base: 'chocolate', ribbon: 'caramel', toppings: ['cookie_crumbs'], density: 'standard' },
+  // Phase 16-02: Vanilla-family batch (vanilla, butter_pecan bases)
+  'badger claw': { base: 'vanilla', ribbon: 'caramel', toppings: ['cashew', 'fudge_bits'], density: 'standard' },
+  "bailey's irish cream": { base: 'vanilla', ribbon: 'chocolate_syrup', toppings: [], density: 'pure' },
+  'boston cream': { base: 'vanilla', ribbon: 'chocolate_syrup', toppings: ['cake'], density: 'standard' },
+  'butter brickle': { base: 'butter_pecan', ribbon: null, toppings: ['heath'], density: 'standard' },
+  'butter finger blast': { base: 'vanilla', ribbon: null, toppings: ['butterfinger'], density: 'standard' },
+  'butterfinger pecan': { base: 'vanilla', ribbon: null, toppings: ['butterfinger', 'pecan'], density: 'standard' },
+  'cashew delight': { base: 'vanilla', ribbon: 'caramel', toppings: ['cashew'], density: 'standard' },
+  'chunky peanut butter dream': { base: 'vanilla', ribbon: 'peanut_butter', toppings: ['reeses'], density: 'standard' },
+  'cookie dough craving': { base: 'vanilla', ribbon: null, toppings: ['cookie_dough'], density: 'standard' },
+  'cookies & cream': { base: 'vanilla', ribbon: null, toppings: ['oreo'], density: 'standard' },
+  'just drummy': { base: 'vanilla', ribbon: null, toppings: ['cake'], density: 'standard' },
+  'kit kat bar': { base: 'vanilla', ribbon: null, toppings: ['heath'], density: 'standard' },
+  'kit kat swirl': { base: 'vanilla', ribbon: 'chocolate_syrup', toppings: ['heath'], density: 'standard' },
+  'nestle crunch swirl': { base: 'vanilla', ribbon: 'chocolate_syrup', toppings: ['cookie_crumbs'], density: 'standard' },
+  'peanut butter cookie dough': { base: 'vanilla', ribbon: 'peanut_butter', toppings: ['cookie_dough'], density: 'standard' },
+  'pecan toffee crunch': { base: 'vanilla', ribbon: null, toppings: ['pecan', 'heath'], density: 'standard' },
+  'polar bear tracks': { base: 'vanilla', ribbon: 'fudge', toppings: ['reeses'], density: 'standard' },
+  'raspberry cordial': { base: 'vanilla', ribbon: null, toppings: ['raspberry', 'dove'], density: 'standard' },
+  'red raspberry': { base: 'vanilla', ribbon: null, toppings: ['raspberry'], density: 'standard' },
+  'rice krispie treat': { base: 'vanilla', ribbon: 'marshmallow', toppings: ['cookie_crumbs'], density: 'standard' },
+  'toffee pecan': { base: 'butter_pecan', ribbon: null, toppings: ['heath', 'pecan'], density: 'standard' },
 };
 
 export const CONE_TIP_COLOR = '#8B5A2B';
@@ -234,6 +256,15 @@ export const FLAVOR_ALIASES = {
   'choc m&m': 'm&m swirl',
   "bonfire smores": "bonfire s'mores",
   "s'mores": "bonfire s'mores",
+  // Phase 16-02: Vanilla-family variant aliases
+  'raspberry cream': 'red raspberry',
+  'butterfinger': 'butter finger blast',
+  'cookies and cream': 'cookies & cream',
+  'oreo cookies & cream': 'cookies & cream',
+  'kit kat': 'kit kat bar',
+  'rice krispy treat': 'rice krispie treat',
+  'rice krispie': 'rice krispie treat',
+  "baileys irish cream": "bailey's irish cream",
 };
 
 const DEFAULT_PROFILE = { base: 'vanilla', ribbon: null, toppings: [], density: 'standard' };

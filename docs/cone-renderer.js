@@ -115,7 +115,16 @@ var FALLBACK_FLAVOR_ALIASES = {
   // Phase 16-01: Chocolate-family variant aliases
   'choc m&m': 'm&m swirl',
   "bonfire smores": "bonfire s'mores",
-  "s'mores": "bonfire s'mores"
+  "s'mores": "bonfire s'mores",
+  // Phase 16-02: Vanilla-family variant aliases
+  'raspberry cream': 'red raspberry',
+  'butterfinger': 'butter finger blast',
+  'cookies and cream': 'cookies & cream',
+  'oreo cookies & cream': 'cookies & cream',
+  'kit kat': 'kit kat bar',
+  'rice krispy treat': 'rice krispie treat',
+  'rice krispie': 'rice krispie treat',
+  "baileys irish cream": "bailey's irish cream"
 };
 
 // ---------------------------------------------------------------------------
