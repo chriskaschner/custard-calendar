@@ -51,25 +51,25 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| RNDQ-01 | — | Pending |
-| RNDQ-02 | — | Pending |
-| RNDQ-03 | — | Pending |
-| RNDQ-04 | — | Pending |
-| VALD-01 | — | Pending |
-| VALD-02 | — | Pending |
-| VALD-03 | — | Pending |
-| PROF-01 | — | Pending |
-| PROF-02 | — | Pending |
-| PROF-03 | — | Pending |
-| PROF-04 | — | Pending |
-| PNGS-01 | — | Pending |
-| PNGS-02 | — | Pending |
+| RNDQ-01 | Phase 13 | Pending |
+| RNDQ-02 | Phase 13 | Pending |
+| RNDQ-03 | Phase 13 | Pending |
+| RNDQ-04 | Phase 13 | Pending |
+| VALD-01 | Phase 14 | Pending |
+| VALD-02 | Phase 14 | Pending |
+| VALD-03 | Phase 14 | Pending |
+| PROF-01 | Phase 15 | Pending |
+| PROF-02 | Phase 15 | Pending |
+| PROF-03 | Phase 16 | Pending |
+| PROF-04 | Phase 15 | Pending |
+| PNGS-01 | Phase 17 | Pending |
+| PNGS-02 | Phase 17 | Pending |
 
 **Coverage:**
 - v1.3 requirements: 13 total
-- Mapped to phases: 0
-- Unmapped: 13
+- Mapped to phases: 13
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-09*
-*Last updated: 2026-03-09 after initial definition*
+*Last updated: 2026-03-09 after roadmap creation*
