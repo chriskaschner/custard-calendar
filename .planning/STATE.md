@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Asset Parity
 status: in_progress
-stopped_at: Completed 16-01-PLAN.md
-last_updated: "2026-03-10T16:37:04Z"
-last_activity: 2026-03-10 -- Completed 16-01 chocolate-family profiles (17 new + 68 goldens)
+stopped_at: Completed 16-02-PLAN.md
+last_updated: "2026-03-10T16:47:33Z"
+last_activity: 2026-03-10 -- Completed 16-02 vanilla/caramel-family profiles (23 new + 92 goldens)
 progress:
   total_phases: 5
   completed_phases: 3
   total_plans: 9
-  completed_plans: 7
-  percent: 70
+  completed_plans: 8
+  percent: 80
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-09)
 
 **Core value:** A family can instantly see what flavors are at their nearby stores and decide where to go
-**Current focus:** v1.3 Asset Parity -- Phase 16 (Bulk Profile Authoring) Plan 1 of 3 complete
+**Current focus:** v1.3 Asset Parity -- Phase 16 (Bulk Profile Authoring) Plan 2 of 3 complete
 
 ## Current Position
 
 Phase: 16 of 17 (Bulk Profile Authoring) -- fourth of 5 v1.3 phases
-Plan: 1 of 3 complete
+Plan: 2 of 3 complete
 Status: In Progress
-Last activity: 2026-03-10 -- Completed 16-01 chocolate-family profiles (17 new profiles + 68 goldens)
+Last activity: 2026-03-10 -- Completed 16-02 vanilla/caramel-family profiles (23 new profiles + 92 goldens)
 
-Progress: [##############......] 70% v1.3 (3 phases complete, Phase 16 in progress)
+Progress: [################....] 80% v1.3 (3 phases complete, Phase 16 plan 2/3)
 
 ## Performance Metrics
 
@@ -38,8 +38,8 @@ Progress: [##############......] 70% v1.3 (3 phases complete, Phase 16 in progre
 - v1.0: 15 plans in ~2 hours (~8 min/plan)
 - v1.1: 4 plans in ~28 min (~7 min/plan)
 - v1.2: 9 plans in ~1 day (~11 min avg)
-- v1.3 so far: 7 plans in ~60 min (~9 min/plan)
-- Total: 35 plans across 4 milestones
+- v1.3 so far: 8 plans in ~66 min (~8 min/plan)
+- Total: 36 plans across 4 milestones
 
 | Phase | Plan | Duration | Tasks | Files |
 |-------|------|----------|-------|-------|
@@ -50,6 +50,7 @@ Progress: [##############......] 70% v1.3 (3 phases complete, Phase 16 in progre
 | 15-01 | palette-expansion-aliases | 9min | 2 | 5 |
 | 15-02 | palette-expansion-aliases | 5min | 2 | 4 |
 | 16-01 | bulk-profile-authoring | 9min | 2 | 5+68 |
+| 16-02 | bulk-profile-authoring | 6min | 2 | 4+92 |
 
 ## Accumulated Context
 
@@ -75,6 +76,9 @@ Full decision log in PROJECT.md Key Decisions table.
 - Phase 16-01: 17 chocolate-family profiles (10 chocolate, 3 dark_chocolate, 4 espresso) with 3 new aliases
 - Phase 16-01: 12 structural contrast exemptions for dark-on-dark topping/base pairs (chocolate, espresso, dark_chocolate)
 - Phase 16-01: Historical/multi-brand flavors tagged historical:true in SEED_CATALOG
+- Phase 16-02: 21 vanilla-family + 2 caramel-family profiles with 8 aliases and 6 light-on-light contrast exemptions
+- Phase 16-02: Raspberry Cream aliased to Red Raspberry (same flavor per Culver's FOTD page)
+- Phase 16-02: Bailey's Irish Cream, Boston Cream, Raspberry Cordial, Toffee Pecan reclassified to vanilla family
 
 ### Pending Todos
 
@@ -87,6 +91,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-10T16:37:04Z
-Stopped at: Completed 16-01-PLAN.md (chocolate-family profiles)
-Resume file: .planning/phases/16-bulk-profile-authoring/16-02-PLAN.md
+Last session: 2026-03-10T16:47:33Z
+Stopped at: Completed 16-02-PLAN.md (vanilla/caramel-family profiles)
+Resume file: .planning/phases/16-bulk-profile-authoring/16-03-PLAN.md
