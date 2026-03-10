@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Asset Parity
 status: in_progress
-stopped_at: Completed 15-01-PLAN.md
-last_updated: "2026-03-10T09:28:08Z"
-last_activity: 2026-03-10 -- Completed 15-01 palette expansion (colors)
+stopped_at: Completed 15-02-PLAN.md
+last_updated: "2026-03-10T09:37:00Z"
+last_activity: 2026-03-10 -- Completed 15-02 flavor aliases (20 mappings + CI gate)
 progress:
   total_phases: 5
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 6
-  completed_plans: 5
-  percent: 50
+  completed_plans: 6
+  percent: 60
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-09)
 
 **Core value:** A family can instantly see what flavors are at their nearby stores and decide where to go
-**Current focus:** v1.3 Asset Parity -- Phase 15 (Palette Expansion & Aliases) IN PROGRESS
+**Current focus:** v1.3 Asset Parity -- Phase 15 (Palette Expansion & Aliases) COMPLETE
 
 ## Current Position
 
 Phase: 15 of 17 (Palette Expansion & Aliases) -- third of 5 v1.3 phases
-Plan: 1 of 2 complete
-Status: In Progress
-Last activity: 2026-03-10 -- Completed 15-01 palette expansion (10 base + 12 topping colors)
+Plan: 2 of 2 complete
+Status: Phase Complete
+Last activity: 2026-03-10 -- Completed 15-02 flavor aliases (20 alias mappings + CI validation)
 
-Progress: [##########..........] 50% v1.3 (2 phases complete, 15-01 done, 15-02 pending)
+Progress: [############........] 60% v1.3 (3 phases complete, Phase 15 done)
 
 ## Performance Metrics
 
@@ -38,8 +38,8 @@ Progress: [##########..........] 50% v1.3 (2 phases complete, 15-01 done, 15-02 
 - v1.0: 15 plans in ~2 hours (~8 min/plan)
 - v1.1: 4 plans in ~28 min (~7 min/plan)
 - v1.2: 9 plans in ~1 day (~11 min avg)
-- v1.3 so far: 5 plans in ~46 min (~9 min/plan)
-- Total: 33 plans across 4 milestones
+- v1.3 so far: 6 plans in ~51 min (~9 min/plan)
+- Total: 34 plans across 4 milestones
 
 | Phase | Plan | Duration | Tasks | Files |
 |-------|------|----------|-------|-------|
@@ -48,6 +48,7 @@ Progress: [##########..........] 50% v1.3 (2 phases complete, 15-01 done, 15-02 
 | 14-01 | validation-tooling | 9min | 3 | 11 |
 | 14-02 | validation-tooling | 10min | 3 | 6 |
 | 15-01 | palette-expansion-aliases | 9min | 2 | 5 |
+| 15-02 | palette-expansion-aliases | 5min | 2 | 4 |
 
 ## Accumulated Context
 
@@ -67,6 +68,9 @@ Full decision log in PROJECT.md Key Decisions table.
 - Phase 15-01: 10 new base colors with food-accurate hex values, each visually distinct from existing palette
 - Phase 15-01: 12 new demand-driven topping colors (exceeds ~10 estimate) from unprofiled flavor audit
 - Phase 15-01: No new ribbon colors needed -- existing 5 ribbons cover all known use cases
+- Phase 15-02: 20 alias mappings targeting existing FLAVOR_PROFILES keys only; unprofiled aliases deferred to Phase 16
+- Phase 15-02: Alias resolution chain: exact match -> unicode normalize -> alias lookup -> keyword fallback -> default
+- Phase 15-02: No alias for 'peanut butter cup' -- already has its own profile entry (exact match wins)
 
 ### Pending Todos
 
@@ -79,6 +83,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-10T09:28:08Z
-Stopped at: Completed 15-01-PLAN.md
-Resume file: .planning/phases/15-palette-expansion-aliases/15-02-PLAN.md
+Last session: 2026-03-10T09:37:00Z
+Stopped at: Completed 15-02-PLAN.md (Phase 15 complete)
+Resume file: Next phase (16)
