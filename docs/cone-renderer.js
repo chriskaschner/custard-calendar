@@ -91,6 +91,28 @@ var FALLBACK_RIBBON_COLORS = {
   fudge: '#3B1F0B'
 };
 
+var FALLBACK_FLAVOR_ALIASES = {
+  "reeses peanut butter cup": "really reese's",
+  "reese's peanut butter cup": "really reese's",
+  "pb cup": "really reese's",
+  'georgia peach pecan': 'georgia peach',
+  'oreo cookies and cream': 'oreo cookie cheesecake',
+  'cookie dough craze': 'crazy for cookie dough',
+  'chocolate decadence': 'dark chocolate decadence',
+  'dark chocolate peanut butter crunch': 'dark chocolate pb crunch',
+  'snickers': 'snickers swirl',
+  'salted caramel pecan': 'salted double caramel pecan',
+  'vanilla custard': 'vanilla',
+  'butter pecan custard': 'butter pecan',
+  'turtle sundae': 'turtle',
+  'caramel turtle sundae': 'caramel turtle',
+  'double strawberry custard': 'double strawberry',
+  'brownie batter': 'brownie thunder',
+  'mint oreo': 'mint cookie',
+  'oreo mint': 'mint cookie',
+  'oreo cheesecake cookie': 'oreo cookie cheesecake'
+};
+
 // ---------------------------------------------------------------------------
 // Shared state
 // ---------------------------------------------------------------------------
@@ -134,7 +156,14 @@ function getFlavorProfileLocal(flavorName) {
   if (!flavorColorData || !flavorName) return null;
   var profiles = flavorColorData.profiles || {};
   var key = normalizeFlavorKey(flavorName);
-  return profiles[key] || null;
+  if (profiles[key]) return profiles[key];
+
+  // Alias resolution (uses API aliases if loaded, falls back to hardcoded)
+  var aliases = (flavorColorData && flavorColorData.aliases) || FALLBACK_FLAVOR_ALIASES;
+  var canonical = aliases[key];
+  if (canonical && profiles[canonical]) return profiles[canonical];
+
+  return null;
 }
 
 function getFlavorBaseColor(flavorName) {
@@ -144,6 +173,11 @@ function getFlavorBaseColor(flavorName) {
   var profiles = flavorColorData ? (flavorColorData.profiles || {}) : {};
   var baseColors = flavorColorData ? (flavorColorData.base_colors || {}) : {};
   var profile = profiles[key];
+  if (!profile) {
+    var aliases = (flavorColorData && flavorColorData.aliases) || FALLBACK_FLAVOR_ALIASES;
+    var canonical = aliases[key];
+    if (canonical) profile = profiles[canonical];
+  }
   if (profile && baseColors[profile.base]) return baseColors[profile.base];
 
   if (key.includes('mint')) return baseColors.mint || FALLBACK_BASE_COLORS.mint;

@@ -40,6 +40,14 @@
   .col-side .cname { font-size: 12px; font-weight: 500; text-align: center; }
   .col-side .cwhere { font-size: 10px; color: var(--muted); text-align: center; line-height: 1.3; }
 
+  /* Alias grid */
+  .alias-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px,1fr)); gap: 8px; }
+  .alias-row { background: var(--surface); border: 1px solid var(--border); border-radius: 5px; padding: 8px 12px; display: flex; align-items: center; gap: 10px; font-size: 12px; }
+  .alias-from { color: var(--muted); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .alias-arrow { color: var(--info-t); font-weight: 700; flex-shrink: 0; }
+  .alias-to { font-weight: 600; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .alias-swatch { width: 14px; height: 14px; border-radius: 3px; border: 1px solid var(--border); flex-shrink: 0; }
+
   /* Filter bar */
   .fbar { display: flex; gap: 10px; margin-bottom: 12px; align-items: center; flex-wrap: wrap; }
   .fbar input[type=text] { background: var(--surface); border: 1px solid var(--border); color: var(--text); border-radius: 4px; padding: 5px 10px; font-size: 13px; width: 180px; }
@@ -138,6 +146,7 @@
     <span class="stat warn"><b id="s-warn">0</b> no profile</span>
     <span class="stat err"><b id="s-info">0</b> profile-only</span>
     <span class="stat warn"><b id="s-flagged">0</b> quality flags</span>
+    <span class="stat ok"><b id="s-alias">0</b> aliases</span>
   </div>
   <span id="api-note">seed data — try the live API for updated catalog</span>
 </header>
@@ -151,6 +160,12 @@
     <summary id="col-resolved-summary">Resolved investigations (0)</summary>
     <div class="col-grid" id="col-grid-resolved"></div>
   </details>
+</section>
+
+<section>
+  <h2>Flavor aliases — variant names resolved to canonical profiles</h2>
+  <p style="color:var(--muted);font-size:12px;margin-bottom:10px;">Each alias maps a variant/historical name to its canonical FLAVOR_PROFILES key. Alias resolution fires after exact match and unicode normalization, before keyword fallback.</p>
+  <div class="alias-grid" id="alias-grid"></div>
 </section>
 
 <section>
@@ -300,6 +315,28 @@ var SEED_TOPPING = {
 };
 var SEED_CONE = { waffle:'#D2691E', waffle_dark:'#B8860B' };
 var CONE_TIP = '#8B5A2B';
+
+var SEED_ALIASES = {
+  "reeses peanut butter cup": "really reese's",
+  "reese's peanut butter cup": "really reese's",
+  "pb cup": "really reese's",
+  'georgia peach pecan': 'georgia peach',
+  'oreo cookies and cream': 'oreo cookie cheesecake',
+  'cookie dough craze': 'crazy for cookie dough',
+  'chocolate decadence': 'dark chocolate decadence',
+  'dark chocolate peanut butter crunch': 'dark chocolate pb crunch',
+  'snickers': 'snickers swirl',
+  'salted caramel pecan': 'salted double caramel pecan',
+  'vanilla custard': 'vanilla',
+  'butter pecan custard': 'butter pecan',
+  'turtle sundae': 'turtle',
+  'caramel turtle sundae': 'caramel turtle',
+  'double strawberry custard': 'double strawberry',
+  'brownie batter': 'brownie thunder',
+  'mint oreo': 'mint cookie',
+  'oreo mint': 'mint cookie',
+  'oreo cheesecake cookie': 'oreo cookie cheesecake'
+};
 
 var SEED_CATALOG = [
   { title:'Andes Mint Avalanche',         description:'Mint Fresh Frozen Custard with Andes Mint pieces and chocolate.' },
@@ -578,6 +615,30 @@ function buildCollisions() {
 }
 
 // ---------------------------------------------------------------------------
+// Build alias grid
+// ---------------------------------------------------------------------------
+function buildAliasGrid() {
+  var grid = document.getElementById('alias-grid');
+  if (!grid) return;
+  var aliases = SEED_ALIASES;
+  var entries = Object.keys(aliases).sort();
+  var html = '';
+  for (var i = 0; i < entries.length; i++) {
+    var from = entries[i];
+    var to = aliases[from];
+    var profile = (colorData.profiles || {})[to];
+    var baseColor = profile ? (colorData.base_colors || {})[profile.base] || SEED_BASE[profile.base] || '#333' : '#333';
+    html += '<div class="alias-row">'
+      + '<span class="alias-from">' + from + '</span>'
+      + '<span class="alias-arrow">-></span>'
+      + '<span class="alias-to">' + to + '</span>'
+      + '<span class="alias-swatch" style="background:' + baseColor + '"></span>'
+      + '</div>';
+  }
+  grid.innerHTML = html;
+}
+
+// ---------------------------------------------------------------------------
 // Build flavor row
 // ---------------------------------------------------------------------------
 function profileTitle(id) {
@@ -716,7 +777,9 @@ function buildGrid(catalog) {
   document.getElementById('s-info').textContent=infoC;
   document.getElementById('s-flagged').textContent=flagC;
 
+  document.getElementById('s-alias').textContent=Object.keys(SEED_ALIASES).length;
   buildCollisions();
+  buildAliasGrid();
 
   var grid=document.getElementById('fgrid');
   grid.innerHTML='';
