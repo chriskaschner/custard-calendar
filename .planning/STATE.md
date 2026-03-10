@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Asset Parity
-status: completed
-stopped_at: Phase 16 context gathered
-last_updated: "2026-03-10T15:50:38.241Z"
-last_activity: 2026-03-10 -- Completed 15-02 flavor aliases (20 alias mappings + CI validation)
+status: in_progress
+stopped_at: Completed 16-01-PLAN.md
+last_updated: "2026-03-10T16:37:04Z"
+last_activity: 2026-03-10 -- Completed 16-01 chocolate-family profiles (17 new + 68 goldens)
 progress:
   total_phases: 5
   completed_phases: 3
-  total_plans: 6
-  completed_plans: 6
-  percent: 60
+  total_plans: 9
+  completed_plans: 7
+  percent: 70
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-09)
 
 **Core value:** A family can instantly see what flavors are at their nearby stores and decide where to go
-**Current focus:** v1.3 Asset Parity -- Phase 15 (Palette Expansion & Aliases) COMPLETE
+**Current focus:** v1.3 Asset Parity -- Phase 16 (Bulk Profile Authoring) Plan 1 of 3 complete
 
 ## Current Position
 
-Phase: 15 of 17 (Palette Expansion & Aliases) -- third of 5 v1.3 phases
-Plan: 2 of 2 complete
-Status: Phase Complete
-Last activity: 2026-03-10 -- Completed 15-02 flavor aliases (20 alias mappings + CI validation)
+Phase: 16 of 17 (Bulk Profile Authoring) -- fourth of 5 v1.3 phases
+Plan: 1 of 3 complete
+Status: In Progress
+Last activity: 2026-03-10 -- Completed 16-01 chocolate-family profiles (17 new profiles + 68 goldens)
 
-Progress: [############........] 60% v1.3 (3 phases complete, Phase 15 done)
+Progress: [##############......] 70% v1.3 (3 phases complete, Phase 16 in progress)
 
 ## Performance Metrics
 
@@ -38,8 +38,8 @@ Progress: [############........] 60% v1.3 (3 phases complete, Phase 15 done)
 - v1.0: 15 plans in ~2 hours (~8 min/plan)
 - v1.1: 4 plans in ~28 min (~7 min/plan)
 - v1.2: 9 plans in ~1 day (~11 min avg)
-- v1.3 so far: 6 plans in ~51 min (~9 min/plan)
-- Total: 34 plans across 4 milestones
+- v1.3 so far: 7 plans in ~60 min (~9 min/plan)
+- Total: 35 plans across 4 milestones
 
 | Phase | Plan | Duration | Tasks | Files |
 |-------|------|----------|-------|-------|
@@ -49,6 +49,7 @@ Progress: [############........] 60% v1.3 (3 phases complete, Phase 15 done)
 | 14-02 | validation-tooling | 10min | 3 | 6 |
 | 15-01 | palette-expansion-aliases | 9min | 2 | 5 |
 | 15-02 | palette-expansion-aliases | 5min | 2 | 4 |
+| 16-01 | bulk-profile-authoring | 9min | 2 | 5+68 |
 
 ## Accumulated Context
 
@@ -71,6 +72,9 @@ Full decision log in PROJECT.md Key Decisions table.
 - Phase 15-02: 20 alias mappings targeting existing FLAVOR_PROFILES keys only; unprofiled aliases deferred to Phase 16
 - Phase 15-02: Alias resolution chain: exact match -> unicode normalize -> alias lookup -> keyword fallback -> default
 - Phase 15-02: No alias for 'peanut butter cup' -- already has its own profile entry (exact match wins)
+- Phase 16-01: 17 chocolate-family profiles (10 chocolate, 3 dark_chocolate, 4 espresso) with 3 new aliases
+- Phase 16-01: 12 structural contrast exemptions for dark-on-dark topping/base pairs (chocolate, espresso, dark_chocolate)
+- Phase 16-01: Historical/multi-brand flavors tagged historical:true in SEED_CATALOG
 
 ### Pending Todos
 
@@ -83,6 +87,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-10T15:50:38.231Z
-Stopped at: Phase 16 context gathered
-Resume file: .planning/phases/16-bulk-profile-authoring/16-CONTEXT.md
+Last session: 2026-03-10T16:37:04Z
+Stopped at: Completed 16-01-PLAN.md (chocolate-family profiles)
+Resume file: .planning/phases/16-bulk-profile-authoring/16-02-PLAN.md
