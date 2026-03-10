@@ -177,6 +177,9 @@ export const FLAVOR_PROFILES = {
   'red raspberry': { base: 'vanilla', ribbon: null, toppings: ['raspberry'], density: 'standard' },
   'rice krispie treat': { base: 'vanilla', ribbon: 'marshmallow', toppings: ['cookie_crumbs'], density: 'standard' },
   'toffee pecan': { base: 'butter_pecan', ribbon: null, toppings: ['heath', 'pecan'], density: 'standard' },
+  // Phase 16-02: Caramel-family batch (caramel, maple bases)
+  'maple pecan': { base: 'maple', ribbon: null, toppings: ['pecan'], density: 'standard' },
+  'nutty caramel apple': { base: 'caramel', ribbon: null, toppings: ['pecan', 'caramel_chips'], density: 'standard' },
 };
 
 export const CONE_TIP_COLOR = '#8B5A2B';

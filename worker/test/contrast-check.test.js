@@ -164,12 +164,12 @@ const CONTRAST_EXEMPTIONS = new Set([
   // heath (#DAA520) on vanilla (#F5DEB3) -- golden on wheat, both warm-toned.
   // Heath passes on chocolate/dark_chocolate/espresso bases.
   'heath:vanilla',
-  // snickers (#C4A060) on vanilla (#F5DEB3) -- golden-tan on wheat.
-  // Snickers passes on chocolate base. (Pre-existing profile snickers swirl
-  // uses chocolate base, but proactively exempting for future vanilla combos.)
-  // cookie_crumbs (#7B5B32) on butter_pecan (#F2E7D1) -- dark sandy on pale cream.
-  // Cookie crumbs pass on vanilla/banana but butter_pecan is even lighter.
-  // (Not currently used on butter_pecan, but exempting proactively.)
+  // pecan (#8B5A2B) on maple (#C9882C) -- both warm medium browns.
+  // Pecan passes on vanilla/cheesecake bases.
+  'pecan:maple',
+  // caramel_chips (#9E6B23) on caramel (#C68E17) -- deep amber on gold, very close.
+  // Caramel chips pass on vanilla/espresso bases.
+  'caramel_chips:caramel',
 ]);
 
 describe('topping/base contrast >= 3:1', () => {
