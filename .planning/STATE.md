@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Asset Parity
-status: executing
-stopped_at: Completed 14-01-PLAN.md
-last_updated: "2026-03-10T02:10:35.477Z"
-last_activity: 2026-03-10 -- Completed 14-01 palette sync + contrast checker CI gates
+status: completed
+stopped_at: Completed 14-02-PLAN.md
+last_updated: "2026-03-10T02:16:19.994Z"
+last_activity: 2026-03-10 -- Completed 14-02 golden baselines visual regression tests
 progress:
   total_phases: 5
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 4
-  completed_plans: 3
-  percent: 30
+  completed_plans: 4
+  percent: 40
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-09)
 
 **Core value:** A family can instantly see what flavors are at their nearby stores and decide where to go
-**Current focus:** v1.3 Asset Parity -- Phase 14 (Validation Tooling)
+**Current focus:** v1.3 Asset Parity -- Phase 14 (Validation Tooling) COMPLETE
 
 ## Current Position
 
 Phase: 14 of 17 (Validation Tooling) -- second of 5 v1.3 phases
-Plan: 1 of 2 complete
-Status: Executing
-Last activity: 2026-03-10 -- Completed 14-01 palette sync + contrast checker CI gates
+Plan: 2 of 2 complete
+Status: Phase Complete
+Last activity: 2026-03-10 -- Completed 14-02 golden baselines visual regression tests
 
-Progress: [######..............] 30% v1.3 (1/5 phases complete, 14-01 done)
+Progress: [########............] 40% v1.3 (2/5 phases complete, all 14-XX plans done)
 
 ## Performance Metrics
 
@@ -53,6 +53,8 @@ Full decision log in PROJECT.md Key Decisions table.
 - Phase 14-01: 10 topping colors adjusted for WCAG 3:1 contrast compliance
 - Phase 14-01: 7 structural contrast exemptions documented (cross-base conflicts)
 - Phase 14-01: Starlark color drift resolved -- custard-tidbyt now matches canonical
+- [Phase 14]: Phase 14-02: Zero tolerance pixelmatch threshold -- deterministic seeded PRNG means any pixel diff is real
+- [Phase 14]: Phase 14-02: Added .gitignore exception for golden baseline PNGs (global *.png rule was blocking)
 
 ### Pending Todos
 
@@ -65,6 +67,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-10T02:10:35.475Z
-Stopped at: Completed 14-01-PLAN.md
+Last session: 2026-03-10T02:16:19.991Z
+Stopped at: Completed 14-02-PLAN.md
 Resume file: None
