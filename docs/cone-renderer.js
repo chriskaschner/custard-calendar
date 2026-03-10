@@ -110,7 +110,8 @@ var FALLBACK_FLAVOR_ALIASES = {
   'brownie batter': 'brownie thunder',
   'mint oreo': 'mint cookie',
   'oreo mint': 'mint cookie',
-  'oreo cheesecake cookie': 'oreo cookie cheesecake'
+  'oreo cheesecake cookie': 'oreo cookie cheesecake',
+  'heath bar crunch': 'chocolate heath crunch'
 };
 
 // ---------------------------------------------------------------------------

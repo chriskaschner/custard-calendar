@@ -208,6 +208,9 @@ export const FLAVOR_ALIASES = {
 
   // Cheesecake shorthand
   'oreo cheesecake cookie': 'oreo cookie cheesecake',
+
+  // Heath bar variant
+  'heath bar crunch': 'chocolate heath crunch',
 };
 
 const DEFAULT_PROFILE = { base: 'vanilla', ribbon: null, toppings: [], density: 'standard' };
