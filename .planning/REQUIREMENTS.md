@@ -9,8 +9,8 @@ Requirements for asset parity release. Each maps to roadmap phases.
 
 ### Rendering Quality
 
-- [ ] **RNDQ-01**: PNG pipeline uses clean integer downscale ratio (scale 10 -> 120px = 3:1)
-- [ ] **RNDQ-02**: Sharp rasterization uses 300 DPI density for crisper pixel edges
+- [x] **RNDQ-01**: PNG pipeline uses clean integer downscale ratio (scale 10 -> 120px = 3:1)
+- [x] **RNDQ-02**: Sharp rasterization uses 300 DPI density for crisper pixel edges
 - [x] **RNDQ-03**: Color hex values match across all 4 sync files (flavor-colors.js, cone-renderer.js, culvers_fotd.star, flavor-audit.html)
 - [x] **RNDQ-04**: HD scoop geometry in cone-renderer.js matches server renderer (row-1 taper step)
 
@@ -51,8 +51,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| RNDQ-01 | Phase 13 | Pending |
-| RNDQ-02 | Phase 13 | Pending |
+| RNDQ-01 | Phase 13 | Complete |
+| RNDQ-02 | Phase 13 | Complete |
 | RNDQ-03 | Phase 13 | Complete |
 | RNDQ-04 | Phase 13 | Complete |
 | VALD-01 | Phase 14 | Pending |
