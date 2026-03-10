@@ -60,11 +60,11 @@
   2. All hex color values are identical across flavor-colors.js, cone-renderer.js, culvers_fotd.star, and flavor-audit.html
   3. HD scoop geometry in cone-renderer.js matches the server renderer (same row-1 taper step)
   4. SVG rasterization produces visibly crisper edges at 300 DPI vs current 72 DPI
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 13-01: TBD
-- [ ] 13-02: TBD
+- [ ] 13-01-PLAN.md -- Sync color palettes across all 4 files + fix HD scoop geometry
+- [ ] 13-02-PLAN.md -- Fix PNG generation pipeline (1:1 rasterization at 300 DPI)
 
 ### Phase 14: Validation Tooling
 **Goal**: Automated guards prevent quality regressions before bulk profile authoring begins
@@ -141,7 +141,7 @@ Phases execute in numeric order: 13 -> 14 -> 15 -> 16 -> 17
 | 10. Redirects & CSS Cleanup | v1.2 | 2/2 | Complete | 2026-03-09 |
 | 11. Monolith Refactoring | v1.2 | 2/2 | Complete | 2026-03-09 |
 | 12. Feature Development | v1.2 | 3/3 | Complete | 2026-03-09 |
-| 13. Rendering Quality Fixes | v1.3 | 0/0 | Not started | - |
+| 13. Rendering Quality Fixes | v1.3 | 0/2 | Planning | - |
 | 14. Validation Tooling | v1.3 | 0/0 | Not started | - |
 | 15. Palette Expansion & Aliases | v1.3 | 0/0 | Not started | - |
 | 16. Bulk Profile Authoring | v1.3 | 0/0 | Not started | - |
