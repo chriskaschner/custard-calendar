@@ -5,7 +5,7 @@
 - Shipped **v1.0 MVP** -- Phases 1-5 (shipped 2026-03-08)
 - Shipped **v1.1 Production Launch + Polish** -- Phases 6-8 (shipped 2026-03-09)
 - Shipped **v1.2 Feature Completion & Cleanup** -- Phases 9-12 (shipped 2026-03-09)
-- Active **v1.3 Asset Parity** -- Phases 13-17 (in progress)
+- Shipped **v1.3 Asset Parity** -- Phases 13-17 (shipped 2026-03-10)
 
 ## Phases
 
@@ -47,7 +47,7 @@
 - [x] **Phase 14: Validation Tooling** - CI palette sync test, contrast checker, pixelmatch golden baselines (completed 2026-03-10)
 - [x] **Phase 15: Palette Expansion & Aliases** - ~10 base colors, ~10 topping colors, ~20 alias mappings across all sync files (completed 2026-03-10)
 - [x] **Phase 16: Bulk Profile Authoring** - FLAVOR_PROFILES entries for all 54 unprofiled flavors (completed 2026-03-10)
-- [ ] **Phase 17: PNG Generation & Deployment** - Regenerate Hero PNGs for 94 profiled flavors, add alias resolution, bump service worker cache
+- [x] **Phase 17: PNG Generation & Deployment** - Regenerate Hero PNGs for 94 profiled flavors, add alias resolution, bump service worker cache (completed 2026-03-10)
 
 ## Phase Details
 
@@ -122,7 +122,7 @@ Plans:
 
 Plans:
 - [x] 17-01-PLAN.md -- Alias resolution in heroConeSrc() + CI count test + regenerate all 94 PNGs (completed 2026-03-10)
-- [ ] 17-02-PLAN.md -- Bump CACHE_VERSION to custard-v19 + visual verification checkpoint
+- [x] 17-02-PLAN.md -- Bump CACHE_VERSION to custard-v19 + visual verification checkpoint (completed 2026-03-10)
 
 ## Progress
 
@@ -147,7 +147,7 @@ Phases execute in numeric order: 13 -> 14 -> 15 -> 16 -> 17
 | 14. Validation Tooling | v1.3 | 2/2 | Complete | 2026-03-10 |
 | 15. Palette Expansion & Aliases | v1.3 | 2/2 | Complete | 2026-03-10 |
 | 16. Bulk Profile Authoring | v1.3 | Complete    | 2026-03-10 | 2026-03-10 |
-| 17. PNG Generation & Deployment | v1.3 | 1/2 | In Progress | - |
+| 17. PNG Generation & Deployment | v1.3 | 2/2 | Complete | 2026-03-10 |
 
 Full v1.0 phase details archived: `.planning/milestones/v1.0-ROADMAP.md`
 Full v1.1 phase details archived: `.planning/milestones/v1.1-ROADMAP.md`

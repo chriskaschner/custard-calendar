@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Asset Parity
-status: in-progress
-stopped_at: Completed 17-01-PLAN.md
-last_updated: "2026-03-11T00:46:08Z"
-last_activity: 2026-03-10 -- Completed 17-01 PNG generation (94 PNGs + heroConeSrc alias resolution + CI count test)
+status: complete
+stopped_at: Completed 17-02-PLAN.md -- v1.3 COMPLETE
+last_updated: "2026-03-11T01:19:14Z"
+last_activity: 2026-03-10 -- Completed 17-02 cache bump + visual verification (v1.3 Asset Parity milestone complete)
 progress:
   total_phases: 5
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 11
-  completed_plans: 10
-  percent: 95
+  completed_plans: 11
+  percent: 100
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-09)
 
 **Core value:** A family can instantly see what flavors are at their nearby stores and decide where to go
-**Current focus:** v1.3 Asset Parity -- Phase 17 Plan 01 complete, Plan 02 (cache bump + deployment) next
+**Current focus:** v1.3 Asset Parity -- COMPLETE. All 5 phases, 11 plans shipped.
 
 ## Current Position
 
-Phase: 17 of 17 (PNG Generation & Deployment) -- IN PROGRESS (fifth of 5 v1.3 phases)
-Plan: 1 of 2 complete
-Status: In Progress
-Last activity: 2026-03-10 -- Completed 17-01 PNG generation (94 PNGs + heroConeSrc alias resolution + CI count test)
+Phase: 17 of 17 (PNG Generation & Deployment) -- COMPLETE (fifth of 5 v1.3 phases)
+Plan: 2 of 2 complete
+Status: Complete
+Last activity: 2026-03-10 -- Completed 17-02 cache bump + visual verification (v1.3 milestone complete)
 
-Progress: [###################.] 95% v1.3 (4 phases + 1 plan complete)
+Progress: [####################] 100% v1.3 (5 phases, 11 plans complete)
 
 ## Performance Metrics
 
@@ -38,8 +38,8 @@ Progress: [###################.] 95% v1.3 (4 phases + 1 plan complete)
 - v1.0: 15 plans in ~2 hours (~8 min/plan)
 - v1.1: 4 plans in ~28 min (~7 min/plan)
 - v1.2: 9 plans in ~1 day (~11 min avg)
-- v1.3 so far: 10 plans in ~80 min (~8 min/plan)
-- Total: 38 plans across 4 milestones
+- v1.3: 11 plans in ~82 min (~7.5 min/plan)
+- Total: 39 plans across 4 milestones
 
 | Phase | Plan | Duration | Tasks | Files |
 |-------|------|----------|-------|-------|
@@ -53,6 +53,7 @@ Progress: [###################.] 95% v1.3 (4 phases + 1 plan complete)
 | 16-02 | bulk-profile-authoring | 6min | 2 | 4+92 |
 | 16-03 | bulk-profile-authoring | 12min | 2 | 4+56 |
 | 17-01 | png-generation-deployment | 2min | 2 | 2+68 |
+| 17-02 | png-generation-deployment | 2min | 2 | 1 |
 
 ## Accumulated Context
 
@@ -87,6 +88,7 @@ Full decision log in PROJECT.md Key Decisions table.
 - Phase 17-01: heroConeSrc uses normalizeFlavorKey + FALLBACK_FLAVOR_ALIASES for alias resolution before slugifying
 - Phase 17-01: Clean-slate PNG regeneration -- deleted all 40 existing PNGs, regenerated all 94 to reflect Phase 13-16 improvements
 - Phase 17-01: CACHE_VERSION test (v19) intentionally fails -- deferred to Plan 02 as designed
+- Phase 17-02: Premium tier cones look poor per user -- not used in production (noted for future work, out of Phase 17 scope)
 
 ### Pending Todos
 
@@ -99,6 +101,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-11T00:46:08Z
-Stopped at: Completed 17-01-PLAN.md
-Resume file: .planning/phases/17-png-generation-deployment/17-01-SUMMARY.md
+Last session: 2026-03-11T01:19:14Z
+Stopped at: Completed 17-02-PLAN.md -- v1.3 Asset Parity milestone COMPLETE
+Resume file: .planning/phases/17-png-generation-deployment/17-02-SUMMARY.md
