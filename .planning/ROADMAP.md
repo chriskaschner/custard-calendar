@@ -47,7 +47,7 @@
 - [x] **Phase 14: Validation Tooling** - CI palette sync test, contrast checker, pixelmatch golden baselines (completed 2026-03-10)
 - [x] **Phase 15: Palette Expansion & Aliases** - ~10 base colors, ~10 topping colors, ~20 alias mappings across all sync files (completed 2026-03-10)
 - [x] **Phase 16: Bulk Profile Authoring** - FLAVOR_PROFILES entries for all 54 unprofiled flavors (completed 2026-03-10)
-- [ ] **Phase 17: PNG Generation & Deployment** - Regenerate Hero PNGs for 176+ flavors, bump service worker cache
+- [ ] **Phase 17: PNG Generation & Deployment** - Regenerate Hero PNGs for 94 profiled flavors, add alias resolution, bump service worker cache
 
 ## Phase Details
 
@@ -115,13 +115,14 @@ Plans:
 **Depends on**: Phase 16
 **Requirements**: PNGS-01, PNGS-02
 **Success Criteria** (what must be TRUE):
-  1. Hero cone PNGs exist for all 176+ profiled flavors (no HD SVG fallback for any profiled flavor)
+  1. Hero cone PNGs exist for all 94 profiled flavors (no HD SVG fallback for any profiled flavor)
   2. Today page shows consistent Hero-tier rendering -- no mixing of PNG and SVG quality levels in the same view
   3. Service worker CACHE_VERSION is bumped so returning users get fresh PNGs without manual cache clear
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 17-01: TBD
+- [ ] 17-01-PLAN.md -- Alias resolution in heroConeSrc() + CI count test + regenerate all 94 PNGs
+- [ ] 17-02-PLAN.md -- Bump CACHE_VERSION to custard-v19 + visual verification checkpoint
 
 ## Progress
 
@@ -146,7 +147,7 @@ Phases execute in numeric order: 13 -> 14 -> 15 -> 16 -> 17
 | 14. Validation Tooling | v1.3 | 2/2 | Complete | 2026-03-10 |
 | 15. Palette Expansion & Aliases | v1.3 | 2/2 | Complete | 2026-03-10 |
 | 16. Bulk Profile Authoring | v1.3 | Complete    | 2026-03-10 | 2026-03-10 |
-| 17. PNG Generation & Deployment | v1.3 | 0/0 | Not started | - |
+| 17. PNG Generation & Deployment | v1.3 | 0/2 | Not started | - |
 
 Full v1.0 phase details archived: `.planning/milestones/v1.0-ROADMAP.md`
 Full v1.1 phase details archived: `.planning/milestones/v1.1-ROADMAP.md`
