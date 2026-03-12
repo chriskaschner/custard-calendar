@@ -1,5 +1,31 @@
 # Milestones
 
+## v1.3 Asset Parity (Shipped: 2026-03-12)
+
+**Phases completed:** 5 phases, 11 plans
+
+**Key accomplishments:**
+- Fixed rendering pipeline: 300 DPI supersample, integer downscale, HD geometry sync, color palette parity across all 4 sync files
+- Built validation tooling: CI palette drift gate, WCAG 3:1 contrast checker, pixelmatch golden baselines for visual regression
+- Expanded color palette from 34 to 56 colors (23 base + 33 topping) and created 37 flavor alias mappings
+- Authored 54 new FLAVOR_PROFILES (94 total) covering every known flavor -- zero unprofiled entries remain
+- Regenerated all 94 Hero cone PNGs from scratch with alias resolution in heroConeSrc() and cache bump to v19
+
+**Stats:**
+- Files modified: 488 | Lines added: 1,602 | Lines removed: 161
+- Timeline: 2 days (2026-03-09 to 2026-03-10)
+- Execution time: ~82 min across 11 plans (~7.5 min/plan)
+- Commits: 24
+- Requirements: 13/13 satisfied
+- UAT: 6/6 passed
+
+**Known tech debt:**
+- FLAVOR_ALIASES not included in API /flavor-colors response (low severity -- FALLBACK copy works)
+- No CI gate for FLAVOR_ALIASES -> FALLBACK_FLAVOR_ALIASES sync (medium severity -- currently 37/37 in sync)
+- Nyquist validation partial on all 5 phases
+
+---
+
 ## v1.2 Feature Completion & Cleanup (Shipped: 2026-03-09)
 
 **Phases completed:** 4 phases, 9 plans

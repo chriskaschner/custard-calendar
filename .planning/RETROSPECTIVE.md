@@ -137,6 +137,53 @@
 
 ---
 
+## Milestone: v1.3 -- Asset Parity
+
+**Shipped:** 2026-03-12
+**Phases:** 5 | **Plans:** 11 | **Sessions:** ~4
+
+### What Was Built
+- Rendering pipeline fixes: 300 DPI supersample, integer downscale, HD geometry sync, color palette parity across 4 sync files
+- Validation tooling: CI palette drift gate (16 tests), WCAG 3:1 contrast checker (132 tests), pixelmatch golden baselines (376 tests)
+- Expanded color palette from 34 to 56 colors (23 base + 33 topping) and created 37 flavor alias mappings
+- 54 new FLAVOR_PROFILES authored across 5 families (chocolate, vanilla, caramel, fruit, specialty) -- 94 total, zero unprofiled
+- All 94 Hero cone PNGs regenerated with alias resolution in heroConeSrc() and service worker cache bumped to v19
+
+### What Worked
+- Phase ordering (fix quality -> build validators -> expand palette -> author profiles -> generate PNGs) prevented rework
+- Contrast checker caught 10 topping colors that needed adjustment BEFORE bulk authoring began -- saved per-profile debugging
+- Golden baselines with zero-tolerance pixelmatch threshold caught genuine visual regressions (deterministic PRNG = no false positives)
+- Family-based profile authoring (chocolate -> vanilla -> caramel -> fruit -> specialty) made batch work manageable
+- Clean-slate PNG regeneration (delete all 40, regenerate 94) was simpler and safer than incremental generation
+- Milestone audit (13/13 requirements, 14/14 integrations, 4/4 E2E flows) confirmed completeness before archiving
+
+### What Was Inefficient
+- ROADMAP.md plan checkboxes for phases 13-16 were never updated from `[ ]` to `[x]` during execution -- only Phase 17 was kept current
+- FLAVOR_ALIASES not included in API response (low severity but creates sync dependency between hardcoded FALLBACK copy and canonical)
+- No CI gate for FLAVOR_ALIASES -> FALLBACK_FLAVOR_ALIASES drift -- currently in sync but could diverge silently
+- Nyquist validation partial on all 5 phases -- same pattern as v1.0-v1.2
+
+### Patterns Established
+- Family-based bulk authoring: group related flavors by base color family for efficient batch profiling
+- Structural contrast exemptions: document dark-on-dark and light-on-light pairs that intentionally fail contrast checks
+- Alias resolution chain: exact match -> unicode normalize -> alias lookup -> keyword fallback -> default
+- FALLBACK_ pattern for client-side copies of server data (works offline, needs sync discipline)
+- Golden baseline PNGs under 1KB each -- small enough for git, visually inspectable in PRs
+
+### Key Lessons
+1. Build validation tooling BEFORE bulk authoring -- contrast checker and golden baselines caught issues early, not late
+2. Zero-tolerance pixelmatch works when rendering is deterministic (seeded PRNG) -- no need for fuzzy thresholds
+3. Clean-slate regeneration beats incremental when profiles have changed -- simpler, fewer edge cases
+4. Family-based batching (18 chocolate, 23 vanilla, 2 caramel, 14 fruit/specialty) makes large authoring tasks tractable
+5. FALLBACK copies of server data need CI sync gates -- manual sync works today but won't scale
+
+### Cost Observations
+- Model mix: 100% opus (quality profile)
+- Sessions: ~4 across 2 days
+- Notable: 82 min total execution time for 11 plans, ~7.5 min average per plan
+
+---
+
 ## Cross-Milestone Trends
 
 ### Process Evolution
@@ -146,6 +193,7 @@
 | v1.0 | ~8 | 5 | Baseline: IIFE pattern, Playwright scaffolds, SW bump discipline |
 | v1.1 | ~4 | 3 | Audit-driven gap closure, CSS static analysis tests, production deploy with human verification |
 | v1.2 | ~6 | 4 | Monolith split (3-file IIFE), page-scoped localStorage, redirect stubs, API surface smoke tests |
+| v1.3 | ~4 | 5 | Validation-first pipeline, family-based bulk authoring, golden baselines, alias resolution chain |
 
 ### Cumulative Quality
 
@@ -154,11 +202,14 @@
 | v1.0 | 32+ | 810+ | 179 | All 38 requirements verified 3 ways |
 | v1.1 | 32+ | 810+ | 179+ | 7/7 requirements satisfied, 5 static analysis tests added |
 | v1.2 | 50+ | 810+ | 179+ | 13/13 requirements satisfied, map/quiz/compare browser tests added |
+| v1.3 | 50+ | 1,351 | 179+ | 13/13 requirements, +541 worker tests (palette sync, contrast, golden baselines, PNG count) |
 
 ### Top Lessons (Verified Across Milestones)
 
-1. Audit before completing milestones -- caught deployment gap in v1.1, caught unused tokens in v1.0, confirmed clean v1.2
+1. Audit before completing milestones -- caught deployment gap in v1.1, caught unused tokens in v1.0, confirmed clean v1.2 and v1.3
 2. Gap closure plans are high-value and fast -- budget 1-2 per milestone
 3. Static analysis tests for CSS/token compliance prevent silent regression
 4. Monolith splits at data/domain/ui boundaries work well for codebases under 2K lines -- verified in v1.2
 5. Page-scoped localStorage keys prevent cross-page state leaks -- established in v1.2, apply from day one
+6. Build validation tooling before bulk work -- v1.3 contrast checker caught 10 issues before they multiplied across 54 profiles
+7. Clean-slate regeneration beats incremental when upstream data has changed fundamentally -- v1.3 PNG regen
