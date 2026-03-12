@@ -1,17 +1,17 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.3
-milestone_name: Asset Parity
-status: archived
-stopped_at: v1.3 milestone archived
-last_updated: "2026-03-12T13:15:00Z"
-last_activity: 2026-03-12 -- v1.3 milestone completed, archived, tagged
+milestone: v1.4
+milestone_name: Bug Fixes
+status: defining_requirements
+stopped_at: null
+last_updated: "2026-03-12T18:00:00Z"
+last_activity: 2026-03-12 -- Milestone v1.4 started
 progress:
-  total_phases: 5
-  completed_phases: 5
-  total_plans: 11
-  completed_plans: 11
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -21,12 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-12)
 
 **Core value:** A family can instantly see what flavors are at their nearby stores and decide where to go
-**Current focus:** Planning next milestone
+**Current focus:** v1.4 Bug Fixes
 
 ## Current Position
 
-v1.3 Asset Parity -- ARCHIVED
-All 4 milestones shipped (v1.0-v1.3), 17 phases, 39 plans total.
+Phase: Not started (defining requirements)
+Plan: --
+Status: Defining requirements
+Last activity: 2026-03-12 -- Milestone v1.4 started
 
 ## Performance Metrics
 
@@ -54,4 +56,4 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-12
-Stopped at: v1.3 milestone archived
+Stopped at: Defining v1.4 requirements

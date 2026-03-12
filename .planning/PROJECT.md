@@ -45,7 +45,16 @@ A family in the car (or on the couch) can instantly see what flavors are at thei
 
 ### Active
 
-(No active requirements -- planning next milestone)
+## Current Milestone: v1.4 Bug Fixes
+
+**Goal:** Fix geolocation, store selection, and map issues found in production.
+
+**Target fixes:**
+- Today page shows onboarding banner even when store is already selected
+- Compare page defaults to 4 stores instead of single geolocated store
+- Map centers on St. Louis instead of user's actual location
+- Map doesn't show nearby store when physically present
+- No "you are here" dot on map for precise GPS position
 
 ### Out of Scope
 
@@ -124,4 +133,4 @@ Tech stack: Cloudflare Worker (API), vanilla JS (4-file IIFE pattern), Playwrigh
 | FALLBACK_FLAVOR_ALIASES in cone-renderer.js | Client-side alias copy avoids API dependency for alias resolution | Good -- works offline, 37/37 in sync |
 
 ---
-*Last updated: 2026-03-12 after v1.3 milestone completed*
+*Last updated: 2026-03-12 after v1.4 milestone started*
