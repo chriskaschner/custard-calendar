@@ -6,6 +6,7 @@
 - Shipped **v1.1 Production Launch + Polish** -- Phases 6-8 (shipped 2026-03-09)
 - Shipped **v1.2 Feature Completion & Cleanup** -- Phases 9-12 (shipped 2026-03-09)
 - Shipped **v1.3 Asset Parity** -- Phases 13-17 (shipped 2026-03-12)
+- Active **v1.4 Bug Fixes** -- Phases 18-19 (in progress)
 
 ## Phases
 
@@ -50,7 +51,38 @@
 
 </details>
 
+### v1.4 Bug Fixes (In Progress)
+
+- [ ] **Phase 18: Store Selection Fixes** - Today and Compare pages respect geolocated store correctly
+- [ ] **Phase 19: Map Geolocation Fixes** - Map centers on user, shows nearest store, displays position dot
+
+## Phase Details
+
+### Phase 18: Store Selection Fixes
+**Goal**: Users who already have a geolocated store see correct initial state on Today and Compare pages
+**Depends on**: Nothing (first phase of v1.4)
+**Requirements**: STOR-01, STOR-02
+**Success Criteria** (what must be TRUE):
+  1. User with a previously selected store sees the flavor card immediately on Today page -- no onboarding banner
+  2. User visiting Today page for the first time (no store selected) still sees the onboarding banner
+  3. User arriving on Compare page with a geolocated store sees only that single store's schedule -- not 4 nearby stores
+  4. User can still add additional stores on Compare page after the single-store initial load
+**Plans**: TBD
+
+### Phase 19: Map Geolocation Fixes
+**Goal**: Map page accurately reflects user's real-world position and shows relevant nearby stores
+**Depends on**: Phase 18 (correct geolocation flow)
+**Requirements**: MAP-01, MAP-02, MAP-03
+**Success Criteria** (what must be TRUE):
+  1. Map viewport centers on user's actual GPS coordinates when geolocation is granted -- not St. Louis or any fallback
+  2. When user is physically near a store, that store's marker is visually highlighted or selected on the map
+  3. A "you are here" dot appears at the user's precise GPS position, distinct from store markers
+  4. Map falls back gracefully to a reasonable default view when geolocation is denied or unavailable
+**Plans**: TBD
+
 ## Progress
+
+**Execution Order:** Phase 18 then Phase 19.
 
 | Phase | Milestone | Plans | Status | Completed |
 |-------|-----------|-------|--------|-----------|
@@ -58,10 +90,12 @@
 | 6-8 | v1.1 | 4/4 | Complete | 2026-03-09 |
 | 9-12 | v1.2 | 9/9 | Complete | 2026-03-09 |
 | 13-17 | v1.3 | 11/11 | Complete | 2026-03-12 |
+| 18. Store Selection Fixes | v1.4 | 0/TBD | Not started | - |
+| 19. Map Geolocation Fixes | v1.4 | 0/TBD | Not started | - |
 
-**Total: 17 phases, 39 plans across 4 milestones**
+**Total: 19 phases, 39+ plans across 5 milestones**
 
-Full phase details archived:
+Full phase details for completed milestones archived:
 - `.planning/milestones/v1.0-ROADMAP.md`
 - `.planning/milestones/v1.1-ROADMAP.md`
 - `.planning/milestones/v1.2-ROADMAP.md`

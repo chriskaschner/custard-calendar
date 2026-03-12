@@ -32,21 +32,19 @@ None -- bug fix milestone only.
 
 ## Traceability
 
-Which phases cover which requirements. Updated during roadmap creation.
-
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| STOR-01 | -- | Pending |
-| STOR-02 | -- | Pending |
-| MAP-01 | -- | Pending |
-| MAP-02 | -- | Pending |
-| MAP-03 | -- | Pending |
+| STOR-01 | Phase 18 | Pending |
+| STOR-02 | Phase 18 | Pending |
+| MAP-01 | Phase 19 | Pending |
+| MAP-02 | Phase 19 | Pending |
+| MAP-03 | Phase 19 | Pending |
 
 **Coverage:**
 - v1.4 requirements: 5 total
-- Mapped to phases: 0
-- Unmapped: 5
+- Mapped to phases: 5
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-12*
-*Last updated: 2026-03-12 after initial definition*
+*Last updated: 2026-03-12 after roadmap creation*
