@@ -182,10 +182,46 @@
         (pos) => {
           // Update dot position but do NOT re-center map
           updatePositionDot(pos.coords.latitude, pos.coords.longitude);
+          // Re-detect nearest store with updated position
+          detectAndHighlightNearest();
         },
         () => { /* watch error is non-fatal */ },
         { enableHighAccuracy: false, maximumAge: 30000 }
       );
+    }
+
+    let nearestStoreSlug = null; // tracks current nearest store for dynamic updates
+
+    function detectAndHighlightNearest() {
+      if (userLat === null || userLon === null || !window._allMarkers || window._allMarkers.length === 0) {
+        nearestStoreSlug = null;
+        return;
+      }
+      var minDist = Infinity;
+      var nearestEntry = null;
+      for (var i = 0; i < window._allMarkers.length; i++) {
+        var entry = window._allMarkers[i];
+        var dist = haversine(userLat, userLon, entry.store._lat, entry.store._lon);
+        if (dist < minDist) {
+          minDist = dist;
+          nearestEntry = entry;
+        }
+      }
+      nearestStoreSlug = nearestEntry ? (nearestEntry.store.slug || null) : null;
+
+      // Apply CSS class to nearest marker, remove from all others
+      for (var i = 0; i < window._allMarkers.length; i++) {
+        var entry = window._allMarkers[i];
+        var el = entry.marker.getElement && entry.marker.getElement();
+        if (!el) continue;
+        var markerDiv = el.querySelector('.flavor-map-marker');
+        if (!markerDiv) continue;
+        if (entry === nearestEntry) {
+          markerDiv.classList.add('flavor-map-marker-nearest');
+        } else {
+          markerDiv.classList.remove('flavor-map-marker-nearest');
+        }
+      }
     }
 
     const flavorColorsReady = loadFlavorColors().then(function() { flavorIconCache.clear(); });
@@ -473,6 +509,16 @@
 
       // Re-apply exclusion dimming after markers refresh
       applyFamilyFilter();
+      // Highlight nearest store to user's GPS position
+      detectAndHighlightNearest();
+
+      // If GPS position available, recalculate distances from user's actual position
+      // (not map center) so nearest-to-user sorts correctly
+      if (userLat !== null && userLon !== null) {
+        for (const store of allStores) {
+          store._userDist = haversine(userLat, userLon, store._lat, store._lon);
+        }
+      }
 
       // Suggestions
       if (primaryData && hasFlavorFilter && primaryData.matches.length === 0 && primaryData.suggestions.length > 0) {
@@ -513,8 +559,8 @@
       const flavorName = primaryData ? primaryData.query.flavor : flavorInput.value.trim();
       let html = '';
       if (hasFlavorFilter) {
-        const matches = allStores.filter(s => s._match).sort((a, b) => a._dist - b._dist);
-        const rest = allStores.filter(s => !s._match).sort((a, b) => a._dist - b._dist);
+        const matches = allStores.filter(s => s._match).sort((a, b) => (a._userDist ?? a._dist) - (b._userDist ?? b._dist));
+        const rest = allStores.filter(s => !s._match).sort((a, b) => (a._userDist ?? a._dist) - (b._userDist ?? b._dist));
 
         if (matches.length > 0) {
           html += `<div class="results-group"><h3 class="results-group-title match-title">Stores with ${escapeHtml(flavorName)} (${matches.length})</h3>`;
@@ -554,7 +600,7 @@
         }
       } else {
         // No flavor filter — single flat list sorted by distance
-        allStores.sort((a, b) => a._dist - b._dist);
+        allStores.sort((a, b) => (a._userDist ?? a._dist) - (b._userDist ?? b._dist));
         const total = allStores.length;
         html += `<div class="results-group">${quipHtml}<h3 class="results-group-title">Results (${total})</h3>`;
         for (const store of allStores) html += storeCard(store, false);
@@ -973,6 +1019,8 @@
       const nameColor = store.brand && BRAND_COLORS[store.brand] ? ` style="color:${BRAND_COLORS[store.brand]}"` : '';
       const desc = store.description ? `<div class="store-card-description">${escapeHtml(store.description)}</div>` : '';
       const distHtml = store._dist != null ? `<span class="store-card-rank">${store._dist.toFixed(1)} mi</span>` : '';
+      const nearestBadge = (nearestStoreSlug && store.slug === nearestStoreSlug) ?
+        '<span class="nearest-badge">Nearest to you</span>' : '';
       const lat = Number(store.lat);
       const lon = Number(store.lon || store.lng);
       const ctas = store.flavor ? CustardPlanner.actionCTAsHTML({
@@ -986,7 +1034,7 @@
       return `<div class="card card--map-store store-card${matchClass}">
         <div class="store-card-header">
           <span class="store-card-name"${nameColor}>${escapeHtml(store.name)}</span>
-          ${distHtml}
+          ${distHtml}${nearestBadge}
         </div>
         <div class="store-card-address">${escapeHtml(store.address || '')}</div>
         <div class="store-card-flavor">${escapeHtml(store.flavor || 'Loading...')}</div>

@@ -46,6 +46,10 @@ var MOCK_NEARBY = {
 
 function mockRoutes(page, geolocateResponse) {
   return Promise.all([
+    // Block service worker registration so it doesn't intercept our mocked routes
+    page.route("**/sw.js", async (route) => {
+      await route.fulfill({ status: 200, contentType: "application/javascript", body: "// noop" });
+    }),
     page.route("https://custard.chriskaschner.com/api/v1/geolocate", async (route) => {
       if (geolocateResponse === null) {
         await route.fulfill({ status: 500, body: "error" });
@@ -57,7 +61,7 @@ function mockRoutes(page, geolocateResponse) {
         });
       }
     }),
-    page.route(/https:\/\/custard\.chriskaschner\.com\/api\/v1\/nearby-flavors\?.*/, async (route) => {
+    page.route("**/api/v1/nearby-flavors*", async (route) => {
       await route.fulfill({
         status: 200,
         contentType: "application/json",
@@ -78,6 +82,27 @@ function mockRoutes(page, geolocateResponse) {
         status: 200,
         contentType: "application/json",
         body: JSON.stringify({ flavors: [] }),
+      });
+    }),
+    page.route("**/api/v1/flavor-config", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ families: {} }),
+      });
+    }),
+    page.route("**/api/v1/flavor-colors", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({}),
+      });
+    }),
+    page.route("**/api/v1/events*", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ events: [] }),
       });
     }),
   ]);
