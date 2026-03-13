@@ -93,7 +93,7 @@ Plans:
 | 6-8 | v1.1 | 4/4 | Complete | 2026-03-09 |
 | 9-12 | v1.2 | 9/9 | Complete | 2026-03-09 |
 | 13-17 | v1.3 | 11/11 | Complete | 2026-03-12 |
-| 18. Store Selection Fixes | 2/2 | Complete   | 2026-03-13 | - |
+| 18. Store Selection Fixes | 2/2 | Complete    | 2026-03-13 | - |
 | 19. Map Geolocation Fixes | v1.4 | 0/TBD | Not started | - |
 
 **Total: 19 phases, 41+ plans across 5 milestones**
