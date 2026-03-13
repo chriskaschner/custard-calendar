@@ -54,7 +54,7 @@
 ### v1.4 Bug Fixes (In Progress)
 
 - [x] **Phase 18: Store Selection Fixes** - Today and Compare pages respect geolocated store correctly (completed 2026-03-13)
-- [ ] **Phase 19: Map Geolocation Fixes** - Map centers on user, shows nearest store, displays position dot
+- [x] **Phase 19: Map Geolocation Fixes** - Map centers on user, shows nearest store, displays position dot (completed 2026-03-13)
 
 ## Phase Details
 
@@ -81,10 +81,10 @@ Plans:
   2. When user is physically near a store, that store's marker is visually highlighted or selected on the map
   3. A "you are here" dot appears at the user's precise GPS position, distinct from store markers
   4. Map falls back gracefully to a reasonable default view when geolocation is denied or unavailable
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 Plans:
-- [ ] 19-01-PLAN.md -- GPS auto-request, map centering, position dot, and fallback behavior
-- [ ] 19-02-PLAN.md -- Nearest store detection, marker highlighting, and results badge
+- [x] 19-01-PLAN.md -- GPS auto-request, map centering, position dot, and fallback behavior
+- [x] 19-02-PLAN.md -- Nearest store detection, marker highlighting, and results badge
 
 ## Progress
 
@@ -97,7 +97,7 @@ Plans:
 | 9-12 | v1.2 | 9/9 | Complete | 2026-03-09 |
 | 13-17 | v1.3 | 11/11 | Complete | 2026-03-12 |
 | 18. Store Selection Fixes | v1.4 | 2/2 | Complete | 2026-03-13 |
-| 19. Map Geolocation Fixes | 1/2 | In Progress|  | - |
+| 19. Map Geolocation Fixes | v1.4 | 2/2 | Complete | 2026-03-13 |
 
 **Total: 19 phases, 43 plans across 5 milestones**
 

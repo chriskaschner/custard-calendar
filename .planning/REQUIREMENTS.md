@@ -15,7 +15,7 @@ Requirements for bug fix release. Each maps to roadmap phases.
 ### Map / Geolocation
 
 - [x] **MAP-01**: Map centers on user's actual GPS position, not a default/fallback location
-- [ ] **MAP-02**: Map shows the nearest store when user is physically near it
+- [x] **MAP-02**: Map shows the nearest store when user is physically near it
 - [x] **MAP-03**: Map displays a "you are here" dot at the user's precise GPS coordinates
 
 ## Future Requirements
@@ -37,7 +37,7 @@ None -- bug fix milestone only.
 | STOR-01 | Phase 18 | Complete |
 | STOR-02 | Phase 18 | Complete |
 | MAP-01 | Phase 19 | Complete |
-| MAP-02 | Phase 19 | Pending |
+| MAP-02 | Phase 19 | Complete |
 | MAP-03 | Phase 19 | Complete |
 
 **Coverage:**
