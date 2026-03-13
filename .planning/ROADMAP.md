@@ -69,8 +69,8 @@
   4. User can still add additional stores on Compare page after the single-store initial load
 **Plans:** 2/2 plans complete
 Plans:
-- [ ] 18-01-PLAN.md -- Fix Today page onboarding banner flash for returning users
-- [ ] 18-02-PLAN.md -- Enable single-store Compare page with add-more hint
+- [x] 18-01-PLAN.md -- Fix Today page onboarding banner flash for returning users
+- [x] 18-02-PLAN.md -- Enable single-store Compare page with add-more hint
 
 ### Phase 19: Map Geolocation Fixes
 **Goal**: Map page accurately reflects user's real-world position and shows relevant nearby stores
@@ -81,7 +81,10 @@ Plans:
   2. When user is physically near a store, that store's marker is visually highlighted or selected on the map
   3. A "you are here" dot appears at the user's precise GPS position, distinct from store markers
   4. Map falls back gracefully to a reasonable default view when geolocation is denied or unavailable
-**Plans**: TBD
+**Plans:** 2 plans
+Plans:
+- [ ] 19-01-PLAN.md -- GPS auto-request, map centering, position dot, and fallback behavior
+- [ ] 19-02-PLAN.md -- Nearest store detection, marker highlighting, and results badge
 
 ## Progress
 
@@ -93,10 +96,10 @@ Plans:
 | 6-8 | v1.1 | 4/4 | Complete | 2026-03-09 |
 | 9-12 | v1.2 | 9/9 | Complete | 2026-03-09 |
 | 13-17 | v1.3 | 11/11 | Complete | 2026-03-12 |
-| 18. Store Selection Fixes | 2/2 | Complete    | 2026-03-13 | - |
-| 19. Map Geolocation Fixes | v1.4 | 0/TBD | Not started | - |
+| 18. Store Selection Fixes | v1.4 | 2/2 | Complete | 2026-03-13 |
+| 19. Map Geolocation Fixes | v1.4 | 0/2 | Not started | - |
 
-**Total: 19 phases, 41+ plans across 5 milestones**
+**Total: 19 phases, 43 plans across 5 milestones**
 
 Full phase details for completed milestones archived:
 - `.planning/milestones/v1.0-ROADMAP.md`
