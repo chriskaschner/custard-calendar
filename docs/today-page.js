@@ -355,31 +355,36 @@ var CustardToday = (function () {
     var brand = brandFromSlug(slug);
     var color = BRAND_COLORS[brand] || '#005696';
 
+    // Reset state classes
+    todayCard.classList.remove('day-card-confirmed', 'day-card-estimated', 'day-card-none');
+    todayCard.style.borderLeftColor = '';
+    todayFlavor.classList.remove('text-estimated');
+    todayFlavor.style.color = '';
+
     if (day.type === 'confirmed') {
+      todayCard.classList.add('day-card-confirmed');
       todayCard.style.borderLeftColor = color;
       // Use hero cone PNG with HD SVG fallback
       renderHeroCone(day.flavor, todayCone, 6);
       todayCone.hidden = false;
       todayFlavor.textContent = day.flavor;
-      todayFlavor.style.color = '';
       todayDesc.textContent = day.description || '';
       todayDesc.hidden = !day.description;
       renderRarity(todayData && todayData.rarity, day.flavor);
     } else if (day.type === 'predicted') {
-      todayCard.style.borderLeftColor = '#bdbdbd';
+      todayCard.classList.add('day-card-estimated');
       renderHeroCone(day.flavor, todayCone, 6);
       todayCone.hidden = false;
       todayFlavor.textContent = day.flavor;
-      todayFlavor.style.color = '';
       todayDesc.textContent = '';
       todayDesc.hidden = true;
       renderRarity(null, null);
     } else {
-      todayCard.style.borderLeftColor = '#e0e0e0';
+      todayCard.classList.add('day-card-none');
       todayCone.innerHTML = '';
       todayCone.hidden = true;
       todayFlavor.textContent = 'No data yet';
-      todayFlavor.style.color = '#999';
+      todayFlavor.classList.add('text-estimated');
       todayDesc.textContent = 'Check back later \u2014 flavor data updates throughout the day.';
       todayDesc.hidden = false;
       renderRarity(null, null);
@@ -428,7 +433,7 @@ var CustardToday = (function () {
           + '<div class="week-day-date">' + escapeHtml(dateLabel) + '</div>'
           + '<div class="week-day-cone cone-sm">' + renderMiniConeSVG(day.flavor) + '</div>'
           + '<div class="week-day-flavor">' + escapeHtml(day.flavor) + '</div>'
-          + '<div class="week-day-confidence" style="color:#2e7d32;">Confirmed</div>';
+          + '<div class="week-day-confidence text-success">Confirmed</div>';
       } else if (day.type === 'predicted') {
         hasAnyData = true;
         card.className = 'week-day-card week-day-card-estimated';
@@ -445,7 +450,7 @@ var CustardToday = (function () {
           '<div class="' + certaintyStripClass(day) + '"></div>'
           + '<div class="week-day-name">' + escapeHtml(dayName) + '</div>'
           + '<div class="week-day-date">' + escapeHtml(dateLabel) + '</div>'
-          + '<div class="week-day-flavor" style="color:#999;font-style:italic;">No data</div>';
+          + '<div class="week-day-flavor text-estimated">No data</div>';
       }
 
       weekStrip.appendChild(card);
@@ -520,7 +525,7 @@ var CustardToday = (function () {
         } else {
           cell.innerHTML =
             '<div class="multi-store-cone"></div>'
-            + '<div class="multi-store-flavor" style="color:#999;font-style:italic;">No data</div>'
+            + '<div class="multi-store-flavor text-estimated">No data</div>'
             + '<div class="multi-store-name">' + escapeHtml(storeName) + '</div>';
         }
 
