@@ -617,11 +617,11 @@ details ol {
 }
 
 .flavor-map-marker-default {
-  --marker-state-glow: var(--marker-glow, rgba(0, 54, 102, 0.34));
+  --marker-state-glow: var(--marker-glow, color-mix(in srgb, var(--state-confirmed) 34%, transparent));
 }
 
 .flavor-map-marker-nearest {
-  --marker-state-glow: rgba(66, 133, 244, 0.7);
+  --marker-state-glow: color-mix(in srgb, var(--state-confirmed) 70%, transparent);
 }
 
 .flavor-map-marker-nearest .mini-cone {
