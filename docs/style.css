@@ -128,6 +128,23 @@
 .card--quiz strong { display: block; font-size: var(--text-md); margin-bottom: var(--space-1); }
 .card--quiz p { font-size: var(--text-sm); color: var(--text-muted); margin: 0; }
 
+/* Card modifiers (Phase 21 - card/button unification) */
+.card--accent { border-left: 4px solid var(--brand); }
+.card--accent-sm { border-left: 3px solid var(--brand); }
+.card--compact { padding: var(--space-3); }
+.card--success { border-color: var(--state-success); background: var(--state-success-bg); }
+.card--danger { border-color: var(--state-danger); background: var(--state-danger-bg); }
+.card--overlay {
+  position: absolute;
+  z-index: 520;
+  border: 1px solid rgba(137, 155, 185, 0.34);
+  border-radius: 14px;
+  background: linear-gradient(160deg, rgba(26, 33, 48, 0.88), rgba(22, 28, 44, 0.78));
+  backdrop-filter: blur(7px);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+  color: #e5ebf6;
+}
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   max-width: 800px;
@@ -1581,6 +1598,37 @@ footer a {
 .btn-secondary:hover {
   background: var(--bg-muted);
 }
+
+/* .btn-text base type (Phase 21 - card/button unification) */
+.btn-text {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--brand);
+  font-size: var(--text-base);
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0 var(--space-1);
+  min-height: 44px;
+}
+.btn-text:hover {
+  color: var(--brand-dark, var(--brand-hover));
+}
+
+/* Button modifiers (Phase 21 - card/button unification) */
+.btn--block { display: block; width: 100%; }
+.btn--sm { padding: var(--space-2) var(--space-3); font-size: 0.875rem; }
+.btn--danger { background: var(--state-danger); color: white; }
+.btn--danger:hover { background: var(--state-danger-text); }
+.btn--muted { opacity: 0.6; }
+.btn--icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: var(--space-2); min-width: 36px; min-height: 36px;
+}
+.btn--circle { border-radius: 50%; }
 
 .hero-empty .hero-coverage {
   max-width: 44rem;

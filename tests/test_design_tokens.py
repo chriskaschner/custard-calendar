@@ -25,6 +25,7 @@ ALLOWED_SELECTOR_PATTERNS = [
     # Fronts dark theme (the entire .fronts-* section uses inverted palette)
     r"\.fronts-",
     r"#fronts-map\b",
+    r"\.card--overlay\b",
     # Leaflet map control overrides
     r"\.leaflet-",
     # Signal card semantic colors (data-signal-type selectors)
