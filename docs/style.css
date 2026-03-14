@@ -104,6 +104,10 @@
   display: none !important;
 }
 
+.hidden {
+  display: none !important;
+}
+
 /* ---------------------------------------------------------------------------
  * Card system (.card base + variants)
  * --------------------------------------------------------------------------- */
@@ -259,6 +263,26 @@ header h1 {
 header p {
   color: var(--text-muted);
   margin-top: var(--space-2);
+}
+
+.header-subtitle {
+  font-size: var(--text-base);
+  margin-top: var(--space-1);      /* overrides header p default of --space-2 */
+  color: var(--text-muted);
+}
+
+.compare-empty-heading {
+  font-size: 1.25rem;              /* no exact token -- between --text-lg and --text-xl */
+  font-weight: 600;
+  margin-bottom: var(--space-2);
+}
+
+.footer-disclaimer {
+  margin-top: var(--space-2);
+}
+
+.d-inline {
+  display: inline;
 }
 
 main {
@@ -2092,7 +2116,10 @@ footer a {
   flex-direction: column;
   gap: var(--space-2);
   background: var(--bg-muted); /* override .card base */
-  margin: var(--space-4) 0;
+  margin: var(--space-5) auto;
+  padding: var(--space-4);
+  max-width: 24rem;
+  text-align: center;
 }
 
 .updates-cta-card strong {

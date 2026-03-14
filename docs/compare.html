@@ -22,8 +22,8 @@
 </head>
 <body>
   <header class="forecast-header">
-    <h1 style="color:#005696;font-size:1.5rem;">Custard Forecast</h1>
-    <p style="color:#666;margin-top:0.25rem;font-size:0.875rem;">Compare flavors across your stores</p>
+    <h1>Custard Forecast</h1>
+    <p class="header-subtitle">Compare flavors across your stores</p>
 
     <div id="shared-nav" data-page="compare"></div>
   </header>
@@ -32,7 +32,7 @@
     <!-- Empty state: 0-1 saved stores -->
     <section id="compare-empty" hidden>
       <div class="compare-empty">
-        <p style="font-size:1.25rem;font-weight:600;margin-bottom:0.5rem;">Compare your stores</p>
+        <p class="compare-empty-heading">Compare your stores</p>
         <p>Add stores to compare flavors side-by-side across the next few days.</p>
         <button class="btn-primary" id="compare-add-stores">Add stores</button>
       </div>
@@ -67,16 +67,16 @@
     <section id="compare-grid"></section>
 
     <!-- Want this every day? CTA -->
-    <section id="updates-cta" class="card updates-cta-card" style="text-align:center;margin:1.5rem auto;padding:1rem;max-width:24rem;">
+    <section id="updates-cta" class="card updates-cta-card">
       <strong>Want this every day?</strong>
-      <p style="margin:0.5rem 0;font-size:0.875rem;color:#666;">Get calendar updates and flavor alerts for your stores.</p>
+      <p class="header-subtitle">Get calendar updates and flavor alerts for your stores.</p>
       <a href="updates.html" class="btn-primary">Set it up</a>
     </section>
 
   </main>
 
   <footer>
-    <p style="margin-top:0.5rem;">Not affiliated with any restaurant. Flavor data sourced from restaurant websites.</p>
+    <p class="footer-disclaimer">Not affiliated with any restaurant. Flavor data sourced from restaurant websites.</p>
     <div class="page-share-mount" id="page-share"></div>
   </footer>
 
