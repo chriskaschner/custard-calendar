@@ -1153,6 +1153,7 @@ details ol {
 
 /* State utility classes (used by JS instead of inline hex) */
 .text-success { color: var(--state-success-text); }
+.text-danger { color: var(--state-danger); }
 .text-estimated { color: var(--state-estimated-text); font-style: italic; }
 
 .day-card-header {
@@ -2534,7 +2535,13 @@ details#week-section { margin-top: 1rem; }
 .fronts-tick-row span {
   font-size: 0.67rem;
   text-align: center;
+  font-weight: 400;
   color: #9fb1d1;
+}
+
+.fronts-tick--confirmed {
+  font-weight: 700;
+  color: var(--brand);
 }
 
 .fronts-status-row {
@@ -3917,3 +3924,4 @@ textarea:focus-visible {
   opacity: 0.5;
   cursor: not-allowed;
 }
+
