@@ -150,7 +150,7 @@ var SharedNav = (function () {
 
   function buildNavLinksHTML() {
     var currentPage = getCurrentPage();
-    var html = '<nav class="nav-links" style="margin-top:0.75rem;">';
+    var html = '<nav class="nav-links">';
     for (var i = 0; i < NAV_ITEMS.length; i++) {
       var item = NAV_ITEMS[i];
       var isActive = (item.href === currentPage);
@@ -166,10 +166,10 @@ var SharedNav = (function () {
   // -------------------------------------------------------------------------
 
   function buildFooterLinksHTML() {
-    return '<div class="shared-footer-links" style="text-align:center;padding:0.5rem 0;font-size:0.8125rem;">'
-      + '<a href="updates.html" style="color:#005696;text-decoration:none;margin:0 0.75rem;">Get Updates</a>'
-      + '<a href="https://github.com/chriskaschner/custard-calendar" style="color:#666;text-decoration:none;margin:0 0.75rem;">GitHub</a>'
-      + '<a href="privacy.html" style="color:#666;text-decoration:none;margin:0 0.75rem;">Privacy</a>'
+    return '<div class="shared-footer-links">'
+      + '<a href="updates.html" class="shared-footer-link shared-footer-link--brand">Get Updates</a>'
+      + '<a href="https://github.com/chriskaschner/custard-calendar" class="shared-footer-link">GitHub</a>'
+      + '<a href="privacy.html" class="shared-footer-link">Privacy</a>'
       + '</div>';
   }
 
@@ -183,7 +183,7 @@ var SharedNav = (function () {
       var placeholder = slugToTitle(slug);
       return '<div class="store-indicator">'
         + '<span class="store-name">' + escapeHtml(placeholder) + '</span>'
-        + ' <button type="button" class="store-change-btn">change</button>'
+        + ' <button type="button" class="btn-text">change</button>'
         + '</div>';
     }
     if (!store) return '';
@@ -202,7 +202,7 @@ var SharedNav = (function () {
     }
     return '<div class="store-indicator">'
       + '<span class="store-name">' + nameText + '<span class="store-city">' + cityState + '</span></span>'
-      + ' <button type="button" class="store-change-btn">change</button>'
+      + ' <button type="button" class="btn-text">change</button>'
       + '</div>';
   }
 
@@ -223,7 +223,7 @@ var SharedNav = (function () {
       }
     }
     // Re-bind change button
-    var btn = _container.querySelector('.store-change-btn');
+    var btn = _container.querySelector('.btn-text');
     if (btn) {
       btn.addEventListener('click', function () { showStorePicker(); });
     }
@@ -249,8 +249,8 @@ var SharedNav = (function () {
     return '<div class="card first-visit-prompt">'
       + '<p>Showing flavors for <strong>' + nameText + '</strong></p>'
       + '<div class="first-visit-actions">'
-      + '<button type="button" class="first-visit-confirm">Looks good</button>'
-      + ' <button type="button" class="store-change-btn">change</button>'
+      + '<button type="button" class="btn-primary btn--sm">Looks good</button>'
+      + ' <button type="button" class="btn-text">change</button>'
       + '</div>'
       + '</div>';
   }
@@ -272,7 +272,7 @@ var SharedNav = (function () {
     }
 
     // Bind confirm button
-    var confirmBtn = _container.querySelector('.first-visit-confirm');
+    var confirmBtn = _container.querySelector('.first-visit-prompt .btn-primary');
     if (confirmBtn) {
       confirmBtn.addEventListener('click', function () {
         if (typeof CustardPlanner !== 'undefined' && CustardPlanner.setPrimaryStoreSlug) {
@@ -283,7 +283,7 @@ var SharedNav = (function () {
     }
 
     // Bind change button
-    var changeBtn = _container.querySelector('.first-visit-prompt .store-change-btn');
+    var changeBtn = _container.querySelector('.first-visit-prompt .btn-text');
     if (changeBtn) {
       changeBtn.addEventListener('click', function () { showStorePicker(); });
     }
@@ -341,7 +341,7 @@ var SharedNav = (function () {
     var html = '<div class="card first-visit-prompt">'
       + '<p>Select a store to see today\'s flavor</p>'
       + '<div class="first-visit-actions">'
-      + '<button type="button" class="store-change-btn">Find your store</button>'
+      + '<button type="button" class="btn-text">Find your store</button>'
       + '</div>'
       + '</div>';
 
@@ -353,7 +353,7 @@ var SharedNav = (function () {
     }
 
     // Bind the find store button to open the picker
-    var btn = _container.querySelector('.first-visit-prompt .store-change-btn');
+    var btn = _container.querySelector('.first-visit-prompt .btn-text');
     if (btn) {
       btn.addEventListener('click', function () { showStorePicker(); });
     }
@@ -539,7 +539,7 @@ var SharedNav = (function () {
     container.innerHTML = indicatorHTML + navHTML;
 
     // Bind change button if indicator was rendered
-    var changeBtn = container.querySelector('.store-change-btn');
+    var changeBtn = container.querySelector('.btn-text');
     if (changeBtn) {
       changeBtn.addEventListener('click', function () { showStorePicker(); });
     }
@@ -569,7 +569,7 @@ var SharedNav = (function () {
         existingFooter.insertAdjacentHTML('afterbegin', buildFooterLinksHTML());
       } else {
         document.body.insertAdjacentHTML('beforeend',
-          '<footer style="text-align:center;padding:1.5rem 0 1rem;margin-top:2rem;border-top:1px solid #e5e5e5;">'
+          '<footer class="shared-footer">'
           + buildFooterLinksHTML() + '</footer>');
       }
     }

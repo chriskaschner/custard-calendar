@@ -795,8 +795,8 @@ var CustardCompare = (function () {
         var hint = document.createElement('div');
         hint.className = 'card compare-add-hint';
         hint.innerHTML = '<span class="compare-add-hint-text">Add another store to compare flavors side by side</span>'
-          + '<br><button type="button" class="compare-add-hint-btn">+ Add store</button>';
-        hint.querySelector('.compare-add-hint-btn').addEventListener('click', function () {
+          + '<br><button type="button" class="btn-text">+ Add store</button>';
+        hint.querySelector('.btn-text').addEventListener('click', function () {
           if (!_manifestLoaded) {
             loadStores().then(function () { showCompareStorePicker(); });
           } else {

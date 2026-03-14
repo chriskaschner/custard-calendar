@@ -30,7 +30,7 @@
       <div class="location-bar-inner">
         <div class="location-input-wrap">
           <input type="text" id="store-search" placeholder="Find your store..." autocomplete="off">
-          <button id="geo-btn" class="location-geo-btn" title="Use my location" aria-label="Use my location">
+          <button id="geo-btn" class="btn-secondary btn--icon" title="Use my location" aria-label="Use my location">
             <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
               <circle cx="12" cy="12" r="3"/>
               <path d="M12 2v4M12 18v4M2 12h4M18 12h4"/>
@@ -40,7 +40,7 @@
         <div id="store-dropdown" class="store-dropdown" hidden></div>
         <div id="current-store" class="current-store-badge" hidden>
           <span id="current-store-name"></span>
-          <button id="change-store-btn" class="change-store-btn">change</button>
+          <button id="change-store-btn" class="btn-text">change</button>
         </div>
       </div>
     </div>
@@ -93,7 +93,7 @@
     <section id="error-state" hidden>
       <div class="card card--danger error-card">
         <p id="error-message">Something went wrong loading the flavor data.</p>
-        <button class="btn-retry" id="retry-btn">Try again</button>
+        <button class="btn-primary btn--danger btn--sm" id="retry-btn">Try again</button>
       </div>
     </section>
 

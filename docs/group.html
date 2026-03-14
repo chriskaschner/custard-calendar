@@ -183,7 +183,7 @@
 
         <div class="selected-slugs" id="selected-slugs" aria-label="Selected stores"></div>
 
-        <button class="btn-primary" id="start-vote-btn" disabled style="width:100%;margin-top:0.5rem;">Start voting</button>
+        <button class="btn-primary btn--block" id="start-vote-btn" disabled>Start voting</button>
         <p id="create-error" style="color:#c62828;font-size:0.84rem;margin-top:0.5rem;display:none;"></p>
       </div>
     </div>
@@ -195,7 +195,7 @@
         <p>Share this code with everyone in the car:</p>
         <div class="join-code-display" id="join-code-big"></div>
         <p>Or share the link:</p>
-        <button class="btn-secondary" id="copy-link-btn" style="margin:0.25rem auto;">Copy join link</button>
+        <button class="btn-secondary" id="copy-link-btn">Copy join link</button>
         <canvas id="qr-canvas" class="qr-canvas" width="128" height="128"></canvas>
       </div>
 
@@ -203,14 +203,14 @@
       <div id="vote-cards" hidden></div>
 
       <div id="vote-actions" style="margin-top:1rem;" hidden>
-        <button class="btn-primary" id="submit-vote-btn" style="width:100%;">Submit votes</button>
+        <button class="btn-primary btn--block" id="submit-vote-btn">Submit votes</button>
         <p id="vote-error" style="color:#c62828;font-size:0.84rem;margin-top:0.5rem;display:none;"></p>
       </div>
 
       <div id="waiting-section" hidden>
         <p class="waiting-note">Voted! Waiting for others...</p>
         <div id="live-tally"></div>
-        <button class="btn-secondary" id="see-results-btn" style="display:block;width:100%;margin-top:0.75rem;">See results now</button>
+        <button class="btn-secondary btn--block" id="see-results-btn">See results now</button>
       </div>
     </div>
 
@@ -640,7 +640,7 @@
       if (winnerCard && winnerCard.lat && winnerCard.lon) {
         mapsUrl = 'https://maps.google.com/?daddr=' + winnerCard.lat + ',' + winnerCard.lon;
       }
-      html += '<a href="' + mapsUrl + '" target="_blank" rel="noopener" class="directions-btn">Get directions</a>';
+      html += '<a href="' + mapsUrl + '" target="_blank" rel="noopener" class="btn-primary btn--block">Get directions</a>';
       html += '</div>';
 
       // Flavor similarity note

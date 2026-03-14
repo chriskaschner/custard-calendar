@@ -22,14 +22,8 @@ BUTTON_PROPERTIES = re.compile(
 # Allowed button base type class names (not modifiers)
 ALLOWED_BUTTON_BASES = {"btn", "btn-primary", "btn-secondary", "btn-text"}
 
-# Known legacy button classes that still exist during migration.
-# Plan 03 will remove these as it migrates each to base + modifier combos.
-LEGACY_BUTTON_ALLOWLIST = {
-    "btn-google",
-    "btn-apple",
-    "btn-search",
-    "btn-retry",
-}
+# Legacy button allowlist emptied by Plan 03 -- all domain-specific buttons remapped.
+LEGACY_BUTTON_ALLOWLIST = set()
 
 
 # -----------------------------------------------------------------------
@@ -91,9 +85,8 @@ def test_only_three_button_base_types():
 # -----------------------------------------------------------------------
 
 
-# Current baseline of inline button style violations in HTML files.
-# Plan 03 drives this to 0 as it replaces all inline styles with classes.
-_HTML_INLINE_BUTTON_STYLE_BASELINE = 5
+# All inline button styles eliminated by Plan 03.
+_HTML_INLINE_BUTTON_STYLE_BASELINE = 0
 
 
 def test_no_inline_button_styles_in_html():
@@ -131,9 +124,8 @@ def test_no_inline_button_styles_in_html():
     )
 
 
-# Current baseline of inline button style violations in JS files.
-# Plan 03 drives this to 0.
-_JS_INLINE_BUTTON_STYLE_BASELINE = 5
+# All inline button styles eliminated by Plan 03.
+_JS_INLINE_BUTTON_STYLE_BASELINE = 0
 
 
 def test_no_inline_button_styles_in_js():
