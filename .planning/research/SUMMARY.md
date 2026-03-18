@@ -1,172 +1,247 @@
 # Project Research Summary
 
-**Project:** Custard Calendar v1.5 Visual Polish
-**Domain:** Design system consolidation, pixel art asset quality, and UX refinement on a static vanilla JS/CSS site
-**Researched:** 2026-03-13
-**Confidence:** HIGH
+**Project:** Custard Calendar v2.0 Art Quality -- AI-Generated Pixel Art Cone Pipeline
+**Domain:** Static asset generation pipeline for 94 unique flavor icons via AI image generation
+**Researched:** 2026-03-18
+**Confidence:** MEDIUM (stack and integration patterns are HIGH confidence; AI generation consistency is empirically unproven at this scale)
 
 ## Executive Summary
 
-v1.5 is a consolidation milestone on an existing working product. There are no new dependencies, no new architectural patterns, and no new pages. The work is four parallel refactoring tracks: design token expansion (eliminating 216 hardcoded hex values from a 3833-line `style.css`), card/button CSS unification (reducing 14 button definitions to 3 base types), compare page first-load UX fix (geolocation race condition), and cone renderer quality upgrade (expanding hero tier topping density and scoop depth). All four tracks operate within a strict constraint set: no build step (GitHub Pages), vanilla JS (ES5 in `docs/`, ES modules in `worker/`), no frameworks, and zero-tolerance pixelmatch visual regression testing on 376 golden baselines covering 4 rendering tiers x 94 flavors.
+This is a pre-baked static asset migration project, not a product feature. The goal is replacing 94 algorithmically-generated SVG-derived cone PNGs with AI-generated pixel art PNGs, then removing the dead SVG renderer stack. The existing codebase has a proof-of-concept (blackberry-cobbler L5 PNG), a complete prompt template system (`masterlock-flavor-fills.json`), an existing API integration script (`generate_ai_sprites.mjs`), and a working downstream consumption pattern (`heroConeSrc()` + `docs/assets/cones/{slug}.png`). The infrastructure for this migration is largely in place. The recommended path is to upgrade the existing pipeline to `gpt-image-1` with `background: 'transparent'`, run the full 94-flavor batch, post-process with sharp (already installed), and drop the outputs into the existing asset path with no calling-code changes required for the primary use case.
 
-The recommended approach is strict phase sequencing with all CSS/JS work completed before any cone renderer changes. Design token expansion must happen first because every subsequent phase consumes the new tokens to replace inline styles and hardcoded colors. Card/button unification follows (requires tokens), then inline style elimination, then the Compare UX fix, and finally the cone renderer upgrade in complete isolation. The cone rendering phase regenerates 470+ binary files (94 hero PNGs + 376 golden baselines), and interleaving this with CSS/JS work creates unresolvable git conflicts on binary files.
+The single highest-risk element is visual consistency across 94 separately-generated images. AI generation is stochastic -- every call is a new roll. The current algorithmic renderer is perfectly deterministic and produces zero visual drift. Replacing it with AI art introduces real risk of inconsistency that would be worse than the status quo. The research-recommended mitigation is: generate all 94 in one session with a locked prompt template, do human curation review in the existing sprite-preview.html interface, enforce size normalization via sharp post-processing, and set a hard gate of 94/94 approved before deploying any new PNGs. Partial migration -- mixing AI art with algorithmic cones -- is explicitly an anti-pattern and should not happen.
 
-The top risks are: (1) renaming existing CSS tokens instead of adding new ones alongside them -- this breaks all 15 pages silently with no console errors because the 37 existing token names are consumed across every page, every JS innerHTML string, and all 3833 lines of `style.css`; (2) regenerating only the modified cone rendering tier instead of all four tiers after any `flavor-colors.js` change, causing CI failure because shared rendering functions cascade across tiers; (3) the Compare page blocking on SharedNav geolocation indefinitely -- SharedNav has an 8-second timeout and the UX fix must race against a 3-second compare-side timeout. All three are avoidable with explicit phase rules and targeted verification steps.
+The architecture of this migration is well-understood. The `heroConeSrc()` function is the universal integration seam: it resolves flavor name to `assets/cones/{slug}.png` path, and L5 PNGs are drop-in replacements at those same paths. Seven distinct rendering sites exist in the codebase, each must be addressed in a specific order driven by dependency analysis. Social card migration (Worker-side) is the most architecturally complex piece and may be deferred without blocking the main migration. The two-tier model -- L0 micro SVG for tiny contexts (Tidbyt, map popups), L5 AI PNG for everything else -- is the correct end state and aligns with existing code patterns.
 
 ## Key Findings
 
 ### Recommended Stack
 
-v1.5 adds zero new dependencies. All work uses CSS custom properties, `color-mix()` (baseline since May 2023, already used in quiz theming), `image-rendering: pixelated` (baseline since Jan 2020, already applied on `.hero-cone-img`), and the existing sharp/Pixelmatch/Playwright/Vitest toolchain. The key constraint is that CSS tokens must be hand-maintained in `:root` with no build-time token transformation -- Style Dictionary and similar tools are incompatible with GitHub Pages' raw-CSS serving.
+The existing `generate_ai_sprites.mjs` pipeline already targets `gpt-image-1` via `--model` flag and handles rate limiting. The only required changes are adding `background: 'transparent'`, `quality: 'medium'`, and `output_format: 'png'` to the API request body. No new packages needed. DALL-E 3 is deprecated May 12, 2026 -- migration to `gpt-image-1` is mandatory regardless of this project. Full batch cost at medium quality: approximately $3.76 (94 images at $0.04 each). With 2-3 candidates per flavor and a 30% reject rate, total generation cost is $20-55. All image post-processing uses sharp (already installed in `worker/node_modules`). A new `scripts/process-ai-cones.mjs` script handles trim + resize to 144x168 with nearest-neighbor kernel.
 
 **Core technologies:**
-- CSS custom properties: design token system -- additive-only, never rename or remove the existing 37 tokens
-- `color-mix()`: derive hover/active/disabled states from semantic tokens without introducing new raw hex values
-- `image-rendering: pixelated`: already applied; enforces nearest-neighbor browser scaling for pixel art
-- sharp 0.33.5 + `kernel: 'nearest'`: SVG-to-PNG at 300 DPI -- pipeline already validated, no changes needed
-- Pixelmatch: zero-tolerance visual regression on 376 baselines -- full 4-tier regeneration required after any renderer change
-- Playwright: new test needed for Compare first-load geolocation race; existing 40 browser specs catch button/class regressions
+- `gpt-image-1` (medium quality): Primary generation model -- best prompt adherence for pixel art among cloud APIs, native transparent background support, already integrated in existing pipeline
+- `sharp` (existing): Post-processing resize/trim -- nearest-neighbor kernel preserves pixel art grid, already installed
+- `pngjs` + `pixelmatch` (existing): Quality control and visual regression between generation runs -- already installed
+
+**What NOT to add:** Local SD/ComfyUI (no GPU), PixelLab (game-sprite oriented, opaque pricing), rembg (unnecessary with native transparency), OpenAI SDK (existing raw fetch approach is sufficient), multiple AI providers (guarantees style inconsistency).
 
 ### Expected Features
 
-**Must have (table stakes):**
-- Consistent topping distribution across all 94 hero cone flavors -- current 8 fixed slots leave center 12 columns of scoop empty
-- Rarity color scale unification -- two incompatible palettes exist for the same labels (map popups vs compare/today badges)
-- Semantic state tokens (success, warning, error, disabled, focus-ring) -- currently hardcoded in 15+ places
-- Compare first-load auto-populate -- geolocation already resolves a store but empty state still shows, requiring 2 user interactions
-- Inline style elimination from compare.html (8 instances) and compare-page.js -- minimum viable cleanup scope
+**Must have (table stakes) -- required for migration to be considered complete:**
+- Prompt generation for all 94 flavors -- already 90% done via `generate_masterlock_prompts.mjs`
+- AI image generation for all 94 flavors -- core deliverable, ~$20-55 total cost
+- Background transparency -- native via `background: 'transparent'` API param
+- Size normalization to 144x168 -- sharp post-processing with nearest-neighbor kernel
+- Drop-in replacement of `docs/assets/cones/*.png` -- same slug naming, same paths, no client code changes
+- Human QA review of all 94 -- the bottleneck step, budget 30% reject rate requiring re-generation
+- Service worker cache version bump -- `custard-v20` to `custard-v21`
+- Dead renderer removal -- `renderConeHDSVG`, `renderConeHeroSVG`, `renderConePremiumSVG` from `flavor-colors.js` and client-side equivalents
+- `flavor-audit.html` update -- reflect two-tier reality (L0 SVG + L5 PNG), remove 4 dead tiers
+- Golden baseline regeneration -- 376+ pixelmatch tests need new baseline snapshots
 
-**Should have (differentiators):**
-- Per-topping multi-pixel shapes at hero scale (port from premium renderer's `_PREM_SHAPE_MAP`)
-- Sub-pixel texture variation on scoop base (deterministic `texHash()` approach from premium renderer)
-- Expanded topping slot count (12-16 slots vs current 8) with collision detection
-- Card/button system reduced from 14 button definitions to 3 base types + size modifiers
-- Full inline style audit across all 11 HTML files (group.html has 19 instances)
+**Should have (differentiators that add significant value):**
+- Premium treatment overrides for complex flavors -- currently only blackberry-cobbler has one; extending to flavors with `density: explosion` and multi-topping profiles produces dramatically better AI output
+- Batch generation script with API integration and generation manifest -- enables reproducible re-generation and locks prompt versions per flavor
+- Candidate gallery HTML for curation -- side-by-side accept/reject, extends existing `blackberry-asset-preview.html` pattern
 
-**Defer (v2+):**
-- Premium tier cone rendering in production (renders poorly; explicitly out of scope per PROJECT.md)
-- Dark mode token layer (would double every color token; "ship light" policy)
-- Responsive hero cone sizes / retina 2x assets (use `image-rendering: pixelated` at integer multiples instead)
-- Animated cone rendering (requires sprite sheets, fights pixel art rendering)
+**Defer:**
+- Social card migration to PNG -- Worker-side change, marked out of scope in PROJECT.md; social cards will keep HD SVG cones while site shows AI PNGs; acceptable inconsistency for this milestone
+- Premium treatment overrides for all 94 -- start with blackberry-cobbler model, add overrides only for flavors that generate poorly
+- WebP output format -- marginal gains, adds `heroConeSrc()` complexity
 
 ### Architecture Approach
 
-v1.5 is a refactoring milestone with a four-tier cone rendering architecture already in place (Mini 9x11, HD 18x22, Premium 24x28, Hero 36x42). No new components are introduced. Changes are contained to: `style.css` (tokens, card/button rules), `compare-page.js` (init flow, inline styles), `shared-nav.js` (inline styles), `worker/src/flavor-colors.js` (Hero renderer geometry), with regenerated outputs to `docs/assets/cones/` and `worker/test/fixtures/goldens/`. The Compare page communicates with SharedNav exclusively via the `sharednav:storechange` CustomEvent -- the UX fix must be a race-with-timeout pattern, not a direct promise dependency.
+The migration targets 7 rendering sites. The integration seam is `heroConeSrc()` in `docs/cone-renderer.js`, which already returns `assets/cones/{slug}.png` paths. L5 PNGs are drop-in replacements at those same paths -- zero calling-code changes for the primary (Today page) use case. The architecture settles into a clean two-tier model: L0 micro SVG (9x11 pixel grid, runtime algorithmic, `renderMiniConeSVG()`) for tiny contexts, L5 AI PNGs (pre-generated, static, served via GitHub Pages) for everything larger. Starlark/Tidbyt and all small inline icons remain on L0 permanently -- no external assets in Starlark, no way to use PNGs at 64x32 LED resolution. Migration follows a dependency-ordered phase structure: generate PNGs first, then swap client-side fallback chain, then update quiz engine and audit page, then clean up dead renderers.
 
 **Major components:**
-1. `style.css` `:root` block -- design system source of truth; grows from 37 to ~60 tokens after rarity/state additions
-2. `worker/src/flavor-colors.js` -- server-side Hero renderer (36x42 grid); 4-file palette sync constraint means cone colors are independent of CSS tokens
-3. `compare-page.js` + `shared-nav.js` -- Compare initialization race: SharedNav dispatches `sharednav:storechange`; Compare must listen with 3-second timeout fallback, then clean up listener after first resolution
-4. Golden baseline + PNG pipeline -- full coordinated regeneration (all 4 tiers + all 94 PNGs + SW cache bump) required after any renderer change; partial regeneration always fails CI
+1. `generate_ai_sprites.mjs` (upgraded) + `process-ai-cones.mjs` (new) -- generation and post-processing pipeline; produces final 144x168 transparent PNGs
+2. `docs/cone-renderer.js` (modified) -- `heroConeSrc()` stays unchanged; `renderHeroCone()` fallback changes from HD SVG to L0 SVG; `renderMiniConeHDSVG()` and supporting utilities removed
+3. `worker/src/flavor-colors.js` (modified) -- removes `renderConeHDSVG`, `renderConeHeroSVG`, `renderConePremiumSVG` and all supporting HD/Premium/Hero code; keeps `FLAVOR_PROFILES`, color constants, `renderConeSVG()` (L0)
+4. `docs/assets/cones/*.png` (replaced) -- 94 AI-generated PNGs replacing 94 algorithmic PNGs at identical paths
 
 ### Critical Pitfalls
 
-1. **Token rename instead of token add** -- renaming any existing token breaks all 15 pages silently (no console errors, elements revert to browser defaults). Add new tokens only; alias if needed: `--color-brand-primary: var(--brand)`. The 37 existing names are load-bearing infrastructure.
+1. **Style drift across 94 generated images** -- Generate ALL 94 in a single session with identical model and prompt template. Never split across days or model versions. Post-process all through the same sharp pipeline to enforce consistent dimensions. Human grid-review in sprite-preview.html before committing anything.
 
-2. **Partial golden baseline regeneration** -- any change to `flavor-colors.js` shared functions (color lookup, topping resolution, scoop geometry) affects all 4 rendering tiers. Always run `UPDATE_GOLDENS=1 npx vitest run golden-baselines.test.js` (all 376), then verify at zero tolerance, then regenerate 94 hero PNGs, then bump SW cache version -- all in the same commit.
+2. **Partial migration creating two incompatible visual styles** -- Hard gate: all 94/94 images must pass QA before deploying any. The existing algorithmic cones and new L5 AI PNGs are visually incompatible styles. Zero partial deploys. The existing `png-asset-count.test.js` enforces 94-file count.
 
-3. **Cone changes interleaved with CSS/JS work** -- the 470+ binary file diff from cone regeneration cannot be merged with text-based CSS/JS changes. Cone phase must be last, in its own isolated commit, with no other changes in flight.
+3. **Deterministic reproducibility lost** -- Treat generated PNGs as PRIMARY ARTIFACTS, not derived outputs. Check them into git. Store a generation manifest (model, prompt, seed, parameters, timestamp) per flavor alongside every PNG. If a single flavor needs regeneration, generate 10+ variants and pick the closest match to the existing set.
 
-4. **Compare geolocation hang** -- SharedNav has an 8-second IP geolocation timeout. Compare must race `sharednav:storechange` against a 3-second timeout, fall back to empty state with CTA, and remove the event listener after resolution to prevent double-render.
+4. **Cache invalidation failure leaves users on stale art** -- Bump `CACHE_VERSION` in `sw.js` (v20 to v21) in the SAME commit that deploys new PNGs. Test the upgrade path on a returning browser profile. Multiple cache layers (SW, browser HTTP, Fastly CDN) all need to be considered.
 
-5. **Rarity unification breaks map popups** -- two rarity color scales exist for a reason (saturated chips on dark map popup vs pastel badges on white cards). Test `.popup-rarity-chip` rarity chips on the map page after token changes, not just Compare/Today pages.
+5. **Social card SVG embedding blocks full renderer removal** -- `social-card.js` embeds inline SVG cones via `renderConeHDSVG()`. Migration requires either pre-encoding L5 PNGs as base64 in KV (Option A, recommended) or keeping the old SVG renderer alive solely for social cards (Option B, defeats the cleanup goal). Decide early -- this determines whether dead renderer removal is complete or partial.
 
 ## Implications for Roadmap
 
-Based on combined research, the phase ordering is architecturally constrained -- not arbitrary. Each phase depends on the previous one being stable.
+Based on research, the dependency graph is clear: generation must complete before any code integration begins. Code integration phases can proceed in parallel after Phase 1. Cleanup is last.
 
-### Phase 1: Design Token Expansion
-**Rationale:** Purely additive, zero regression risk, and every subsequent phase depends on the new tokens being present. Non-negotiable first position.
-**Delivers:** ~20 new CSS tokens (rarity scale unified via `--rarity-*`, semantic states via `--color-success/warning/error`, interactive states via `color-mix()`); rarity color scales converged in `:root`; Fronts dark palette scoped under `.fronts-map-shell` class
-**Addresses:** 216 hardcoded hex values (partial start), two incompatible rarity color scales, missing state and interactive tokens
-**Avoids:** Token rename pitfall -- additive-only policy established as phase rule #1 before any CSS is touched
-**Verification:** Map popup rarity chips AND compare/today rarity badges tested after change; `grep -c 'var(--'` count does not decrease
+### Phase 1: Generate and Curate L5 PNGs
 
-### Phase 2: Card and Button Unification
-**Rationale:** Consumes tokens from Phase 1. Cleans up the class hierarchy that Compare and SharedNav both generate via JS innerHTML -- must be stable before Phase 3 touches those files.
-**Delivers:** 14 button definitions reduced to 3 base types (`.btn-primary`, `.btn-secondary`, `.btn-ghost`) + size modifiers; `.btn-google` aliased to `.btn-primary`; `.calendar-cta-btn` hardcoded `#005696` replaced; `.card` base class applied to all card-like components; all class renames audited across every `.js` file before committing
-**Addresses:** Button fragmentation, `.card` base class gaps, `.btn-retry` duplication
-**Avoids:** CSS-only rename without JS innerHTML audit -- grep required for every renamed class before commit; Playwright nav tests run after any SharedNav change
+**Rationale:** All downstream phases depend on having the final 94 PNGs at `docs/assets/cones/{slug}.png`. No code integration should begin until generation is complete and QA-approved. Mixing in-progress AI PNGs with the existing algorithmic PNGs is the worst possible outcome (style inconsistency across the catalog).
 
-### Phase 3: Inline Style Elimination
-**Rationale:** Can only run after tokens (Phase 1) and clean button classes (Phase 2) exist to replace the inline styles. Starting here would require inventing tokens mid-phase.
-**Delivers:** compare.html 8 inline styles removed; compare-page.js `style.cssText` removed (line 797); shared-nav.js 5 inline styles moved to CSS classes (lines 153, 169-172, 572); `style=""` attribute count in compare.html reduced to zero
-**Addresses:** 77 inline style attributes (minimum: compare.html and the two JS files); `#005696` and `#888`/`#ccc` hardcoded in JS strings replaced with token-based classes
-**Avoids:** Adding new inline styles during elimination -- `grep -rc 'style="' docs/*.html` baseline established before phase starts
+**Delivers:** 94 AI-generated, normalized, human-approved cone PNGs at 144x168px with transparent backgrounds. Generation manifest JSON committed alongside images.
 
-### Phase 4: Compare First-Load UX Fix
-**Rationale:** Needs clean button/card markup from Phases 2-3 (the add-hint element requires a CSS class replacement of inline styles). Small scope but needs stable SharedNav contract first.
-**Delivers:** Compare shows loading skeleton instead of empty state on first visit; `sharednav:storechange` race with 3-second timeout fallback auto-populates compare grid; new Playwright test with geolocate API returning 500 (verifies fallback to empty state within 3 seconds); event listener removed after first resolution
-**Addresses:** Two-interaction first-load flow, empty state shown despite primary store resolving, indefinite spinner risk
-**Avoids:** Infinite geolocation await; double-render from unremoved listener
+**Addresses:** Prompt generation (all 94), AI image generation, background transparency, size normalization, human QA review
 
-### Phase 5: Cone Renderer Quality Upgrade
-**Rationale:** Last among functional changes because it generates 470+ binary files. All CSS/JS committed and stable before this phase starts. The massive binary diff must be clean and isolated.
-**Delivers:** Hero tier (36x42 grid) expanded from 8 to 12-16 topping slots covering full scoop width (cols 6-28 vs current 8-11 and 22-27); highlight pixels expanded from 4 to 6-8 along upper-left arc; shadow pixels expanded from 3 to 5-6 along lower-right edge; all 376 golden baselines regenerated atomically; all 94 hero PNGs regenerated; SW cache version bumped -- all in one commit
-**Addresses:** Center 12 columns of scoop topping-free, "two columns of dots" look, minimal scoop depth at hero display size
-**Avoids:** Partial golden regeneration; interleaving with CSS/JS (this is the final functional phase)
+**Avoids:** Style drift (single-session generation, locked template), partial migration (94/94 gate), reproducibility loss (generation manifest required before starting)
 
-### Phase 6: Test Cleanup
-**Rationale:** Verifies final state of the milestone, not intermediate states. Must follow all functional changes.
-**Delivers:** 11 `test.skip` calls reviewed (each fixed and unskipped, or documented with permanent skip rationale); map-pan-stability.spec.mjs timeout addressed; golden baseline count confirmed at 376
-**Addresses:** Dead test code, flaky timeouts, undocumented skip reasons
+**Key tasks:**
+- Upgrade `generate_ai_sprites.mjs` with `gpt-image-1` params (`background: 'transparent'`, `quality: 'medium'`, `output_format: 'png'`)
+- Write `scripts/process-ai-cones.mjs` for sharp trim+resize post-processing
+- Generate all 94 flavors (estimate 20 min at Tier 1 rate limit)
+- Visual review in sprite-preview.html, re-run outliers
+- Commit PNGs + generation manifest as primary artifacts
+
+**Research flag:** Standard patterns -- generation workflow is well-documented. No additional research phase needed.
+
+---
+
+### Phase 2: Client-Side Renderer Swap
+
+**Rationale:** Once L5 PNGs exist at expected paths, client-side code changes are straightforward. The `heroConeSrc()` integration seam means the Today page hero cone works automatically. Quiz engine and audit page need explicit updates.
+
+**Delivers:** All 7 rendering sites consuming L5 PNGs. `renderHeroCone()` falls back to L0 SVG instead of HD SVG. Dead intermediate renderers removed from `cone-renderer.js`.
+
+**Addresses:** Client-side fallback chain update, quiz engine migration, audit page update, dead `renderMiniConeHDSVG()` removal
+
+**Avoids:** Dead code accumulation ("keeping dead renderers just in case" is explicitly identified as an anti-pattern in the architecture research)
+
+**Key tasks:**
+- Modify `renderHeroCone()` fallback: HD SVG to L0 mini SVG
+- Remove `renderMiniConeHDSVG()` and supporting utilities from `cone-renderer.js`
+- Update `docs/quizzes/engine.js` to use `renderHeroCone()` instead of `renderMiniConeHDSVG()`
+- Update `docs/masterlock-audit.html` to show L0 + L5 only
+
+**Research flag:** Standard patterns. No additional research needed.
+
+---
+
+### Phase 3: Service Worker and Baseline Updates
+
+**Rationale:** Cache invalidation must be handled atomically with the PNG deploy. Golden baselines become stale the moment new PNGs land. Both are mechanical steps with clear success criteria.
+
+**Delivers:** Returning users receive new art. Test suite passes with new baselines.
+
+**Addresses:** SW cache version bump (v20 to v21), golden baseline regeneration (376+ pixelmatch tests)
+
+**Avoids:** Cache staleness leaving users on stale art -- bump in same commit as PNG deploy
+
+**Key tasks:**
+- Bump `CACHE_VERSION` in `docs/sw.js` in same commit as PNG deploy
+- Run `cd worker && npm run bless:cones` to regenerate golden baselines
+- Verify returning-user upgrade path with a real browser profile (not incognito)
+
+**Research flag:** Standard patterns. No additional research needed.
+
+---
+
+### Phase 4: Worker Dead Renderer Cleanup
+
+**Rationale:** Worker-side cleanup (removing `renderConeHDSVG`, `renderConeHeroSVG`, `renderConePremiumSVG` from `flavor-colors.js`) depends on resolving the social card dependency first. If social cards are migrated to KV-based PNG embed (Option A), full cleanup is possible. If deferred, the HD renderer stays alive and the dead code removal is incomplete.
+
+**Delivers:** Worker codebase free of dead SVG renderers. Estimated 700+ lines removed. Worker test suite updated.
+
+**Addresses:** `renderConeHDSVG` removal, `renderConeHeroSVG` removal, `renderConePremiumSVG` removal, all supporting HD/Premium/Hero scoop-row arrays and utility functions
+
+**Avoids:** Dead renderers staying in the Worker codebase under the guise of "only social cards use it"
+
+**Key tasks:**
+- Decision point: migrate social cards to KV PNG embed (Option A) or defer and keep HD SVG renderer
+- If Option A: write KV upload script for base64-encoded L5 PNGs, modify `social-card.js` to use `renderConeImage()` async lookup
+- Remove dead functions from `flavor-colors.js`
+- Update worker test suites (remove HD/Premium/Hero test suites, keep L0 tests)
+- Verify `/api/v1/flavor-colors` endpoint still works; `cd worker && npm test` passes
+
+**Research flag:** Social card KV embed approach needs validation. Specifically: (a) whether `<image href="data:image/png;base64,..."/>` in SVG renders correctly on Facebook/Twitter/LinkedIn OG scrapers, and (b) Worker KV read latency in the social card hot path. Recommend a proof-of-concept before planning this phase in full detail.
+
+---
+
+### Phase 5: Scriptable Widget Unification
+
+**Rationale:** The Scriptable widget (`custard-today.js`) has an independent renderer (`drawConeIcon()`) with its own 15-color map that has drifted from the canonical 23-color system. This is independent of all other phases and can be done last as a polish step.
+
+**Delivers:** Scriptable widget loads L5 PNGs via URL (online) with aligned-color L0 fallback (offline). Color drift between widget and canonical system eliminated.
+
+**Addresses:** `drawConeIcon()` unification, `FLAVOR_SCOOP_COLORS` alignment to canonical `BASE_COLORS`
+
+**Avoids:** Different slug conventions per consumer (slug inconsistency between consumers is an identified architecture anti-pattern)
+
+**Key tasks:**
+- Add `loadConeImage(slug)` async function using `Image.fromURL()` (Scriptable API)
+- Update widget build functions to use loaded PNG images
+- Align `FLAVOR_SCOOP_COLORS` to canonical 23-entry `BASE_COLORS`
+- Mirror changes in `widgets/custard-today.js` (two copies exist)
+- Test: online shows L5 PNG, airplane mode shows L0 fallback
+
+**Research flag:** Standard patterns. Scriptable `Image.fromURL()` is well-documented.
+
+---
 
 ### Phase Ordering Rationale
 
-- Token expansion is strictly first: all other phases consume the new tokens to replace hardcoded values
-- Card/button unification precedes inline style elimination: provides the CSS classes that replace the inline styles
-- Inline style elimination precedes Compare UX fix: the Compare add-hint element needs clean CSS classes before its JS can be refactored
-- Compare UX fix precedes cone work: JS changes produce reviewable text diffs; cone work produces 470+ binary diffs that must not mix with text changes
-- Cone work is last and isolated: binary file diffs from golden regeneration cannot coexist with in-flight CSS/JS changes
-- Test cleanup is terminal: verifies the whole milestone's final state
+- Phase 1 blocks all other phases. No integration work should begin until all 94 PNGs exist and pass QA. This is a strict sequential dependency.
+- Phases 2, 3, and 4 can run in parallel after Phase 1 completes -- they touch different files (`cone-renderer.js`, `sw.js`, `flavor-colors.js`) and have no cross-dependencies.
+- Phase 5 is fully independent and can be done at any point after Phase 1.
+- The hard 94/94 gate prevents partial migration, which is identified as the most damaging failure mode for user experience.
+- Social card migration (Phase 4) is the only phase with architectural uncertainty. It should be prototyped early to unblock the full dead-renderer removal decision.
 
 ### Research Flags
 
-Phases with well-documented patterns (skip additional research-phase):
-- **Phase 1** (Design Tokens): CSS custom property expansion is straightforward; additive-only policy eliminates regression risk; `color-mix()` already used in project
-- **Phase 2** (Card/Button): Pure CSS class consolidation; `.card` base already exists at line 67; pattern is mechanical grep-and-replace with verification
-- **Phase 3** (Inline Styles): Mechanical extraction; tokens from Phase 1 provide the replacements
-- **Phase 5** (Cone Renderer): Coordinate array changes only; renderer logic unchanged; pipeline validated with 94 flavors
+Phases needing deeper research during planning:
+- **Phase 4 (Social card KV embed):** Need to confirm (a) base64 PNG inside SVG `<image>` renders correctly on major social scrapers, and (b) Worker KV latency for base64 cone lookup is acceptable in the social card hot path. Small prototype recommended before committing to implementation plan.
 
-Phases that benefit from deeper review during planning:
-- **Phase 4** (Compare UX): Geolocation race condition has multiple failure modes (API down, browser geolocation denied, no stores in manifest, event fires before Compare JS initializes). The 3-second timeout + event listener cleanup pattern is specified in ARCHITECTURE.md but edge cases should be prototyped and tested before writing the Playwright spec.
-- **Phase 6** (Test Cleanup): The 11 `test.skip` calls need individual investigation -- causes unknown without reading each spec file.
+Phases with standard patterns (no additional research needed):
+- **Phase 1:** gpt-image-1 API is well-documented. Existing pipeline already handles most cases. Cost and rate limits confirmed. Proof-of-concept validates the approach.
+- **Phase 2:** Cone-renderer.js refactoring follows clear patterns from ARCHITECTURE.md. All 7 rendering sites are mapped and inventoried.
+- **Phase 3:** SW cache bump and pixelmatch baseline regeneration are mechanical, fully documented in existing scripts.
+- **Phase 5:** Scriptable widget unification is isolated and well-understood.
 
 ## Confidence Assessment
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | HIGH | No new dependencies; all tools verified against official docs (MDN, sharp API); `color-mix()` already in use |
-| Features | HIGH | All gaps identified via direct grep/inspection with verified line numbers and counts |
-| Architecture | HIGH | Direct code analysis of all affected files; data flow diagrams based on actual function names and line numbers |
-| Pitfalls | HIGH | All pitfalls verified against actual codebase; line numbers and file locations confirmed; counts grep-verified |
+| Stack | HIGH | gpt-image-1 parameters confirmed via official OpenAI docs. sharp pipeline patterns confirmed via existing codebase. No new dependencies required. DALL-E 3 deprecation date confirmed. Cost estimates based on confirmed pricing. |
+| Features | HIGH | Full codebase inspection. 94 FLAVOR_PROFILES counted. All 7 rendering sites mapped. Proof-of-concept (blackberry-cobbler) exists and validates the quality target. Critical path identified with dependencies. |
+| Architecture | HIGH | All 7 rendering sites inspected directly. Data flow traced end-to-end. Dependency graph is clear. Integration seam (`heroConeSrc()`) confirmed. Two copies of Scriptable widget confirmed. Social card dependency identified. |
+| Pitfalls | MEDIUM | Integration and caching pitfalls are HIGH confidence (verified against codebase with line numbers). AI generation consistency pitfalls are MEDIUM confidence -- model-specific behavior varies and exact consistency at 94-image scale is empirically unknown for this prompt template until the first full batch run. |
 
-**Overall confidence:** HIGH
+**Overall confidence:** MEDIUM-HIGH
+
+The stack, features, and architecture are well-understood based on direct codebase inspection. The empirical unknown is AI generation quality and consistency at scale. The mitigation strategy (single-session generation, locked template, human QA) is sound, but the outcome cannot be guaranteed without running the batch. Budget for 1-2 regeneration iterations.
 
 ### Gaps to Address
 
-- **Rarity color choice for unified scale**: Two scales exist (purple/blue/green vs pink/orange/blue). STACK.md recommends the popup-rarity-chip scale (purple = ultra-rare convention from gaming/collectibles) but this is a design decision. The token infrastructure supports either choice; pick one and test in both visual contexts.
-- **Shaped topping system at hero scale**: Porting `_PREM_SHAPE_MAP` to the 36x42 grid is proven in concept (premium renderer at 24x28) but requires manual visual tuning at the smaller grid. Treat per-topping shapes as a Phase 5 stretch goal, not required scope. Start with expanded slot positions (12-16 slots, full-width distribution) and evaluate whether 2x2 squares need differentiation.
-- **Full inline style elimination scope**: 77 inline styles across 11 HTML files identified. Phase 3 targets compare.html and JS files (highest priority). group.html with 19 inline styles and remaining pages are deferred to a cleanup pass -- document this boundary explicitly in the phase plan.
-- **Fronts dark-mode palette**: ~60 hardcoded hex values under the Fronts visual scope. Technique is documented (class-scoped tokens under `.fronts-map-shell`) but the exact token list requires implementation-time audit of which values cluster into shared groups vs remain unique.
+- **AI generation quality at 94-flavor scale:** The blackberry-cobbler proof-of-concept validates the approach but one image is not a batch. The first full batch run will reveal actual consistency characteristics. If style drift is severe, the session-level constraints (same model, same template, same timing) are the primary lever.
+- **Social card SVG-with-embedded-PNG scrapability:** Whether Facebook/Twitter/LinkedIn scrapers render `<image href="data:image/png;base64,..."/>` inside SVG is a known open question. External URL references inside SVG are confirmed broken on most platforms, but base64 embedding is less documented. Needs real-world validation before Phase 4 planning.
+- **Target PNG dimensions:** Research documents 144x168 as the existing convention for drop-in compatibility. If AI generation quality warrants a higher base resolution (288x336 at 2x for retina), it requires updating CSS, golden baselines, and the post-processing script. Document the dimension decision before generating the first image.
+- **File size budget per PNG:** Research recommends 10KB max per PNG (keeping total under 1MB). Until actual AI-generated pixel art is post-processed and measured, this is an estimate. Enforce measurement after the first batch run and apply pngquant if needed.
 
 ## Sources
 
 ### Primary (HIGH confidence)
-- Direct codebase inspection: `docs/style.css` (3833 lines, 216 hardcoded hex values verified), `worker/src/flavor-colors.js` (~1100 lines, Hero renderer at line 939), `docs/compare-page.js` (945 lines, init at line 922), `docs/shared-nav.js` (597 lines, geolocation at line 303), `docs/compare.html` (93 lines, 8 inline style attributes), `worker/test/golden-baselines.test.js` (376 tests)
-- MDN: `image-rendering` -- Baseline widely available since January 2020
-- MDN: `color-mix()` -- Baseline widely available since May 2023
-- sharp API docs: nearest-neighbor kernel via `kernel: 'nearest'`; 300 DPI SVG input via density option
+- `tools/generate_ai_sprites.mjs` -- existing AI pipeline, `--model gpt-image-1` support confirmed
+- `docs/assets/masterlock-flavor-fills.json` -- 94 flavor fill cards with ingredient treatments
+- `docs/assets/blackberry-cobbler/blackberry-l5-premium.png` -- quality target reference
+- `worker/src/flavor-colors.js` -- 94 FLAVOR_PROFILES, 4 SVG renderers confirmed
+- `docs/cone-renderer.js` -- `heroConeSrc()` integration seam, `renderHeroCone()` fallback chain
+- `worker/src/social-card.js` -- `renderConeGroup()` SVG embedding dependency
+- `docs/sw.js` -- `CACHE_VERSION = 'custard-v20'`, stale-while-revalidate cone caching confirmed
+- `docs/assets/custard-today.js` -- independent `drawConeIcon()` with 15-color `FLAVOR_SCOOP_COLORS` confirmed
+- `tidbyt/culvers_fotd.star` -- Starlark constraint (no external assets) confirmed
+- `scripts/generate-hero-cones.mjs` -- current sharp pipeline at 300 DPI, 144x168 nearest-neighbor
+- [OpenAI Image Generation API](https://platform.openai.com/docs/guides/image-generation) -- gpt-image-1 params, transparent background, quality tiers
+- [OpenAI Pricing](https://platform.openai.com/docs/pricing) -- $0.04/image medium quality confirmed
+- [sharp Resize API](https://sharp.pixelplumbing.com/api-resize/) -- `kernel: 'nearest'` for pixel art
+- [GitHub Storage Limits](https://gitprotect.io/blog/github-storage-limits/) -- 1GB repo recommendation, LFS incompatibility with GitHub Pages
 
 ### Secondary (MEDIUM confidence)
-- GitLab Design Tokens Usage Guide -- semantic naming conventions
-- Imperavi: Designing Semantic Colors -- state color architecture
-- Penpot: Developer's Guide to Design Tokens -- three-layer token architecture rationale
-- CSS-Tricks: Building Scalable CSS with BEM and Utility Classes -- base + modifier composition
-- Smashing Magazine: Battling BEM Common Problems -- when full BEM is overkill
-- Derek Yu: Pixel Art Tutorial -- sub-pixel techniques, anti-aliasing at small scales
-- NN/g: Progressive Disclosure -- "show one, add more" interaction pattern for Compare first-load
+- [OpenAI Cookbook: Generate images with GPT Image](https://developers.openai.com/cookbook/examples/generate_images_with_gpt_image/) -- Node.js examples, transparent background usage
+- [Retro Diffusion: Pixel art with AI at scale](https://runware.ai/blog/retro-diffusion-creating-authentic-pixel-art-with-ai-at-scale) -- palette enforcement and downscaling algorithms
+- [AI Image Generation API Comparison 2026](https://blog.laozhang.ai/en/posts/ai-image-generation-api-comparison-2026) -- provider landscape, gpt-image-1 positioning
+- [og:image SVG not supported by Facebook](https://github.com/BreakOutEvent/breakout-frontend/issues/234) -- SVG OG image scrapability failure modes
+- [Generative AI in Game Asset Production 2026](https://www.gianty.com/generative-ai-in-game-asset-production-in-2026/) -- batch asset quality control patterns
 
 ---
-*Research completed: 2026-03-13*
+*Research completed: 2026-03-18*
 *Ready for roadmap: yes*
