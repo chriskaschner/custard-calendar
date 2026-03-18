@@ -506,10 +506,72 @@ export function resolveHDToppingSlots(profile) {
 }
 
 /**
+ * Resolve the flat topping list for HD scatter placement.
+ *
+ * Rules by density:
+ *   pure      -> []
+ *   standard  -> ~10 pieces: cycle toppings to fill
+ *   double    -> ~12 pieces: primary topping weighted 2:1 over secondary
+ *   explosion -> ~14 pieces: cycle all toppings
+ *   overload  -> ~10 pieces: single topping repeated (monochrome distinction)
+ *
+ * @param {{ toppings: string[], density: string }} profile
+ * @returns {string[]}
+ */
+export function resolveHDScatterToppingList(profile) {
+  const toppings = profile.toppings || [];
+  const density = profile.density || 'standard';
+  if (density === 'pure') return [];
+  if (density === 'standard') {
+    if (toppings.length === 0) return [];
+    const result = [];
+    for (let i = 0; i < 10; i++) result.push(toppings[i % toppings.length]);
+    return result;
+  }
+  if (density === 'double') {
+    if (toppings.length === 0) return [];
+    const primary = toppings[0];
+    const secondary = toppings[1] || primary;
+    const result = [];
+    for (let i = 0; i < 12; i++) result.push(i % 3 === 2 ? secondary : primary);
+    return result;
+  }
+  if (density === 'explosion') {
+    if (toppings.length === 0) return [];
+    const result = [];
+    for (let i = 0; i < 14; i++) result.push(toppings[i % toppings.length]);
+    return result;
+  }
+  if (density === 'overload') {
+    return toppings.length > 0 ? Array(10).fill(toppings[0]) : [];
+  }
+  return toppings.slice();
+}
+
+// HD scoop geometry: [startCol, endCol] for rows 0-10.
+// Extracted as named constant for use in both base fill and scatter placement.
+const _HD_SCOOP_ROWS = [
+  [4, 13],   // row 0: 10px (top corners nipped)
+  [3, 14],   // row 1: 12px
+  [2, 15],   // row 2: 14px (full width)
+  [2, 15],   // row 3: 14px
+  [2, 15],   // row 4: 14px
+  [2, 15],   // row 5: 14px
+  [2, 15],   // row 6: 14px
+  [2, 15],   // row 7: 14px
+  [2, 15],   // row 8: 14px
+  [2, 15],   // row 9: 14px
+  [3, 14],   // row 10: 12px (full-width bottom; overhangs cone by 1px each side)
+];
+
+/**
  * Render an HD SVG cone for a flavor at the given scale.
  *
- * Grid: 18x22 pixels -- doubled resolution for smoother curves, more
+ * Grid: 18x21 pixels -- doubled resolution for smoother curves, more
  * topping/ribbon detail, and a specular highlight on the scoop.
+ *
+ * v2 upgrade: scatter-placed toppings with per-type shapes and collision
+ * detection, replacing the 8 fixed 1x1 topping slots.
  *
  * @param {string} flavorName
  * @param {number} [scale=1]
@@ -521,66 +583,84 @@ export function renderConeHDSVG(flavorName, scale = 1) {
   const ribbonKey = profile.ribbon;
   const hasRibbon = ribbonKey && profile.density !== 'pure';
   const ribbonColor = hasRibbon ? (RIBBON_COLORS[ribbonKey] || null) : null;
-  const toppingSlots = resolveHDToppingSlots(profile);
   const highlightColor = lightenHex(baseColor, 0.3);
+  const shadowColor = darkenHex(baseColor, 0.10);
 
   const w = 18 * scale;
   const h = 21 * scale;
   const s = scale;
   const rects = [];
 
-  // Scoop (rows 0-11): flat rectangle with just corners nipped,
-  // matching the 9x11 shape (5->7->7->7->7->5 doubled).
-  // Each entry: [startCol, endCol]
-  const scoopRows = [
-    [4, 13],   // row 0: 10px (top corners nipped)
-    [3, 14],   // row 1: 12px
-    [2, 15],   // row 2: 14px (full width)
-    [2, 15],   // row 3: 14px
-    [2, 15],   // row 4: 14px
-    [2, 15],   // row 5: 14px
-    [2, 15],   // row 6: 14px
-    [2, 15],   // row 7: 14px
-    [2, 15],   // row 8: 14px
-    [2, 15],   // row 9: 14px
-    [3, 14],   // row 10: 12px (full-width bottom; overhangs cone by 1px each side)
-  ];
+  // Deterministic seed from flavor name
+  const seed = flavorName.split('').reduce((a, c) => (a * 31 + c.charCodeAt(0)) | 0, 0);
+  const rng = _mulberry32(seed);
 
-  // Base fill
-  for (let row = 0; row < scoopRows.length; row++) {
-    const [sc, ec] = scoopRows[row];
+  function rect(col, row, pw, ph, color) {
+    rects.push(`<rect x="${col * s}" y="${row * s}" width="${pw * s}" height="${ph * s}" fill="${color}"/>`);
+  }
+
+  // 1. Base scoop fill
+  for (let row = 0; row < _HD_SCOOP_ROWS.length; row++) {
+    const [sc, ec] = _HD_SCOOP_ROWS[row];
     for (let col = sc; col <= ec; col++) {
-      rects.push(`<rect x="${col * s}" y="${row * s}" width="${s}" height="${s}" fill="${baseColor}"/>`);
+      rect(col, row, 1, 1, baseColor);
     }
   }
 
-  // Highlight slots (upper-left specular shine)
+  // 2. Highlight slots (upper-left specular shine)
   const hlSlots = [[4, 0], [3, 1]];
   for (const [hx, hy] of hlSlots) {
-    rects.push(`<rect x="${hx * s}" y="${hy * s}" width="${s}" height="${s}" fill="${highlightColor}"/>`);
+    rect(hx, hy, 1, 1, highlightColor);
   }
 
-  // Fixed topping slots (T1-T8): distributed top-to-bottom so toppings span
-  // the full scoop height. Standard density uses first 6 (rows 0,1,3,4,6,7);
-  // explosion density uses all 8 (adds rows 9,10). Asymmetric placement avoids
-  // mirrored look.
-  const tSlots = [[5,0],[11,1],[4,3],[13,4],[5,6],[12,7],[4,9],[11,10]];
-  for (let i = 0; i < toppingSlots.length && i < tSlots.length; i++) {
-    const color = TOPPING_COLORS[toppingSlots[i]];
+  // 3. Scatter toppings with Mulberry32 PRNG + collision detection
+  const toppingList = resolveHDScatterToppingList(profile);
+  const occupied = new Set();
+
+  for (let pi = 0; pi < toppingList.length; pi++) {
+    const toppingKey = toppingList[pi];
+    const color = TOPPING_COLORS[toppingKey];
     if (!color) continue;
-    const [tx, ty] = tSlots[i];
-    rects.push(`<rect x="${tx * s}" y="${ty * s}" width="${s}" height="${s}" fill="${color}"/>`);
+    const shapeKey = _CANONICAL_SHAPE_MAP[toppingKey] || 'dot';
+    const shape = _CANONICAL_TOPPING_SHAPES[shapeKey];
+
+    for (let attempt = 0; attempt < 30; attempt++) {
+      const row = Math.floor(rng() * _HD_SCOOP_ROWS.length);
+      const [sc, ec] = _HD_SCOOP_ROWS[row];
+      const col = sc + Math.floor(rng() * (ec - sc + 1));
+
+      // Verify every shape pixel is within scoop bounds and unoccupied
+      let valid = true;
+      for (const [dc, dr] of shape) {
+        const pc = col + dc;
+        const pr = row + dr;
+        if (pr >= _HD_SCOOP_ROWS.length) { valid = false; break; }
+        const [rsc, rec] = _HD_SCOOP_ROWS[pr];
+        if (pc < rsc || pc > rec) { valid = false; break; }
+        if (occupied.has(pr * 100 + pc)) { valid = false; break; }
+      }
+
+      if (valid) {
+        for (const [dc, dr] of shape) {
+          const pc = col + dc;
+          const pr = row + dr;
+          occupied.add(pr * 100 + pc);
+          rect(pc, pr, 1, 1, color);
+        }
+        break;
+      }
+    }
   }
 
-  // Fixed ribbon slots (R1-R6, S-curve through center)
+  // 4. Fixed ribbon slots (R1-R6, S-curve through center)
   if (ribbonColor) {
     const rSlots = [[7,1],[8,3],[9,4],[10,5],[9,7],[8,9]];
     for (const [rx, ry] of rSlots) {
-      rects.push(`<rect x="${rx * s}" y="${ry * s}" width="${s}" height="${s}" fill="${ribbonColor}"/>`);
+      rect(rx, ry, 1, 1, ribbonColor);
     }
   }
 
-  // Cone (rows 11-19: checkerboard taper + 2px tip)
+  // 5. Cone (rows 11-19: checkerboard taper + 2px tip)
   const coneRows = [
     [4, 13],  // row 11: 10px
     [4, 13],  // row 12: 10px
@@ -596,12 +676,12 @@ export function renderConeHDSVG(flavorName, scale = 1) {
     const [sc, ec] = coneRows[row];
     for (let col = sc; col <= ec; col++) {
       const color = ((row + col) % 2 === 0) ? CONE_COLORS.waffle : CONE_COLORS.waffle_dark;
-      rects.push(`<rect x="${col * s}" y="${(row + 11) * s}" width="${s}" height="${s}" fill="${color}"/>`);
+      rect(col, row + 11, 1, 1, color);
     }
   }
-  // Tip row 20: 2px dark
-  rects.push(`<rect x="${8 * s}" y="${20 * s}" width="${s}" height="${s}" fill="${CONE_TIP_COLOR}"/>`);
-  rects.push(`<rect x="${9 * s}" y="${20 * s}" width="${s}" height="${s}" fill="${CONE_TIP_COLOR}"/>`);
+  // 6. Tip row 20: 2px dark
+  rect(8, 20, 1, 1, CONE_TIP_COLOR);
+  rect(9, 20, 1, 1, CONE_TIP_COLOR);
 
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" shape-rendering="crispEdges">${rects.join('')}</svg>`;
 }
