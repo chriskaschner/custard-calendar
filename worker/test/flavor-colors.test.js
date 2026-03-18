@@ -6,6 +6,7 @@ import {
   renderConeHeroSVG,
   renderConePremiumSVG,
   resolveHDToppingSlots,
+  resolveHDScatterToppingList,
   resolvePremiumToppingList,
   resolveHeroToppingList,
   _CANONICAL_TOPPING_SHAPES,
@@ -127,6 +128,52 @@ describe('resolveHDToppingSlots', () => {
   });
 });
 
+describe('resolveHDScatterToppingList', () => {
+  it('returns empty array for pure density', () => {
+    expect(resolveHDScatterToppingList({ toppings: ['oreo'], density: 'pure' })).toEqual([]);
+  });
+
+  it('returns ~10 pieces for standard density with 2 toppings', () => {
+    const list = resolveHDScatterToppingList({ toppings: ['oreo', 'andes'], density: 'standard' });
+    expect(list).toHaveLength(10);
+    // Cycles through toppings
+    expect(list[0]).toBe('oreo');
+    expect(list[1]).toBe('andes');
+    expect(list[2]).toBe('oreo');
+  });
+
+  it('returns ~12 pieces for double density', () => {
+    const list = resolveHDScatterToppingList({ toppings: ['oreo', 'andes'], density: 'double' });
+    expect(list).toHaveLength(12);
+    // Primary weighted 2:1 over secondary
+    expect(list[0]).toBe('oreo');   // primary
+    expect(list[1]).toBe('oreo');   // primary
+    expect(list[2]).toBe('andes');  // secondary
+  });
+
+  it('returns ~14 pieces for explosion density', () => {
+    const list = resolveHDScatterToppingList({ toppings: ['oreo', 'andes', 'dove'], density: 'explosion' });
+    expect(list).toHaveLength(14);
+    // Cycles through all toppings
+    expect(list[0]).toBe('oreo');
+    expect(list[1]).toBe('andes');
+    expect(list[2]).toBe('dove');
+    expect(list[3]).toBe('oreo');
+  });
+
+  it('returns ~10 pieces monochrome for overload density', () => {
+    const list = resolveHDScatterToppingList({ toppings: ['oreo', 'andes'], density: 'overload' });
+    expect(list).toHaveLength(10);
+    // All same topping (monochrome)
+    for (const t of list) expect(t).toBe('oreo');
+  });
+
+  it('returns empty array when toppings list is empty', () => {
+    expect(resolveHDScatterToppingList({ toppings: [], density: 'standard' })).toEqual([]);
+    expect(resolveHDScatterToppingList({ toppings: [], density: 'explosion' })).toEqual([]);
+  });
+});
+
 describe('renderConeHDSVG', () => {
   it('returns valid SVG with 18x21 viewBox', () => {
     const svg = renderConeHDSVG('Mint Explosion');
@@ -150,17 +197,35 @@ describe('renderConeHDSVG', () => {
     expect(svg).toContain(lightenHex(base, 0.3));
   });
 
-  it('includes 8 topping slots for explosion density', () => {
+  it('contains more topping rects than previous 8-slot max for explosion density', () => {
     const svg = renderConeHDSVG('Mint Explosion');
     // Mint Explosion has toppings: oreo, andes, dove with explosion density
-    // All 8 slots should be filled. Count unique topping colors present.
+    // With scatter + shapes, should produce many more topping pixels than old 8 fixed slots
     const oreoCt = (svg.match(new RegExp(TOPPING_COLORS.oreo, 'g')) || []).length;
     const andesCt = (svg.match(new RegExp(TOPPING_COLORS.andes.replace(/[()]/g, '\\$&'), 'g')) || []).length;
     const doveCt = (svg.match(new RegExp(TOPPING_COLORS.dove, 'g')) || []).length;
-    // Each appears at least twice cycling across 8 slots
-    expect(oreoCt).toBeGreaterThanOrEqual(2);
-    expect(andesCt).toBeGreaterThanOrEqual(2);
-    expect(doveCt).toBeGreaterThanOrEqual(2);
+    const totalToppingRects = oreoCt + andesCt + doveCt;
+    // Old renderer had max 8 topping rects; new scatter should have more
+    expect(totalToppingRects).toBeGreaterThan(8);
+  });
+
+  it('output is deterministic (same input = identical SVG)', () => {
+    const svg1 = renderConeHDSVG('Mint Explosion');
+    const svg2 = renderConeHDSVG('Mint Explosion');
+    expect(svg1).toBe(svg2);
+  });
+
+  it('vanilla (pure density) contains zero topping-colored rects', () => {
+    const svg = renderConeHDSVG('Vanilla');
+    // Exclude topping colors that collide with structural colors (cone tip, waffle, base)
+    const structuralColors = new Set([CONE_TIP_COLOR, BASE_COLORS.vanilla]);
+    for (const [key, color] of Object.entries(TOPPING_COLORS)) {
+      if (structuralColors.has(color)) continue; // skip color collisions
+      const count = (svg.match(new RegExp(color.replace(/[()]/g, '\\$&'), 'g')) || []).length;
+      if (count > 0) {
+        throw new Error(`Vanilla (pure) SVG contains topping color ${key}=${color} (${count} times)`);
+      }
+    }
   });
 
   it('includes 6 ribbon slots when ribbon present', () => {
