@@ -89,15 +89,16 @@
 **Depends on**: Nothing (first phase of v2.0)
 **Requirements**: GEN-01, GEN-02, GEN-03, GEN-04
 **Success Criteria** (what must be TRUE):
-  1. 94 AI-generated cone PNGs exist at docs/assets/cones/{slug}.png with transparent backgrounds and 144x168 dimensions
+  1. 94 AI-generated cone PNGs exist at docs/assets/cones/{slug}.png with transparent backgrounds and 288x336 dimensions
   2. A generation manifest JSON file is committed alongside images recording model, prompt, parameters, and timestamp per flavor
   3. A QA gallery HTML page renders all 94 cones in a grid for side-by-side visual comparison, and a human has reviewed and approved all 94
-  4. Post-processing pipeline (trim, resize to 144x168 nearest-neighbor, optimize) runs via a single script invocation with no manual steps
-**Plans**: TBD
+  4. Post-processing pipeline (trim, resize, nearest-neighbor, optimize) runs via a single script invocation with no manual steps
+**Plans:** 3 plans
 
 Plans:
-- [ ] 26-01: TBD
-- [ ] 26-02: TBD
+- [ ] 26-01-PLAN.md -- Prompt data foundation: author 93 premium overrides, 54 descriptions, verification script
+- [ ] 26-02-PLAN.md -- Generation pipeline + trial: update scripts for gpt-image-1, post-processing, trial run with quality checkpoint
+- [ ] 26-03-PLAN.md -- Full batch + QA + finalize: generate 282 candidates, QA gallery, human review, deploy to cones/
 
 ### Phase 27: Client-Side Art Migration
 **Goal**: Every client-side rendering site displays L5 AI PNGs as the primary art, with L0 micro SVG as the only fallback, and all dead intermediate renderers are removed
@@ -155,9 +156,9 @@ Phases 26 is strictly first. Phases 27, 28, and 29 can proceed in parallel after
 | 13-17 | v1.3 | 11/11 | Complete | 2026-03-12 |
 | 18-19 | v1.4 | 4/4 | Complete | 2026-03-13 |
 | 20-25 | v1.5 | 10/10 | Complete | 2026-03-18 |
-| 26. AI Cone Generation | v2.0 | 0/TBD | Not started | - |
+| 26. AI Cone Generation | v2.0 | 0/3 | Not started | - |
 | 27. Client-Side Art Migration | v2.0 | 0/TBD | Not started | - |
 | 28. Worker Social Card Migration | v2.0 | 0/TBD | Not started | - |
 | 29. Scriptable Widget Unification | v2.0 | 0/TBD | Not started | - |
 
-**Total: 29 phases, 53+ plans across 7 milestones**
+**Total: 29 phases, 56+ plans across 7 milestones**
