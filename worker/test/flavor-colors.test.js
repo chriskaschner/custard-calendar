@@ -7,6 +7,9 @@ import {
   renderConePremiumSVG,
   resolveHDToppingSlots,
   resolvePremiumToppingList,
+  resolveHeroToppingList,
+  _CANONICAL_TOPPING_SHAPES,
+  _CANONICAL_SHAPE_MAP,
   lightenHex,
   darkenHex,
   BASE_COLORS,
@@ -426,6 +429,124 @@ describe('renderConePremiumSVG', () => {
       if (c === BASE_COLORS.vanilla) continue;
       expect(svg).not.toContain(c);
     }
+  });
+});
+
+// =============================================================
+// Canonical shape map + hero density resolver
+// =============================================================
+
+describe('_CANONICAL_TOPPING_SHAPES', () => {
+  it('has exactly 5 shape keys: dot, chunk, sliver, flake, scatter', () => {
+    const keys = Object.keys(_CANONICAL_TOPPING_SHAPES).sort();
+    expect(keys).toEqual(['chunk', 'dot', 'flake', 'scatter', 'sliver']);
+  });
+
+  it('dot shape is 2x2', () => {
+    expect(_CANONICAL_TOPPING_SHAPES.dot).toEqual([[0,0],[1,0],[0,1],[1,1]]);
+  });
+
+  it('chunk shape is 3x2', () => {
+    expect(_CANONICAL_TOPPING_SHAPES.chunk).toEqual([[0,0],[1,0],[2,0],[0,1],[1,1],[2,1]]);
+  });
+
+  it('sliver shape is 1x3', () => {
+    expect(_CANONICAL_TOPPING_SHAPES.sliver).toEqual([[0,0],[0,1],[0,2]]);
+  });
+
+  it('flake shape is 3x1', () => {
+    expect(_CANONICAL_TOPPING_SHAPES.flake).toEqual([[0,0],[1,0],[2,0]]);
+  });
+
+  it('scatter shape is two offset pixels', () => {
+    expect(_CANONICAL_TOPPING_SHAPES.scatter).toEqual([[0,0],[2,1]]);
+  });
+});
+
+describe('_CANONICAL_SHAPE_MAP', () => {
+  it('has an entry for every TOPPING_COLORS key', () => {
+    const toppingKeys = Object.keys(TOPPING_COLORS);
+    for (const key of toppingKeys) {
+      expect(_CANONICAL_SHAPE_MAP).toHaveProperty(key);
+    }
+  });
+
+  it('all map values are valid shape keys', () => {
+    const validShapes = Object.keys(_CANONICAL_TOPPING_SHAPES);
+    for (const [key, shape] of Object.entries(_CANONICAL_SHAPE_MAP)) {
+      expect(validShapes).toContain(shape);
+    }
+  });
+});
+
+describe('resolveHeroToppingList', () => {
+  it('pure density returns empty array', () => {
+    expect(resolveHeroToppingList({ toppings: ['oreo'], density: 'pure' })).toEqual([]);
+  });
+
+  it('standard density with 2 toppings returns 16 pieces cycling toppings', () => {
+    const result = resolveHeroToppingList({ toppings: ['oreo', 'andes'], density: 'standard' });
+    expect(result).toHaveLength(16);
+    // Should cycle: oreo, andes, oreo, andes, ...
+    expect(result[0]).toBe('oreo');
+    expect(result[1]).toBe('andes');
+    expect(result[2]).toBe('oreo');
+  });
+
+  it('double density returns 20 pieces with primary weighted 2:1', () => {
+    const result = resolveHeroToppingList({ toppings: ['strawberry_bits', 'dove'], density: 'double' });
+    expect(result).toHaveLength(20);
+    // Primary should appear more than secondary
+    const primaryCount = result.filter(t => t === 'strawberry_bits').length;
+    const secondaryCount = result.filter(t => t === 'dove').length;
+    expect(primaryCount).toBeGreaterThan(secondaryCount);
+  });
+
+  it('explosion density returns 24 pieces cycling all toppings', () => {
+    const result = resolveHeroToppingList({ toppings: ['oreo', 'andes', 'dove'], density: 'explosion' });
+    expect(result).toHaveLength(24);
+    expect(result[0]).toBe('oreo');
+    expect(result[1]).toBe('andes');
+    expect(result[2]).toBe('dove');
+  });
+
+  it('overload density returns 16 pieces of single topping', () => {
+    const result = resolveHeroToppingList({ toppings: ['oreo'], density: 'overload' });
+    expect(result).toHaveLength(16);
+    expect(result.every(t => t === 'oreo')).toBe(true);
+  });
+
+  it('returns empty array when toppings are empty for any density', () => {
+    expect(resolveHeroToppingList({ toppings: [], density: 'standard' })).toEqual([]);
+    expect(resolveHeroToppingList({ toppings: [], density: 'double' })).toEqual([]);
+    expect(resolveHeroToppingList({ toppings: [], density: 'explosion' })).toEqual([]);
+    expect(resolveHeroToppingList({ toppings: [], density: 'overload' })).toEqual([]);
+  });
+});
+
+describe('renderConeHeroSVG scatter upgrade', () => {
+  it('mint explosion (explosion density) has more than 8 topping rects', () => {
+    const svg = renderConeHeroSVG('mint explosion', 1);
+    // Count topping-colored rects (oreo #1A1A1A, andes #0A3726, dove #2B1A12)
+    const oreoCount = (svg.match(/#1A1A1A/g) || []).length;
+    const andesCount = (svg.match(/#0A3726/g) || []).length;
+    const doveCount = (svg.match(/#2B1A12/g) || []).length;
+    const totalToppingRects = oreoCount + andesCount + doveCount;
+    expect(totalToppingRects).toBeGreaterThan(8);
+  });
+
+  it('vanilla (pure density) has zero topping-colored rects', () => {
+    const svg = renderConeHeroSVG('vanilla', 1);
+    for (const [key, color] of Object.entries(TOPPING_COLORS)) {
+      if (color === CONE_TIP_COLOR) continue;
+      expect(svg).not.toContain(color);
+    }
+  });
+
+  it('output is deterministic (same input produces identical SVG)', () => {
+    const svg1 = renderConeHeroSVG('turtle', 1);
+    const svg2 = renderConeHeroSVG('turtle', 1);
+    expect(svg1).toBe(svg2);
   });
 });
 
