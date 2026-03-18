@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: Visual Polish
 status: in_progress
-stopped_at: Completed 24-01-PLAN.md
-last_updated: "2026-03-18T03:03:20.660Z"
-last_activity: 2026-03-17 -- 24-01 Canonical shape map + hero scatter renderer (4 min)
+stopped_at: Completed 24-02-PLAN.md (Phase 24 complete)
+last_updated: "2026-03-18T03:11:56Z"
+last_activity: 2026-03-17 -- 24-02 HD scatter upgrade + hero PNGs + SW cache v20 (6 min)
 progress:
   total_phases: 6
   completed_phases: 4
   total_plans: 10
-  completed_plans: 9
+  completed_plans: 10
   percent: 100
 ---
 
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-03-13)
 ## Current Position
 
 Phase: 24 (5 of 6 in v1.5) - Cone Rendering Quality
-Plan: 1 of 2 complete
-Status: In progress
-Last activity: 2026-03-17 -- 24-01 Canonical shape map + hero scatter renderer (4 min)
+Plan: 2 of 2 complete
+Status: Phase complete
+Last activity: 2026-03-17 -- 24-02 HD scatter upgrade + hero PNGs + SW cache v20 (6 min)
 
-Progress: [=========.] 90%
+Progress: [==========] 100%
 
 ## Performance Metrics
 
@@ -40,8 +40,8 @@ Progress: [=========.] 90%
 - v1.2: 9 plans in ~1 day (~11 min avg)
 - v1.3: 11 plans in ~82 min (~7.5 min/plan)
 - v1.4: 4 plans in ~34 min (~8.5 min/plan)
-- v1.5 (in progress): 9 plans in ~63 min (~7.0 min/plan)
-- Total: 52 plans across 6 milestones
+- v1.5 (in progress): 10 plans in ~69 min (~6.9 min/plan)
+- Total: 53 plans across 6 milestones
 
 | Phase | Plan | Duration | Tasks | Files |
 |-------|------|----------|-------|-------|
@@ -54,6 +54,7 @@ Progress: [=========.] 90%
 | 22-02 | JS Inline Style Elimination | 12 min | 2 | 6 |
 | 23-01 | Compare UX Fix | 12 min | 2 | 10 |
 | 24-01 | Canonical shape map + hero scatter renderer | 4 min | 2 | 145 |
+| 24-02 | HD scatter upgrade + hero PNGs + SW cache v20 | 6 min | 2 | 178 |
 
 ## Accumulated Context
 
@@ -95,6 +96,9 @@ Recent decisions affecting current work:
 - [Phase 24-01]: Canonical shape map with 5-shape vocabulary (dot/chunk/sliver/flake/scatter) shared across all tiers
 - [Phase 24-01]: Hero scatter renderer uses Mulberry32 PRNG + collision detection (ported from premium tier)
 - [Phase 24-01]: Premium renderer switched to canonical maps; old _PREM_SHAPE_MAP kept as dead code
+- [Phase 24-02]: HD scatter uses 10/12/14/10 piece counts (scaled down from hero's 16/20/24/16)
+- [Phase 24-02]: Client-side occupied tracking uses plain object {} for ES5 compatibility
+- [Phase 24-02]: SW cache bumped v19->v20 for fresh hero PNG delivery
 
 ### Pending Todos
 
@@ -107,6 +111,5 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-18T03:01:50Z
-Stopped at: Completed 24-01-PLAN.md
-Resume file: .planning/phases/24-cone-rendering-quality/24-02-PLAN.md
+Last session: 2026-03-18T03:11:56Z
+Stopped at: Completed 24-02-PLAN.md (Phase 24 complete)

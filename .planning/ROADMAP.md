@@ -66,7 +66,7 @@
 - [x] **Phase 21: Card & Button Unification** - Consolidate all card and button styles to shared base classes (completed 2026-03-14)
 - [x] **Phase 22: Inline Style Elimination** - Replace remaining inline styles with CSS classes consuming design tokens (completed 2026-03-14)
 - [x] **Phase 23: Compare UX Fix** - Deliver a coherent first-load experience on the Compare page (completed 2026-03-14)
-- [ ] **Phase 24: Cone Rendering Quality** - Upgrade hero cone topping density, shapes, and visual coherence
+- [x] **Phase 24: Cone Rendering Quality** - Upgrade hero cone topping density, shapes, and visual coherence (completed 2026-03-18)
 - [ ] **Phase 25: Test Cleanup** - Remove dead tests, fix flaky tests, document permanent skips
 
 ## Phase Details
@@ -174,7 +174,7 @@ Phases execute sequentially: 20 -> 21 -> 22 -> 23 -> 24 -> 25
 | 21. Card & Button Unification | 3/3 | Complete    | 2026-03-14 | - |
 | 22. Inline Style Elimination | 2/2 | Complete    | 2026-03-14 | - |
 | 23. Compare UX Fix | 1/1 | Complete    | 2026-03-14 | - |
-| 24. Cone Rendering Quality | 1/2 | In Progress|  | - |
+| 24. Cone Rendering Quality | 2/2 | Complete   | 2026-03-18 | - |
 | 25. Test Cleanup | v1.5 | 0/TBD | Not started | - |
 
 **Total: 25 phases, 50+ plans across 6 milestones**
