@@ -97,7 +97,7 @@
 
 Plans:
 - [ ] 26-01-PLAN.md -- Prompt data foundation: author 93 premium overrides, 54 descriptions, verification script
-- [ ] 26-02-PLAN.md -- Generation pipeline + trial: update scripts for gpt-image-1, post-processing, trial run with quality checkpoint
+- [ ] 26-02-PLAN.md -- Generation pipeline + trial: new generate_cone_art.mjs for Azure gpt-image-1.5, post-processing, trial run with quality checkpoint
 - [ ] 26-03-PLAN.md -- Full batch + QA + finalize: generate 282 candidates, QA gallery, human review, deploy to cones/
 
 ### Phase 27: Client-Side Art Migration
