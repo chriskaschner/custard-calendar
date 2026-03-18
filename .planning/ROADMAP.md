@@ -174,7 +174,7 @@ Phases execute sequentially: 20 -> 21 -> 22 -> 23 -> 24 -> 25
 | 21. Card & Button Unification | 3/3 | Complete    | 2026-03-14 | - |
 | 22. Inline Style Elimination | 2/2 | Complete    | 2026-03-14 | - |
 | 23. Compare UX Fix | 1/1 | Complete    | 2026-03-14 | - |
-| 24. Cone Rendering Quality | v1.5 | 0/2 | Not started | - |
+| 24. Cone Rendering Quality | 1/2 | In Progress|  | - |
 | 25. Test Cleanup | v1.5 | 0/TBD | Not started | - |
 
 **Total: 25 phases, 50+ plans across 6 milestones**

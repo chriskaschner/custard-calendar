@@ -27,9 +27,9 @@
 
 ### Cone Rendering
 
-- [ ] **CONE-01**: Hero cone tier (36x42) has higher topping density filling empty center columns of the scoop
-- [ ] **CONE-02**: Toppings use per-type shapes (not uniform 2x2 squares) for visual distinction at hero and HD sizes
-- [ ] **CONE-03**: Topping distribution is visually coherent and consistent across all 94 flavor profiles
+- [x] **CONE-01**: Hero cone tier (36x42) has higher topping density filling empty center columns of the scoop
+- [x] **CONE-02**: Toppings use per-type shapes (not uniform 2x2 squares) for visual distinction at hero and HD sizes
+- [x] **CONE-03**: Topping distribution is visually coherent and consistent across all 94 flavor profiles
 - [ ] **CONE-04**: All 94 Hero cone PNGs regenerated with updated renderer and golden baselines refreshed
 
 ### Test Health
@@ -76,9 +76,9 @@
 | COMP-01 | Phase 23 | Complete |
 | COMP-02 | Phase 23 | Complete |
 | COMP-03 | Phase 23 | Complete |
-| CONE-01 | Phase 24 | Pending |
-| CONE-02 | Phase 24 | Pending |
-| CONE-03 | Phase 24 | Pending |
+| CONE-01 | Phase 24 | Complete |
+| CONE-02 | Phase 24 | Complete |
+| CONE-03 | Phase 24 | Complete |
 | CONE-04 | Phase 24 | Pending |
 | TEST-01 | Phase 25 | Pending |
 | TEST-02 | Phase 25 | Pending |

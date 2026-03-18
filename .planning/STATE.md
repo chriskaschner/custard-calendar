@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: Visual Polish
-status: completed
-stopped_at: Phase 24 context gathered
-last_updated: "2026-03-16T23:20:39.633Z"
-last_activity: 2026-03-14 -- 23-01 Compare UX fix (12 min)
+status: in_progress
+stopped_at: Completed 24-01-PLAN.md
+last_updated: "2026-03-18T03:03:20.660Z"
+last_activity: 2026-03-17 -- 24-01 Canonical shape map + hero scatter renderer (4 min)
 progress:
   total_phases: 6
   completed_phases: 4
-  total_plans: 8
-  completed_plans: 8
+  total_plans: 10
+  completed_plans: 9
   percent: 100
 ---
 
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-13)
 
 **Core value:** A family can instantly see what flavors are at their nearby stores and decide where to go
-**Current focus:** Phase 23 - Compare UX Fix
+**Current focus:** Phase 24 - Cone Rendering Quality
 
 ## Current Position
 
-Phase: 23 (4 of 6 in v1.5) - Compare UX Fix
-Plan: 1 of 1 complete
-Status: Phase 23 complete
-Last activity: 2026-03-14 -- 23-01 Compare UX fix (12 min)
+Phase: 24 (5 of 6 in v1.5) - Cone Rendering Quality
+Plan: 1 of 2 complete
+Status: In progress
+Last activity: 2026-03-17 -- 24-01 Canonical shape map + hero scatter renderer (4 min)
 
-Progress: [##########] 100%
+Progress: [=========.] 90%
 
 ## Performance Metrics
 
@@ -40,8 +40,8 @@ Progress: [##########] 100%
 - v1.2: 9 plans in ~1 day (~11 min avg)
 - v1.3: 11 plans in ~82 min (~7.5 min/plan)
 - v1.4: 4 plans in ~34 min (~8.5 min/plan)
-- v1.5 (in progress): 8 plans in ~59 min (~7.4 min/plan)
-- Total: 51 plans across 6 milestones
+- v1.5 (in progress): 9 plans in ~63 min (~7.0 min/plan)
+- Total: 52 plans across 6 milestones
 
 | Phase | Plan | Duration | Tasks | Files |
 |-------|------|----------|-------|-------|
@@ -53,6 +53,7 @@ Progress: [##########] 100%
 | 22-01 | Inline Style Elimination | 3 min | 1 | 5 |
 | 22-02 | JS Inline Style Elimination | 12 min | 2 | 6 |
 | 23-01 | Compare UX Fix | 12 min | 2 | 10 |
+| 24-01 | Canonical shape map + hero scatter renderer | 4 min | 2 | 145 |
 
 ## Accumulated Context
 
@@ -91,6 +92,9 @@ Recent decisions affecting current work:
 - [Phase 23-01]: Compare runs its own geo call, accesses SharedNav.manifestPromise for store list
 - [Phase 23-01]: cloneNode pattern to override SharedNav's change button handler
 - [Phase 23-01]: addInitScript pattern for race-free localStorage setup in Playwright tests
+- [Phase 24-01]: Canonical shape map with 5-shape vocabulary (dot/chunk/sliver/flake/scatter) shared across all tiers
+- [Phase 24-01]: Hero scatter renderer uses Mulberry32 PRNG + collision detection (ported from premium tier)
+- [Phase 24-01]: Premium renderer switched to canonical maps; old _PREM_SHAPE_MAP kept as dead code
 
 ### Pending Todos
 
@@ -103,6 +107,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-16T23:20:39.630Z
-Stopped at: Phase 24 context gathered
-Resume file: .planning/phases/24-cone-rendering-quality/24-CONTEXT.md
+Last session: 2026-03-18T03:01:50Z
+Stopped at: Completed 24-01-PLAN.md
+Resume file: .planning/phases/24-cone-rendering-quality/24-02-PLAN.md
