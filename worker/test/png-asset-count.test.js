@@ -45,8 +45,8 @@ describe('heroConeSrc alias resolution', () => {
 });
 
 describe('CACHE_VERSION', () => {
-  it('docs/sw.js contains custard-v19', () => {
+  it('docs/sw.js contains custard-v20', () => {
     const swSource = readFileSync(SW_PATH, 'utf-8');
-    expect(swSource).toContain('custard-v19');
+    expect(swSource).toContain('custard-v20');
   });
 });
