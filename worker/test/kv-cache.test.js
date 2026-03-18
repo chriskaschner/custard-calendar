@@ -29,6 +29,28 @@ describe('sanitizeFlavorPayload', () => {
     expect(result.data.flavors).toHaveLength(2);
   });
 
+  it('drops closed-day sentinel titles', () => {
+    const payload = {
+      name: 'Test Store',
+      flavors: [
+        { date: '2026-03-01', title: 'Butter Pecan', description: '' },
+        { date: '2026-03-02', title: 'z_storeclosed', description: '' },
+        { date: '2026-03-03', title: 'Closed', description: '' },
+        { date: '2026-03-04', title: 'CLOSED', description: '' },
+        { date: '2026-03-05', title: 'Closed for Remodel', description: '' },
+        { date: '2026-03-06', title: 'z *Restaurant Closed Today', description: '' },
+        { date: '2026-03-07', title: 'z_storeclosed', description: '' },
+        { date: '2026-03-08', title: 'Chocolate Eclair', description: '' },
+      ],
+    };
+
+    const result = sanitizeFlavorPayload(payload);
+    expect(result.data.flavors).toHaveLength(2);
+    expect(result.data.flavors[0].title).toBe('Butter Pecan');
+    expect(result.data.flavors[1].title).toBe('Chocolate Eclair');
+    expect(result.dropped).toBe(6);
+  });
+
   it('drops malformed entries and preserves only trusted fields', () => {
     const payload = {
       name: 'Mt. Horeb<script>',

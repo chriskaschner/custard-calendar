@@ -9,6 +9,10 @@ const MAX_TITLE_LENGTH = 100;
 const MAX_DESCRIPTION_LENGTH = 500;
 const MAX_STORE_NAME_LENGTH = 120;
 
+// Upstream brands sometimes use sentinel titles to indicate a store is closed.
+// These are not real flavors and must be dropped before caching or serving.
+const CLOSED_TITLE_RE = /\bclosed\b|^z[_ ]*(store|restaurant)?closed/i;
+
 export function brandCounterKey(brand) {
   return String(brand || 'unknown')
     .toLowerCase()
@@ -71,6 +75,12 @@ export function sanitizeFlavorPayload(payload) {
       : '';
 
     if (!isValidIsoDate(date) || !title || (descriptionRaw && description == null)) {
+      dropped++;
+      continue;
+    }
+
+    // Drop closed-day sentinel values (e.g. "z_storeclosed", "Closed", "Closed for Remodel")
+    if (CLOSED_TITLE_RE.test(title)) {
       dropped++;
       continue;
     }
