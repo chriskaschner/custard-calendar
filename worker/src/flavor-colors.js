@@ -780,8 +780,8 @@ export function renderConePremiumSVG(flavorName, scale = 1) {
     const toppingKey = toppingList[pi % toppingList.length];
     const color = TOPPING_COLORS[toppingKey];
     if (!color) continue;
-    const shapeKey = _PREM_SHAPE_MAP[toppingKey] || 'default';
-    const shape = _PREM_TOPPING_SHAPES[shapeKey];
+    const shapeKey = _CANONICAL_SHAPE_MAP[toppingKey] || 'dot';
+    const shape = _CANONICAL_TOPPING_SHAPES[shapeKey];
 
     for (let attempt = 0; attempt < 30; attempt++) {
       const row = Math.floor(rng() * _PREM_SCOOP_ROWS.length);
@@ -827,16 +827,99 @@ export function renderConePremiumSVG(flavorName, scale = 1) {
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" shape-rendering="crispEdges">${rects.join('')}</svg>`;
 }
 
-// --- Hero cone renderer v2 (36×42 pixel grid) ---
+// --- Canonical topping shapes (shared across all tiers) ---
+
+// Per-piece topping shape offsets from anchor [col, row]. 5-shape vocabulary:
+//   dot:     2x2 square -- sprinkles, m&ms, salt, small bits
+//   chunk:   3x2 rectangle -- pecans, pretzels, brownie, cookie dough
+//   sliver:  1x3 vertical -- chocolate chips, heath, andes
+//   flake:   3x1 horizontal -- coconut flakes, graham cracker, pie crust
+//   scatter: 1x1+1x1 offset pair -- marshmallow bits, cheesecake bits
+export const _CANONICAL_TOPPING_SHAPES = {
+  dot:     [[0,0],[1,0],[0,1],[1,1]],                     // 2x2 square
+  chunk:   [[0,0],[1,0],[2,0],[0,1],[1,1],[2,1]],         // 3x2 rectangle
+  sliver:  [[0,0],[0,1],[0,2]],                           // 1x3 vertical
+  flake:   [[0,0],[1,0],[2,0]],                           // 3x1 horizontal
+  scatter: [[0,0],[2,1]],                                 // two 1x1 pixels offset
+};
+
+// Canonical shape assignment: every TOPPING_COLORS key gets an explicit entry.
+// Tiers render what their pixel budget allows; the map is shared for consistency.
+export const _CANONICAL_SHAPE_MAP = {
+  // Dot (2x2) -- sprinkles, m&ms, salt, small bits
+  oreo: 'dot', salt: 'dot', m_and_m: 'dot', reeses: 'dot',
+  sprinkles: 'dot', candy_cane: 'dot', blueberry: 'dot',
+  blackberry_drupe: 'dot', raspberry: 'dot', strawberry_bits: 'dot',
+  peach_bits: 'dot', cherry_bits: 'dot',
+  // Chunk (3x2) -- pecans, pretzels, brownie, cookie dough
+  pecan: 'chunk', pretzel: 'chunk', brownie: 'chunk',
+  cookie_dough: 'chunk', cake: 'chunk', snickers: 'chunk',
+  cashew: 'chunk', butterfinger: 'chunk',
+  // Sliver (1x3) -- chocolate chips, heath, andes
+  chocolate_chip: 'sliver', heath: 'sliver', andes: 'sliver',
+  dove: 'sliver', fudge_bits: 'sliver', caramel_chips: 'sliver',
+  // Flake (3x1) -- coconut flakes, graham cracker, pie crust
+  coconut_flakes: 'flake', graham_cracker: 'flake', pie_crust: 'flake',
+  cookie_crumbs: 'flake', pumpkin_spice: 'flake',
+  // Scatter (1x1+1x1) -- marshmallow bits, cheesecake bits
+  marshmallow_bits: 'scatter', cheesecake_bits: 'scatter',
+};
+
+/**
+ * Resolve the flat topping list for hero scatter placement.
+ *
+ * Rules by density:
+ *   pure      -> []
+ *   standard  -> ~16 pieces: cycle toppings to fill
+ *   double    -> ~20 pieces: primary topping weighted 2:1 over secondary
+ *   explosion -> ~24 pieces: cycle all toppings
+ *   overload  -> ~16 pieces: single topping repeated (monochrome distinction)
+ *
+ * @param {{ toppings: string[], density: string }} profile
+ * @returns {string[]}
+ */
+export function resolveHeroToppingList(profile) {
+  const toppings = profile.toppings || [];
+  const density = profile.density || 'standard';
+  if (density === 'pure') return [];
+  if (density === 'standard') {
+    if (toppings.length === 0) return [];
+    const result = [];
+    for (let i = 0; i < 16; i++) result.push(toppings[i % toppings.length]);
+    return result;
+  }
+  if (density === 'double') {
+    if (toppings.length === 0) return [];
+    const primary = toppings[0];
+    const secondary = toppings[1] || primary;
+    const result = [];
+    for (let i = 0; i < 20; i++) {
+      result.push(i % 3 === 2 ? secondary : primary);
+    }
+    return result;
+  }
+  if (density === 'explosion') {
+    if (toppings.length === 0) return [];
+    const result = [];
+    for (let i = 0; i < 24; i++) result.push(toppings[i % toppings.length]);
+    return result;
+  }
+  if (density === 'overload') {
+    if (toppings.length === 0) return [];
+    return Array(16).fill(toppings[0]);
+  }
+  return toppings.slice(); // fallback
+}
+
+// --- Hero cone renderer v3 (36×42 pixel grid) ---
 //
-// From-scratch redesign fixing three problems in the v1 26×24 design:
-//   - v1 used block-style highlight/shadow (rectangular strips read as color
-//     artifacts, not depth). v2 uses 4 specular + 3 shadow pixels at specific
-//     edge positions -- small clusters, not bands.
-//   - v1 used seeded PRNG scatter for toppings (random placement produced
-//     uneven clusters). v2 uses 8 fixed topping slots (same as renderConeHDSVG).
-//   - v1 ribbon was 10 single-pixel steps (staircase at scale 8). v2 ribbon is
-//     a 9-point S-curve, each point 2px wide -- visible band at any scale.
+// v3 upgrade from v2: scatter-placed toppings with per-type shapes and
+// collision detection, replacing the 8 fixed 2x2 topping slots.
+//   - Seeded Mulberry32 PRNG for deterministic scatter placement
+//   - 5-shape vocabulary from _CANONICAL_TOPPING_SHAPES
+//   - Density-based piece counts via resolveHeroToppingList
+//   - Collision detection prevents topping overlap
+//   - Center columns (11-21) now filled (were previously empty)
 //
 // Grid: 36×42px. Intended usage:
 //   scale 4 = 144×168px  (hero / index page, matches renderConeHDSVG ×8)
@@ -928,9 +1011,10 @@ const _HERO_RIBBON_PATH = [
 /**
  * Render a hero-scale SVG cone for a flavor at the given scale.
  *
- * Grid: 36×42px. Uses 8 fixed topping slots (same approach as renderConeHDSVG),
- * a 4-pixel specular highlight + 3-pixel edge shadow for depth, and a 9-point
- * S-curve ribbon (2px wide) that threads the scoop center.
+ * Grid: 36×42px. Uses seeded Mulberry32 PRNG scatter placement with per-type
+ * shaped toppings and collision detection. 4-pixel specular highlight +
+ * 3-pixel edge shadow for depth. 9-point S-curve ribbon (2px wide) threads
+ * the scoop center, rendered after toppings so ribbon wins at overlap.
  *
  * @param {string} flavorName
  * @param {number} [scale=1]
@@ -942,7 +1026,6 @@ export function renderConeHeroSVG(flavorName, scale = 1) {
   const ribbonKey = profile.ribbon;
   const hasRibbon = ribbonKey && profile.density !== 'pure';
   const ribbonColor = hasRibbon ? (RIBBON_COLORS[ribbonKey] || null) : null;
-  const toppingSlots = resolveHDToppingSlots(profile);
 
   const GRID_W = 36;
   const GRID_H = 42;
@@ -950,6 +1033,10 @@ export function renderConeHeroSVG(flavorName, scale = 1) {
   const h = GRID_H * scale;
   const s = scale;
   const rects = [];
+
+  // Deterministic seed from flavor name
+  const seed = flavorName.split('').reduce((a, c) => (a * 31 + c.charCodeAt(0)) | 0, 0);
+  const rng = _mulberry32(seed);
 
   const hlColor = lightenHex(baseColor, 0.25);
   const shadowColor = darkenHex(baseColor, 0.12);
@@ -974,12 +1061,43 @@ export function renderConeHeroSVG(flavorName, scale = 1) {
     rect(sx, sy, 1, 1, shadowColor);
   }
 
-  // 3. Toppings: 8 fixed 2×2 slots filled up to resolveHDToppingSlots length.
-  for (let i = 0; i < toppingSlots.length && i < _HERO_TOPPING_SLOTS.length; i++) {
-    const color = TOPPING_COLORS[toppingSlots[i]];
+  // 3. Scatter toppings with Mulberry32 PRNG + collision detection.
+  const toppingList = resolveHeroToppingList(profile);
+  const occupied = new Set();
+
+  for (let pi = 0; pi < toppingList.length; pi++) {
+    const toppingKey = toppingList[pi];
+    const color = TOPPING_COLORS[toppingKey];
     if (!color) continue;
-    const [tx, ty] = _HERO_TOPPING_SLOTS[i];
-    rect(tx, ty, 2, 2, color);
+    const shapeKey = _CANONICAL_SHAPE_MAP[toppingKey] || 'dot';
+    const shape = _CANONICAL_TOPPING_SHAPES[shapeKey];
+
+    for (let attempt = 0; attempt < 30; attempt++) {
+      const row = Math.floor(rng() * _HERO_SCOOP_ROWS.length);
+      const [sc, ec] = _HERO_SCOOP_ROWS[row];
+      const col = sc + Math.floor(rng() * (ec - sc + 1));
+
+      // Verify every shape pixel is within scoop bounds and unoccupied
+      let valid = true;
+      for (const [dc, dr] of shape) {
+        const pc = col + dc;
+        const pr = row + dr;
+        if (pr >= _HERO_SCOOP_ROWS.length) { valid = false; break; }
+        const [rsc, rec] = _HERO_SCOOP_ROWS[pr];
+        if (pc < rsc || pc > rec) { valid = false; break; }
+        if (occupied.has(pr * 100 + pc)) { valid = false; break; }
+      }
+
+      if (valid) {
+        for (const [dc, dr] of shape) {
+          const pc = col + dc;
+          const pr = row + dr;
+          occupied.add(pr * 100 + pc);
+          rect(pc, pr, 1, 1, color);
+        }
+        break;
+      }
+    }
   }
 
   // 4. Ribbon: 9-point S-curve, each point 2px wide × 1px tall.

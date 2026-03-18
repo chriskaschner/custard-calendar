@@ -755,15 +755,15 @@ const GOLDEN_HASHES = {
   'HD/dark chocolate decadence':    '8a7c8271',
   'HD/caramel chocolate pecan':     '56b33517',
   'Premium/vanilla':                'cc0e3069',
-  'Premium/mint explosion':         '0526992b',
-  'Premium/chocolate caramel twist':'de723f6b',
+  'Premium/mint explosion':         'e35eb910',
+  'Premium/chocolate caramel twist':'d0e8b426',
   'Premium/dark chocolate decadence':'03b26551',
-  'Premium/caramel chocolate pecan':'2dbf7bcb',
+  'Premium/caramel chocolate pecan':'95a4d691',
   'Hero/vanilla':                   '2ef6df7b',
-  'Hero/mint explosion':            'd9c597a2',
-  'Hero/chocolate caramel twist':   'b0df661b',
+  'Hero/mint explosion':            '412c233e',
+  'Hero/chocolate caramel twist':   '68b702b7',
   'Hero/dark chocolate decadence':  '2385a85f',
-  'Hero/caramel chocolate pecan':   '47289457',
+  'Hero/caramel chocolate pecan':   '16f101ed',
 };
 
 const GOLDEN_FLAVORS = [
