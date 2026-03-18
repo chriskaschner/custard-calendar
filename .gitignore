@@ -50,6 +50,8 @@ Thumbs.db
 !docs/screenshots/*.png
 # Exception: Hero cone PNG assets served by GitHub Pages
 !docs/assets/cones/*.png
+# Exception: AI-generated cone candidate PNGs for curation pipeline
+!docs/assets/ai-candidates/**/*.png
 # Exception: Golden baseline PNGs for pixelmatch visual regression tests
 !worker/test/fixtures/goldens/**/*.png
 

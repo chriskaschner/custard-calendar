@@ -1,0 +1,152 @@
+{
+  "vanilla:medium": {
+    "flavor_key": "vanilla",
+    "slug": "vanilla",
+    "model": "gpt-image-1.5",
+    "quality": "medium",
+    "size": "1024x1024",
+    "background": "transparent",
+    "prompt_hash": "0e37a30923012812",
+    "candidates": [
+      {
+        "file": "vanilla-medium-1.png",
+        "generated_at": "2026-03-18T20:45:04.948Z"
+      },
+      {
+        "file": "vanilla-medium-2.png",
+        "generated_at": "2026-03-18T20:45:28.400Z"
+      },
+      {
+        "file": "vanilla-medium-3.png",
+        "generated_at": "2026-03-18T20:46:16.115Z"
+      }
+    ],
+    "selected": null,
+    "status": "pending"
+  },
+  "mint explosion:medium": {
+    "flavor_key": "mint explosion",
+    "slug": "mint-explosion",
+    "model": "gpt-image-1.5",
+    "quality": "medium",
+    "size": "1024x1024",
+    "background": "transparent",
+    "prompt_hash": "6c45a0deb8bfe300",
+    "candidates": [
+      {
+        "file": "mint-explosion-medium-1.png",
+        "generated_at": "2026-03-18T20:46:39.167Z"
+      },
+      {
+        "file": "mint-explosion-medium-2.png",
+        "generated_at": "2026-03-18T20:47:03.941Z"
+      },
+      {
+        "file": "mint-explosion-medium-3.png",
+        "generated_at": "2026-03-18T20:47:24.988Z"
+      }
+    ],
+    "selected": null,
+    "status": "pending"
+  },
+  "caramel turtle:medium": {
+    "flavor_key": "caramel turtle",
+    "slug": "caramel-turtle",
+    "model": "gpt-image-1.5",
+    "quality": "medium",
+    "size": "1024x1024",
+    "background": "transparent",
+    "prompt_hash": "f13dbfdb0c04ae96",
+    "candidates": [
+      {
+        "file": "caramel-turtle-medium-1.png",
+        "generated_at": "2026-03-18T20:47:46.398Z"
+      },
+      {
+        "file": "caramel-turtle-medium-2.png",
+        "generated_at": "2026-03-18T20:48:08.165Z"
+      },
+      {
+        "file": "caramel-turtle-medium-3.png",
+        "generated_at": "2026-03-18T20:48:31.188Z"
+      }
+    ],
+    "selected": null,
+    "status": "pending"
+  },
+  "vanilla:high": {
+    "flavor_key": "vanilla",
+    "slug": "vanilla",
+    "model": "gpt-image-1.5",
+    "quality": "high",
+    "size": "1024x1024",
+    "background": "transparent",
+    "prompt_hash": "0e37a30923012812",
+    "candidates": [
+      {
+        "file": "vanilla-high-1.png",
+        "generated_at": "2026-03-18T20:49:15.249Z"
+      },
+      {
+        "file": "vanilla-high-2.png",
+        "generated_at": "2026-03-18T20:50:06.877Z"
+      },
+      {
+        "file": "vanilla-high-3.png",
+        "generated_at": "2026-03-18T20:50:48.961Z"
+      }
+    ],
+    "selected": null,
+    "status": "pending"
+  },
+  "mint explosion:high": {
+    "flavor_key": "mint explosion",
+    "slug": "mint-explosion",
+    "model": "gpt-image-1.5",
+    "quality": "high",
+    "size": "1024x1024",
+    "background": "transparent",
+    "prompt_hash": "6c45a0deb8bfe300",
+    "candidates": [
+      {
+        "file": "mint-explosion-high-1.png",
+        "generated_at": "2026-03-18T20:51:34.211Z"
+      },
+      {
+        "file": "mint-explosion-high-2.png",
+        "generated_at": "2026-03-18T20:52:26.113Z"
+      },
+      {
+        "file": "mint-explosion-high-3.png",
+        "generated_at": "2026-03-18T20:53:18.041Z"
+      }
+    ],
+    "selected": null,
+    "status": "pending"
+  },
+  "caramel turtle:high": {
+    "flavor_key": "caramel turtle",
+    "slug": "caramel-turtle",
+    "model": "gpt-image-1.5",
+    "quality": "high",
+    "size": "1024x1024",
+    "background": "transparent",
+    "prompt_hash": "f13dbfdb0c04ae96",
+    "candidates": [
+      {
+        "file": "caramel-turtle-high-1.png",
+        "generated_at": "2026-03-18T21:15:46.585Z"
+      },
+      {
+        "file": "caramel-turtle-high-2.png",
+        "generated_at": "2026-03-18T21:15:46.586Z"
+      },
+      {
+        "file": "caramel-turtle-high-3.png",
+        "generated_at": "2026-03-18T21:15:46.586Z"
+      }
+    ],
+    "selected": null,
+    "status": "pending"
+  }
+}
