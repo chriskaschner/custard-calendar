@@ -7,8 +7,7 @@
  * Usage: include via <script src="cone-renderer.js"></script> before page scripts.
  * Sets globals: flavorColorData, loadFlavorColors, normalizeFlavorKey,
  *   getFlavorProfileLocal, getFlavorBaseColor, resolveToppingSlots,
- *   resolveHDToppingSlots, lightenHex, renderMiniConeSVG, renderMiniConeHDSVG,
- *   heroConeSrc, renderHeroCone,
+ *   lightenHex, renderMiniConeSVG, heroConeSrc, renderHeroCone,
  *   FALLBACK_BASE_COLORS, FALLBACK_CONE_COLORS, FALLBACK_TOPPING_COLORS,
  *   FALLBACK_RIBBON_COLORS
  */
@@ -90,94 +89,6 @@ var FALLBACK_RIBBON_COLORS = {
   chocolate_syrup: '#1A0A00',
   fudge: '#3B1F0B'
 };
-
-// ---------------------------------------------------------------------------
-// Canonical topping shapes (synced with worker/src/flavor-colors.js)
-// ---------------------------------------------------------------------------
-
-var _CANONICAL_TOPPING_SHAPES = {
-  dot:     [[0,0],[1,0],[0,1],[1,1]],
-  chunk:   [[0,0],[1,0],[2,0],[0,1],[1,1],[2,1]],
-  sliver:  [[0,0],[0,1],[0,2]],
-  flake:   [[0,0],[1,0],[2,0]],
-  scatter: [[0,0],[2,1]]
-};
-
-var _CANONICAL_SHAPE_MAP = {
-  oreo: 'dot', salt: 'dot', m_and_m: 'dot', reeses: 'dot',
-  sprinkles: 'dot', candy_cane: 'dot', blueberry: 'dot',
-  blackberry_drupe: 'dot', raspberry: 'dot', strawberry_bits: 'dot',
-  peach_bits: 'dot', cherry_bits: 'dot',
-  pecan: 'chunk', pretzel: 'chunk', brownie: 'chunk',
-  cookie_dough: 'chunk', cake: 'chunk', snickers: 'chunk',
-  cashew: 'chunk', butterfinger: 'chunk',
-  chocolate_chip: 'sliver', heath: 'sliver', andes: 'sliver',
-  dove: 'sliver', fudge_bits: 'sliver', caramel_chips: 'sliver',
-  coconut_flakes: 'flake', graham_cracker: 'flake', pie_crust: 'flake',
-  cookie_crumbs: 'flake', pumpkin_spice: 'flake',
-  marshmallow_bits: 'scatter', cheesecake_bits: 'scatter'
-};
-
-// ---------------------------------------------------------------------------
-// PRNG + color utilities for HD scatter renderer
-// ---------------------------------------------------------------------------
-
-function _mulberry32(seed) {
-  var s = seed >>> 0;
-  return function() {
-    s = (s + 0x6D2B79F5) >>> 0;
-    var t = Math.imul(s ^ (s >>> 15), s | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-function darkenHex(hex, amount) {
-  var r = parseInt(hex.slice(1, 3), 16);
-  var g = parseInt(hex.slice(3, 5), 16);
-  var b = parseInt(hex.slice(5, 7), 16);
-  var dr = Math.round(r * (1 - amount));
-  var dg = Math.round(g * (1 - amount));
-  var db = Math.round(b * (1 - amount));
-  return '#' + [dr, dg, db].map(function(c) { return c.toString(16).padStart(2, '0'); }).join('').toUpperCase();
-}
-
-// ---------------------------------------------------------------------------
-// HD scatter topping list resolver
-// ---------------------------------------------------------------------------
-
-function resolveHDScatterToppingList(profile) {
-  var tops = (profile && profile.toppings) || [];
-  var density = (profile && profile.density) || 'standard';
-  if (density === 'pure') return [];
-  if (density === 'standard') {
-    if (tops.length === 0) return [];
-    var result = [];
-    for (var i = 0; i < 10; i++) result.push(tops[i % tops.length]);
-    return result;
-  }
-  if (density === 'double') {
-    if (tops.length === 0) return [];
-    var primary = tops[0];
-    var secondary = tops[1] || primary;
-    var dResult = [];
-    for (var di = 0; di < 12; di++) dResult.push(di % 3 === 2 ? secondary : primary);
-    return dResult;
-  }
-  if (density === 'explosion') {
-    if (tops.length === 0) return [];
-    var eResult = [];
-    for (var ei = 0; ei < 14; ei++) eResult.push(tops[ei % tops.length]);
-    return eResult;
-  }
-  if (density === 'overload') {
-    if (tops.length === 0) return [];
-    var oResult = [];
-    for (var oi = 0; oi < 10; oi++) oResult.push(tops[0]);
-    return oResult;
-  }
-  return tops.slice();
-}
 
 var FALLBACK_FLAVOR_ALIASES = {
   "reeses peanut butter cup": "really reese's",
@@ -318,29 +229,6 @@ function resolveToppingSlots(profile) {
   return tops.slice(0, 4);
 }
 
-function resolveHDToppingSlots(profile) {
-  var tops = (profile && profile.toppings) || [];
-  var density = (profile && profile.density) || 'standard';
-  if (density === 'pure') return [];
-  if (density === 'double') {
-    if (tops.length === 0) return [];
-    var primary = tops[0];
-    var secondary = tops[1] || primary;
-    return [primary, primary, secondary, primary, secondary, primary, secondary];
-  }
-  if (density === 'explosion') {
-    if (tops.length === 0) return [];
-    var slots = [];
-    for (var i = 0; i < 8; i++) slots.push(tops[i % tops.length]);
-    return slots;
-  }
-  if (density === 'overload') return tops.length > 0 ? [tops[0], tops[0], tops[0], tops[0], tops[0], tops[0]] : [];
-  if (tops.length === 0) return [];
-  var standardSlots = [];
-  for (var si = 0; si < 6; si++) standardSlots.push(tops[si % tops.length]);
-  return standardSlots;
-}
-
 // ---------------------------------------------------------------------------
 // Color utilities
 // ---------------------------------------------------------------------------
@@ -429,113 +317,6 @@ function renderMiniConeSVG(flavorName, scale) {
 }
 
 // ---------------------------------------------------------------------------
-// HD cone SVG (18x22 pixel grid)
-// ---------------------------------------------------------------------------
-
-function renderMiniConeHDSVG(flavorName, scale) {
-  if (!flavorName) return '';
-
-  var baseColors = flavorColorData ? (flavorColorData.base_colors || {}) : {};
-  var ribbonColors = flavorColorData ? (flavorColorData.ribbon_colors || {}) : {};
-  var toppingColors = flavorColorData ? (flavorColorData.topping_colors || {}) : {};
-  var coneColors = flavorColorData ? (flavorColorData.cone_colors || FALLBACK_CONE_COLORS) : FALLBACK_CONE_COLORS;
-  var CONE_TIP = '#8B5A2B';
-
-  var profile = getFlavorProfileLocal(flavorName);
-  var baseColor = (profile ? baseColors[profile.base] : null) || getFlavorBaseColor(flavorName);
-  var ribbonKey = profile ? profile.ribbon : null;
-  var hasRibbon = ribbonKey && (!profile || profile.density !== 'pure');
-  var ribbonColor = hasRibbon ? ((ribbonColors[ribbonKey] || FALLBACK_RIBBON_COLORS[ribbonKey]) || null) : null;
-  var highlightColor = lightenHex(baseColor, 0.3);
-  var shadowColor = darkenHex(baseColor, 0.10);
-
-  var s = scale || 5;
-  var rects = [];
-
-  // Deterministic seed from flavor name
-  var seed = flavorName.split('').reduce(function(a, c) { return (a * 31 + c.charCodeAt(0)) | 0; }, 0);
-  var rng = _mulberry32(seed);
-
-  // HD scoop rows [startCol, endCol] for rows 0-10
-  var hdScoopRows = [[4,13],[3,14],[2,15],[2,15],[2,15],[2,15],[2,15],[2,15],[2,15],[2,15],[3,14]];
-
-  // 1. Base scoop fill
-  for (var row = 0; row < hdScoopRows.length; row++) {
-    var sc = hdScoopRows[row][0], ec = hdScoopRows[row][1];
-    for (var col = sc; col <= ec; col++) {
-      rects.push('<rect x="' + (col*s) + '" y="' + (row*s) + '" width="' + s + '" height="' + s + '" fill="' + baseColor + '"/>');
-    }
-  }
-
-  // 2. Highlight (upper-left shine)
-  var hlSlots = [[4,0],[3,1]];
-  for (var hi = 0; hi < hlSlots.length; hi++) {
-    rects.push('<rect x="' + (hlSlots[hi][0]*s) + '" y="' + (hlSlots[hi][1]*s) + '" width="' + s + '" height="' + s + '" fill="' + highlightColor + '"/>');
-  }
-
-  // 3. Scatter toppings with Mulberry32 PRNG + collision detection
-  var toppingList = resolveHDScatterToppingList(profile);
-  var occupied = {};
-
-  for (var pi = 0; pi < toppingList.length; pi++) {
-    var toppingKey = toppingList[pi];
-    var tColor = toppingColors[toppingKey] || FALLBACK_TOPPING_COLORS[toppingKey];
-    if (!tColor) continue;
-    var shapeKey = _CANONICAL_SHAPE_MAP[toppingKey] || 'dot';
-    var shape = _CANONICAL_TOPPING_SHAPES[shapeKey];
-
-    for (var attempt = 0; attempt < 30; attempt++) {
-      var sRow = Math.floor(rng() * hdScoopRows.length);
-      var sSc = hdScoopRows[sRow][0], sEc = hdScoopRows[sRow][1];
-      var sCol = sSc + Math.floor(rng() * (sEc - sSc + 1));
-
-      // Verify every shape pixel is within scoop bounds and unoccupied
-      var valid = true;
-      for (var si = 0; si < shape.length; si++) {
-        var pc = sCol + shape[si][0];
-        var pr = sRow + shape[si][1];
-        if (pr >= hdScoopRows.length) { valid = false; break; }
-        var rsc = hdScoopRows[pr][0], rec = hdScoopRows[pr][1];
-        if (pc < rsc || pc > rec) { valid = false; break; }
-        if (occupied[pr * 100 + pc]) { valid = false; break; }
-      }
-
-      if (valid) {
-        for (var sj = 0; sj < shape.length; sj++) {
-          var ppc = sCol + shape[sj][0];
-          var ppr = sRow + shape[sj][1];
-          occupied[ppr * 100 + ppc] = true;
-          rects.push('<rect x="' + (ppc*s) + '" y="' + (ppr*s) + '" width="' + s + '" height="' + s + '" fill="' + tColor + '"/>');
-        }
-        break;
-      }
-    }
-  }
-
-  // 4. Ribbon slots R1-R6 (S-curve)
-  if (ribbonColor) {
-    var rSlots = [[7,1],[8,3],[9,4],[10,5],[9,7],[8,9]];
-    for (var ri = 0; ri < rSlots.length; ri++) {
-      rects.push('<rect x="' + (rSlots[ri][0]*s) + '" y="' + (rSlots[ri][1]*s) + '" width="' + s + '" height="' + s + '" fill="' + ribbonColor + '"/>');
-    }
-  }
-
-  // 5. Cone (rows 11-19 checkerboard + row 20 tip)
-  var coneRows = [[4,13],[4,13],[5,12],[5,12],[6,11],[6,11],[7,10],[7,10],[8,9]];
-  for (var cr = 0; cr < coneRows.length; cr++) {
-    var csc = coneRows[cr][0], cec = coneRows[cr][1];
-    for (var col2 = csc; col2 <= cec; col2++) {
-      var wc = ((cr + col2) % 2 === 0) ? coneColors.waffle : coneColors.waffle_dark;
-      rects.push('<rect x="' + (col2*s) + '" y="' + ((cr+11)*s) + '" width="' + s + '" height="' + s + '" fill="' + wc + '"/>');
-    }
-  }
-  rects.push('<rect x="' + (8*s) + '" y="' + (20*s) + '" width="' + s + '" height="' + s + '" fill="' + CONE_TIP + '"/>');
-  rects.push('<rect x="' + (9*s) + '" y="' + (20*s) + '" width="' + s + '" height="' + s + '" fill="' + CONE_TIP + '"/>');
-
-  return '<svg class="mini-cone" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + (18*s) + ' ' + (21*s) + '" width="' + (18*s) + '" height="' + (21*s) + '" shape-rendering="crispEdges">' + rects.join('') + '</svg>';
-}
-
-// ---------------------------------------------------------------------------
 // Hero cone PNG lookup + fallback
 // ---------------------------------------------------------------------------
 
@@ -555,15 +336,15 @@ function heroConeSrc(flavorName) {
 }
 
 /**
- * Render a hero cone into a container: tries PNG first, falls back to HD SVG.
+ * Render a hero cone into a container: tries PNG first, falls back to L0 SVG.
  * @param {string} flavorName
  * @param {HTMLElement} container - DOM element to render into
- * @param {number} [fallbackScale] - scale for HD SVG fallback (default 6)
+ * @param {number} [fallbackScale] - scale for L0 SVG fallback (default 6)
  */
 function renderHeroCone(flavorName, container, fallbackScale) {
   var src = heroConeSrc(flavorName);
   if (!src) {
-    container.innerHTML = renderMiniConeHDSVG(flavorName, fallbackScale || 6);
+    container.innerHTML = renderMiniConeSVG(flavorName, fallbackScale || 6);
     return;
   }
   var img = new Image();
@@ -571,7 +352,7 @@ function renderHeroCone(flavorName, container, fallbackScale) {
   img.className = 'hero-cone-img';
   img.src = src;
   img.onerror = function() {
-    container.innerHTML = renderMiniConeHDSVG(flavorName, fallbackScale || 6);
+    container.innerHTML = renderMiniConeSVG(flavorName, fallbackScale || 6);
   };
   container.innerHTML = '';
   container.appendChild(img);
