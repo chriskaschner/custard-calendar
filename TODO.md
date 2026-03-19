@@ -392,10 +392,19 @@ Not active. Only promote if they clearly improve core decision KPIs.
 - [ ] **Flavor chatbot** -- conversational Q&A for flavor info via web chat UI
 - [x] **Group vote: "where are we going?" session** -- promoted from Someday/Maybe; shipped 2026-03-01. See "Now -- Group Vote" section above. KV-backed ephemeral sessions (4h TTL), join code + QR, yes/meh/no voting, minimize-misery winner algorithm, flavor similarity note, 15 tests. `docs/group.html` + `worker/src/group-routes.js` + nav link on all 12 pages.
 - [ ] **Tidbyt cone animation** -- add sparkle or other animation to the Tidbyt cone render.
-- [ ] **Ensemble predictor** -- combine FR (40%), Markov (40%), PCA-collaborative (20%). Current 3.2% top-1 -> maybe 5-6%. Prediction-only; no surface value without forecast headline.
-- [ ] **Confidence intervals in forecast output** -- P95 uncertainty bands on predictions.
-- [ ] **Cluster-based transfer learning** -- PCA cluster centroid as prior for sparse stores. Prediction infrastructure only.
-- [ ] **Cluster-personalized forecast emails** -- compare store to its PCA cluster centroid. Prediction-framed; revisit if forecast email becomes primary channel.
+
+## Won't Do
+
+Formally closed items. Documented rationale for why these will not be built.
+
+### ML Prediction Pipeline (closed 2026-03-19)
+
+Strategic rationale: The analytics pipeline confirmed that Culver's publishes flavor schedules deterministically. Confirmed schedule accuracy is ~100%; ML prediction top-1 accuracy is 3.2%. The confirmed schedule IS the product. Prediction infrastructure has no user-visible value and would add maintenance burden without improving the core experience. See REQUIREMENTS.md SIMP-03.
+
+- [x] **Ensemble predictor** -- Won't Do. FR/Markov/PCA ensemble targets ~5-6% top-1 accuracy from 3.2% baseline. The confirmed schedule IS the product (99%+ accuracy); prediction accuracy improvements have no user-visible value. Closed 2026-03-19.
+- [x] **Confidence intervals in forecast output** -- Won't Do. P95 uncertainty bands on predictions are meaningless when predictions themselves have 3.2% accuracy. The product surfaces confirmed schedules, not probabilistic forecasts. Closed 2026-03-19.
+- [x] **Cluster-based transfer learning** -- Won't Do. PCA cluster centroids as priors for sparse stores is prediction infrastructure with no surface value. Confirmed schedule data from upstream sites provides 100% accuracy for covered stores. Closed 2026-03-19.
+- [x] **Cluster-personalized forecast emails** -- Won't Do. Comparing store to PCA cluster centroid for email personalization is prediction-framed. Weekly digest emails already ship confirmed schedules and flavor signals -- no user value from adding probabilistic cluster comparisons. Closed 2026-03-19.
 
 ## Data Health -- Store Coverage Audit
 
