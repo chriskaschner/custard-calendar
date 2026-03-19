@@ -1,5 +1,30 @@
 # Milestones
 
+## v2.0 Art Quality (Shipped: 2026-03-19)
+
+**Phases completed:** 4 phases (26-29), 7 plans
+
+**Key accomplishments:**
+- Generated 91 AI cone PNGs via Azure OpenAI gpt-image-1.5 (2 Kit-Kat flavors deferred)
+- Migrated all client-side rendering to L5 PNG pipeline with L0 SVG fallback (Phase 27)
+- Migrated Worker social cards to fetch + embed L5 PNGs from CDN (Phase 28)
+- Unified Scriptable widget into shared art pipeline with canonical 23-color palette (Phase 29)
+- Deleted ~990 lines of dead SVG rendering code (HD, Hero, Premium renderers)
+- Removed 282 golden baseline PNG fixtures for deleted renderers
+- flavor-colors.js reduced from 1,207 to 441 lines
+
+**Stats:**
+- Timeline: 2 days (2026-03-18 to 2026-03-19)
+- Execution time: ~23 min across 7 plans
+- Requirements: 8/8 satisfied (GEN-01-04, INT-01-05, CLN-01-04)
+
+**Known tech debt:**
+- 2 Kit-Kat flavors skipped in AI generation (kit-kat-bar, kit-kat-swirl)
+- Pre-existing map-pan-stability.spec.mjs test failure (carried from v1.5)
+- Social card PNG fetch is runtime (not pre-loaded to KV) -- works due to 24h cache
+
+---
+
 ## v1.5 Visual Polish (Shipped: 2026-03-18)
 
 **Phases completed:** 5 of 6 phases (Phase 25 test cleanup skipped), 10 plans
