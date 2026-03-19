@@ -1,152 +1,467 @@
 {
-  "vanilla:medium": {
-    "flavor_key": "vanilla",
-    "slug": "vanilla",
-    "model": "gpt-image-1.5",
-    "quality": "medium",
-    "size": "1024x1024",
-    "background": "transparent",
-    "prompt_hash": "0e37a30923012812",
-    "candidates": [
-      {
-        "file": "vanilla-medium-1.png",
-        "generated_at": "2026-03-18T20:45:04.948Z"
-      },
-      {
-        "file": "vanilla-medium-2.png",
-        "generated_at": "2026-03-18T20:45:28.400Z"
-      },
-      {
-        "file": "vanilla-medium-3.png",
-        "generated_at": "2026-03-18T20:46:16.115Z"
-      }
-    ],
-    "selected": null,
-    "status": "pending"
-  },
-  "mint explosion:medium": {
-    "flavor_key": "mint explosion",
-    "slug": "mint-explosion",
-    "model": "gpt-image-1.5",
-    "quality": "medium",
-    "size": "1024x1024",
-    "background": "transparent",
-    "prompt_hash": "6c45a0deb8bfe300",
-    "candidates": [
-      {
-        "file": "mint-explosion-medium-1.png",
-        "generated_at": "2026-03-18T20:46:39.167Z"
-      },
-      {
-        "file": "mint-explosion-medium-2.png",
-        "generated_at": "2026-03-18T20:47:03.941Z"
-      },
-      {
-        "file": "mint-explosion-medium-3.png",
-        "generated_at": "2026-03-18T20:47:24.988Z"
-      }
-    ],
-    "selected": null,
-    "status": "pending"
-  },
-  "caramel turtle:medium": {
-    "flavor_key": "caramel turtle",
-    "slug": "caramel-turtle",
-    "model": "gpt-image-1.5",
-    "quality": "medium",
-    "size": "1024x1024",
-    "background": "transparent",
-    "prompt_hash": "f13dbfdb0c04ae96",
-    "candidates": [
-      {
-        "file": "caramel-turtle-medium-1.png",
-        "generated_at": "2026-03-18T20:47:46.398Z"
-      },
-      {
-        "file": "caramel-turtle-medium-2.png",
-        "generated_at": "2026-03-18T20:48:08.165Z"
-      },
-      {
-        "file": "caramel-turtle-medium-3.png",
-        "generated_at": "2026-03-18T20:48:31.188Z"
-      }
-    ],
-    "selected": null,
-    "status": "pending"
-  },
-  "vanilla:high": {
-    "flavor_key": "vanilla",
-    "slug": "vanilla",
-    "model": "gpt-image-1.5",
-    "quality": "high",
-    "size": "1024x1024",
-    "background": "transparent",
-    "prompt_hash": "0e37a30923012812",
-    "candidates": [
-      {
-        "file": "vanilla-high-1.png",
-        "generated_at": "2026-03-18T20:49:15.249Z"
-      },
-      {
-        "file": "vanilla-high-2.png",
-        "generated_at": "2026-03-18T20:50:06.877Z"
-      },
-      {
-        "file": "vanilla-high-3.png",
-        "generated_at": "2026-03-18T20:50:48.961Z"
-      }
-    ],
-    "selected": null,
-    "status": "pending"
-  },
-  "mint explosion:high": {
-    "flavor_key": "mint explosion",
-    "slug": "mint-explosion",
-    "model": "gpt-image-1.5",
-    "quality": "high",
-    "size": "1024x1024",
-    "background": "transparent",
-    "prompt_hash": "6c45a0deb8bfe300",
-    "candidates": [
-      {
-        "file": "mint-explosion-high-1.png",
-        "generated_at": "2026-03-18T20:51:34.211Z"
-      },
-      {
-        "file": "mint-explosion-high-2.png",
-        "generated_at": "2026-03-18T20:52:26.113Z"
-      },
-      {
-        "file": "mint-explosion-high-3.png",
-        "generated_at": "2026-03-18T20:53:18.041Z"
-      }
-    ],
-    "selected": null,
-    "status": "pending"
-  },
-  "caramel turtle:high": {
-    "flavor_key": "caramel turtle",
-    "slug": "caramel-turtle",
-    "model": "gpt-image-1.5",
-    "quality": "high",
-    "size": "1024x1024",
-    "background": "transparent",
-    "prompt_hash": "f13dbfdb0c04ae96",
-    "candidates": [
-      {
-        "file": "caramel-turtle-high-1.png",
-        "generated_at": "2026-03-18T21:15:46.585Z"
-      },
-      {
-        "file": "caramel-turtle-high-2.png",
-        "generated_at": "2026-03-18T21:15:46.586Z"
-      },
-      {
-        "file": "caramel-turtle-high-3.png",
-        "generated_at": "2026-03-18T21:15:46.586Z"
-      }
-    ],
-    "selected": null,
-    "status": "pending"
+  "generated_at": "2026-03-19T11:50:28.946Z",
+  "model": "gpt-image-1.5",
+  "quality": "medium",
+  "brand": "culvers",
+  "total_flavors": 38,
+  "approved_count": 38,
+  "flagged_count": 0,
+  "flavors": {
+    "andes-mint-avalanche": {
+      "slug": "andes-mint-avalanche",
+      "status": "approved",
+      "selected": "andes-mint-avalanche-1.png",
+      "candidates": [
+        "andes-mint-avalanche-1.png",
+        "andes-mint-avalanche-2.png",
+        "andes-mint-avalanche-3.png",
+        "andes-mint-avalanche-4.png",
+        "andes-mint-avalanche-5.png"
+      ]
+    },
+    "blackberry-cobbler": {
+      "slug": "blackberry-cobbler",
+      "status": "approved",
+      "selected": "blackberry-cobbler-3.png",
+      "candidates": [
+        "blackberry-cobbler-1.png",
+        "blackberry-cobbler-2.png",
+        "blackberry-cobbler-3.png",
+        "blackberry-cobbler-4.png",
+        "blackberry-cobbler-5.png"
+      ]
+    },
+    "brownie-thunder": {
+      "slug": "brownie-thunder",
+      "status": "approved",
+      "selected": "brownie-thunder-4.png",
+      "candidates": [
+        "brownie-thunder-1.png",
+        "brownie-thunder-2.png",
+        "brownie-thunder-3.png",
+        "brownie-thunder-4.png",
+        "brownie-thunder-5.png"
+      ]
+    },
+    "butter-pecan": {
+      "slug": "butter-pecan",
+      "status": "approved",
+      "selected": "butter-pecan-4.png",
+      "candidates": [
+        "butter-pecan-1.png",
+        "butter-pecan-2.png",
+        "butter-pecan-3.png",
+        "butter-pecan-4.png",
+        "butter-pecan-5.png"
+      ]
+    },
+    "caramel-cashew": {
+      "slug": "caramel-cashew",
+      "status": "approved",
+      "selected": "caramel-cashew-1.png",
+      "candidates": [
+        "caramel-cashew-1.png",
+        "caramel-cashew-2.png",
+        "caramel-cashew-3.png",
+        "caramel-cashew-4.png",
+        "caramel-cashew-5.png"
+      ]
+    },
+    "caramel-chocolate-pecan": {
+      "slug": "caramel-chocolate-pecan",
+      "status": "approved",
+      "selected": "caramel-chocolate-pecan-5.png",
+      "candidates": [
+        "caramel-chocolate-pecan-1.png",
+        "caramel-chocolate-pecan-2.png",
+        "caramel-chocolate-pecan-3.png",
+        "caramel-chocolate-pecan-4.png",
+        "caramel-chocolate-pecan-5.png"
+      ]
+    },
+    "caramel-fudge-cookie-dough": {
+      "slug": "caramel-fudge-cookie-dough",
+      "status": "approved",
+      "selected": "caramel-fudge-cookie-dough-3.png",
+      "candidates": [
+        "caramel-fudge-cookie-dough-1.png",
+        "caramel-fudge-cookie-dough-2.png",
+        "caramel-fudge-cookie-dough-3.png",
+        "caramel-fudge-cookie-dough-4.png",
+        "caramel-fudge-cookie-dough-5.png"
+      ]
+    },
+    "caramel-peanut-buttercup": {
+      "slug": "caramel-peanut-buttercup",
+      "status": "approved",
+      "selected": "caramel-peanut-buttercup-3.png",
+      "candidates": [
+        "caramel-peanut-buttercup-1.png",
+        "caramel-peanut-buttercup-2.png",
+        "caramel-peanut-buttercup-3.png",
+        "caramel-peanut-buttercup-4.png",
+        "caramel-peanut-buttercup-5.png"
+      ]
+    },
+    "caramel-pecan": {
+      "slug": "caramel-pecan",
+      "status": "approved",
+      "selected": "caramel-pecan-5.png",
+      "candidates": [
+        "caramel-pecan-1.png",
+        "caramel-pecan-2.png",
+        "caramel-pecan-3.png",
+        "caramel-pecan-4.png",
+        "caramel-pecan-5.png"
+      ]
+    },
+    "caramel-turtle": {
+      "slug": "caramel-turtle",
+      "status": "approved",
+      "selected": "caramel-turtle-2.png",
+      "candidates": [
+        "caramel-turtle-1.png",
+        "caramel-turtle-2.png",
+        "caramel-turtle-3.png",
+        "caramel-turtle-4.png",
+        "caramel-turtle-5.png"
+      ]
+    },
+    "chocolate-caramel-twist": {
+      "slug": "chocolate-caramel-twist",
+      "status": "approved",
+      "selected": "chocolate-caramel-twist-4.png",
+      "candidates": [
+        "chocolate-caramel-twist-1.png",
+        "chocolate-caramel-twist-2.png",
+        "chocolate-caramel-twist-3.png",
+        "chocolate-caramel-twist-4.png",
+        "chocolate-caramel-twist-5.png"
+      ]
+    },
+    "chocolate-covered-strawberry": {
+      "slug": "chocolate-covered-strawberry",
+      "status": "approved",
+      "selected": "chocolate-covered-strawberry-4.png",
+      "candidates": [
+        "chocolate-covered-strawberry-1.png",
+        "chocolate-covered-strawberry-2.png",
+        "chocolate-covered-strawberry-3.png",
+        "chocolate-covered-strawberry-4.png",
+        "chocolate-covered-strawberry-5.png"
+      ]
+    },
+    "chocolate-heath-crunch": {
+      "slug": "chocolate-heath-crunch",
+      "status": "approved",
+      "selected": "chocolate-heath-crunch-4.png",
+      "candidates": [
+        "chocolate-heath-crunch-1.png",
+        "chocolate-heath-crunch-2.png",
+        "chocolate-heath-crunch-3.png",
+        "chocolate-heath-crunch-4.png",
+        "chocolate-heath-crunch-5.png"
+      ]
+    },
+    "chocolate-oreo-volcano": {
+      "slug": "chocolate-oreo-volcano",
+      "status": "approved",
+      "selected": "chocolate-oreo-volcano-3.png",
+      "candidates": [
+        "chocolate-oreo-volcano-1.png",
+        "chocolate-oreo-volcano-2.png",
+        "chocolate-oreo-volcano-3.png",
+        "chocolate-oreo-volcano-4.png",
+        "chocolate-oreo-volcano-5.png"
+      ]
+    },
+    "chocolate-volcano": {
+      "slug": "chocolate-volcano",
+      "status": "approved",
+      "selected": "chocolate-volcano-1.png",
+      "candidates": [
+        "chocolate-volcano-1.png",
+        "chocolate-volcano-2.png",
+        "chocolate-volcano-3.png",
+        "chocolate-volcano-4.png",
+        "chocolate-volcano-5.png"
+      ]
+    },
+    "crazy-for-cookie-dough": {
+      "slug": "crazy-for-cookie-dough",
+      "status": "approved",
+      "selected": "crazy-for-cookie-dough-4.png",
+      "candidates": [
+        "crazy-for-cookie-dough-1.png",
+        "crazy-for-cookie-dough-2.png",
+        "crazy-for-cookie-dough-3.png",
+        "crazy-for-cookie-dough-4.png",
+        "crazy-for-cookie-dough-5.png"
+      ]
+    },
+    "dark-chocolate-decadence": {
+      "slug": "dark-chocolate-decadence",
+      "status": "approved",
+      "selected": "dark-chocolate-decadence-4.png",
+      "candidates": [
+        "dark-chocolate-decadence-1.png",
+        "dark-chocolate-decadence-2.png",
+        "dark-chocolate-decadence-3.png",
+        "dark-chocolate-decadence-4.png",
+        "dark-chocolate-decadence-5.png"
+      ]
+    },
+    "dark-chocolate-pb-crunch": {
+      "slug": "dark-chocolate-pb-crunch",
+      "status": "approved",
+      "selected": "dark-chocolate-pb-crunch-5.png",
+      "candidates": [
+        "dark-chocolate-pb-crunch-1.png",
+        "dark-chocolate-pb-crunch-2.png",
+        "dark-chocolate-pb-crunch-3.png",
+        "dark-chocolate-pb-crunch-4.png",
+        "dark-chocolate-pb-crunch-5.png"
+      ]
+    },
+    "double-butter-pecan": {
+      "slug": "double-butter-pecan",
+      "status": "approved",
+      "selected": "double-butter-pecan-2.png",
+      "candidates": [
+        "double-butter-pecan-1.png",
+        "double-butter-pecan-2.png",
+        "double-butter-pecan-3.png",
+        "double-butter-pecan-4.png",
+        "double-butter-pecan-5.png"
+      ]
+    },
+    "double-strawberry": {
+      "slug": "double-strawberry",
+      "status": "approved",
+      "selected": "double-strawberry-3.png",
+      "candidates": [
+        "double-strawberry-1.png",
+        "double-strawberry-2.png",
+        "double-strawberry-3.png",
+        "double-strawberry-4.png",
+        "double-strawberry-5.png"
+      ]
+    },
+    "georgia-peach": {
+      "slug": "georgia-peach",
+      "status": "approved",
+      "selected": "georgia-peach-5.png",
+      "candidates": [
+        "georgia-peach-1.png",
+        "georgia-peach-2.png",
+        "georgia-peach-3.png",
+        "georgia-peach-4.png",
+        "georgia-peach-5.png"
+      ]
+    },
+    "lemon-berry-layer-cake": {
+      "slug": "lemon-berry-layer-cake",
+      "status": "approved",
+      "selected": "lemon-berry-layer-cake-3.png",
+      "candidates": [
+        "lemon-berry-layer-cake-1.png",
+        "lemon-berry-layer-cake-2.png",
+        "lemon-berry-layer-cake-3.png",
+        "lemon-berry-layer-cake-4.png",
+        "lemon-berry-layer-cake-5.png"
+      ]
+    },
+    "lemon-dash-cookie": {
+      "slug": "lemon-dash-cookie",
+      "status": "approved",
+      "selected": "lemon-dash-cookie-4.png",
+      "candidates": [
+        "lemon-dash-cookie-1.png",
+        "lemon-dash-cookie-2.png",
+        "lemon-dash-cookie-3.png",
+        "lemon-dash-cookie-4.png",
+        "lemon-dash-cookie-5.png"
+      ]
+    },
+    "mint-cookie": {
+      "slug": "mint-cookie",
+      "status": "approved",
+      "selected": "mint-cookie-2.png",
+      "candidates": [
+        "mint-cookie-1.png",
+        "mint-cookie-2.png",
+        "mint-cookie-3.png",
+        "mint-cookie-4.png",
+        "mint-cookie-5.png"
+      ]
+    },
+    "mint-explosion": {
+      "slug": "mint-explosion",
+      "status": "approved",
+      "selected": "mint-explosion-3.png",
+      "candidates": [
+        "mint-explosion-1.png",
+        "mint-explosion-2.png",
+        "mint-explosion-3.png",
+        "mint-explosion-4.png",
+        "mint-explosion-5.png"
+      ]
+    },
+    "oreo-cheesecake": {
+      "slug": "oreo-cheesecake",
+      "status": "approved",
+      "selected": "oreo-cheesecake-2.png",
+      "candidates": [
+        "oreo-cheesecake-1.png",
+        "oreo-cheesecake-2.png",
+        "oreo-cheesecake-3.png",
+        "oreo-cheesecake-4.png",
+        "oreo-cheesecake-5.png"
+      ]
+    },
+    "oreo-cookie-cheesecake": {
+      "slug": "oreo-cookie-cheesecake",
+      "status": "approved",
+      "selected": "oreo-cookie-cheesecake-5.png",
+      "candidates": [
+        "oreo-cookie-cheesecake-1.png",
+        "oreo-cookie-cheesecake-2.png",
+        "oreo-cookie-cheesecake-3.png",
+        "oreo-cookie-cheesecake-4.png",
+        "oreo-cookie-cheesecake-5.png"
+      ]
+    },
+    "oreo-cookie-overload": {
+      "slug": "oreo-cookie-overload",
+      "status": "approved",
+      "selected": "oreo-cookie-overload-2.png",
+      "candidates": [
+        "oreo-cookie-overload-1.png",
+        "oreo-cookie-overload-2.png",
+        "oreo-cookie-overload-3.png",
+        "oreo-cookie-overload-4.png",
+        "oreo-cookie-overload-5.png"
+      ]
+    },
+    "peanut-butter-cup": {
+      "slug": "peanut-butter-cup",
+      "status": "approved",
+      "selected": "peanut-butter-cup-5.png",
+      "candidates": [
+        "peanut-butter-cup-1.png",
+        "peanut-butter-cup-2.png",
+        "peanut-butter-cup-3.png",
+        "peanut-butter-cup-4.png",
+        "peanut-butter-cup-5.png"
+      ]
+    },
+    "raspberry-cheesecake": {
+      "slug": "raspberry-cheesecake",
+      "status": "approved",
+      "selected": "raspberry-cheesecake-5.png",
+      "candidates": [
+        "raspberry-cheesecake-1.png",
+        "raspberry-cheesecake-2.png",
+        "raspberry-cheesecake-3.png",
+        "raspberry-cheesecake-4.png",
+        "raspberry-cheesecake-5.png"
+      ]
+    },
+    "salted-caramel-pecan-pie": {
+      "slug": "salted-caramel-pecan-pie",
+      "status": "approved",
+      "selected": "salted-caramel-pecan-pie-5.png",
+      "candidates": [
+        "salted-caramel-pecan-pie-1.png",
+        "salted-caramel-pecan-pie-2.png",
+        "salted-caramel-pecan-pie-3.png",
+        "salted-caramel-pecan-pie-4.png",
+        "salted-caramel-pecan-pie-5.png"
+      ]
+    },
+    "salted-double-caramel-pecan": {
+      "slug": "salted-double-caramel-pecan",
+      "status": "approved",
+      "selected": "salted-double-caramel-pecan-2.png",
+      "candidates": [
+        "salted-double-caramel-pecan-1.png",
+        "salted-double-caramel-pecan-2.png",
+        "salted-double-caramel-pecan-3.png",
+        "salted-double-caramel-pecan-4.png",
+        "salted-double-caramel-pecan-5.png"
+      ]
+    },
+    "snickers-swirl": {
+      "slug": "snickers-swirl",
+      "status": "approved",
+      "selected": "snickers-swirl-2.png",
+      "candidates": [
+        "snickers-swirl-1.png",
+        "snickers-swirl-2.png",
+        "snickers-swirl-3.png",
+        "snickers-swirl-4.png",
+        "snickers-swirl-5.png"
+      ]
+    },
+    "strawberry-cheesecake": {
+      "slug": "strawberry-cheesecake",
+      "status": "approved",
+      "selected": "strawberry-cheesecake-4.png",
+      "candidates": [
+        "strawberry-cheesecake-1.png",
+        "strawberry-cheesecake-2.png",
+        "strawberry-cheesecake-3.png",
+        "strawberry-cheesecake-4.png",
+        "strawberry-cheesecake-5.png"
+      ]
+    },
+    "turtle": {
+      "slug": "turtle",
+      "status": "approved",
+      "selected": "turtle-4.png",
+      "candidates": [
+        "turtle-1.png",
+        "turtle-2.png",
+        "turtle-3.png",
+        "turtle-4.png",
+        "turtle-5.png"
+      ]
+    },
+    "turtle-cheesecake": {
+      "slug": "turtle-cheesecake",
+      "status": "approved",
+      "selected": "turtle-cheesecake-2.png",
+      "candidates": [
+        "turtle-cheesecake-1.png",
+        "turtle-cheesecake-2.png",
+        "turtle-cheesecake-3.png",
+        "turtle-cheesecake-4.png",
+        "turtle-cheesecake-5.png"
+      ]
+    },
+    "turtle-dove": {
+      "slug": "turtle-dove",
+      "status": "approved",
+      "selected": "turtle-dove-4.png",
+      "candidates": [
+        "turtle-dove-1.png",
+        "turtle-dove-2.png",
+        "turtle-dove-3.png",
+        "turtle-dove-4.png",
+        "turtle-dove-5.png"
+      ]
+    },
+    "vanilla": {
+      "slug": "vanilla",
+      "status": "approved",
+      "selected": "vanilla-5.png",
+      "candidates": [
+        "vanilla-1.png",
+        "vanilla-2.png",
+        "vanilla-3.png",
+        "vanilla-4.png",
+        "vanilla-5.png"
+      ]
+    }
   }
 }

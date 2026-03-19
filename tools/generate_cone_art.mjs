@@ -292,6 +292,10 @@ Options:
   --all             Full batch: all flavors
   --flavor "key"    Single flavor by key
   --quality <q>     medium or high (required for --all and --flavor)
+  --candidates <n>  Number of candidates per flavor (default: 5)
+  --offset <n>      Start at flavor index N (0-based, for parallel batches)
+  --limit <n>       Generate only N flavors (for parallel batches)
+  --no-manifest     Skip manifest writes (use when running parallel batches)
   --delay <ms>      Delay between API calls in ms (default: ${DELAY_MS})
   --help            Show this help`);
 }
@@ -366,11 +370,32 @@ async function main() {
     flavorsToGenerate.push(entry);
     qualities = [qualityFlag];
   } else if (isAll) {
-    flavorsToGenerate = fills.flavors;
+    // Filter by --flavors-file if provided
+    const flavorsFileIdx = args.indexOf('--flavors-file');
+    if (flavorsFileIdx >= 0) {
+      const filterKeys = JSON.parse(await fs.readFile(args[flavorsFileIdx + 1], 'utf-8'));
+      const filterSet = new Set(filterKeys);
+      flavorsToGenerate = fills.flavors.filter(f => filterSet.has(f.flavor_key));
+      console.log(`Filtered to ${flavorsToGenerate.length} flavors from ${args[flavorsFileIdx + 1]}`);
+    } else {
+      flavorsToGenerate = fills.flavors;
+    }
     qualities = [qualityFlag];
+
+    // Apply offset/limit for parallel batch support
+    const offset = args.includes('--offset')
+      ? parseInt(args[args.indexOf('--offset') + 1], 10)
+      : 0;
+    const limit = args.includes('--limit')
+      ? parseInt(args[args.indexOf('--limit') + 1], 10)
+      : flavorsToGenerate.length;
+    flavorsToGenerate = flavorsToGenerate.slice(offset, offset + limit);
+    console.log(`Batch: offset=${offset} limit=${limit} (flavors ${offset + 1}-${offset + flavorsToGenerate.length} of ${fills.flavors.length})`);
   }
 
-  const candidateCount = 3;
+  const candidateCount = args.includes('--candidates')
+    ? parseInt(args[args.indexOf('--candidates') + 1], 10)
+    : 5;
   const totalImages = flavorsToGenerate.length * qualities.length * candidateCount;
 
   console.log(`\nGenerating ${totalImages} images:`);
@@ -382,7 +407,8 @@ async function main() {
 
   await fs.mkdir(CANDIDATES_DIR, { recursive: true });
 
-  const manifest = await loadManifest();
+  const noManifest = args.includes('--no-manifest');
+  const manifest = noManifest ? {} : await loadManifest();
   const progress = { current: 0, total: totalImages };
 
   for (const quality of qualities) {
@@ -397,13 +423,17 @@ async function main() {
         manifest,
         progress,
       );
-      // Save manifest after each flavor (crash recovery)
-      await saveManifest(manifest);
+      // Save manifest after each flavor (crash recovery) -- skip in parallel mode
+      if (!noManifest) {
+        await saveManifest(manifest);
+      }
     }
   }
 
   console.log(`\nDone. ${progress.current} images generated.`);
-  console.log(`Manifest: ${MANIFEST_PATH}`);
+  if (!noManifest) {
+    console.log(`Manifest: ${MANIFEST_PATH}`);
+  }
   console.log(`Candidates: ${CANDIDATES_DIR}`);
 }
 

@@ -1,0 +1,1748 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>AI Cone QA - Culver's (38 Flavors)</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0e1117; color: #e6edf3; font-family: system-ui, sans-serif; padding: 16px; }
+
+  .header { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; flex-wrap: wrap; }
+  h1 { font-size: 18px; }
+  .progress { font-size: 14px; color: #8b949e; }
+  .progress-bar { width: 200px; height: 8px; background: #21262d; border-radius: 4px; overflow: hidden; }
+  .progress-fill { height: 100%; background: #6dd49b; transition: width 0.3s; }
+
+  .filters { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+  .filters button { background: #21262d; color: #e6edf3; border: 1px solid #30363d; padding: 4px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; }
+  .filters button.active { background: #388bfd; border-color: #388bfd; }
+  .filters input { background: #21262d; color: #e6edf3; border: 1px solid #30363d; padding: 4px 8px; border-radius: 4px; font-size: 12px; width: 200px; }
+
+  .flavor-row { display: flex; gap: 8px; align-items: flex-start; padding: 12px; margin-bottom: 4px; border: 1px solid #21262d; border-radius: 6px; background: #161b22; }
+  .flavor-row.focused { border-color: #58a6ff; }
+  .flavor-row[data-status="approved"] { border-color: #238636; }
+  .flavor-row[data-status="flagged"] { border-color: #da3633; }
+  .flavor-row.hidden { display: none; }
+
+  .flavor-info { width: 180px; flex-shrink: 0; }
+  .flavor-name { display: block; font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+  .flavor-desc { display: block; font-size: 11px; color: #8b949e; margin-bottom: 6px; line-height: 1.3; }
+  .ref-col { margin-bottom: 6px; }
+  .ref-col img { width: 120px; height: auto; border-radius: 4px; background: #fff; }
+  .ref-col.empty { height: 40px; display: flex; align-items: center; }
+  .ref-label { display: block; font-size: 10px; color: #8b949e; margin-top: 2px; }
+
+  .ingredients { font-size: 10px; color: #8b949e; margin-top: 4px; }
+  .ingredients summary { cursor: pointer; color: #58a6ff; }
+  .ingredients summary:hover { text-decoration: underline; }
+  .ing-item { margin: 2px 0; line-height: 1.3; }
+  .ing-item b { color: #c9d1d9; }
+
+  .candidates { display: flex; gap: 6px; flex-wrap: wrap; flex: 1; }
+  .candidate { position: relative; cursor: pointer; border: 3px solid transparent; border-radius: 4px; transition: border-color 0.15s; }
+  .candidate:hover { border-color: #58a6ff; }
+  .candidate.selected { border-color: #6dd49b; }
+  .candidate img { display: block; width: 120px; height: 140px; object-fit: contain; background: repeating-conic-gradient(#2d333b 0% 25%, #22272e 0% 50%) 0 0 / 12px 12px; border-radius: 2px; }
+  .candidate .label { position: absolute; bottom: 2px; right: 2px; background: rgba(0,0,0,0.7); color: #e6edf3; font-size: 9px; padding: 1px 5px; border-radius: 2px; }
+
+  .actions { width: 50px; flex-shrink: 0; display: flex; flex-direction: column; gap: 4px; }
+  .flag-btn { background: #21262d; color: #da3633; border: 1px solid #30363d; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; }
+  .flag-btn:hover { background: #da3633; color: #fff; }
+
+  .export-bar { position: sticky; bottom: 0; background: #0e1117; border-top: 1px solid #30363d; padding: 12px; display: flex; gap: 12px; align-items: center; }
+  .export-bar button { background: #238636; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 14px; }
+  .export-bar button:hover { background: #2ea043; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>AI Cone QA - Culver's Only</h1>
+  <div class="progress">
+    <span id="count">0</span>/38 approved
+    <div class="progress-bar"><div class="progress-fill" id="bar" style="width:0%"></div></div>
+  </div>
+</div>
+
+<div class="filters">
+  <button class="active" onclick="filterRows('all', this)">All (38)</button>
+  <button onclick="filterRows('pending', this)">Pending</button>
+  <button onclick="filterRows('approved', this)">Approved</button>
+  <button onclick="filterRows('flagged', this)">Flagged</button>
+  <input type="text" id="search" placeholder="Search flavor..." oninput="filterBySearch(this.value)" />
+</div>
+
+
+    <div class="flavor-row" data-flavor="andes-mint-avalanche" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">Andes Mint Avalanche</span>
+        <span class="flavor-desc">Mint Fresh Frozen Custard with Andes Mint pieces and chocolate.</span>
+        <div class="ref-col"><img src="https://cdn.culvers.com/menu-item-detail/andes-mint-avalanche.png" loading="lazy" /><span class="ref-label">Culver's ref</span></div>
+        <details class="ingredients">
+          <summary>Prompt details</summary>
+          <div class="ing-item"><b>Base:</b> Deep forest-green mint custard with cool undertones (#1A8A4A with brighter #2ECC71 highlights at scoop crown).</div>
+          <div class="ing-item"><b>Swirls:</b> None -- pure Andes mint base with flecks of green and chocolate visible through the body.</div>
+          <div class="ing-item"><b>Chunks:</b> Bright Andes mint pieces with green-white layered striping and crisp fracture edges (#0A3726); dark chocolate chunks with matte cocoa finish and irregular broken shapes (#2B1A12).</div>
+          <div class="ing-item"><b>Texture:</b> Standard inclusion depth with mint pieces and chocolate chunks clearly separated. Green Andes pieces catch light differently than dark chocolate for strong two-tone contrast.</div>
+        </details>
+      </div>
+      <div class="candidates">
+        
+        <div class="candidate" data-flavor="andes-mint-avalanche" data-index="1" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/andes-mint-avalanche/andes-mint-avalanche-1.png" loading="lazy" />
+          <span class="label">#1</span>
+        </div>
+        <div class="candidate" data-flavor="andes-mint-avalanche" data-index="2" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/andes-mint-avalanche/andes-mint-avalanche-2.png" loading="lazy" />
+          <span class="label">#2</span>
+        </div>
+        <div class="candidate" data-flavor="andes-mint-avalanche" data-index="3" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/andes-mint-avalanche/andes-mint-avalanche-3.png" loading="lazy" />
+          <span class="label">#3</span>
+        </div>
+        <div class="candidate" data-flavor="andes-mint-avalanche" data-index="4" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/andes-mint-avalanche/andes-mint-avalanche-4.png" loading="lazy" />
+          <span class="label">#4</span>
+        </div>
+        <div class="candidate" data-flavor="andes-mint-avalanche" data-index="5" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/andes-mint-avalanche/andes-mint-avalanche-5.png" loading="lazy" />
+          <span class="label">#5</span>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="flag-btn" onclick="flagFlavor('andes-mint-avalanche')">Flag</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="blackberry-cobbler" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">Blackberry Cobbler</span>
+        <span class="flavor-desc">Blackberry Fresh Frozen Custard with pie crust pieces.</span>
+        <div class="ref-col"><img src="https://cdn.culvers.com/menu-item-detail/img-Blackberry-Cobbler1.png" loading="lazy" /><span class="ref-label">Culver's ref</span></div>
+        <details class="ingredients">
+          <summary>Prompt details</summary>
+          <div class="ing-item"><b>Base:</b> Creamy vanilla-white custard with blackberry marbling (#F5DEB3 mixed with deep blackberry tones #6B3FA0).</div>
+          <div class="ing-item"><b>Swirls:</b> Deep purple blackberry sauce ribbons with visible marbling through the scoop.</div>
+          <div class="ing-item"><b>Chunks:</b> Whole blackberries with clustered drupelet shape and glossy deep-purple highlights; pie crust pieces as irregular golden crumbles with slightly toasted edges.</div>
+          <div class="ing-item"><b>Texture:</b> Visible sauce marbling, balanced chunk placement, and clear depth between berries, sauce, and custard body.</div>
+        </details>
+      </div>
+      <div class="candidates">
+        
+        <div class="candidate" data-flavor="blackberry-cobbler" data-index="1" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/blackberry-cobbler/blackberry-cobbler-1.png" loading="lazy" />
+          <span class="label">#1</span>
+        </div>
+        <div class="candidate" data-flavor="blackberry-cobbler" data-index="2" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/blackberry-cobbler/blackberry-cobbler-2.png" loading="lazy" />
+          <span class="label">#2</span>
+        </div>
+        <div class="candidate" data-flavor="blackberry-cobbler" data-index="3" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/blackberry-cobbler/blackberry-cobbler-3.png" loading="lazy" />
+          <span class="label">#3</span>
+        </div>
+        <div class="candidate" data-flavor="blackberry-cobbler" data-index="4" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/blackberry-cobbler/blackberry-cobbler-4.png" loading="lazy" />
+          <span class="label">#4</span>
+        </div>
+        <div class="candidate" data-flavor="blackberry-cobbler" data-index="5" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/blackberry-cobbler/blackberry-cobbler-5.png" loading="lazy" />
+          <span class="label">#5</span>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="flag-btn" onclick="flagFlavor('blackberry-cobbler')">Flag</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="brownie-thunder" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">Brownie Thunder</span>
+        <span class="flavor-desc">Chocolate Fresh Frozen Custard with brownie pieces and marshmallow.</span>
+        <div class="ref-col empty"><span class="ref-label">No ref</span></div>
+        <details class="ingredients">
+          <summary>Prompt details</summary>
+          <div class="ing-item"><b>Base:</b> Rich chocolate custard with deep cocoa warmth (#6F4E37 with #5A3825 darker zones).</div>
+          <div class="ing-item"><b>Swirls:</b> Bright white marshmallow swirl with fluffy pulled texture threading through the chocolate (#FFFFFF).</div>
+          <div class="ing-item"><b>Chunks:</b> Fudgy brownie chunks with moist cracked surfaces (#ADA59C); dark chocolate pieces with glossy facets (#2B1A12); additional brownie chunks layered for double-brownie density.</div>
+          <div class="ing-item"><b>Texture:</b> Dense inclusion field with layered depth. Marshmallow swirl creates bright paths between dark brownie and chocolate chunks. Multiple brownie sizes create visual depth.</div>
+        </details>
+      </div>
+      <div class="candidates">
+        
+        <div class="candidate" data-flavor="brownie-thunder" data-index="1" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/brownie-thunder/brownie-thunder-1.png" loading="lazy" />
+          <span class="label">#1</span>
+        </div>
+        <div class="candidate" data-flavor="brownie-thunder" data-index="2" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/brownie-thunder/brownie-thunder-2.png" loading="lazy" />
+          <span class="label">#2</span>
+        </div>
+        <div class="candidate" data-flavor="brownie-thunder" data-index="3" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/brownie-thunder/brownie-thunder-3.png" loading="lazy" />
+          <span class="label">#3</span>
+        </div>
+        <div class="candidate" data-flavor="brownie-thunder" data-index="4" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/brownie-thunder/brownie-thunder-4.png" loading="lazy" />
+          <span class="label">#4</span>
+        </div>
+        <div class="candidate" data-flavor="brownie-thunder" data-index="5" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/brownie-thunder/brownie-thunder-5.png" loading="lazy" />
+          <span class="label">#5</span>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="flag-btn" onclick="flagFlavor('brownie-thunder')">Flag</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="butter-pecan" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">Butter Pecan</span>
+        <span class="flavor-desc">Butter Pecan Fresh Frozen Custard.</span>
+        <div class="ref-col"><img src="https://cdn.culvers.com/menu-item-detail/img-Butter-Pecan-New.png" loading="lazy" /><span class="ref-label">Culver's ref</span></div>
+        <details class="ingredients">
+          <summary>Prompt details</summary>
+          <div class="ing-item"><b>Base:</b> Warm butter pecan custard with toasty cream-gold tones (#F2E7D1 with deeper #E5D5BE in scoop shadows).</div>
+          <div class="ing-item"><b>Swirls:</b> None -- pure butter pecan base with warm custard gradients.</div>
+          <div class="ing-item"><b>Chunks:</b> Rich brown pecan pieces with natural wood-grain texture and warm saddle-brown surfaces (#8B5A2B).</div>
+          <div class="ing-item"><b>Texture:</b> Standard inclusion depth with pecan pieces distributed naturally. Pecans create warm brown contrast against the pale cream base. Natural piece shapes suggest hand-broken halves.</div>
+        </details>
+      </div>
+      <div class="candidates">
+        
+        <div class="candidate" data-flavor="butter-pecan" data-index="1" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/butter-pecan/butter-pecan-1.png" loading="lazy" />
+          <span class="label">#1</span>
+        </div>
+        <div class="candidate" data-flavor="butter-pecan" data-index="2" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/butter-pecan/butter-pecan-2.png" loading="lazy" />
+          <span class="label">#2</span>
+        </div>
+        <div class="candidate" data-flavor="butter-pecan" data-index="3" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/butter-pecan/butter-pecan-3.png" loading="lazy" />
+          <span class="label">#3</span>
+        </div>
+        <div class="candidate" data-flavor="butter-pecan" data-index="4" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/butter-pecan/butter-pecan-4.png" loading="lazy" />
+          <span class="label">#4</span>
+        </div>
+        <div class="candidate" data-flavor="butter-pecan" data-index="5" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/butter-pecan/butter-pecan-5.png" loading="lazy" />
+          <span class="label">#5</span>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="flag-btn" onclick="flagFlavor('butter-pecan')">Flag</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="caramel-cashew" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">Caramel Cashew</span>
+        <span class="flavor-desc">Vanilla Fresh Frozen Custard with caramel and cashew pieces.</span>
+        <div class="ref-col"><img src="https://cdn.culvers.com/menu-item-detail/img-Caramel-Cashew.png" loading="lazy" /><span class="ref-label">Culver's ref</span></div>
+        <details class="ingredients">
+          <summary>Prompt details</summary>
+          <div class="ing-item"><b>Base:</b> Warm vanilla custard with creamy wheat tones (#F5DEB3 with golden #EDD9A3 shadows).</div>
+          <div class="ing-item"><b>Swirls:</b> Glossy amber caramel ribbon with translucent golden edges winding through the scoop (#D38B2C).</div>
+          <div class="ing-item"><b>Chunks:</b> Smooth ivory cashew pieces with pale cream surfaces and natural curved shapes (#897E6C).</div>
+          <div class="ing-item"><b>Texture:</b> Balanced spread with caramel ribbon creating golden paths between scattered cashew pieces. Cashew surfaces catch warm highlights from the caramel ribbon nearby.</div>
+        </details>
+      </div>
+      <div class="candidates">
+        
+        <div class="candidate" data-flavor="caramel-cashew" data-index="1" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/caramel-cashew/caramel-cashew-1.png" loading="lazy" />
+          <span class="label">#1</span>
+        </div>
+        <div class="candidate" data-flavor="caramel-cashew" data-index="2" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/caramel-cashew/caramel-cashew-2.png" loading="lazy" />
+          <span class="label">#2</span>
+        </div>
+        <div class="candidate" data-flavor="caramel-cashew" data-index="3" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/caramel-cashew/caramel-cashew-3.png" loading="lazy" />
+          <span class="label">#3</span>
+        </div>
+        <div class="candidate" data-flavor="caramel-cashew" data-index="4" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/caramel-cashew/caramel-cashew-4.png" loading="lazy" />
+          <span class="label">#4</span>
+        </div>
+        <div class="candidate" data-flavor="caramel-cashew" data-index="5" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/caramel-cashew/caramel-cashew-5.png" loading="lazy" />
+          <span class="label">#5</span>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="flag-btn" onclick="flagFlavor('caramel-cashew')">Flag</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="caramel-chocolate-pecan" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">Caramel Chocolate Pecan</span>
+        <span class="flavor-desc">Delicious Chocolate Fresh Frozen Custard enhanced with ribbons of old fashioned salted caramel, toasted pecan pieces and chopped Dove Chocolate pieces.</span>
+        <div class="ref-col"><img src="https://cdn.culvers.com/menu-item-detail/img-Caramel-Chocolate-Pecan3.png" loading="lazy" /><span class="ref-label">Culver's ref</span></div>
+        <details class="ingredients">
+          <summary>Prompt details</summary>
+          <div class="ing-item"><b>Base:</b> Deep chocolate custard with rich dark-cocoa tones (#5A3825 with #4A2D1C shadows).</div>
+          <div class="ing-item"><b>Swirls:</b> Glossy amber caramel ribbon with golden translucent edges cutting through the dark chocolate (#D38B2C).</div>
+          <div class="ing-item"><b>Chunks:</b> Multiple warm toasted pecan pieces with natural wood-grain texture and golden-brown surfaces (#C4A04D); dark chocolate Dove chunks with glossy broken-bar facets (#2B1A12); additional pecans layered through the scoop.</div>
+          <div class="ing-item"><b>Texture:</b> Dense inclusion field with layered depth. Caramel ribbon weaves between pecan clusters and chocolate chunks. Keep ribbon visible through inclusions with clean edge contrast. Boost local contrast around dark chocolate chunks on the dark base.</div>
+        </details>
+      </div>
+      <div class="candidates">
+        
+        <div class="candidate" data-flavor="caramel-chocolate-pecan" data-index="1" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/caramel-chocolate-pecan/caramel-chocolate-pecan-1.png" loading="lazy" />
+          <span class="label">#1</span>
+        </div>
+        <div class="candidate" data-flavor="caramel-chocolate-pecan" data-index="2" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/caramel-chocolate-pecan/caramel-chocolate-pecan-2.png" loading="lazy" />
+          <span class="label">#2</span>
+        </div>
+        <div class="candidate" data-flavor="caramel-chocolate-pecan" data-index="3" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/caramel-chocolate-pecan/caramel-chocolate-pecan-3.png" loading="lazy" />
+          <span class="label">#3</span>
+        </div>
+        <div class="candidate" data-flavor="caramel-chocolate-pecan" data-index="4" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/caramel-chocolate-pecan/caramel-chocolate-pecan-4.png" loading="lazy" />
+          <span class="label">#4</span>
+        </div>
+        <div class="candidate" data-flavor="caramel-chocolate-pecan" data-index="5" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/caramel-chocolate-pecan/caramel-chocolate-pecan-5.png" loading="lazy" />
+          <span class="label">#5</span>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="flag-btn" onclick="flagFlavor('caramel-chocolate-pecan')">Flag</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="caramel-fudge-cookie-dough" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">Caramel Fudge Cookie Dough</span>
+        <span class="flavor-desc">Vanilla Fresh Frozen Custard with caramel, fudge, and cookie dough.</span>
+        <div class="ref-col"><img src="https://cdn.culvers.com/menu-item-detail/img-Caramel-Fudge-CookieDough.png" loading="lazy" /><span class="ref-label">Culver's ref</span></div>
+        <details class="ingredients">
+          <summary>Prompt details</summary>
+          <div class="ing-item"><b>Base:</b> Warm vanilla custard with creamy wheat highlights (#F5DEB3 with #EDD9A3 gentle depth).</div>
+          <div class="ing-item"><b>Swirls:</b> Dark near-black fudge ribbon with matte chocolate surface threading through the scoop (#3B1F0B).</div>
+          <div class="ing-item"><b>Chunks:</b> Tan cookie dough chunks with speckled chocolate-chip flecks and soft rounded shapes (#917C60).</div>
+          <div class="ing-item"><b>Texture:</b> Balanced spread with fudge ribbon creating dark contrast lines between scattered cookie dough pieces. Dough chunks have visible chocolate-chip specks against their tan surface.</div>
+        </details>
+      </div>
+      <div class="candidates">
+        
+        <div class="candidate" data-flavor="caramel-fudge-cookie-dough" data-index="1" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/caramel-fudge-cookie-dough/caramel-fudge-cookie-dough-1.png" loading="lazy" />
+          <span class="label">#1</span>
+        </div>
+        <div class="candidate" data-flavor="caramel-fudge-cookie-dough" data-index="2" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/caramel-fudge-cookie-dough/caramel-fudge-cookie-dough-2.png" loading="lazy" />
+          <span class="label">#2</span>
+        </div>
+        <div class="candidate" data-flavor="caramel-fudge-cookie-dough" data-index="3" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/caramel-fudge-cookie-dough/caramel-fudge-cookie-dough-3.png" loading="lazy" />
+          <span class="label">#3</span>
+        </div>
+        <div class="candidate" data-flavor="caramel-fudge-cookie-dough" data-index="4" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/caramel-fudge-cookie-dough/caramel-fudge-cookie-dough-4.png" loading="lazy" />
+          <span class="label">#4</span>
+        </div>
+        <div class="candidate" data-flavor="caramel-fudge-cookie-dough" data-index="5" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/caramel-fudge-cookie-dough/caramel-fudge-cookie-dough-5.png" loading="lazy" />
+          <span class="label">#5</span>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="flag-btn" onclick="flagFlavor('caramel-fudge-cookie-dough')">Flag</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="caramel-peanut-buttercup" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">Caramel Peanut Buttercup</span>
+        <span class="flavor-desc">Creamy Vanilla Fresh Frozen Custard swirled with ribbons of peanut butter and old fashioned salted caramel and loaded with novelty chocolate.</span>
+        <div class="ref-col"><img src="https://cdn.culvers.com/menu-item-detail/caramel-peanut-buttercup.png" loading="lazy" /><span class="ref-label">Culver's ref</span></div>
+        <details class="ingredients">
+          <summary>Prompt details</summary>
+          <div class="ing-item"><b>Base:</b> Warm vanilla custard with creamy wheat tones (#F5DEB3 with golden #EDD9A3 highlights).</div>
+          <div class="ing-item"><b>Swirls:</b> Golden peanut butter swirl with thick, matte amber texture winding through the scoop (#D4A017).</div>
+          <div class="ing-item"><b>Chunks:</b> Dark chocolate chunks with glossy broken-piece facets (#2B1A12).</div>
+          <div class="ing-item"><b>Texture:</b> Balanced depth with peanut butter swirl weaving broad golden paths between dark chocolate pieces. Strong light-dark contrast between golden swirl and near-black chocolate.</div>
+        </details>
+      </div>
+      <div class="candidates">
+        
+        <div class="candidate" data-flavor="caramel-peanut-buttercup" data-index="1" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/caramel-peanut-buttercup/caramel-peanut-buttercup-1.png" loading="lazy" />
+          <span class="label">#1</span>
+        </div>
+        <div class="candidate" data-flavor="caramel-peanut-buttercup" data-index="2" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/caramel-peanut-buttercup/caramel-peanut-buttercup-2.png" loading="lazy" />
+          <span class="label">#2</span>
+        </div>
+        <div class="candidate" data-flavor="caramel-peanut-buttercup" data-index="3" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/caramel-peanut-buttercup/caramel-peanut-buttercup-3.png" loading="lazy" />
+          <span class="label">#3</span>
+        </div>
+        <div class="candidate" data-flavor="caramel-peanut-buttercup" data-index="4" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/caramel-peanut-buttercup/caramel-peanut-buttercup-4.png" loading="lazy" />
+          <span class="label">#4</span>
+        </div>
+        <div class="candidate" data-flavor="caramel-peanut-buttercup" data-index="5" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/caramel-peanut-buttercup/caramel-peanut-buttercup-5.png" loading="lazy" />
+          <span class="label">#5</span>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="flag-btn" onclick="flagFlavor('caramel-peanut-buttercup')">Flag</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="caramel-pecan" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">Caramel Pecan</span>
+        <span class="flavor-desc">Caramel Fresh Frozen Custard with pecan pieces.</span>
+        <div class="ref-col"><img src="https://cdn.culvers.com/menu-item-detail/img-Caramel-Pecan.png" loading="lazy" /><span class="ref-label">Culver's ref</span></div>
+        <details class="ingredients">
+          <summary>Prompt details</summary>
+          <div class="ing-item"><b>Base:</b> Rich caramel custard with warm golden-amber depth (#C68E17 with deeper #B07D12 shadow tones).</div>
+          <div class="ing-item"><b>Swirls:</b> None -- pure caramel base with warm custard body gradients.</div>
+          <div class="ing-item"><b>Chunks:</b> Rich brown pecan pieces with natural wood-grain texture and warm saddle-brown surfaces (#8B5A2B).</div>
+          <div class="ing-item"><b>Texture:</b> Standard inclusion depth with pecan pieces evenly distributed. Brown pecans create earthy contrast against the golden caramel base. Natural piece shapes add organic variety.</div>
+        </details>
+      </div>
+      <div class="candidates">
+        
+        <div class="candidate" data-flavor="caramel-pecan" data-index="1" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/caramel-pecan/caramel-pecan-1.png" loading="lazy" />
+          <span class="label">#1</span>
+        </div>
+        <div class="candidate" data-flavor="caramel-pecan" data-index="2" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/caramel-pecan/caramel-pecan-2.png" loading="lazy" />
+          <span class="label">#2</span>
+        </div>
+        <div class="candidate" data-flavor="caramel-pecan" data-index="3" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/caramel-pecan/caramel-pecan-3.png" loading="lazy" />
+          <span class="label">#3</span>
+        </div>
+        <div class="candidate" data-flavor="caramel-pecan" data-index="4" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/caramel-pecan/caramel-pecan-4.png" loading="lazy" />
+          <span class="label">#4</span>
+        </div>
+        <div class="candidate" data-flavor="caramel-pecan" data-index="5" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/caramel-pecan/caramel-pecan-5.png" loading="lazy" />
+          <span class="label">#5</span>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="flag-btn" onclick="flagFlavor('caramel-pecan')">Flag</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="caramel-turtle" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">Caramel Turtle</span>
+        <span class="flavor-desc">Caramel Fresh Frozen Custard with pecan pieces and fudge.</span>
+        <div class="ref-col"><img src="https://cdn.culvers.com/menu-item-detail/img-Caramel-Turtle.Waffle-Cone.png" loading="lazy" /><span class="ref-label">Culver's ref</span></div>
+        <details class="ingredients">
+          <summary>Prompt details</summary>
+          <div class="ing-item"><b>Base:</b> Rich caramel custard with warm golden depth (#C68E17 with deeper #B07D12 undertones).</div>
+          <div class="ing-item"><b>Swirls:</b> Near-black fudge ribbon with matte chocolate depth winding through golden caramel (#3B1F0B).</div>
+          <div class="ing-item"><b>Chunks:</b> Brown pecan pieces with natural wood-grain texture (#8B5A2B); dark chocolate Dove chunks with glossy facets (#2B1A12); additional pecan pieces layered for depth.</div>
+          <div class="ing-item"><b>Texture:</b> Dense inclusion field with layered depth. Fudge ribbon creates dark paths between pecan clusters and chocolate chunks. Three ingredients at different tones create strong visual depth against the golden base.</div>
+        </details>
+      </div>
+      <div class="candidates">
+        
+        <div class="candidate" data-flavor="caramel-turtle" data-index="1" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/caramel-turtle/caramel-turtle-1.png" loading="lazy" />
+          <span class="label">#1</span>
+        </div>
+        <div class="candidate" data-flavor="caramel-turtle" data-index="2" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/caramel-turtle/caramel-turtle-2.png" loading="lazy" />
+          <span class="label">#2</span>
+        </div>
+        <div class="candidate" data-flavor="caramel-turtle" data-index="3" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/caramel-turtle/caramel-turtle-3.png" loading="lazy" />
+          <span class="label">#3</span>
+        </div>
+        <div class="candidate" data-flavor="caramel-turtle" data-index="4" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/caramel-turtle/caramel-turtle-4.png" loading="lazy" />
+          <span class="label">#4</span>
+        </div>
+        <div class="candidate" data-flavor="caramel-turtle" data-index="5" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/caramel-turtle/caramel-turtle-5.png" loading="lazy" />
+          <span class="label">#5</span>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="flag-btn" onclick="flagFlavor('caramel-turtle')">Flag</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="chocolate-caramel-twist" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">Chocolate Caramel Twist</span>
+        <span class="flavor-desc">Chocolate and Vanilla Fresh Frozen Custard with caramel.</span>
+        <div class="ref-col"><img src="https://cdn.culvers.com/menu-item-detail/img-Chocolate-Caramel-Twist2.png" loading="lazy" /><span class="ref-label">Culver's ref</span></div>
+        <details class="ingredients">
+          <summary>Prompt details</summary>
+          <div class="ing-item"><b>Base:</b> Swirled twist of rich chocolate (#6F4E37) and warm vanilla ivory (#F5DEB3) custard in a marbled spiral pattern.</div>
+          <div class="ing-item"><b>Swirls:</b> Glossy amber caramel ribbon with golden translucent edges swirling through chocolate (#D38B2C).</div>
+          <div class="ing-item"><b>Chunks:</b> Dark chocolate Dove chunks with glossy broken-bar facets and deep cocoa surfaces (#2B1A12).</div>
+          <div class="ing-item"><b>Texture:</b> Balanced depth with bright caramel ribbon creating golden contrast lines through the marbled chocolate-vanilla body. Dove chunks add texture. Keep ribbon visible for strong contrast.</div>
+        </details>
+      </div>
+      <div class="candidates">
+        
+        <div class="candidate" data-flavor="chocolate-caramel-twist" data-index="1" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/chocolate-caramel-twist/chocolate-caramel-twist-1.png" loading="lazy" />
+          <span class="label">#1</span>
+        </div>
+        <div class="candidate" data-flavor="chocolate-caramel-twist" data-index="2" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/chocolate-caramel-twist/chocolate-caramel-twist-2.png" loading="lazy" />
+          <span class="label">#2</span>
+        </div>
+        <div class="candidate" data-flavor="chocolate-caramel-twist" data-index="3" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/chocolate-caramel-twist/chocolate-caramel-twist-3.png" loading="lazy" />
+          <span class="label">#3</span>
+        </div>
+        <div class="candidate" data-flavor="chocolate-caramel-twist" data-index="4" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/chocolate-caramel-twist/chocolate-caramel-twist-4.png" loading="lazy" />
+          <span class="label">#4</span>
+        </div>
+        <div class="candidate" data-flavor="chocolate-caramel-twist" data-index="5" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/chocolate-caramel-twist/chocolate-caramel-twist-5.png" loading="lazy" />
+          <span class="label">#5</span>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="flag-btn" onclick="flagFlavor('chocolate-caramel-twist')">Flag</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="chocolate-covered-strawberry" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">Chocolate Covered Strawberry</span>
+        <span class="flavor-desc">Our creamy Vanilla Fresh Frozen Custard complemented with plump strawberries and novelty chocolate.</span>
+        <div class="ref-col"><img src="https://cdn.culvers.com/menu-item-detail/img-Chocolate-Covered-Strawberry1.png" loading="lazy" /><span class="ref-label">Culver's ref</span></div>
+        <details class="ingredients">
+          <summary>Prompt details</summary>
+          <div class="ing-item"><b>Base:</b> Warm vanilla custard with creamy wheat tones (#F5DEB3 with #EDD9A3 gentle shadows).</div>
+          <div class="ing-item"><b>Swirls:</b> None -- pure vanilla base with fruit and chocolate inclusions.</div>
+          <div class="ing-item"><b>Chunks:</b> Plump strawberry slices with recognizable wedge shapes, vivid red flesh, and visible seed texture (#A10E2B); dark chocolate Dove chunks with glossy cocoa facets (#2B1A12).</div>
+          <div class="ing-item"><b>Texture:</b> Balanced two-ingredient spread with bright strawberry and dark chocolate pieces clearly separated. Red-on-cream and dark-on-cream create strong dual-tone visual interest.</div>
+        </details>
+      </div>
+      <div class="candidates">
+        
+        <div class="candidate" data-flavor="chocolate-covered-strawberry" data-index="1" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/chocolate-covered-strawberry/chocolate-covered-strawberry-1.png" loading="lazy" />
+          <span class="label">#1</span>
+        </div>
+        <div class="candidate" data-flavor="chocolate-covered-strawberry" data-index="2" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/chocolate-covered-strawberry/chocolate-covered-strawberry-2.png" loading="lazy" />
+          <span class="label">#2</span>
+        </div>
+        <div class="candidate" data-flavor="chocolate-covered-strawberry" data-index="3" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/chocolate-covered-strawberry/chocolate-covered-strawberry-3.png" loading="lazy" />
+          <span class="label">#3</span>
+        </div>
+        <div class="candidate" data-flavor="chocolate-covered-strawberry" data-index="4" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/chocolate-covered-strawberry/chocolate-covered-strawberry-4.png" loading="lazy" />
+          <span class="label">#4</span>
+        </div>
+        <div class="candidate" data-flavor="chocolate-covered-strawberry" data-index="5" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/chocolate-covered-strawberry/chocolate-covered-strawberry-5.png" loading="lazy" />
+          <span class="label">#5</span>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="flag-btn" onclick="flagFlavor('chocolate-covered-strawberry')">Flag</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="chocolate-heath-crunch" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">Chocolate Heath Crunch</span>
+        <span class="flavor-desc">Chocolate Fresh Frozen Custard with Heath bar pieces.</span>
+        <div class="ref-col"><img src="https://cdn.culvers.com/menu-item-detail/img-Choc-Heath-Crunch.Cake-Cone.png" loading="lazy" /><span class="ref-label">Culver's ref</span></div>
+        <details class="ingredients">
+          <summary>Prompt details</summary>
+          <div class="ing-item"><b>Base:</b> Rich chocolate custard with warm cocoa depth (#6F4E37 with #5C3E2B shadow tones).</div>
+          <div class="ing-item"><b>Swirls:</b> None -- pure chocolate base with toffee inclusions.</div>
+          <div class="ing-item"><b>Chunks:</b> Golden Heath toffee bits with amber crystalline edges and glossy caramel sheen (#DAA520).</div>
+          <div class="ing-item"><b>Texture:</b> Standard inclusion depth with toffee bits spread evenly. Bright golden Heath pieces pop strongly against the dark chocolate base, creating vivid warm-tone contrast.</div>
+        </details>
+      </div>
+      <div class="candidates">
+        
+        <div class="candidate" data-flavor="chocolate-heath-crunch" data-index="1" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/chocolate-heath-crunch/chocolate-heath-crunch-1.png" loading="lazy" />
+          <span class="label">#1</span>
+        </div>
+        <div class="candidate" data-flavor="chocolate-heath-crunch" data-index="2" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/chocolate-heath-crunch/chocolate-heath-crunch-2.png" loading="lazy" />
+          <span class="label">#2</span>
+        </div>
+        <div class="candidate" data-flavor="chocolate-heath-crunch" data-index="3" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/chocolate-heath-crunch/chocolate-heath-crunch-3.png" loading="lazy" />
+          <span class="label">#3</span>
+        </div>
+        <div class="candidate" data-flavor="chocolate-heath-crunch" data-index="4" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/chocolate-heath-crunch/chocolate-heath-crunch-4.png" loading="lazy" />
+          <span class="label">#4</span>
+        </div>
+        <div class="candidate" data-flavor="chocolate-heath-crunch" data-index="5" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/chocolate-heath-crunch/chocolate-heath-crunch-5.png" loading="lazy" />
+          <span class="label">#5</span>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="flag-btn" onclick="flagFlavor('chocolate-heath-crunch')">Flag</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="chocolate-oreo-volcano" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">Chocolate Oreo Volcano</span>
+        <span class="flavor-desc">Chocolate Fresh Frozen Custard with OREO cookie pieces and marshmallow.</span>
+        <div class="ref-col empty"><span class="ref-label">No ref</span></div>
+        <details class="ingredients">
+          <summary>Prompt details</summary>
+          <div class="ing-item"><b>Base:</b> Rich chocolate custard with deep cocoa warmth (#6F4E37 with #5A3825 undertones).</div>
+          <div class="ing-item"><b>Swirls:</b> Bright white marshmallow swirl with fluffy pulled texture erupting through the chocolate (#FFFFFF).</div>
+          <div class="ing-item"><b>Chunks:</b> Dark OREO cookie chunks with visible cream filling layers (#1A1A1A); dark chocolate Dove pieces with glossy cocoa facets (#2B1A12).</div>
+          <div class="ing-item"><b>Texture:</b> Dense inclusion field with layered depth. Marshmallow swirl creates bright white eruption paths between dark OREO and chocolate chunks. Three dark tones contrast against bright white.</div>
+        </details>
+      </div>
+      <div class="candidates">
+        
+        <div class="candidate" data-flavor="chocolate-oreo-volcano" data-index="1" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/chocolate-oreo-volcano/chocolate-oreo-volcano-1.png" loading="lazy" />
+          <span class="label">#1</span>
+        </div>
+        <div class="candidate" data-flavor="chocolate-oreo-volcano" data-index="2" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/chocolate-oreo-volcano/chocolate-oreo-volcano-2.png" loading="lazy" />
+          <span class="label">#2</span>
+        </div>
+        <div class="candidate" data-flavor="chocolate-oreo-volcano" data-index="3" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/chocolate-oreo-volcano/chocolate-oreo-volcano-3.png" loading="lazy" />
+          <span class="label">#3</span>
+        </div>
+        <div class="candidate" data-flavor="chocolate-oreo-volcano" data-index="4" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/chocolate-oreo-volcano/chocolate-oreo-volcano-4.png" loading="lazy" />
+          <span class="label">#4</span>
+        </div>
+        <div class="candidate" data-flavor="chocolate-oreo-volcano" data-index="5" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/chocolate-oreo-volcano/chocolate-oreo-volcano-5.png" loading="lazy" />
+          <span class="label">#5</span>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="flag-btn" onclick="flagFlavor('chocolate-oreo-volcano')">Flag</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="chocolate-volcano" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">Chocolate Volcano</span>
+        <span class="flavor-desc">Chocolate Fresh Frozen Custard with fudge and marshmallow.</span>
+        <div class="ref-col"><img src="https://cdn.culvers.com/menu-item-detail/img-Chocolate-Volcano2.png" loading="lazy" /><span class="ref-label">Culver's ref</span></div>
+        <details class="ingredients">
+          <summary>Prompt details</summary>
+          <div class="ing-item"><b>Base:</b> Rich chocolate custard with warm cocoa body (#6F4E37 with darker #5A3825 depth).</div>
+          <div class="ing-item"><b>Swirls:</b> Near-black chocolate syrup ribbon with glossy wet sheen draping through the scoop (#1A0A00).</div>
+          <div class="ing-item"><b>Chunks:</b> Dark OREO cookie chunks with visible cream filling streaks (#1A1A1A); dark chocolate Dove pieces with broken-bar facets (#2B1A12); bright multicolor M&amp;M candy pieces with glossy shell (#FF7D7D).</div>
+          <div class="ing-item"><b>Texture:</b> Dense inclusion field with layered depth. Multiple dark ingredients compete for contrast while M&amp;M pieces add bright color pops. Chocolate syrup ribbon adds glossy-vs-matte variation.</div>
+        </details>
+      </div>
+      <div class="candidates">
+        
+        <div class="candidate" data-flavor="chocolate-volcano" data-index="1" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/chocolate-volcano/chocolate-volcano-1.png" loading="lazy" />
+          <span class="label">#1</span>
+        </div>
+        <div class="candidate" data-flavor="chocolate-volcano" data-index="2" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/chocolate-volcano/chocolate-volcano-2.png" loading="lazy" />
+          <span class="label">#2</span>
+        </div>
+        <div class="candidate" data-flavor="chocolate-volcano" data-index="3" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/chocolate-volcano/chocolate-volcano-3.png" loading="lazy" />
+          <span class="label">#3</span>
+        </div>
+        <div class="candidate" data-flavor="chocolate-volcano" data-index="4" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/chocolate-volcano/chocolate-volcano-4.png" loading="lazy" />
+          <span class="label">#4</span>
+        </div>
+        <div class="candidate" data-flavor="chocolate-volcano" data-index="5" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/chocolate-volcano/chocolate-volcano-5.png" loading="lazy" />
+          <span class="label">#5</span>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="flag-btn" onclick="flagFlavor('chocolate-volcano')">Flag</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="crazy-for-cookie-dough" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">Crazy for Cookie Dough</span>
+        <span class="flavor-desc">Vanilla Fresh Frozen Custard with cookie dough pieces and fudge.</span>
+        <div class="ref-col"><img src="https://cdn.culvers.com/menu-item-detail/img-Crazy-for-Cookie-Dough.Waffle-Cone1.png" loading="lazy" /><span class="ref-label">Culver's ref</span></div>
+        <details class="ingredients">
+          <summary>Prompt details</summary>
+          <div class="ing-item"><b>Base:</b> Warm vanilla custard with creamy wheat highlights (#F5DEB3 with golden #EDD9A3 depth).</div>
+          <div class="ing-item"><b>Swirls:</b> Near-black fudge ribbon with matte chocolate surface threading through the scoop (#3B1F0B).</div>
+          <div class="ing-item"><b>Chunks:</b> Tan cookie dough chunks with speckled chocolate-chip flecks and soft rounded shapes (#917C60).</div>
+          <div class="ing-item"><b>Texture:</b> Balanced depth with fudge ribbon creating dark contrast lines weaving between cookie dough chunks. Tan dough against dark fudge and pale vanilla creates three-tone layering.</div>
+        </details>
+      </div>
+      <div class="candidates">
+        
+        <div class="candidate" data-flavor="crazy-for-cookie-dough" data-index="1" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/crazy-for-cookie-dough/crazy-for-cookie-dough-1.png" loading="lazy" />
+          <span class="label">#1</span>
+        </div>
+        <div class="candidate" data-flavor="crazy-for-cookie-dough" data-index="2" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/crazy-for-cookie-dough/crazy-for-cookie-dough-2.png" loading="lazy" />
+          <span class="label">#2</span>
+        </div>
+        <div class="candidate" data-flavor="crazy-for-cookie-dough" data-index="3" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/crazy-for-cookie-dough/crazy-for-cookie-dough-3.png" loading="lazy" />
+          <span class="label">#3</span>
+        </div>
+        <div class="candidate" data-flavor="crazy-for-cookie-dough" data-index="4" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/crazy-for-cookie-dough/crazy-for-cookie-dough-4.png" loading="lazy" />
+          <span class="label">#4</span>
+        </div>
+        <div class="candidate" data-flavor="crazy-for-cookie-dough" data-index="5" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/crazy-for-cookie-dough/crazy-for-cookie-dough-5.png" loading="lazy" />
+          <span class="label">#5</span>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="flag-btn" onclick="flagFlavor('crazy-for-cookie-dough')">Flag</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="dark-chocolate-decadence" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">Dark Chocolate Decadence</span>
+        <span class="flavor-desc">Dark Chocolate Fresh Frozen Custard with fudge and chocolate chips.</span>
+        <div class="ref-col"><img src="https://cdn.culvers.com/menu-item-detail/img-Dark-Chocolate-Decadence1.png" loading="lazy" /><span class="ref-label">Culver's ref</span></div>
+        <details class="ingredients">
+          <summary>Prompt details</summary>
+          <div class="ing-item"><b>Base:</b> Rich dark chocolate custard with deep brown warmth (#5C3A2E with #4A2D18 depth highlights). NOT black -- this is dark chocolate, a rich brown.</div>
+          <div class="ing-item"><b>Swirls:</b> None -- pure dark chocolate with subtle color depth variations only.</div>
+          <div class="ing-item"><b>Chunks:</b> None -- clean scoop with no inclusions.</div>
+          <div class="ing-item"><b>Texture:</b> Smooth scoop with low inclusion noise. Emphasize the rich dark brown chocolate with subtle warm highlight at the crown and gentle shadow depth at the base. Velvety surface with minimal light reflection.</div>
+        </details>
+      </div>
+      <div class="candidates">
+        
+        <div class="candidate" data-flavor="dark-chocolate-decadence" data-index="1" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/dark-chocolate-decadence/dark-chocolate-decadence-1.png" loading="lazy" />
+          <span class="label">#1</span>
+        </div>
+        <div class="candidate" data-flavor="dark-chocolate-decadence" data-index="2" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/dark-chocolate-decadence/dark-chocolate-decadence-2.png" loading="lazy" />
+          <span class="label">#2</span>
+        </div>
+        <div class="candidate" data-flavor="dark-chocolate-decadence" data-index="3" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/dark-chocolate-decadence/dark-chocolate-decadence-3.png" loading="lazy" />
+          <span class="label">#3</span>
+        </div>
+        <div class="candidate" data-flavor="dark-chocolate-decadence" data-index="4" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/dark-chocolate-decadence/dark-chocolate-decadence-4.png" loading="lazy" />
+          <span class="label">#4</span>
+        </div>
+        <div class="candidate" data-flavor="dark-chocolate-decadence" data-index="5" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/dark-chocolate-decadence/dark-chocolate-decadence-5.png" loading="lazy" />
+          <span class="label">#5</span>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="flag-btn" onclick="flagFlavor('dark-chocolate-decadence')">Flag</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="dark-chocolate-pb-crunch" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">Dark Chocolate PB Crunch</span>
+        <span class="flavor-desc">Dark Chocolate Fresh Frozen Custard with peanut butter and chocolate crunch.</span>
+        <div class="ref-col"><img src="https://cdn.culvers.com/menu-item-detail/img-Dark-Chocolate-PB-Crunch12.png" loading="lazy" /><span class="ref-label">Culver's ref</span></div>
+        <details class="ingredients">
+          <summary>Prompt details</summary>
+          <div class="ing-item"><b>Base:</b> Deep dark chocolate custard with near-black richness (#3B1F0B with warm #4A2D18 undertones).</div>
+          <div class="ing-item"><b>Swirls:</b> Golden peanut butter swirl with thick matte amber texture winding through the dark base (#D4A017).</div>
+          <div class="ing-item"><b>Chunks:</b> Bright golden Butterfinger crunch pieces with flaky layered texture and vivid amber surfaces (#E6A817).</div>
+          <div class="ing-item"><b>Texture:</b> Balanced depth with peanut butter swirl and Butterfinger pieces creating bright golden contrast against the ultra-dark chocolate base. Keep ribbon visible for maximum light-dark drama.</div>
+        </details>
+      </div>
+      <div class="candidates">
+        
+        <div class="candidate" data-flavor="dark-chocolate-pb-crunch" data-index="1" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/dark-chocolate-pb-crunch/dark-chocolate-pb-crunch-1.png" loading="lazy" />
+          <span class="label">#1</span>
+        </div>
+        <div class="candidate" data-flavor="dark-chocolate-pb-crunch" data-index="2" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/dark-chocolate-pb-crunch/dark-chocolate-pb-crunch-2.png" loading="lazy" />
+          <span class="label">#2</span>
+        </div>
+        <div class="candidate" data-flavor="dark-chocolate-pb-crunch" data-index="3" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/dark-chocolate-pb-crunch/dark-chocolate-pb-crunch-3.png" loading="lazy" />
+          <span class="label">#3</span>
+        </div>
+        <div class="candidate" data-flavor="dark-chocolate-pb-crunch" data-index="4" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/dark-chocolate-pb-crunch/dark-chocolate-pb-crunch-4.png" loading="lazy" />
+          <span class="label">#4</span>
+        </div>
+        <div class="candidate" data-flavor="dark-chocolate-pb-crunch" data-index="5" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/dark-chocolate-pb-crunch/dark-chocolate-pb-crunch-5.png" loading="lazy" />
+          <span class="label">#5</span>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="flag-btn" onclick="flagFlavor('dark-chocolate-pb-crunch')">Flag</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="double-butter-pecan" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">Double Butter Pecan</span>
+        <span class="flavor-desc">Vanilla Fresh Frozen Custard with extra pecan pieces.</span>
+        <div class="ref-col empty"><span class="ref-label">No ref</span></div>
+        <details class="ingredients">
+          <summary>Prompt details</summary>
+          <div class="ing-item"><b>Base:</b> Warm vanilla custard with creamy wheat highlights (#F5DEB3 with #EDD9A3 golden depth).</div>
+          <div class="ing-item"><b>Swirls:</b> None -- pure vanilla base with double-portion pecan inclusions.</div>
+          <div class="ing-item"><b>Chunks:</b> Rich brown pecan pieces with natural wood-grain texture, doubled in quantity with pieces near top and mid scoop (#8B5A2B).</div>
+          <div class="ing-item"><b>Texture:</b> Emphasize the primary inclusion with repeated pecan chunks near top and mid scoop. Double portion means denser pecan coverage than standard, but pieces remain individually readable.</div>
+        </details>
+      </div>
+      <div class="candidates">
+        
+        <div class="candidate" data-flavor="double-butter-pecan" data-index="1" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/double-butter-pecan/double-butter-pecan-1.png" loading="lazy" />
+          <span class="label">#1</span>
+        </div>
+        <div class="candidate" data-flavor="double-butter-pecan" data-index="2" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/double-butter-pecan/double-butter-pecan-2.png" loading="lazy" />
+          <span class="label">#2</span>
+        </div>
+        <div class="candidate" data-flavor="double-butter-pecan" data-index="3" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/double-butter-pecan/double-butter-pecan-3.png" loading="lazy" />
+          <span class="label">#3</span>
+        </div>
+        <div class="candidate" data-flavor="double-butter-pecan" data-index="4" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/double-butter-pecan/double-butter-pecan-4.png" loading="lazy" />
+          <span class="label">#4</span>
+        </div>
+        <div class="candidate" data-flavor="double-butter-pecan" data-index="5" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/double-butter-pecan/double-butter-pecan-5.png" loading="lazy" />
+          <span class="label">#5</span>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="flag-btn" onclick="flagFlavor('double-butter-pecan')">Flag</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="double-strawberry" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">Double Strawberry</span>
+        <span class="flavor-desc">Our specially blended Strawberry Fresh Frozen Custard swirled with plump strawberries.</span>
+        <div class="ref-col"><img src="https://cdn.culvers.com/menu-item-detail/img-Double-Strawberry.Waffle-Cone.png" loading="lazy" /><span class="ref-label">Culver's ref</span></div>
+        <details class="ingredients">
+          <summary>Prompt details</summary>
+          <div class="ing-item"><b>Base:</b> Vibrant strawberry-pink custard with bright berry warmth (#FF6B9D with deeper #E8598A undertones).</div>
+          <div class="ing-item"><b>Swirls:</b> None -- pure strawberry base with fruit inclusions.</div>
+          <div class="ing-item"><b>Chunks:</b> Plump strawberry slices with recognizable wedge shapes and vivid red flesh (#A10E2B), doubled in quantity near top and mid scoop.</div>
+          <div class="ing-item"><b>Texture:</b> Emphasize the primary inclusion with strawberry pieces doubled near top and mid scoop. Dark red fruit slices against bright pink base create rich monochromatic depth within the berry color family.</div>
+        </details>
+      </div>
+      <div class="candidates">
+        
+        <div class="candidate" data-flavor="double-strawberry" data-index="1" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/double-strawberry/double-strawberry-1.png" loading="lazy" />
+          <span class="label">#1</span>
+        </div>
+        <div class="candidate" data-flavor="double-strawberry" data-index="2" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/double-strawberry/double-strawberry-2.png" loading="lazy" />
+          <span class="label">#2</span>
+        </div>
+        <div class="candidate" data-flavor="double-strawberry" data-index="3" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/double-strawberry/double-strawberry-3.png" loading="lazy" />
+          <span class="label">#3</span>
+        </div>
+        <div class="candidate" data-flavor="double-strawberry" data-index="4" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/double-strawberry/double-strawberry-4.png" loading="lazy" />
+          <span class="label">#4</span>
+        </div>
+        <div class="candidate" data-flavor="double-strawberry" data-index="5" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/double-strawberry/double-strawberry-5.png" loading="lazy" />
+          <span class="label">#5</span>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="flag-btn" onclick="flagFlavor('double-strawberry')">Flag</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="georgia-peach" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">Georgia Peach</span>
+        <span class="flavor-desc">Our specially blended Peach Fresh Frozen Custard swirled with sweet peaches for a light, refreshing treat.</span>
+        <div class="ref-col"><img src="https://cdn.culvers.com/menu-item-detail/img-Georgia-Peach1.png" loading="lazy" /><span class="ref-label">Culver's ref</span></div>
+        <details class="ingredients">
+          <summary>Prompt details</summary>
+          <div class="ing-item"><b>Base:</b> Warm peach custard with soft golden-orange glow (#FFE5B4 with slightly deeper #F5D9A0 shadow tones).</div>
+          <div class="ing-item"><b>Swirls:</b> None -- pure peach base with fruit inclusions.</div>
+          <div class="ing-item"><b>Chunks:</b> Deep amber-orange peach bits with warm sunset tones and natural fruit-slice shapes (#BF7200).</div>
+          <div class="ing-item"><b>Texture:</b> Standard inclusion depth with peach pieces naturally distributed. Darker orange fruit bits against pale peach base create warm monochromatic depth. Fruit pieces suggest natural irregular cuts.</div>
+        </details>
+      </div>
+      <div class="candidates">
+        
+        <div class="candidate" data-flavor="georgia-peach" data-index="1" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/georgia-peach/georgia-peach-1.png" loading="lazy" />
+          <span class="label">#1</span>
+        </div>
+        <div class="candidate" data-flavor="georgia-peach" data-index="2" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/georgia-peach/georgia-peach-2.png" loading="lazy" />
+          <span class="label">#2</span>
+        </div>
+        <div class="candidate" data-flavor="georgia-peach" data-index="3" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/georgia-peach/georgia-peach-3.png" loading="lazy" />
+          <span class="label">#3</span>
+        </div>
+        <div class="candidate" data-flavor="georgia-peach" data-index="4" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/georgia-peach/georgia-peach-4.png" loading="lazy" />
+          <span class="label">#4</span>
+        </div>
+        <div class="candidate" data-flavor="georgia-peach" data-index="5" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/georgia-peach/georgia-peach-5.png" loading="lazy" />
+          <span class="label">#5</span>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="flag-btn" onclick="flagFlavor('georgia-peach')">Flag</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="lemon-berry-layer-cake" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">Lemon Berry Layer Cake</span>
+        <span class="flavor-desc">Lemon Fresh Frozen Custard with blueberries and cake pieces.</span>
+        <div class="ref-col"><img src="https://cdn.culvers.com/menu-item-detail/img-Lemon-Berry-Layer-Cake.png" loading="lazy" /><span class="ref-label">Culver's ref</span></div>
+        <details class="ingredients">
+          <summary>Prompt details</summary>
+          <div class="ing-item"><b>Base:</b> Bright lemon custard with vivid yellow warmth (#FFF176 with slightly deeper #F5E76A in shadows).</div>
+          <div class="ing-item"><b>Swirls:</b> None -- pure lemon base with berry and cake inclusions.</div>
+          <div class="ing-item"><b>Chunks:</b> Deep purple blueberry pieces with dark violet surfaces and natural round shapes (#3B1F6B); pale golden-yellow cake crumbles with soft, fluffy texture (#F5E6B8) -- NOT black or dark, this is a light-colored layer cake.</div>
+          <div class="ing-item"><b>Texture:</b> Balanced two-ingredient spread with dark purple blueberry and pale golden cake pieces providing contrast against the bright yellow lemon base. Blueberry is glossy and dark, cake crumbles are soft and light.</div>
+        </details>
+      </div>
+      <div class="candidates">
+        
+        <div class="candidate" data-flavor="lemon-berry-layer-cake" data-index="1" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/lemon-berry-layer-cake/lemon-berry-layer-cake-1.png" loading="lazy" />
+          <span class="label">#1</span>
+        </div>
+        <div class="candidate" data-flavor="lemon-berry-layer-cake" data-index="2" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/lemon-berry-layer-cake/lemon-berry-layer-cake-2.png" loading="lazy" />
+          <span class="label">#2</span>
+        </div>
+        <div class="candidate" data-flavor="lemon-berry-layer-cake" data-index="3" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/lemon-berry-layer-cake/lemon-berry-layer-cake-3.png" loading="lazy" />
+          <span class="label">#3</span>
+        </div>
+        <div class="candidate" data-flavor="lemon-berry-layer-cake" data-index="4" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/lemon-berry-layer-cake/lemon-berry-layer-cake-4.png" loading="lazy" />
+          <span class="label">#4</span>
+        </div>
+        <div class="candidate" data-flavor="lemon-berry-layer-cake" data-index="5" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/lemon-berry-layer-cake/lemon-berry-layer-cake-5.png" loading="lazy" />
+          <span class="label">#5</span>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="flag-btn" onclick="flagFlavor('lemon-berry-layer-cake')">Flag</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="lemon-dash-cookie" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">Lemon Dash Cookie</span>
+        <span class="flavor-desc">Lemon Fresh Frozen Custard with cookie pieces.</span>
+        <div class="ref-col empty"><span class="ref-label">No ref</span></div>
+        <details class="ingredients">
+          <summary>Prompt details</summary>
+          <div class="ing-item"><b>Base:</b> Bright lemon custard with vivid yellow warmth (#FFF176 with #F5E76A depth in shadows).</div>
+          <div class="ing-item"><b>Swirls:</b> None -- pure lemon base with cookie inclusions.</div>
+          <div class="ing-item"><b>Chunks:</b> Pale golden sugar cookie pieces with lightly toasted sandy surfaces (#E8D5A3) -- these are sugar cookies, NOT dark oreos or black cookies.</div>
+          <div class="ing-item"><b>Texture:</b> Standard inclusion depth with sugar cookie pieces distributed evenly. Warm pale golden cookies against vivid yellow lemon base. Sandy toasted surfaces catch warm highlights.</div>
+        </details>
+      </div>
+      <div class="candidates">
+        
+        <div class="candidate" data-flavor="lemon-dash-cookie" data-index="1" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/lemon-dash-cookie/lemon-dash-cookie-1.png" loading="lazy" />
+          <span class="label">#1</span>
+        </div>
+        <div class="candidate" data-flavor="lemon-dash-cookie" data-index="2" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/lemon-dash-cookie/lemon-dash-cookie-2.png" loading="lazy" />
+          <span class="label">#2</span>
+        </div>
+        <div class="candidate" data-flavor="lemon-dash-cookie" data-index="3" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/lemon-dash-cookie/lemon-dash-cookie-3.png" loading="lazy" />
+          <span class="label">#3</span>
+        </div>
+        <div class="candidate" data-flavor="lemon-dash-cookie" data-index="4" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/lemon-dash-cookie/lemon-dash-cookie-4.png" loading="lazy" />
+          <span class="label">#4</span>
+        </div>
+        <div class="candidate" data-flavor="lemon-dash-cookie" data-index="5" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/lemon-dash-cookie/lemon-dash-cookie-5.png" loading="lazy" />
+          <span class="label">#5</span>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="flag-btn" onclick="flagFlavor('lemon-dash-cookie')">Flag</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="mint-cookie" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">Mint Cookie</span>
+        <span class="flavor-desc">Mint Fresh Frozen Custard with cookie pieces.</span>
+        <div class="ref-col"><img src="https://cdn.culvers.com/menu-item-detail/img-Mint-Oreo-updated.png" loading="lazy" /><span class="ref-label">Culver's ref</span></div>
+        <details class="ingredients">
+          <summary>Prompt details</summary>
+          <div class="ing-item"><b>Base:</b> Bright mint-green custard with cool fresh tones (#2ECC71 with slightly deeper #28B563 in shadows).</div>
+          <div class="ing-item"><b>Swirls:</b> None -- pure mint base with double-portion cookie inclusions.</div>
+          <div class="ing-item"><b>Chunks:</b> Dark OREO cookie chunks with near-black surfaces and visible cream filling layers, doubled for density (#1A1A1A).</div>
+          <div class="ing-item"><b>Texture:</b> Emphasize the primary inclusion with OREO pieces repeated near top and mid scoop. Dark cookie chunks against bright mint create strong contrast. Double portion means denser coverage.</div>
+        </details>
+      </div>
+      <div class="candidates">
+        
+        <div class="candidate" data-flavor="mint-cookie" data-index="1" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/mint-cookie/mint-cookie-1.png" loading="lazy" />
+          <span class="label">#1</span>
+        </div>
+        <div class="candidate" data-flavor="mint-cookie" data-index="2" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/mint-cookie/mint-cookie-2.png" loading="lazy" />
+          <span class="label">#2</span>
+        </div>
+        <div class="candidate" data-flavor="mint-cookie" data-index="3" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/mint-cookie/mint-cookie-3.png" loading="lazy" />
+          <span class="label">#3</span>
+        </div>
+        <div class="candidate" data-flavor="mint-cookie" data-index="4" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/mint-cookie/mint-cookie-4.png" loading="lazy" />
+          <span class="label">#4</span>
+        </div>
+        <div class="candidate" data-flavor="mint-cookie" data-index="5" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/mint-cookie/mint-cookie-5.png" loading="lazy" />
+          <span class="label">#5</span>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="flag-btn" onclick="flagFlavor('mint-cookie')">Flag</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="mint-explosion" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">Mint Explosion</span>
+        <span class="flavor-desc">Mint Fresh Frozen Custard with OREO cookie pieces and fudge.</span>
+        <div class="ref-col"><img src="https://cdn.culvers.com/menu-item-detail/img-Mint-Explosion.Cake-Cone-updated.png" loading="lazy" /><span class="ref-label">Culver's ref</span></div>
+        <details class="ingredients">
+          <summary>Prompt details</summary>
+          <div class="ing-item"><b>Base:</b> Bright mint-green custard with vibrant cool tones (#2ECC71 with deeper #25A85E in shadows).</div>
+          <div class="ing-item"><b>Swirls:</b> Dark fudge ribbon with glossy chocolate surface threading through the mint (#3B1F0B).</div>
+          <div class="ing-item"><b>Chunks:</b> Dark OREO cookie chunks with visible cream filling layers (#1A1A1A); bright Andes mint pieces with green-white layered striping (#0A3726); dark chocolate Dove chunks with glossy cocoa facets (#2B1A12).</div>
+          <div class="ing-item"><b>Texture:</b> Dense inclusion field with layered depth while keeping each ingredient readable. Dark fudge ribbon threads through the bright mint base. Three dark-toned ingredients at slightly different values create depth against the mint. OREO is near-black, Andes is deep green, Dove is dark brown.</div>
+        </details>
+      </div>
+      <div class="candidates">
+        
+        <div class="candidate" data-flavor="mint-explosion" data-index="1" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/mint-explosion/mint-explosion-1.png" loading="lazy" />
+          <span class="label">#1</span>
+        </div>
+        <div class="candidate" data-flavor="mint-explosion" data-index="2" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/mint-explosion/mint-explosion-2.png" loading="lazy" />
+          <span class="label">#2</span>
+        </div>
+        <div class="candidate" data-flavor="mint-explosion" data-index="3" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/mint-explosion/mint-explosion-3.png" loading="lazy" />
+          <span class="label">#3</span>
+        </div>
+        <div class="candidate" data-flavor="mint-explosion" data-index="4" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/mint-explosion/mint-explosion-4.png" loading="lazy" />
+          <span class="label">#4</span>
+        </div>
+        <div class="candidate" data-flavor="mint-explosion" data-index="5" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/mint-explosion/mint-explosion-5.png" loading="lazy" />
+          <span class="label">#5</span>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="flag-btn" onclick="flagFlavor('mint-explosion')">Flag</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="oreo-cheesecake" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">OREO Cheesecake</span>
+        <span class="flavor-desc">Cheesecake Fresh Frozen Custard with OREO cookie pieces.</span>
+        <div class="ref-col"><img src="https://cdn.culvers.com/menu-item-detail/img-Oreo-Cheesecake.Waffle-Cone1.png" loading="lazy" /><span class="ref-label">Culver's ref</span></div>
+        <details class="ingredients">
+          <summary>Prompt details</summary>
+          <div class="ing-item"><b>Base:</b> Warm ivory cheesecake custard with buttery cream tones (#FFF5E1 with slightly deeper #F5EBD0 shadows).</div>
+          <div class="ing-item"><b>Swirls:</b> None -- pure cheesecake base with double-portion OREO inclusions.</div>
+          <div class="ing-item"><b>Chunks:</b> Dark OREO cookie chunks with near-black surfaces and visible cream filling layers, doubled for density (#1A1A1A).</div>
+          <div class="ing-item"><b>Texture:</b> Emphasize the primary inclusion with OREO pieces repeated near top and mid scoop. Extreme dark-on-light contrast between near-black cookies and pale cheesecake base. Double portion creates dense cookie coverage.</div>
+        </details>
+      </div>
+      <div class="candidates">
+        
+        <div class="candidate" data-flavor="oreo-cheesecake" data-index="1" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/oreo-cheesecake/oreo-cheesecake-1.png" loading="lazy" />
+          <span class="label">#1</span>
+        </div>
+        <div class="candidate" data-flavor="oreo-cheesecake" data-index="2" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/oreo-cheesecake/oreo-cheesecake-2.png" loading="lazy" />
+          <span class="label">#2</span>
+        </div>
+        <div class="candidate" data-flavor="oreo-cheesecake" data-index="3" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/oreo-cheesecake/oreo-cheesecake-3.png" loading="lazy" />
+          <span class="label">#3</span>
+        </div>
+        <div class="candidate" data-flavor="oreo-cheesecake" data-index="4" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/oreo-cheesecake/oreo-cheesecake-4.png" loading="lazy" />
+          <span class="label">#4</span>
+        </div>
+        <div class="candidate" data-flavor="oreo-cheesecake" data-index="5" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/oreo-cheesecake/oreo-cheesecake-5.png" loading="lazy" />
+          <span class="label">#5</span>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="flag-btn" onclick="flagFlavor('oreo-cheesecake')">Flag</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="oreo-cookie-cheesecake" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">OREO Cookie Cheesecake</span>
+        <span class="flavor-desc">Cheesecake Fresh Frozen Custard with OREO cookie pieces.</span>
+        <div class="ref-col"><img src="https://cdn.culvers.com/menu-item-detail/img-Oreo-Cheesecake.Waffle-Cone1.png" loading="lazy" /><span class="ref-label">Culver's ref</span></div>
+        <details class="ingredients">
+          <summary>Prompt details</summary>
+          <div class="ing-item"><b>Base:</b> Warm ivory cheesecake custard with buttery cream depth (#FFF5E1 with #F5EBD0 gentle shadows).</div>
+          <div class="ing-item"><b>Swirls:</b> None -- pure cheesecake base with double-portion OREO inclusions.</div>
+          <div class="ing-item"><b>Chunks:</b> Dark OREO cookie chunks with near-black surfaces and visible cream filling layers, doubled for density (#1A1A1A).</div>
+          <div class="ing-item"><b>Texture:</b> Emphasize the primary inclusion with OREO pieces repeated near top and mid scoop. Near-black OREO against pale cheesecake creates maximum contrast. Double portion means dense cookie field.</div>
+        </details>
+      </div>
+      <div class="candidates">
+        
+        <div class="candidate" data-flavor="oreo-cookie-cheesecake" data-index="1" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/oreo-cookie-cheesecake/oreo-cookie-cheesecake-1.png" loading="lazy" />
+          <span class="label">#1</span>
+        </div>
+        <div class="candidate" data-flavor="oreo-cookie-cheesecake" data-index="2" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/oreo-cookie-cheesecake/oreo-cookie-cheesecake-2.png" loading="lazy" />
+          <span class="label">#2</span>
+        </div>
+        <div class="candidate" data-flavor="oreo-cookie-cheesecake" data-index="3" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/oreo-cookie-cheesecake/oreo-cookie-cheesecake-3.png" loading="lazy" />
+          <span class="label">#3</span>
+        </div>
+        <div class="candidate" data-flavor="oreo-cookie-cheesecake" data-index="4" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/oreo-cookie-cheesecake/oreo-cookie-cheesecake-4.png" loading="lazy" />
+          <span class="label">#4</span>
+        </div>
+        <div class="candidate" data-flavor="oreo-cookie-cheesecake" data-index="5" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/oreo-cookie-cheesecake/oreo-cookie-cheesecake-5.png" loading="lazy" />
+          <span class="label">#5</span>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="flag-btn" onclick="flagFlavor('oreo-cookie-cheesecake')">Flag</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="oreo-cookie-overload" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">OREO Cookie Overload</span>
+        <span class="flavor-desc">Chocolate Fresh Frozen Custard overloaded with OREO cookie pieces and chocolate syrup.</span>
+        <div class="ref-col"><img src="https://cdn.culvers.com/menu-item-detail/oreo-cookie-overload.png" loading="lazy" /><span class="ref-label">Culver's ref</span></div>
+        <details class="ingredients">
+          <summary>Prompt details</summary>
+          <div class="ing-item"><b>Base:</b> Rich chocolate custard with warm cocoa tones (#6F4E37 with #5A3825 deeper shadows).</div>
+          <div class="ing-item"><b>Swirls:</b> Near-black chocolate syrup ribbon with glossy wet sheen draping through the scoop (#1A0A00).</div>
+          <div class="ing-item"><b>Chunks:</b> Dense field of dark OREO cookie chunks with near-black surfaces and cream filling streaks, overloaded across the entire scoop surface (#1A1A1A).</div>
+          <div class="ing-item"><b>Texture:</b> Very dense single-ingredient distribution across the scoop surface. OREO pieces crowd every surface area with minimal exposed custard. Chocolate syrup ribbon adds wet-vs-matte variation among the dark tones.</div>
+        </details>
+      </div>
+      <div class="candidates">
+        
+        <div class="candidate" data-flavor="oreo-cookie-overload" data-index="1" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/oreo-cookie-overload/oreo-cookie-overload-1.png" loading="lazy" />
+          <span class="label">#1</span>
+        </div>
+        <div class="candidate" data-flavor="oreo-cookie-overload" data-index="2" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/oreo-cookie-overload/oreo-cookie-overload-2.png" loading="lazy" />
+          <span class="label">#2</span>
+        </div>
+        <div class="candidate" data-flavor="oreo-cookie-overload" data-index="3" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/oreo-cookie-overload/oreo-cookie-overload-3.png" loading="lazy" />
+          <span class="label">#3</span>
+        </div>
+        <div class="candidate" data-flavor="oreo-cookie-overload" data-index="4" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/oreo-cookie-overload/oreo-cookie-overload-4.png" loading="lazy" />
+          <span class="label">#4</span>
+        </div>
+        <div class="candidate" data-flavor="oreo-cookie-overload" data-index="5" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/oreo-cookie-overload/oreo-cookie-overload-5.png" loading="lazy" />
+          <span class="label">#5</span>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="flag-btn" onclick="flagFlavor('oreo-cookie-overload')">Flag</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="peanut-butter-cup" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">Peanut Butter Cup</span>
+        <span class="flavor-desc">Chocolate Fresh Frozen Custard with peanut butter cup pieces.</span>
+        <div class="ref-col empty"><span class="ref-label">No ref</span></div>
+        <details class="ingredients">
+          <summary>Prompt details</summary>
+          <div class="ing-item"><b>Base:</b> Rich chocolate custard with warm cocoa depth (#6F4E37 with #5C3E2B undertones).</div>
+          <div class="ing-item"><b>Swirls:</b> Golden peanut butter swirl with thick matte amber texture winding through the chocolate (#D4A017).</div>
+          <div class="ing-item"><b>Chunks:</b> Golden-amber Reese's cup pieces with layered peanut butter and chocolate visible at broken edges (#D4A017).</div>
+          <div class="ing-item"><b>Texture:</b> Balanced depth with peanut butter swirl and Reese's pieces creating bright golden contrast against dark chocolate. Swirl and cup pieces share similar golden tone but differ in texture -- smooth vs chunky.</div>
+        </details>
+      </div>
+      <div class="candidates">
+        
+        <div class="candidate" data-flavor="peanut-butter-cup" data-index="1" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/peanut-butter-cup/peanut-butter-cup-1.png" loading="lazy" />
+          <span class="label">#1</span>
+        </div>
+        <div class="candidate" data-flavor="peanut-butter-cup" data-index="2" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/peanut-butter-cup/peanut-butter-cup-2.png" loading="lazy" />
+          <span class="label">#2</span>
+        </div>
+        <div class="candidate" data-flavor="peanut-butter-cup" data-index="3" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/peanut-butter-cup/peanut-butter-cup-3.png" loading="lazy" />
+          <span class="label">#3</span>
+        </div>
+        <div class="candidate" data-flavor="peanut-butter-cup" data-index="4" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/peanut-butter-cup/peanut-butter-cup-4.png" loading="lazy" />
+          <span class="label">#4</span>
+        </div>
+        <div class="candidate" data-flavor="peanut-butter-cup" data-index="5" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/peanut-butter-cup/peanut-butter-cup-5.png" loading="lazy" />
+          <span class="label">#5</span>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="flag-btn" onclick="flagFlavor('peanut-butter-cup')">Flag</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="raspberry-cheesecake" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">Raspberry Cheesecake</span>
+        <span class="flavor-desc">Cheesecake Fresh Frozen Custard with raspberry sauce.</span>
+        <div class="ref-col"><img src="https://cdn.culvers.com/menu-item-detail/img-Raspberry-Cheesecake.Waffle-Cone.png" loading="lazy" /><span class="ref-label">Culver's ref</span></div>
+        <details class="ingredients">
+          <summary>Prompt details</summary>
+          <div class="ing-item"><b>Base:</b> Warm ivory cheesecake custard with buttery cream tones (#FFF5E1 with #F5EBD0 gentle shadows).</div>
+          <div class="ing-item"><b>Swirls:</b> None -- pure cheesecake base with double-portion raspberry inclusions.</div>
+          <div class="ing-item"><b>Chunks:</b> Bright magenta-pink raspberry pieces with vivid berry color and natural seed-textured surfaces (#E91E63).</div>
+          <div class="ing-item"><b>Texture:</b> Emphasize the primary inclusion with raspberry pieces doubled near top and mid scoop. Vibrant pink-magenta fruit against pale ivory cheesecake creates vivid color pop. Fruit pieces have organic shapes.</div>
+        </details>
+      </div>
+      <div class="candidates">
+        
+        <div class="candidate" data-flavor="raspberry-cheesecake" data-index="1" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/raspberry-cheesecake/raspberry-cheesecake-1.png" loading="lazy" />
+          <span class="label">#1</span>
+        </div>
+        <div class="candidate" data-flavor="raspberry-cheesecake" data-index="2" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/raspberry-cheesecake/raspberry-cheesecake-2.png" loading="lazy" />
+          <span class="label">#2</span>
+        </div>
+        <div class="candidate" data-flavor="raspberry-cheesecake" data-index="3" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/raspberry-cheesecake/raspberry-cheesecake-3.png" loading="lazy" />
+          <span class="label">#3</span>
+        </div>
+        <div class="candidate" data-flavor="raspberry-cheesecake" data-index="4" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/raspberry-cheesecake/raspberry-cheesecake-4.png" loading="lazy" />
+          <span class="label">#4</span>
+        </div>
+        <div class="candidate" data-flavor="raspberry-cheesecake" data-index="5" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/raspberry-cheesecake/raspberry-cheesecake-5.png" loading="lazy" />
+          <span class="label">#5</span>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="flag-btn" onclick="flagFlavor('raspberry-cheesecake')">Flag</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="salted-caramel-pecan-pie" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">Salted Caramel Pecan Pie</span>
+        <span class="flavor-desc">Salted Caramel Fresh Frozen Custard with pecan pie pieces.</span>
+        <div class="ref-col"><img src="https://cdn.culvers.com/menu-item-detail/img-Salted-Caramel-Pecan-Pie.png" loading="lazy" /><span class="ref-label">Culver's ref</span></div>
+        <details class="ingredients">
+          <summary>Prompt details</summary>
+          <div class="ing-item"><b>Base:</b> Rich caramel custard with warm golden-amber depth (#C68E17 with deeper #B07D12 shadow tones).</div>
+          <div class="ing-item"><b>Swirls:</b> None -- pure caramel base with dense multi-ingredient inclusion field.</div>
+          <div class="ing-item"><b>Chunks:</b> Brown pecan pieces with natural wood-grain texture (#8B5A2B); crystalline salt flakes with translucent grey-white sparkle (#4B4B4B); golden pie crust crumbles with toasty warm surfaces (#C99E76).</div>
+          <div class="ing-item"><b>Texture:</b> Dense inclusion field with layered depth. Three ingredients in warm tones -- brown pecans, grey-white salt crystals, golden crust -- create visual depth against the golden caramel base. Salt crystals add tiny sparkle points.</div>
+        </details>
+      </div>
+      <div class="candidates">
+        
+        <div class="candidate" data-flavor="salted-caramel-pecan-pie" data-index="1" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/salted-caramel-pecan-pie/salted-caramel-pecan-pie-1.png" loading="lazy" />
+          <span class="label">#1</span>
+        </div>
+        <div class="candidate" data-flavor="salted-caramel-pecan-pie" data-index="2" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/salted-caramel-pecan-pie/salted-caramel-pecan-pie-2.png" loading="lazy" />
+          <span class="label">#2</span>
+        </div>
+        <div class="candidate" data-flavor="salted-caramel-pecan-pie" data-index="3" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/salted-caramel-pecan-pie/salted-caramel-pecan-pie-3.png" loading="lazy" />
+          <span class="label">#3</span>
+        </div>
+        <div class="candidate" data-flavor="salted-caramel-pecan-pie" data-index="4" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/salted-caramel-pecan-pie/salted-caramel-pecan-pie-4.png" loading="lazy" />
+          <span class="label">#4</span>
+        </div>
+        <div class="candidate" data-flavor="salted-caramel-pecan-pie" data-index="5" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/salted-caramel-pecan-pie/salted-caramel-pecan-pie-5.png" loading="lazy" />
+          <span class="label">#5</span>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="flag-btn" onclick="flagFlavor('salted-caramel-pecan-pie')">Flag</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="salted-double-caramel-pecan" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">Salted Double Caramel Pecan</span>
+        <span class="flavor-desc">Ribbons of old fashioned salted caramel swirled into Caramel Fresh Frozen Custard and mixed with toasted pecan pieces.</span>
+        <div class="ref-col"><img src="https://cdn.culvers.com/menu-item-detail/img-Salted-Double-Caramel-Pecan.Cake-Cone.png" loading="lazy" /><span class="ref-label">Culver's ref</span></div>
+        <details class="ingredients">
+          <summary>Prompt details</summary>
+          <div class="ing-item"><b>Base:</b> Warm vanilla custard with creamy wheat tones (#F5DEB3 with golden #EDD9A3 depth).</div>
+          <div class="ing-item"><b>Swirls:</b> Glossy amber caramel ribbon with golden translucent edges -- double-width for emphasis (#D38B2C).</div>
+          <div class="ing-item"><b>Chunks:</b> Brown pecan pieces with natural wood-grain texture (#8B5A2B); crystalline salt flakes with translucent grey-white sparkle (#4B4B4B).</div>
+          <div class="ing-item"><b>Texture:</b> Emphasize the primary inclusion with caramel ribbon extra prominent. Double caramel means wider, more visible golden paths. Pecan pieces and salt crystals add warm and cool accent points respectively.</div>
+        </details>
+      </div>
+      <div class="candidates">
+        
+        <div class="candidate" data-flavor="salted-double-caramel-pecan" data-index="1" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/salted-double-caramel-pecan/salted-double-caramel-pecan-1.png" loading="lazy" />
+          <span class="label">#1</span>
+        </div>
+        <div class="candidate" data-flavor="salted-double-caramel-pecan" data-index="2" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/salted-double-caramel-pecan/salted-double-caramel-pecan-2.png" loading="lazy" />
+          <span class="label">#2</span>
+        </div>
+        <div class="candidate" data-flavor="salted-double-caramel-pecan" data-index="3" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/salted-double-caramel-pecan/salted-double-caramel-pecan-3.png" loading="lazy" />
+          <span class="label">#3</span>
+        </div>
+        <div class="candidate" data-flavor="salted-double-caramel-pecan" data-index="4" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/salted-double-caramel-pecan/salted-double-caramel-pecan-4.png" loading="lazy" />
+          <span class="label">#4</span>
+        </div>
+        <div class="candidate" data-flavor="salted-double-caramel-pecan" data-index="5" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/salted-double-caramel-pecan/salted-double-caramel-pecan-5.png" loading="lazy" />
+          <span class="label">#5</span>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="flag-btn" onclick="flagFlavor('salted-double-caramel-pecan')">Flag</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="snickers-swirl" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">Snickers Swirl</span>
+        <span class="flavor-desc">Chocolate Fresh Frozen Custard with Snickers bar pieces and caramel.</span>
+        <div class="ref-col"><img src="https://cdn.culvers.com/menu-item-detail/img-Snicker-Swirl.png" loading="lazy" /><span class="ref-label">Culver's ref</span></div>
+        <details class="ingredients">
+          <summary>Prompt details</summary>
+          <div class="ing-item"><b>Base:</b> Rich chocolate custard with warm cocoa depth (#6F4E37 with #5C3E2B undertones).</div>
+          <div class="ing-item"><b>Swirls:</b> Glossy amber caramel ribbon with golden translucent edges winding through the chocolate (#D38B2C).</div>
+          <div class="ing-item"><b>Chunks:</b> Snickers bar pieces with visible layers of nougat, caramel, and peanuts in cross-section with golden-tan color (#C4A060).</div>
+          <div class="ing-item"><b>Texture:</b> Balanced depth with bright caramel ribbon creating golden paths through dark chocolate. Snickers pieces show internal layering at broken edges. Warm golden tones contrast against dark cocoa base.</div>
+        </details>
+      </div>
+      <div class="candidates">
+        
+        <div class="candidate" data-flavor="snickers-swirl" data-index="1" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/snickers-swirl/snickers-swirl-1.png" loading="lazy" />
+          <span class="label">#1</span>
+        </div>
+        <div class="candidate" data-flavor="snickers-swirl" data-index="2" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/snickers-swirl/snickers-swirl-2.png" loading="lazy" />
+          <span class="label">#2</span>
+        </div>
+        <div class="candidate" data-flavor="snickers-swirl" data-index="3" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/snickers-swirl/snickers-swirl-3.png" loading="lazy" />
+          <span class="label">#3</span>
+        </div>
+        <div class="candidate" data-flavor="snickers-swirl" data-index="4" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/snickers-swirl/snickers-swirl-4.png" loading="lazy" />
+          <span class="label">#4</span>
+        </div>
+        <div class="candidate" data-flavor="snickers-swirl" data-index="5" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/snickers-swirl/snickers-swirl-5.png" loading="lazy" />
+          <span class="label">#5</span>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="flag-btn" onclick="flagFlavor('snickers-swirl')">Flag</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="strawberry-cheesecake" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">Strawberry Cheesecake</span>
+        <span class="flavor-desc">Cheesecake Fresh Frozen Custard with strawberry sauce.</span>
+        <div class="ref-col empty"><span class="ref-label">No ref</span></div>
+        <details class="ingredients">
+          <summary>Prompt details</summary>
+          <div class="ing-item"><b>Base:</b> Warm ivory cheesecake custard with buttery cream tones (#FFF5E1 with slightly deeper #F5EBD0 shadows).</div>
+          <div class="ing-item"><b>Swirls:</b> Strawberry sauce swirl with visible strawberry slices showing wedge shapes and vivid red color (#A10E2B).</div>
+          <div class="ing-item"><b>Chunks:</b> Plump strawberry slices with recognizable wedge shapes, vivid red flesh, and visible seed texture (#A10E2B).</div>
+          <div class="ing-item"><b>Texture:</b> Emphasize the primary inclusion with strawberry pieces doubled near top and mid scoop. Deep red fruit slices and strawberry sauce swirl against pale ivory cheesecake create vivid color pop.</div>
+        </details>
+      </div>
+      <div class="candidates">
+        
+        <div class="candidate" data-flavor="strawberry-cheesecake" data-index="1" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/strawberry-cheesecake/strawberry-cheesecake-1.png" loading="lazy" />
+          <span class="label">#1</span>
+        </div>
+        <div class="candidate" data-flavor="strawberry-cheesecake" data-index="2" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/strawberry-cheesecake/strawberry-cheesecake-2.png" loading="lazy" />
+          <span class="label">#2</span>
+        </div>
+        <div class="candidate" data-flavor="strawberry-cheesecake" data-index="3" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/strawberry-cheesecake/strawberry-cheesecake-3.png" loading="lazy" />
+          <span class="label">#3</span>
+        </div>
+        <div class="candidate" data-flavor="strawberry-cheesecake" data-index="4" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/strawberry-cheesecake/strawberry-cheesecake-4.png" loading="lazy" />
+          <span class="label">#4</span>
+        </div>
+        <div class="candidate" data-flavor="strawberry-cheesecake" data-index="5" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/strawberry-cheesecake/strawberry-cheesecake-5.png" loading="lazy" />
+          <span class="label">#5</span>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="flag-btn" onclick="flagFlavor('strawberry-cheesecake')">Flag</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="turtle" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">Turtle</span>
+        <span class="flavor-desc">Vanilla Fresh Frozen Custard with pecan pieces, caramel, and fudge.</span>
+        <div class="ref-col"><img src="https://cdn.culvers.com/menu-item-detail/img-Turtle.png" loading="lazy" /><span class="ref-label">Culver's ref</span></div>
+        <details class="ingredients">
+          <summary>Prompt details</summary>
+          <div class="ing-item"><b>Base:</b> Warm vanilla custard with creamy wheat tones (#F5DEB3 with golden #EDD9A3 highlights).</div>
+          <div class="ing-item"><b>Swirls:</b> Glossy amber caramel ribbon (#D38B2C) and dark fudge ribbon (#3B1F0B) threading through the vanilla base.</div>
+          <div class="ing-item"><b>Chunks:</b> Rich brown pecan pieces with natural wood-grain texture (#8B5A2B).</div>
+          <div class="ing-item"><b>Texture:</b> Balanced depth with caramel and fudge ribbons weaving between pecan pieces. Golden caramel ribbon and dark fudge ribbon create classic turtle layering against pale vanilla.</div>
+        </details>
+      </div>
+      <div class="candidates">
+        
+        <div class="candidate" data-flavor="turtle" data-index="1" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/turtle/turtle-1.png" loading="lazy" />
+          <span class="label">#1</span>
+        </div>
+        <div class="candidate" data-flavor="turtle" data-index="2" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/turtle/turtle-2.png" loading="lazy" />
+          <span class="label">#2</span>
+        </div>
+        <div class="candidate" data-flavor="turtle" data-index="3" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/turtle/turtle-3.png" loading="lazy" />
+          <span class="label">#3</span>
+        </div>
+        <div class="candidate" data-flavor="turtle" data-index="4" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/turtle/turtle-4.png" loading="lazy" />
+          <span class="label">#4</span>
+        </div>
+        <div class="candidate" data-flavor="turtle" data-index="5" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/turtle/turtle-5.png" loading="lazy" />
+          <span class="label">#5</span>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="flag-btn" onclick="flagFlavor('turtle')">Flag</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="turtle-cheesecake" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">Turtle Cheesecake</span>
+        <span class="flavor-desc">Cheesecake Fresh Frozen Custard with pecan pieces, caramel, and fudge.</span>
+        <div class="ref-col"><img src="https://cdn.culvers.com/menu-item-detail/img-Turtle-Cheesecake.Cake-Cone2.png" loading="lazy" /><span class="ref-label">Culver's ref</span></div>
+        <details class="ingredients">
+          <summary>Prompt details</summary>
+          <div class="ing-item"><b>Base:</b> Warm ivory cheesecake custard with buttery cream depth (#FFF5E1 with #F5EBD0 gentle shadows).</div>
+          <div class="ing-item"><b>Swirls:</b> Glossy amber caramel ribbon (#D38B2C) and dark fudge ribbon (#3B1F0B) swirling through cheesecake base.</div>
+          <div class="ing-item"><b>Chunks:</b> Brown pecan pieces with natural wood-grain texture (#8B5A2B); additional pecan pieces layered through the scoop.</div>
+          <div class="ing-item"><b>Texture:</b> Dense inclusion field with layered depth. Caramel and fudge ribbons weave between pecan clusters. Classic turtle ribbons against pale cheesecake creates strong multi-tone contrast.</div>
+        </details>
+      </div>
+      <div class="candidates">
+        
+        <div class="candidate" data-flavor="turtle-cheesecake" data-index="1" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/turtle-cheesecake/turtle-cheesecake-1.png" loading="lazy" />
+          <span class="label">#1</span>
+        </div>
+        <div class="candidate" data-flavor="turtle-cheesecake" data-index="2" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/turtle-cheesecake/turtle-cheesecake-2.png" loading="lazy" />
+          <span class="label">#2</span>
+        </div>
+        <div class="candidate" data-flavor="turtle-cheesecake" data-index="3" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/turtle-cheesecake/turtle-cheesecake-3.png" loading="lazy" />
+          <span class="label">#3</span>
+        </div>
+        <div class="candidate" data-flavor="turtle-cheesecake" data-index="4" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/turtle-cheesecake/turtle-cheesecake-4.png" loading="lazy" />
+          <span class="label">#4</span>
+        </div>
+        <div class="candidate" data-flavor="turtle-cheesecake" data-index="5" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/turtle-cheesecake/turtle-cheesecake-5.png" loading="lazy" />
+          <span class="label">#5</span>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="flag-btn" onclick="flagFlavor('turtle-cheesecake')">Flag</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="turtle-dove" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">Turtle Dove</span>
+        <span class="flavor-desc">Chocolate and Vanilla Fresh Frozen Custard with pecan pieces, caramel, and fudge.</span>
+        <div class="ref-col"><img src="https://cdn.culvers.com/menu-item-detail/turtle-dove.png" loading="lazy" /><span class="ref-label">Culver's ref</span></div>
+        <details class="ingredients">
+          <summary>Prompt details</summary>
+          <div class="ing-item"><b>Base:</b> Warm vanilla custard with creamy wheat highlights (#F5DEB3 with golden #EDD9A3 depth).</div>
+          <div class="ing-item"><b>Swirls:</b> Glossy amber caramel ribbon (#D38B2C) and dark fudge ribbon (#3B1F0B) threading through the chocolate-vanilla swirl.</div>
+          <div class="ing-item"><b>Chunks:</b> Rich brown pecan pieces with natural wood-grain texture (#8B5A2B); dark chocolate Dove chunks with glossy broken-bar facets (#2B1A12).</div>
+          <div class="ing-item"><b>Texture:</b> Balanced depth with caramel and fudge ribbons weaving between brown pecan and dark chocolate pieces. Golden caramel and dark fudge ribbons create classic turtle layering through the base.</div>
+        </details>
+      </div>
+      <div class="candidates">
+        
+        <div class="candidate" data-flavor="turtle-dove" data-index="1" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/turtle-dove/turtle-dove-1.png" loading="lazy" />
+          <span class="label">#1</span>
+        </div>
+        <div class="candidate" data-flavor="turtle-dove" data-index="2" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/turtle-dove/turtle-dove-2.png" loading="lazy" />
+          <span class="label">#2</span>
+        </div>
+        <div class="candidate" data-flavor="turtle-dove" data-index="3" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/turtle-dove/turtle-dove-3.png" loading="lazy" />
+          <span class="label">#3</span>
+        </div>
+        <div class="candidate" data-flavor="turtle-dove" data-index="4" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/turtle-dove/turtle-dove-4.png" loading="lazy" />
+          <span class="label">#4</span>
+        </div>
+        <div class="candidate" data-flavor="turtle-dove" data-index="5" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/turtle-dove/turtle-dove-5.png" loading="lazy" />
+          <span class="label">#5</span>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="flag-btn" onclick="flagFlavor('turtle-dove')">Flag</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="vanilla" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">Vanilla</span>
+        <span class="flavor-desc">Vanilla Fresh Frozen Custard.</span>
+        <div class="ref-col empty"><span class="ref-label">No ref</span></div>
+        <details class="ingredients">
+          <summary>Prompt details</summary>
+          <div class="ing-item"><b>Base:</b> Classic warm vanilla custard with golden wheat tones (#F5DEB3 with slightly deeper #EDD9A3 in scoop shadows and brighter #FFF5E8 at crown).</div>
+          <div class="ing-item"><b>Swirls:</b> None -- pure vanilla with subtle natural color depth variations.</div>
+          <div class="ing-item"><b>Chunks:</b> None -- clean scoop with no inclusions.</div>
+          <div class="ing-item"><b>Texture:</b> Smooth scoop with low inclusion noise. Emphasize the warm golden-cream color with gentle gradients from deeper wheat at the base to brighter cream at the crown. Classic custard surface with soft light reflections and creamy richness.</div>
+        </details>
+      </div>
+      <div class="candidates">
+        
+        <div class="candidate" data-flavor="vanilla" data-index="1" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/vanilla/vanilla-1.png" loading="lazy" />
+          <span class="label">#1</span>
+        </div>
+        <div class="candidate" data-flavor="vanilla" data-index="2" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/vanilla/vanilla-2.png" loading="lazy" />
+          <span class="label">#2</span>
+        </div>
+        <div class="candidate" data-flavor="vanilla" data-index="3" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/vanilla/vanilla-3.png" loading="lazy" />
+          <span class="label">#3</span>
+        </div>
+        <div class="candidate" data-flavor="vanilla" data-index="4" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/vanilla/vanilla-4.png" loading="lazy" />
+          <span class="label">#4</span>
+        </div>
+        <div class="candidate" data-flavor="vanilla" data-index="5" onclick="selectCandidate(this)">
+          <img src="assets/ai-candidates/vanilla/vanilla-5.png" loading="lazy" />
+          <span class="label">#5</span>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="flag-btn" onclick="flagFlavor('vanilla')">Flag</button>
+      </div>
+    </div>
+
+<div class="export-bar">
+  <button onclick="exportManifest()">Export Manifest JSON</button>
+  <span id="export-status" style="color:#8b949e;font-size:12px;"></span>
+</div>
+
+<script>
+const TOTAL = 38;
+const state = JSON.parse(localStorage.getItem('ai-cone-qa-culvers') || '{}');
+
+document.querySelectorAll('.flavor-row').forEach(row => {
+  const slug = row.dataset.flavor;
+  if (state[slug]) {
+    row.dataset.status = state[slug].status;
+    if (state[slug].selected) {
+      const c = row.querySelector('.candidate[data-index="' + state[slug].selected + '"]');
+      if (c) c.classList.add('selected');
+    }
+  }
+});
+updateProgress();
+
+function selectCandidate(el) {
+  const slug = el.dataset.flavor;
+  const idx = el.dataset.index;
+  const row = el.closest('.flavor-row');
+  row.querySelectorAll('.candidate').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  row.dataset.status = 'approved';
+  state[slug] = { status: 'approved', selected: parseInt(idx) };
+  localStorage.setItem('ai-cone-qa-culvers', JSON.stringify(state));
+  updateProgress();
+}
+
+function flagFlavor(slug) {
+  const row = document.querySelector('.flavor-row[data-flavor="' + slug + '"]');
+  row.querySelectorAll('.candidate').forEach(c => c.classList.remove('selected'));
+  row.dataset.status = 'flagged';
+  state[slug] = { status: 'flagged', selected: null };
+  localStorage.setItem('ai-cone-qa-culvers', JSON.stringify(state));
+  updateProgress();
+}
+
+function updateProgress() {
+  const approved = Object.values(state).filter(s => s.status === 'approved').length;
+  document.getElementById('count').textContent = approved;
+  document.getElementById('bar').style.width = (approved / TOTAL * 100) + '%';
+}
+
+function filterRows(filter, btn) {
+  document.querySelectorAll('.filters button').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  document.querySelectorAll('.flavor-row').forEach(row => {
+    if (filter === 'all') { row.classList.remove('hidden'); return; }
+    row.classList.toggle('hidden', row.dataset.status !== filter);
+  });
+}
+
+function filterBySearch(query) {
+  const q = query.toLowerCase();
+  document.querySelectorAll('.flavor-row').forEach(row => {
+    const name = row.querySelector('.flavor-name').textContent.toLowerCase();
+    row.classList.toggle('hidden', q && !name.includes(q));
+  });
+}
+
+function exportManifest() {
+  const manifest = {
+    generated_at: new Date().toISOString(),
+    model: 'gpt-image-1.5',
+    quality: 'medium',
+    brand: 'culvers',
+    total_flavors: TOTAL,
+    approved_count: Object.values(state).filter(s => s.status === 'approved').length,
+    flagged_count: Object.values(state).filter(s => s.status === 'flagged').length,
+    flavors: {}
+  };
+  document.querySelectorAll('.flavor-row').forEach(row => {
+    const slug = row.dataset.flavor;
+    const candidates = Array.from(row.querySelectorAll('.candidate img')).map(img => img.getAttribute('src').split('/').pop());
+    const s = state[slug] || { status: 'pending', selected: null };
+    manifest.flavors[slug] = {
+      slug: slug,
+      status: s.status,
+      selected: s.selected ? candidates[s.selected - 1] : null,
+      candidates: candidates
+    };
+  });
+  const blob = new Blob([JSON.stringify(manifest, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'ai-generation-manifest.json';
+  a.click();
+  document.getElementById('export-status').textContent = 'Exported ' + manifest.approved_count + '/' + TOTAL + ' approved, ' + manifest.flagged_count + ' flagged';
+}
+
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT') return;
+  const rows = Array.from(document.querySelectorAll('.flavor-row:not(.hidden)'));
+  const focused = document.querySelector('.flavor-row.focused');
+  let idx = focused ? rows.indexOf(focused) : -1;
+  if (e.key === 'ArrowDown' || e.key === 'j') { e.preventDefault(); idx = Math.min(idx + 1, rows.length - 1); }
+  else if (e.key === 'ArrowUp' || e.key === 'k') { e.preventDefault(); idx = Math.max(idx - 1, 0); }
+  else if (e.key >= '1' && e.key <= '9' && focused) {
+    const c = focused.querySelector('.candidate[data-index="' + e.key + '"]');
+    if (c) selectCandidate(c);
+    return;
+  }
+  else if (e.key === 'f' && focused) { flagFlavor(focused.dataset.flavor); return; }
+  else return;
+  if (focused) focused.classList.remove('focused');
+  if (rows[idx]) { rows[idx].classList.add('focused'); rows[idx].scrollIntoView({ block: 'center' }); }
+});
+</script>
+</body>
+</html>

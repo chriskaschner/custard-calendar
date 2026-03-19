@@ -258,7 +258,7 @@ const PREMIUM_TREATMENT_OVERRIDES = {
   'caramel chocolate pecan': {
     base: 'Deep chocolate custard with rich dark-cocoa tones (#5A3825 with #4A2D1C shadows).',
     swirls: 'Glossy amber caramel ribbon with golden translucent edges cutting through the dark chocolate (#D38B2C).',
-    chunks: 'Multiple brown pecan pieces with natural wood-grain texture (#8B5A2B); dark chocolate Dove chunks with glossy broken-bar facets (#2B1A12); additional pecans layered through the scoop.',
+    chunks: 'Multiple warm toasted pecan pieces with natural wood-grain texture and golden-brown surfaces (#C4A04D); dark chocolate Dove chunks with glossy broken-bar facets (#2B1A12); additional pecans layered through the scoop.',
     texture: 'Dense inclusion field with layered depth. Caramel ribbon weaves between pecan clusters and chocolate chunks. Keep ribbon visible through inclusions with clean edge contrast. Boost local contrast around dark chocolate chunks on the dark base.',
   },
   'caramel fudge cookie dough': {
@@ -304,15 +304,15 @@ const PREMIUM_TREATMENT_OVERRIDES = {
     texture: 'Balanced two-ingredient spread with dark cherry and brown pecan pieces clearly separated. Cherry pieces are darker and glossier while pecans are matte and warm-toned.',
   },
   'chocolate caramel twist': {
-    base: 'Rich chocolate custard with warm cocoa depth (#6F4E37 with #5A3825 darker undertones).',
+    base: 'Swirled twist of rich chocolate (#6F4E37) and warm vanilla ivory (#F5DEB3) custard in a marbled spiral pattern.',
     swirls: 'Glossy amber caramel ribbon with golden translucent edges swirling through chocolate (#D38B2C).',
     chunks: 'Dark chocolate Dove chunks with glossy broken-bar facets and deep cocoa surfaces (#2B1A12).',
-    texture: 'Balanced depth with bright caramel ribbon creating golden contrast lines through the dark chocolate body. Dove chunks add texture at similar darkness to the base. Keep ribbon visible for strong contrast.',
+    texture: 'Balanced depth with bright caramel ribbon creating golden contrast lines through the marbled chocolate-vanilla body. Dove chunks add texture. Keep ribbon visible for strong contrast.',
   },
   'chocolate covered strawberry': {
     base: 'Warm vanilla custard with creamy wheat tones (#F5DEB3 with #EDD9A3 gentle shadows).',
     swirls: 'None -- pure vanilla base with fruit and chocolate inclusions.',
-    chunks: 'Bright red strawberry bits with vivid crimson surfaces (#A10E2B); dark chocolate Dove chunks with glossy cocoa facets (#2B1A12).',
+    chunks: 'Plump strawberry slices with recognizable wedge shapes, vivid red flesh, and visible seed texture (#A10E2B); dark chocolate Dove chunks with glossy cocoa facets (#2B1A12).',
     texture: 'Balanced two-ingredient spread with bright strawberry and dark chocolate pieces clearly separated. Red-on-cream and dark-on-cream create strong dual-tone visual interest.',
   },
   'chocolate heath crunch': {
@@ -370,10 +370,10 @@ const PREMIUM_TREATMENT_OVERRIDES = {
     texture: 'Standard inclusion depth with cookie crumbles evenly spread. Dark crumble pieces create strong contrast against the bright yellow lemon base. Fine granular texture adds surface interest.',
   },
   'dark chocolate decadence': {
-    base: 'Deep, near-black chocolate custard with velvety darkness (#3B1F0B with warm #4A2D18 highlights at crown and edges).',
+    base: 'Rich dark chocolate custard with deep brown warmth (#5C3A2E with #4A2D18 depth highlights). NOT black -- this is dark chocolate, a rich brown.',
     swirls: 'None -- pure dark chocolate with subtle color depth variations only.',
     chunks: 'None -- clean scoop with no inclusions.',
-    texture: 'Smooth scoop with low inclusion noise. Emphasize the ultra-dark chocolate with subtle warm highlight at the crown and gentle shadow depth at the base. Velvety surface with minimal light reflection.',
+    texture: 'Smooth scoop with low inclusion noise. Emphasize the rich dark brown chocolate with subtle warm highlight at the crown and gentle shadow depth at the base. Velvety surface with minimal light reflection.',
   },
   'dark chocolate pb crunch': {
     base: 'Deep dark chocolate custard with near-black richness (#3B1F0B with warm #4A2D18 undertones).',
@@ -408,8 +408,8 @@ const PREMIUM_TREATMENT_OVERRIDES = {
   'double strawberry': {
     base: 'Vibrant strawberry-pink custard with bright berry warmth (#FF6B9D with deeper #E8598A undertones).',
     swirls: 'None -- pure strawberry base with fruit inclusions.',
-    chunks: 'Deep red strawberry bits with vivid crimson surfaces and natural fruit shapes (#A10E2B).',
-    texture: 'Emphasize the primary inclusion with strawberry pieces doubled near top and mid scoop. Dark red fruit bits against bright pink base create rich monochromatic depth within the berry color family.',
+    chunks: 'Plump strawberry slices with recognizable wedge shapes and vivid red flesh (#A10E2B), doubled in quantity near top and mid scoop.',
+    texture: 'Emphasize the primary inclusion with strawberry pieces doubled near top and mid scoop. Dark red fruit slices against bright pink base create rich monochromatic depth within the berry color family.',
   },
   'georgia peach': {
     base: 'Warm peach custard with soft golden-orange glow (#FFE5B4 with slightly deeper #F5D9A0 shadow tones).',
@@ -450,14 +450,14 @@ const PREMIUM_TREATMENT_OVERRIDES = {
   'lemon berry layer cake': {
     base: 'Bright lemon custard with vivid yellow warmth (#FFF176 with slightly deeper #F5E76A in shadows).',
     swirls: 'None -- pure lemon base with berry and cake inclusions.',
-    chunks: 'Deep purple blueberry pieces with dark violet surfaces and natural round shapes (#3B1F6B); deep brown chocolate cake chunks with moist matte surfaces (#4A2800).',
-    texture: 'Balanced two-ingredient spread with dark purple blueberry and dark brown cake pieces clearly separated. Both create strong contrast against the bright yellow lemon base. Blueberry is glossy, cake is matte.',
+    chunks: 'Deep purple blueberry pieces with dark violet surfaces and natural round shapes (#3B1F6B); pale golden-yellow cake crumbles with soft, fluffy texture (#F5E6B8) -- NOT black or dark, this is a light-colored layer cake.',
+    texture: 'Balanced two-ingredient spread with dark purple blueberry and pale golden cake pieces providing contrast against the bright yellow lemon base. Blueberry is glossy and dark, cake crumbles are soft and light.',
   },
   'lemon dash cookie': {
     base: 'Bright lemon custard with vivid yellow warmth (#FFF176 with #F5E76A depth in shadows).',
     swirls: 'None -- pure lemon base with cookie inclusions.',
-    chunks: 'Dark OREO cookie chunks with near-black surfaces and visible cream filling layers (#1A1A1A).',
-    texture: 'Standard inclusion depth with OREO pieces distributed evenly. Extreme dark-on-bright contrast between near-black cookies and vivid yellow lemon base. Cream filling streaks add fine detail.',
+    chunks: 'Pale golden sugar cookie pieces with lightly toasted sandy surfaces (#E8D5A3) -- these are sugar cookies, NOT dark oreos or black cookies.',
+    texture: 'Standard inclusion depth with sugar cookie pieces distributed evenly. Warm pale golden cookies against vivid yellow lemon base. Sandy toasted surfaces catch warm highlights.',
   },
   'm&m cookie dough': {
     base: 'Rich chocolate custard with warm cocoa depth (#6F4E37 with #5C3E2B undertones).',
@@ -491,9 +491,9 @@ const PREMIUM_TREATMENT_OVERRIDES = {
   },
   'mint explosion': {
     base: 'Bright mint-green custard with vibrant cool tones (#2ECC71 with deeper #25A85E in shadows).',
-    swirls: 'None -- pure mint base with dense multi-ingredient inclusion field.',
+    swirls: 'Dark fudge ribbon with glossy chocolate surface threading through the mint (#3B1F0B).',
     chunks: 'Dark OREO cookie chunks with visible cream filling layers (#1A1A1A); bright Andes mint pieces with green-white layered striping (#0A3726); dark chocolate Dove chunks with glossy cocoa facets (#2B1A12).',
-    texture: 'Dense inclusion field with layered depth while keeping each ingredient readable. Three dark-toned ingredients at slightly different values create depth against the bright mint base. OREO is near-black, Andes is deep green, Dove is dark brown.',
+    texture: 'Dense inclusion field with layered depth while keeping each ingredient readable. Dark fudge ribbon threads through the bright mint base. Three dark-toned ingredients at slightly different values create depth against the mint. OREO is near-black, Andes is deep green, Dove is dark brown.',
   },
   'mooey gooey twist': {
     base: 'Rich chocolate custard with warm cocoa depth (#6F4E37 with #5A3825 shadow tones).',
@@ -653,9 +653,9 @@ const PREMIUM_TREATMENT_OVERRIDES = {
   },
   'strawberry cheesecake': {
     base: 'Warm ivory cheesecake custard with buttery cream tones (#FFF5E1 with slightly deeper #F5EBD0 shadows).',
-    swirls: 'None -- pure cheesecake base with double-portion strawberry inclusions.',
-    chunks: 'Deep red strawberry bits with vivid crimson surfaces and natural fruit shapes (#A10E2B).',
-    texture: 'Emphasize the primary inclusion with strawberry pieces doubled near top and mid scoop. Deep red fruit bits against pale ivory cheesecake create vivid color pop. Fruit pieces have organic shapes.',
+    swirls: 'Strawberry sauce swirl with visible strawberry slices showing wedge shapes and vivid red color (#A10E2B).',
+    chunks: 'Plump strawberry slices with recognizable wedge shapes, vivid red flesh, and visible seed texture (#A10E2B).',
+    texture: 'Emphasize the primary inclusion with strawberry pieces doubled near top and mid scoop. Deep red fruit slices and strawberry sauce swirl against pale ivory cheesecake create vivid color pop.',
   },
   'tiramisu': {
     base: 'Dark espresso custard with deep coffee-brown richness (#2C1503 with warm #3A2010 crown highlights).',
@@ -677,21 +677,21 @@ const PREMIUM_TREATMENT_OVERRIDES = {
   },
   'turtle': {
     base: 'Warm vanilla custard with creamy wheat tones (#F5DEB3 with golden #EDD9A3 highlights).',
-    swirls: 'Glossy amber caramel ribbon with golden translucent edges winding through the scoop (#D38B2C).',
-    chunks: 'Rich brown pecan pieces with natural wood-grain texture (#8B5A2B); dark chocolate Dove chunks with glossy cocoa facets (#2B1A12).',
-    texture: 'Balanced depth with caramel ribbon weaving between pecan and chocolate pieces. Three warm tones -- golden ribbon, brown pecans, dark chocolate -- create classic turtle layering against pale vanilla.',
+    swirls: 'Glossy amber caramel ribbon (#D38B2C) and dark fudge ribbon (#3B1F0B) threading through the vanilla base.',
+    chunks: 'Rich brown pecan pieces with natural wood-grain texture (#8B5A2B).',
+    texture: 'Balanced depth with caramel and fudge ribbons weaving between pecan pieces. Golden caramel ribbon and dark fudge ribbon create classic turtle layering against pale vanilla.',
   },
   'turtle cheesecake': {
     base: 'Warm ivory cheesecake custard with buttery cream depth (#FFF5E1 with #F5EBD0 gentle shadows).',
-    swirls: 'Glossy amber caramel ribbon with golden translucent edges threading through the cheesecake (#D38B2C).',
-    chunks: 'Brown pecan pieces with natural wood-grain texture (#8B5A2B); dark chocolate Dove chunks with glossy cocoa facets (#2B1A12); additional pecan pieces layered through the scoop.',
-    texture: 'Dense inclusion field with layered depth. Caramel ribbon weaves between pecan clusters and chocolate chunks. Classic turtle trio against pale cheesecake creates strong multi-tone contrast.',
+    swirls: 'Glossy amber caramel ribbon (#D38B2C) and dark fudge ribbon (#3B1F0B) swirling through cheesecake base.',
+    chunks: 'Brown pecan pieces with natural wood-grain texture (#8B5A2B); additional pecan pieces layered through the scoop.',
+    texture: 'Dense inclusion field with layered depth. Caramel and fudge ribbons weave between pecan clusters. Classic turtle ribbons against pale cheesecake creates strong multi-tone contrast.',
   },
   'turtle dove': {
     base: 'Warm vanilla custard with creamy wheat highlights (#F5DEB3 with golden #EDD9A3 depth).',
-    swirls: 'Bright white marshmallow swirl with fluffy pulled texture winding through the vanilla (#FFFFFF).',
+    swirls: 'Glossy amber caramel ribbon (#D38B2C) and dark fudge ribbon (#3B1F0B) threading through the chocolate-vanilla swirl.',
     chunks: 'Rich brown pecan pieces with natural wood-grain texture (#8B5A2B); dark chocolate Dove chunks with glossy broken-bar facets (#2B1A12).',
-    texture: 'Balanced depth with bright marshmallow swirl weaving between brown pecan and dark chocolate pieces. Marshmallow and vanilla are both light but swirl is brighter white. Pecans and Dove at two different brown tones.',
+    texture: 'Balanced depth with caramel and fudge ribbons weaving between brown pecan and dark chocolate pieces. Golden caramel and dark fudge ribbons create classic turtle layering through the base.',
   },
   'twix mix': {
     base: 'Rich chocolate custard with warm cocoa depth (#6F4E37 with #5C3E2B shadow tones).',
