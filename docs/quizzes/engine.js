@@ -1018,8 +1018,8 @@ async function runQuiz(evt) {
 
     // Render cone icon for the result flavor
     if (els.resultCone) {
-      if (displayFlavor && typeof window.renderMiniConeHDSVG === 'function') {
-        els.resultCone.innerHTML = window.renderMiniConeHDSVG(displayFlavor, 5);
+      if (displayFlavor && typeof window.renderHeroCone === 'function') {
+        window.renderHeroCone(displayFlavor, els.resultCone, 6);
       } else if (displayFlavor && typeof window.renderMiniConeSVG === 'function') {
         els.resultCone.innerHTML = window.renderMiniConeSVG(displayFlavor, 8);
       } else {
