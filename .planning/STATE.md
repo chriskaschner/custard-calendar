@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Art Quality
 status: unknown
-stopped_at: Completed 27-02-PLAN.md
-last_updated: "2026-03-19T18:24:28.863Z"
+stopped_at: Completed 28-01-PLAN.md
+last_updated: "2026-03-19T18:38:38.806Z"
 progress:
   total_phases: 4
   completed_phases: 1
-  total_plans: 5
-  completed_plans: 4
+  total_plans: 7
+  completed_plans: 5
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-18)
 
 **Core value:** A family can instantly see what flavors are at their nearby stores and decide where to go
-**Current focus:** Phase 27 — client-side-art-migration
+**Current focus:** Phase 28 — worker-social-card-migration
 
 ## Current Position
 
-Phase: 27 (client-side-art-migration) — COMPLETE
-Plan: 2 of 2 (all plans complete)
+Phase: 28 (worker-social-card-migration) — EXECUTING
+Plan: 2 of 2
 
 ## Performance Metrics
 
@@ -61,6 +61,7 @@ Recent decisions affecting current work:
 - 26-02: Prompt feedback captured: oreos need cream filling detail, andes mints too white, caramel lumpiness varies
 - [Phase 27]: HD SVG tier fully removed rather than deprecated -- no conditional paths left
 - [Phase 27]: Collision pair rendering switched from hdCone to miniCone after HD tier removal
+- [Phase 28]: PNG fetched from GitHub Pages CDN rather than KV storage for social card cones
 
 ### Pending Todos
 
@@ -74,6 +75,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-19T18:19:22.643Z
-Stopped at: Completed 27-02-PLAN.md
+Last session: 2026-03-19T18:38:38.803Z
+Stopped at: Completed 28-01-PLAN.md
 Resume file: None
