@@ -159,6 +159,6 @@ Phases 26 is strictly first. Phases 27, 28, and 29 can proceed in parallel after
 | 26. AI Cone Generation | 2/3 | In Progress|  | - |
 | 27. Client-Side Art Migration | 2/2 | Complete    | 2026-03-19 | - |
 | 28. Worker Social Card Migration | 2/2 | Complete    | 2026-03-19 | - |
-| 29. Scriptable Widget Unification | 1/1 | Complete   | 2026-03-19 | - |
+| 29. Scriptable Widget Unification | 1/1 | Complete    | 2026-03-19 | - |
 
 **Total: 29 phases, 61 plans across 7 milestones**
