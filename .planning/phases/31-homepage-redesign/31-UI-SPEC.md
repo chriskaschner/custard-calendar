@@ -39,6 +39,7 @@ Declared values use the existing `--space-*` CSS custom property tokens. All val
 | 2xl | `--space-6` | 32px (2rem) | Header top padding |
 
 Exceptions:
+- **12px (`--space-3`):** Grandfathered exception. This token predates the 8-point standard set and is defined in the existing `docs/style.css` `:root` block (line 23). Replacing it with 8px would break existing card layouts site-wide; replacing with 16px would create excessive internal gaps in compact cards. Retained for backward compatibility with the established token system.
 - Hero card left accent border: 3px (existing `.today-card` pattern, not a spacing token)
 - CTA touch targets: minimum 44px hit area (existing `.btn-text` pattern with `min-height: 44px`)
 
@@ -48,16 +49,15 @@ Source: Pre-populated from existing `docs/style.css` `:root` tokens (lines 21-27
 
 ## Typography
 
-All sizes reference existing CSS custom property tokens. Two weights used: 400 (regular) and 700 (bold). One exception at 600 (semibold) for buttons and secondary emphasis.
+All sizes reference existing CSS custom property tokens. Two weights used: 400 (regular) and 700 (bold). No other weights are permitted in this phase.
 
 | Role | Size Token | Computed | Weight | Line Height | Usage in this phase |
 |------|-----------|----------|--------|-------------|---------------------|
 | Display | `--text-2xl` | 28px (1.75rem) | 700 | 1.2 | Hero card flavor name |
-| Body | `--text-base` | 14px (0.875rem) | 400 | 1.4 | Flavor description, CTA line, first-visit prompt body |
-| Label | `--text-sm` | 12px (0.75rem) | 700 | 1.2 | Week strip day names, store name in hero meta, rarity badge text |
-| Caption | `--text-xs` | 11px (0.6875rem) | 700 | 1.0 | Rarity badge pill text, freshness timestamp, week day dates |
+| Body | `--text-base` | 14px (0.875rem) | 400 | 1.4 | Flavor description, CTA line, first-visit prompt body, button text |
+| Label | `--text-sm` | 12px (0.75rem) | 700 | 1.2 | Week strip day names, store name in hero meta, rarity badge text, freshness timestamp, week day dates |
 
-Button text: 16px (1rem) at weight 600 -- existing `.btn-primary` pattern.
+Button text: 14px (`--text-base`) at weight 700 -- distinguished from body copy by weight, not size.
 
 Source: Pre-populated from existing `docs/style.css` `:root` tokens (lines 11-19) and `.today-flavor-name` (line 1903), `.today-flavor-desc` (line 1911).
 
