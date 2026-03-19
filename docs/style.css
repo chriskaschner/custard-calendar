@@ -2070,8 +2070,6 @@ footer a {
 }
 
 /* Section spacing for below-fold flow */
-#signals-section { margin-top: 0.75rem; }
-#multi-store-section { margin-top: 1rem; }
 #updates-cta { margin-top: 1rem; }
 details#week-section { margin-top: 1rem; }
 
