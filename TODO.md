@@ -113,29 +113,33 @@ Status baseline: core Drive API + index/scoop shared module are now in productio
 ### Phase 2 — Preference model evolution (P1/P2)
 
 - [x] **Local preferences v1 hardening** -- 300ms debounce on saveDrivePreferences with beforeunload flush; resetDrivePreferences clears v1 + legacy keys; Reset button in route editor UI. 6 browser tests (debounce, reset, migration, corruption, flush). (2026-03-03)
-- [ ] **Route profile roadmap** -- keep one active route now, but define migration path to optional named multi-route profiles (`work/weekend`) without breaking existing keys.
+- [x] **Route profile roadmap** -- Closed 2026-03-19. Named multi-route profiles deferred indefinitely. Single active route covers the primary use case; multi-route adds complexity with no validated user demand. Tracked as ROUTE-01 in REQUIREMENTS.md Future Requirements if revisited.
 - [x] **State schema governance** -- legacy migration covered by browser tests (corrupt v1 JSON fallback, corrupt legacy key fallback, legacy-to-v1 migration). Version field validated in sanitizeDrivePreferences. (2026-03-03)
 
 ### P0 -- Homepage visual coherence audit
 
+Note: Items below closed individually. Section superseded by v3.0 Phase 31 homepage redesign.
+
 The homepage is a mess of disconnected visual elements. Drive cards, hero flavor card, minimap, week-ahead row, cone icons, and score badges all use different sizing, spacing, and styling conventions. Nothing looks like it belongs together.
 
 Specific issues observed (2026-03-03):
-- [ ] **Cone icon sizing in Drive cards** -- renderMiniConeSVG renders at pixel-art scale that doesn't match card text; needs either a constrained CSS size or a purpose-built inline icon tier
-- [ ] **Drive card vs hero card inconsistency** -- the hero "Today's Flavor" card below the Drive section uses completely different layout, typography, and cone rendering (HD cone) than the Drive cards above it; looks like two different products
-- [ ] **Minimap mostly blank** -- when route stores are far apart, pins sit at opposite corners of an empty light-blue rectangle; needs either a real tile background or tighter bounds padding
-- [ ] **Score badge styling** -- orange "68" circles float with no visual connection to the card content; unclear what the number means without reading documentation
-- [ ] **Week Ahead row cones** -- different scale/rendering tier than Drive card cones; another visual register that doesn't match
-- [ ] **Overall card/section hierarchy** -- Drive cards, hero card, overdue alert, calendar CTA, and week-ahead all stack with inconsistent borders, backgrounds, and spacing; needs a unified card system
-- [ ] **Rarity/overdue copy fails sniff test** -- "Pumpkin Pecan usually appears every 19 days but hasn't been seen in 97 days" is absurd. Pumpkin Pecan is a seasonal flavor that barely appears outside fall. The avg_gap_days calculation doesn't account for seasonality, so it produces misleading cadence claims. Overdue alerts need a seasonal filter or the cadence copy needs to be suppressed for flavors with strong seasonal concentration.
+- [x] **Cone icon sizing in Drive cards** -- Closed 2026-03-19. Superseded by v2.0 art pipeline -- Drive cards now use L5 AI PNG cones, not renderMiniConeSVG. Homepage redesign (Phase 31) will establish the final card layout.
+- [x] **Drive card vs hero card inconsistency** -- Closed 2026-03-19. Phase 31 homepage redesign will rebuild the hero card from scratch, making this inconsistency moot.
+- [x] **Minimap mostly blank** -- Closed 2026-03-19. Minimap is a secondary element. Homepage redesign (Phase 31) may remove or redesign the minimap entirely. Not worth fixing independently.
+- [x] **Score badge styling** -- Closed 2026-03-19. Score badges will be reconsidered during homepage redesign (Phase 31). Current numeric scores may be removed entirely in favor of simpler trust signals.
+- [x] **Week Ahead row cones** -- Closed 2026-03-19. Superseded by L5 AI PNG art pipeline (v2.0). Week-ahead section redesign is scoped in Phase 31.
+- [x] **Overall card/section hierarchy** -- Closed 2026-03-19. Directly addressed by Phase 31 (homepage redesign) and Phase 32 (page consolidation) in v3.0 roadmap.
+- [x] **Rarity/overdue copy fails sniff test** -- Closed 2026-03-19. The seasonal cadence copy issue is a known data quality problem. Flavor hierarchy fallback (shipped in Data Health section) partially addresses this. Further refinement is out of scope for v3.0 -- the homepage redesign will determine which copy surfaces at all.
 
 Goal: a single visual language across all homepage sections so it reads as one product, not six widgets duct-taped together.
 
 ### Phase 3 — Optional sync architecture (P2+)
 
-- [ ] **Anonymous sync design spike** -- evaluate Level 2 sync model (random local user_id + tokenized sync link) with explicit KV vs D1 tradeoff and write-rate constraints.
-- [ ] **Persistence decision record** -- choose KV blob vs D1 structured storage based on expected write frequency, query needs, and operational simplicity.
-- [ ] **Security/privacy review for sync** -- ensure no accidental user identity coupling; document retention and delete semantics before implementation.
+Note: All items closed. Sync deferred indefinitely per v3.0 strategy (find users before adding features).
+
+- [x] **Anonymous sync design spike** -- Closed 2026-03-19. Anonymous sync deferred indefinitely. Tracked as SYNC-01 in REQUIREMENTS.md Future Requirements. No validated user demand; find 10 real users first.
+- [x] **Persistence decision record** -- Closed 2026-03-19. Dependent on sync design spike which is deferred. No standalone value.
+- [x] **Security/privacy review for sync** -- Closed 2026-03-19. Dependent on sync design spike which is deferred.
 
 ### Test and rollout gates
 
@@ -158,7 +162,7 @@ Goal: a single visual language across all homepage sections so it reads as one p
 - [x] **OG social card endpoint verification (P1)** -- confirmed: og:image tags resolve through `/og/page/{slug}.svg` on all pages. scoop.svg, group.svg verified 200 in production. Real share-preview spot-check remains a manual nice-to-have. (2026-03-03)
 - [x] **Meta consistency for Scoop + Privacy (P2)** -- scoop.html has og:image + twitter:card. privacy.html has og:title/url/type (no social card — policy page). (2026-03-03)
 - [x] **Siri brand color token cleanup (P2)** -- verified: siri.html already uses #005696 throughout, no #003366 found. (2026-03-03)
-- [ ] **Alerts placeholder copy review (P2)** -- decide whether `placeholder=\"you@example.com\"` remains intentional UX copy or should be revised to a less developer-toned variant.
+- [x] **Alerts placeholder copy review (P2)** -- Closed 2026-03-19. The 'you@example.com' placeholder is fine as intentional UX copy. Not worth a separate work item.
 
 ## Now -- Weather Brand Reframe
 
@@ -276,11 +280,10 @@ Canonical status values: `Open | Partial | Resolved | Accepted`. Security status
 - [x] **Flavor config API** -- `GET /api/v1/flavor-config` returns similarity groups + flavor families + brand colors from single server source (`flavor-matcher.js`). `planner-shared.js` bootstraps from this endpoint with local fallback constants, eliminating manual sync drift. (2026-02-24)
 - [x] **Shared decision/certainty modules** -- Fixed critical threshold divergence: planner-shared.js now matches worker/src/certainty.js (MIN_PROBABILITY=0.02, MIN_HISTORY_DEPTH=14, MAX_FORECAST_AGE_HOURS=168). Added escapeHtml export. (2026-02-27)
 - [x] **Decompose index.js** -- extracted `route-today.js`, `route-calendar.js`, `route-nearby.js`, `kv-cache.js`, and `brand-registry.js`; index.js now 489 lines. Named exports (`getFetcherForSlug`, `getBrandForSlug`, `getFlavorsCached`) preserved via re-export for test compatibility. (2026-02-24)
-- [ ] **Mad Libs quality + variety** -- current mad libs feel unnatural; expand beyond the single template to multiple options and revisit question/answer quality
-- [ ] **Flavor asset parity audit + canonicalization** -- full cross-surface review: displayed name, description copy, and visual asset output (cone/marker/card variants) everywhere a flavor appears (Forecast, Radar, Map, Fronts, Quiz results, Widget, Tidbyt, OG/social); publish mismatch report, align all surfaces to one canonical source of truth. Blocked on asset generation work. Phases 1–5 (profiles, collisions, Tidbyt sync, OG cards, comparison tool) already complete.
-- [ ] **Canonical render spec** -- palette + geometry + toppings with adapters per surface.
+- [x] **Flavor asset parity audit + canonicalization** -- Closed 2026-03-19. v2.0 AI cone pipeline established a single canonical art source (L5 PNGs). Phases 27-29 unified all surfaces to this pipeline. Remaining parity is maintained by the shared art system.
+- [x] **Canonical render spec** -- Closed 2026-03-19. v2.0 established L5 AI PNGs as the canonical render output. The hero cone renderer v2 sub-task already shipped. Multi-surface adapter architecture is unnecessary now that all surfaces consume the same PNG pipeline.
   - [x] **Hero cone renderer reevaluation** -- redesigned from scratch as 36×42 grid v2: fixed topping slots (same as HD cone, no scatter), 4-pixel specular highlight at upper-left dome (not a rectangle), 3-pixel occlusion shadow at lower-right edge, 9-point S-curve ribbon 2px wide (no staircase artifact at scale 8). lightenHex(0.25) highlight, darkenHex(0.12) shadow. Toppings and ribbon non-overlapping by geometry. Audit page updated to scale 4 (144×168px). 646 tests pass. (2026-02-26)
-- [ ] **Greenfield target architecture** -- three-layer model: Presentation (docs), Decision (planner/certainty/signals/reliability as pure functions), Data (KV/D1 access). Incremental migration, not rewrite.
+- [x] **Greenfield target architecture** -- Closed 2026-03-19. Three-layer model documented in ARCHITECTURE.md. Incremental migration happens organically as features are built. No value in a standalone architecture migration effort.
 - [x] **CLAUDE.md + Codex rules: rate limit awareness** -- External Rate Limits table + explicit agent/batch rule already in CLAUDE.md. (2026-02-25)
 - [x] **CLAUDE.md doc fixes** -- updated Worker test count (343 -> 574, 21 -> 32 suites), Python test counts (142 -> 179, analytics 99 -> 117), page count (5 -> 9), added analytics_report.py command. Fixed timezone bug in reliability.test.js isoDate helper. (2026-02-25)
 - [x] **CLAUDE.md / Codex consistency** -- audited commands, test counts, and architecture; all updated to match current state. (2026-02-25)
@@ -309,7 +312,7 @@ Consumer habit product first, intelligence platform second. One promise everywhe
 
   **4. ML confidence gates (already shipped — document the policy)** -- Certainty thresholds (`MIN_PROBABILITY = 0.02`, `MIN_HISTORY_DEPTH = 14`, `MAX_FORECAST_AGE_HOURS = 168`) documented in `ARCHITECTURE.md` Decision Layer section. (2026-02-27)
 
-- [ ] **Greenfield target architecture: formalize layer discipline** -- `ARCHITECTURE.md` now documents target state, current gaps, and migration rule. Current gaps: rarity query inline in alert-checker (move to flavor-stats.js), brand-specific locator logic in planner.js (multi-brand abstraction when needed). See ARCHITECTURE.md "Greenfield Target Architecture" section.
+- [x] **Greenfield target architecture: formalize layer discipline** -- Closed 2026-03-19. ARCHITECTURE.md already documents the three-layer model with current gaps. Layer discipline is enforced incrementally, not as a standalone task.
 
 **KPI system (formalize weekly operating cadence):**
 - North-star: weekly users who take a planning action (alert subscribe, calendar subscribe, or directions click)
@@ -392,6 +395,7 @@ Not active. Only promote if they clearly improve core decision KPIs.
 - [ ] **Flavor chatbot** -- conversational Q&A for flavor info via web chat UI
 - [x] **Group vote: "where are we going?" session** -- promoted from Someday/Maybe; shipped 2026-03-01. See "Now -- Group Vote" section above. KV-backed ephemeral sessions (4h TTL), join code + QR, yes/meh/no voting, minimize-misery winner algorithm, flavor similarity note, 15 tests. `docs/group.html` + `worker/src/group-routes.js` + nav link on all 12 pages.
 - [ ] **Tidbyt cone animation** -- add sparkle or other animation to the Tidbyt cone render.
+- [ ] **Mad Libs quality + variety** -- current mad libs feel unnatural; expand beyond the single template to multiple options and revisit question/answer quality. Moved from Refactor section 2026-03-19. Not critical path; revisit after v3.0 simplification.
 
 ## Won't Do
 
