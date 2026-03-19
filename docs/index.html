@@ -21,71 +21,33 @@
   <!-- Cloudflare Web Analytics --><script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "c050ff4e79d54b2abbb60587137d0bb2"}'></script><!-- End Cloudflare Web Analytics -->
 </head>
 <body>
-  <header class="forecast-header">
-    <h1>Custard Forecast</h1>
-    <p class="header-subtitle">Today's flavor and the week ahead</p>
-
-    <!-- Legacy location-bar hidden: shared-nav.js now handles store selection -->
-    <div class="location-bar" hidden>
-      <div class="location-bar-inner">
-        <div class="location-input-wrap">
-          <input type="text" id="store-search" placeholder="Find your store..." autocomplete="off">
-          <button id="geo-btn" class="btn-secondary btn--icon" title="Use my location" aria-label="Use my location">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-              <circle cx="12" cy="12" r="3"/>
-              <path d="M12 2v4M12 18v4M2 12h4M18 12h4"/>
-            </svg>
-          </button>
-        </div>
-        <div id="store-dropdown" class="store-dropdown" hidden></div>
-        <div id="current-store" class="current-store-badge" hidden>
-          <span id="current-store-name"></span>
-          <button id="change-store-btn" class="btn-text">change</button>
-        </div>
-      </div>
-    </div>
-
-    <div id="shared-nav" data-page="index"></div>
-  </header>
+  <div id="shared-nav" data-page="index"></div>
 
   <main>
     <!-- Empty state: no store selected -->
     <section id="empty-state">
       <div class="hero-empty">
-        <p class="hero-kicker">New here?</p>
-        <h2>Know today's flavor before you go.</h2>
-        <p class="hero-subtitle">Custard Calendar tracks daily flavor schedules across 1,000+ stores so you can check today's scoop and the week ahead in one place.</p>
-        <div class="hero-cta-row">
-          <button class="btn-primary" id="find-store-btn">Find your store</button>
-          <a href="map.html" class="btn-secondary">View the map</a>
-        </div>
-        <p class="hero-coverage">Coverage is strongest across Culver's locations nationwide plus Milwaukee-area independents: Kopp's, Gille's, Hefner's, Kraverz, and Oscar's.</p>
+        <p class="hero-empty-heading">Pick your Culver's to see today's flavor.</p>
+        <button class="btn-primary" id="find-store-btn">Find your store</button>
       </div>
       <div id="near-me-section" class="near-me-section" hidden>
-        <h3>Near you now</h3>
+        <p class="near-me-label">Near you</p>
         <div id="near-me-cards" class="near-me-cards"></div>
-      </div>
-      <div class="first-visit-guide">
-        <h3>Start in 3 steps</h3>
-        <ol>
-          <li>Pick a store above, or use one of the quick start stores below.</li>
-          <li>Check today's confirmed flavor and this week's schedule.</li>
-          <li>Use Calendar or Alerts so you do not miss favorite flavors.</li>
-        </ol>
-        <div id="quick-start-wrap" class="quick-start-wrap" hidden>
-          <span class="quick-start-label">Quick start stores:</span>
-          <div id="quick-start-stores" class="quick-start-stores"></div>
-        </div>
       </div>
     </section>
 
     <!-- Loading skeleton -->
     <section id="today-loading" hidden>
-      <div class="card today-card-skeleton">
-        <div class="skeleton-line skeleton-short"></div>
-        <div class="skeleton-line skeleton-long"></div>
-        <div class="skeleton-line skeleton-medium"></div>
-        <div class="skeleton-line skeleton-short"></div>
+      <div class="card today-card today-card-skeleton">
+        <div class="today-flavor-body">
+          <div class="skeleton-cone"></div>
+          <div class="skeleton-text">
+            <div class="skeleton-line skeleton-long"></div>
+            <div class="skeleton-line skeleton-medium"></div>
+            <div class="skeleton-line skeleton-short"></div>
+            <div class="skeleton-line skeleton-short"></div>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -106,19 +68,11 @@
             <div class="today-flavor-name" id="today-flavor"></div>
             <div class="today-flavor-desc" id="today-desc"></div>
             <div class="today-rarity" id="today-rarity" hidden></div>
+            <div class="today-ctas" id="today-ctas"></div>
           </div>
         </div>
+        <div class="today-meta" id="today-meta"></div>
       </div>
-    </section>
-
-    <!-- Flavor signal hero (top signal only, shown if confidence threshold met) -->
-    <section id="signals-section" class="hero-signal" hidden>
-      <div id="signals-list" class="signals-list"></div>
-    </section>
-
-    <!-- Multi-store glance row -->
-    <section id="multi-store-section" hidden>
-      <div class="multi-store-row" id="multi-store-row"></div>
     </section>
 
     <!-- Week ahead (collapsed by default) -->
