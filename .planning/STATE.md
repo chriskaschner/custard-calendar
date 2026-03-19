@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Sharpen the Core
 status: unknown
-stopped_at: Completed 30-01-PLAN.md (Phase 30 complete, ready for Phase 31)
-last_updated: "2026-03-19T20:24:48.400Z"
+stopped_at: Phase 31 context gathered
+last_updated: "2026-03-19T20:37:45.571Z"
 progress:
   total_phases: 9
   completed_phases: 4
@@ -73,6 +73,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-19
-Stopped at: Completed 30-01-PLAN.md (Phase 30 complete, ready for Phase 31)
-Resume file: None
+Last session: 2026-03-19T20:37:45.559Z
+Stopped at: Phase 31 context gathered
+Resume file: .planning/phases/31-homepage-redesign/31-CONTEXT.md
