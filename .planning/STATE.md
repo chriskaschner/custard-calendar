@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Art Quality
 status: unknown
-stopped_at: Completed 28-02-PLAN.md
-last_updated: "2026-03-19T18:50:51.408Z"
+stopped_at: Completed 29-01-PLAN.md
+last_updated: "2026-03-19T19:01:45.057Z"
 progress:
   total_phases: 4
-  completed_phases: 2
-  total_plans: 7
-  completed_plans: 6
+  completed_phases: 3
+  total_plans: 8
+  completed_plans: 7
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-18)
 
 **Core value:** A family can instantly see what flavors are at their nearby stores and decide where to go
-**Current focus:** Phase 28 — worker-social-card-migration
+**Current focus:** Phase 29 — scriptable-widget-unification
 
 ## Current Position
 
-Phase: 28 (worker-social-card-migration) — COMPLETE
-Plan: 2 of 2 (all complete)
+Phase: 29 (scriptable-widget-unification) — COMPLETE
+Plan: 1 of 1 (all complete)
 
 ## Performance Metrics
 
@@ -64,6 +64,7 @@ Recent decisions affecting current work:
 - [Phase 28]: PNG fetched from GitHub Pages CDN rather than KV storage for social card cones
 - [Phase 28]: Dead HD/Hero/Premium renderers deleted (766 lines), completing CLN-02
 - [Phase 28]: Dead HD/Hero/Premium renderers deleted (766 lines), completing CLN-02
+- [Phase 29]: Used Scriptable Request.loadImage() for PNG loading; kept drawConeIcon as offline fallback
 
 ### Pending Todos
 
@@ -77,6 +78,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-19T18:47:41.952Z
-Stopped at: Completed 28-02-PLAN.md
+Last session: 2026-03-19T19:01:45.054Z
+Stopped at: Completed 29-01-PLAN.md
 Resume file: None

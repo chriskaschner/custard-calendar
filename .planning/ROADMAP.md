@@ -80,7 +80,7 @@
 - [ ] **Phase 26: AI Cone Generation** - Generate, curate, and commit L5 pixel art PNGs for all 94 profiled flavors
 - [x] **Phase 27: Client-Side Art Migration** - Swap all client-side rendering to L5 PNGs, remove dead renderers, update baselines (completed 2026-03-19)
 - [x] **Phase 28: Worker Social Card Migration** - Embed L5 PNGs in OG social cards and remove dead Worker-side SVG renderers (completed 2026-03-19)
-- [ ] **Phase 29: Scriptable Widget Unification** - Unify Scriptable widget cone rendering into the shared L0/L5 art pipeline
+- [x] **Phase 29: Scriptable Widget Unification** - Unify Scriptable widget cone rendering into the shared L0/L5 art pipeline (completed 2026-03-19)
 
 ## Phase Details
 
@@ -138,7 +138,7 @@ Plans:
   1. Scriptable widget displays L5 AI PNG cones when the device is online, loaded via Image.fromURL() from the GitHub Pages asset path
   2. Offline fallback renders a color-aligned cone using the canonical 23-entry BASE_COLORS palette (not the drifted 15-color FLAVOR_SCOOP_COLORS)
   3. Both docs/assets/custard-today.js and widgets/custard-today.js are updated and kept in sync
-**Plans:** 1 plan
+**Plans:** 1/1 plans complete
 
 Plans:
 - [ ] 29-01-PLAN.md -- Add L5 PNG loading via getConeImage(), replace 15-color palette with 23-entry BASE_COLORS, sync both widget copies
@@ -159,6 +159,6 @@ Phases 26 is strictly first. Phases 27, 28, and 29 can proceed in parallel after
 | 26. AI Cone Generation | 2/3 | In Progress|  | - |
 | 27. Client-Side Art Migration | 2/2 | Complete    | 2026-03-19 | - |
 | 28. Worker Social Card Migration | 2/2 | Complete    | 2026-03-19 | - |
-| 29. Scriptable Widget Unification | v2.0 | 0/1 | Not started | - |
+| 29. Scriptable Widget Unification | 1/1 | Complete   | 2026-03-19 | - |
 
 **Total: 29 phases, 61 plans across 7 milestones**

@@ -18,7 +18,7 @@ Requirements for the two-tier cone art pipeline: L0 micro SVG + L5 AI-generated 
 
 - [x] **INT-01**: Today page hero cone displays L5 PNG for all 94 flavors (no HD SVG fallback)
 - [x] **INT-02**: Quiz result cone displays L5 PNG instead of HD SVG
-- [ ] **INT-03**: Scriptable widget uses shared art pipeline (L0 or L5 PNG) instead of its own drawConeIcon renderer
+- [x] **INT-03**: Scriptable widget uses shared art pipeline (L0 or L5 PNG) instead of its own drawConeIcon renderer
 - [x] **INT-04**: Worker social-card.js embeds L5 PNGs instead of inline SVG rects for OG images
 - [x] **INT-05**: Service worker cache version bumped to serve fresh L5 PNGs
 
@@ -57,7 +57,7 @@ Requirements for the two-tier cone art pipeline: L0 micro SVG + L5 AI-generated 
 | GEN-04 | Phase 26 | Complete |
 | INT-01 | Phase 27 | Complete |
 | INT-02 | Phase 27 | Complete |
-| INT-03 | Phase 29 | Pending |
+| INT-03 | Phase 29 | Complete |
 | INT-04 | Phase 28 | Complete |
 | INT-05 | Phase 27 | Complete |
 | CLN-01 | Phase 27 | Complete |
