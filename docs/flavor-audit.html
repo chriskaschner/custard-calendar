@@ -56,7 +56,7 @@
   #fcount { font-size: 12px; color: var(--muted); margin-left: auto; }
 
   /* Col headers */
-  .ch { display: grid; grid-template-columns: 180px 58px 65px 72px 94px 148px 148px 220px 1fr; padding: 0 10px; margin-bottom: 6px; }
+  .ch { display: grid; grid-template-columns: 180px 58px 65px 72px 160px 1fr; padding: 0 10px; margin-bottom: 6px; }
   .ch span { font-size: 10px; color: var(--muted); font-weight: 700; text-align: center; line-height: 1.3; }
   .ch span:first-child { text-align: left; }
 
@@ -64,7 +64,7 @@
   .fgrid { display: flex; flex-direction: column; gap: 3px; }
   .frow {
     display: grid;
-    grid-template-columns: 180px 58px 65px 72px 94px 148px 148px 220px 1fr;
+    grid-template-columns: 180px 58px 65px 72px 160px 1fr;
     align-items: center;
     background: var(--surface);
     border: 1px solid var(--border);
@@ -89,8 +89,7 @@
   .b-info    { background: var(--info); color: var(--info-t); }
   .b-changed { background: #2a1a3e; color: #c084fc; }
 
-  .c-before { position: relative; flex-direction: column; gap: 4px; }
-  .c-before .badge { position: absolute; top: 4px; right: 4px; }
+  /* (c-before removed — no Before column in two-tier layout) */
 
   /* Map marker */
   .mw { width: 46px; height: 54px; display: flex; align-items: flex-start; justify-content: center; }
@@ -183,10 +182,7 @@
     <span>Tidbyt<br>px ×1→6</span>
     <span>Widget<br>mini ×5</span>
     <span>Map<br>dark/light</span>
-    <span>Radar<br>HD ×5</span>
-    <span>Before<br>HD ×8</span>
-    <span>Hero / OG<br>HD ×8</span>
-    <span>Premium ×6<br>24x28 scatter</span>
+    <span>L5 AI PNG<br>288×336</span>
     <span>Quality + Colors</span>
   </div>
   <div class="fgrid" id="fgrid"></div>
@@ -198,51 +194,6 @@
 // Embedded seed data (from worker/src/flavor-colors.js + flavor-catalog.js)
 // Page works fully offline; API calls upgrade to live data if available.
 // ---------------------------------------------------------------------------
-// Snapshot of profiles BEFORE the spec-driven update (2026-02-26).
-// Used by the "Before" HD×8 column in the audit grid for comparison.
-var LEGACY_PROFILES = {
-  'dark chocolate pb crunch':    { base:'dark_chocolate',    ribbon:'peanut_butter',   toppings:['butterfinger'],                        density:'standard' },
-  'chocolate caramel twist':     { base:'chocolate',         ribbon:'caramel',         toppings:['dove'],                               density:'standard' },
-  'mint explosion':              { base:'mint',              ribbon:null,              toppings:['oreo','andes','dove'],                 density:'explosion' },
-  'turtle dove':                 { base:'vanilla',           ribbon:'marshmallow',     toppings:['pecan','dove'],                       density:'standard' },
-  'double strawberry':           { base:'strawberry',        ribbon:null,              toppings:['strawberry_bits'],                    density:'double' },
-  'turtle cheesecake':           { base:'cheesecake',        ribbon:'caramel',         toppings:['dove','pecan','cheesecake_bits'],      density:'explosion' },
-  'caramel turtle':              { base:'caramel',           ribbon:null,              toppings:['pecan','dove'],                       density:'standard' },
-  'andes mint avalanche':        { base:'mint_andes',        ribbon:null,              toppings:['andes','andes','dove'],               density:'standard' },
-  'oreo cookie cheesecake':      { base:'cheesecake',        ribbon:null,              toppings:['oreo','cheesecake_bits'],             density:'standard' },
-  "devil's food cake":           { base:'dark_chocolate',    ribbon:null,              toppings:['cake','dove'],                        density:'standard' },
-  'caramel cashew':              { base:'vanilla',           ribbon:'caramel',         toppings:['cashew'],                             density:'standard' },
-  'butter pecan':                { base:'butter_pecan',      ribbon:null,              toppings:['pecan'],                              density:'standard' },
-  'caramel chocolate pecan':     { base:'chocolate_custard', ribbon:'caramel',         toppings:['pecan','pecan','dove','pecan'],        density:'explosion' },
-  'dark chocolate decadence':    { base:'dark_chocolate',    ribbon:null,              toppings:[],                                     density:'pure' },
-  'caramel fudge cookie dough':  { base:'vanilla',           ribbon:'fudge',           toppings:['cookie_dough'],                       density:'standard' },
-  'mint cookie':                 { base:'mint',              ribbon:null,              toppings:['oreo'],                               density:'double' },
-  'caramel pecan':               { base:'caramel',           ribbon:null,              toppings:['pecan'],                              density:'standard' },
-  "really reese's":              { base:'chocolate',         ribbon:'peanut_butter',   toppings:['reeses'],                             density:'standard' },
-  'raspberry cheesecake':        { base:'cheesecake',        ribbon:null,              toppings:['raspberry','cheesecake_bits'],         density:'standard' },
-  'chocolate covered strawberry':{ base:'vanilla',           ribbon:null,              toppings:['strawberry_bits','dove'],             density:'standard' },
-  'caramel peanut buttercup':    { base:'vanilla',           ribbon:'peanut_butter',   toppings:['dove'],                               density:'standard' },
-  'turtle':                      { base:'vanilla',           ribbon:'caramel',         toppings:['dove','pecan'],                       density:'standard' },
-  'georgia peach':               { base:'peach',             ribbon:null,              toppings:['peach_bits'],                         density:'standard' },
-  'snickers swirl':              { base:'chocolate',         ribbon:'caramel',         toppings:['snickers'],                           density:'standard' },
-  'chocolate volcano':           { base:'chocolate',         ribbon:'chocolate_syrup', toppings:['oreo','dove','m_and_m'],              density:'explosion' },
-  'oreo cookie overload':        { base:'chocolate',         ribbon:'chocolate_syrup', toppings:['oreo'],                               density:'overload' },
-  'salted double caramel pecan': { base:'vanilla',           ribbon:'caramel',         toppings:['pecan','salt'],                       density:'double' },
-  'crazy for cookie dough':      { base:'vanilla',           ribbon:'fudge',           toppings:['cookie_dough'],                       density:'standard' },
-  'chocolate heath crunch':      { base:'chocolate',         ribbon:null,              toppings:['heath'],                              density:'standard' },
-  'double butter pecan':         { base:'vanilla',           ribbon:null,              toppings:['pecan'],                              density:'double' },
-  'blackberry cobbler':          { base:'blackberry',        ribbon:null,              toppings:['pie_crust','pie_crust','pie_crust'],  density:'standard' },
-  'brownie thunder':             { base:'chocolate',         ribbon:'marshmallow',     toppings:['brownie'],                            density:'standard' },
-  'chocolate oreo volcano':      { base:'chocolate',         ribbon:'marshmallow',     toppings:['oreo','dove'],                        density:'explosion' },
-  'lemon berry layer cake':      { base:'lemon',             ribbon:null,              toppings:['blueberry','cake'],                   density:'standard' },
-  'lemon dash cookie':           { base:'lemon',             ribbon:null,              toppings:['oreo'],                               density:'standard' },
-  'oreo cheesecake':             { base:'cheesecake',        ribbon:null,              toppings:['oreo','cheesecake_bits'],             density:'standard' },
-  'peanut butter cup':           { base:'chocolate',         ribbon:'peanut_butter',   toppings:['reeses'],                             density:'standard' },
-  'salted caramel pecan pie':    { base:'caramel',           ribbon:null,              toppings:['pecan','salt','pie_crust'],           density:'explosion' },
-  'strawberry cheesecake':       { base:'cheesecake',        ribbon:null,              toppings:['strawberry_bits','cheesecake_bits'],  density:'standard' },
-  'vanilla':                     { base:'vanilla',           ribbon:null,              toppings:[],                                     density:'pure' },
-};
-
 // Current profiles — synced with worker/src/flavor-colors.js (post spec-driven update)
 var SEED_PROFILES = {
   'dark chocolate pb crunch':    { base:'dark_chocolate',    ribbon:'peanut_butter',   toppings:['butterfinger'],                        density:'standard' },
@@ -557,8 +508,6 @@ function bCol(name) {
   if(k.includes('blackberry')) return bc.blackberry||SEED_BASE.blackberry||'#6B3FA0';
   return bc.vanilla||SEED_BASE.vanilla;
 }
-function lh(hex,a) { var r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16); return '#'+[r,g,b].map(function(c){return Math.round(c+(255-c)*a).toString(16).padStart(2,'0');}).join('').toUpperCase(); }
-function dk(hex,a) { var r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16); return '#'+[r,g,b].map(function(c){return Math.round(c*(1-a)).toString(16).padStart(2,'0');}).join('').toUpperCase(); }
 function R(x,y,w,h,f) { return '<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" fill="'+f+'"/>'; }
 
 function miniCone(name,s) {
@@ -580,149 +529,14 @@ function miniCone(name,s) {
   return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+(9*s)+' '+(11*s)+'" width="'+(9*s)+'" height="'+(11*s)+'" shape-rendering="crispEdges">'+o.join('')+'</svg>';
 }
 
-function hdCone(name,s) {
-  s=s||5;
-  var p=getP(name), bc=colorData.base_colors||{}, tc=colorData.topping_colors||{}, rc=colorData.ribbon_colors||{}, cc=colorData.cone_colors||SEED_CONE;
-  var b=(p&&bc[p.base])?bc[p.base]:bCol(name), rk=p?p.ribbon:null, rCol=rk?(rc[rk]||SEED_RIBBON[rk]||null):null;
-  var den=p?p.density:'standard', tops=p?(p.toppings||[]):[], ts;
-  if(den==='pure') ts=[];
-  else if(den==='double'){var pr=tops[0],se=tops[1]||pr;ts=pr?[pr,pr,se,pr,se,pr,se]:[];}
-  else if(den==='explosion'){ts=[];for(var i=0;i<8;i++)ts.push(tops[i%tops.length]||tops[0]);}
-  else if(den==='overload') ts=tops.length?[tops[0],tops[0],tops[0],tops[0],tops[0],tops[0]]:[];
-  else{ts=[];for(var si=0;si<6;si++)ts.push(tops[si%tops.length]||tops[0]);}
-  var hl=lh(b,0.3),o=[];
-  [[4,13],[3,14],[2,15],[2,15],[2,15],[2,15],[2,15],[2,15],[2,15],[2,15],[3,14],[4,13]].forEach(function(r,i){for(var c=r[0];c<=r[1];c++)o.push(R(c*s,i*s,s,s,b));});
-  [[4,0],[3,1]].forEach(function(h){o.push(R(h[0]*s,h[1]*s,s,s,hl));});
-  var tsl=[[4,2],[12,1],[6,3],[14,5],[3,6],[11,7],[5,9],[13,8]];
-  ts.forEach(function(k,i){var col=tc[k]||SEED_TOPPING[k];if(!col)return;o.push(R(tsl[i][0]*s,tsl[i][1]*s,s,s,col));});
-  if(rCol)[[7,1],[8,3],[9,4],[10,5],[9,7],[8,9]].forEach(function(r){o.push(R(r[0]*s,r[1]*s,s,s,rCol));});
-  [[4,13],[4,13],[5,12],[5,12],[6,11],[6,11],[7,10],[7,10],[8,9]].forEach(function(r,cr){for(var c=r[0];c<=r[1];c++){var wc=((cr+c)%2===0)?cc.waffle:cc.waffle_dark;o.push(R(c*s,(cr+12)*s,s,s,wc));}});
-  o.push(R(8*s,21*s,s,s,CONE_TIP));o.push(R(9*s,21*s,s,s,CONE_TIP));
-  return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+(18*s)+' '+(22*s)+'" width="'+(18*s)+'" height="'+(22*s)+'" shape-rendering="crispEdges">'+o.join('')+'</svg>';
-}
 
-// Hero cone renderer v2 -- mirrors renderConeHeroSVG in worker/src/flavor-colors.js
-// Grid: 36x42px. Fixed topping slots, 4-pixel specular highlight, 9-point ribbon.
-var _HSR=[[8,27],[6,29],[4,31],[4,31],[4,31],[4,31],[4,31],[4,31],[4,31],[4,31],[4,31],[4,31],[4,31],[4,31],[4,31],[4,31],[4,31],[4,31],[4,31],[4,31],[6,29],[7,28]];
-var _HCR=[[7,28],[7,28],[9,26],[9,26],[11,24],[11,24],[13,22],[13,22],[14,21],[14,21],[15,20],[15,20],[16,19],[16,19],[16,19],[16,19],[17,18],[17,18]];
-var _HHL=[[8,0],[9,0],[6,1],[7,1]]; // highlight slots
-var _HSH=[[29,19],[28,20],[27,21]]; // shadow slots
-var _HTS=[[10,1],[22,3],[8,7],[26,8],[10,12],[24,13],[8,17],[23,18]]; // topping slots (2x2)
-var _HRP=[[14,2],[15,4],[16,6],[17,8],[18,10],[17,12],[16,14],[15,16],[16,18]]; // ribbon path
-function heroCone(name,s) {
-  s=s||4;
-  var p=getP(name), bc=colorData.base_colors||{}, tc=colorData.topping_colors||{}, rc=colorData.ribbon_colors||{}, cc=colorData.cone_colors||SEED_CONE;
-  var b=(p&&bc[p.base])?bc[p.base]:bCol(name), rk=p?p.ribbon:null, rCol=rk?(rc[rk]||SEED_RIBBON[rk]||null):null;
-  var den=p?p.density:'standard', tops=p?(p.toppings||[]):[], ts;
-  if(den==='pure') ts=[];
-  else if(den==='double'){var pr=tops[0],se=tops[1]||pr;ts=pr?[pr,pr,se,pr,se,pr,se]:[];}
-  else if(den==='explosion'){ts=[];for(var i=0;i<8;i++)ts.push(tops[i%tops.length]||tops[0]);}
-  else if(den==='overload') ts=tops.length?[tops[0],tops[0],tops[0],tops[0],tops[0],tops[0]]:[];
-  else{ts=[];for(var si=0;si<6;si++)ts.push(tops[si%tops.length]||tops[0]);}
-  var hl=lh(b,0.25),sh=dk(b,0.12),o=[];
-  // 1. Base scoop fill
-  _HSR.forEach(function(r,row){for(var col=r[0];col<=r[1];col++)o.push(R(col*s,row*s,s,s,b));});
-  // 2. Depth shading: highlight + shadow
-  _HHL.forEach(function(pt){o.push(R(pt[0]*s,pt[1]*s,s,s,hl));});
-  _HSH.forEach(function(pt){o.push(R(pt[0]*s,pt[1]*s,s,s,sh));});
-  // 3. Toppings: fixed 2x2 slots
-  for(var i=0;i<ts.length&&i<_HTS.length;i++){
-    var col=tc[ts[i]]||SEED_TOPPING[ts[i]]; if(!col) continue;
-    o.push(R(_HTS[i][0]*s,_HTS[i][1]*s,2*s,2*s,col));
-  }
-  // 4. Ribbon: 9-point S-curve, 2px wide
-  if(rCol){_HRP.forEach(function(pt){o.push(R(pt[0]*s,pt[1]*s,2*s,s,rCol));});}
-  // 5. Cone rows 22-39
-  _HCR.forEach(function(r,ri){
-    var row=ri+22;
-    for(var col=r[0];col<=r[1];col++){var wc=((row+col)%2===0)?cc.waffle:cc.waffle_dark;o.push(R(col*s,row*s,s,s,wc));}
-  });
-  // 6. Tip rows 40-41
-  o.push(R(17*s,40*s,2*s,s,CONE_TIP));o.push(R(17*s,41*s,2*s,s,CONE_TIP));
-  return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+(36*s)+' '+(42*s)+'" width="'+(36*s)+'" height="'+(42*s)+'" shape-rendering="crispEdges">'+o.join('')+'</svg>';
-}
-
-// Premium cone renderer -- mirrors renderConePremiumSVG in worker/src/flavor-colors.js
-// Grid: 24x28px. Scatter toppings with Mulberry32 PRNG + collision detection.
-// Constants mirror the server-side arrays exactly.
-var _PSR=[[3,18],[1,22],[0,23],[0,23],[0,23],[0,23],[0,23],[0,23],[1,22],[2,20],[3,18],[4,16],[5,15],[6,14]]; // scoop rows
-var _PCR=[[5,19],[5,19],[6,18],[6,18],[7,17],[7,17],[8,16],[8,16],[9,15],[9,15],[10,14],[10,14],[11,13],[11,13]]; // cone rows
-var _PRP=[[6,2],[8,4],[10,6],[12,8],[14,10],[12,11],[10,12]]; // ribbon path
-var _PSHAPES={'default':[[0,0],[1,0],[0,1],[1,1]],'chunk':[[0,0],[1,0],[2,0],[0,1],[1,1],[2,1]],'sliver':[[0,0],[0,1],[0,2]]};
-var _PSHMAP={pie_crust:'chunk',pecan:'chunk',pretzel:'chunk',heath:'sliver',chocolate_chip:'sliver'};
-function premiumCone(name,s) {
-  s=s||6;
-  var p=getP(name), bc=colorData.base_colors||{}, tc=colorData.topping_colors||{}, rc=colorData.ribbon_colors||{}, cc=colorData.cone_colors||SEED_CONE;
-  var b=(p&&bc[p.base])?bc[p.base]:bCol(name), rk=p?p.ribbon:null;
-  var rCol=(rk&&p&&p.density!=='pure')?(rc[rk]||SEED_RIBBON[rk]||null):null;
-  var den=p?p.density:'standard', tops=p?(p.toppings||[]):[];
-  // resolvePremiumToppingList inline
-  var tl;
-  if(den==='pure') tl=[];
-  else if(den==='double'){tl=tops.length?[tops[0],tops[0]]:[];if(tops.length>1)tl.push(tops[1]);}
-  else if(den==='explosion'){tl=[];tops.forEach(function(t){tl.push(t);tl.push(t);});}
-  else if(den==='overload'){tl=tops.length?[tops[0],tops[0],tops[0],tops[0],tops[0],tops[0]]:[];}
-  else{tl=tops.slice();}
-  // Deterministic seed from flavor name
-  var seed=name.split('').reduce(function(a,c){return((a*31+c.charCodeAt(0))|0);},0);
-  var ms=seed>>>0;
-  function rng(){ms=(ms+0x6D2B79F5)>>>0;var t=Math.imul(ms^(ms>>>15),ms|1);t^=t+Math.imul(t^(t>>>7),t|61);return((t^(t>>>14))>>>0)/4294967296;}
-  function texH(col,row){var h=((col*2246822519)^(row*3266489917)^seed)>>>0,r=h%20;if(r===0)return lh(b,0.07);if(r===1)return dk(b,0.07);return b;}
-  var hl=lh(b,0.22),sh=dk(b,0.10),o=[];
-  // 1. Base scoop fill with texture
-  _PSR.forEach(function(sr,row){for(var col=sr[0];col<=sr[1];col++)o.push(R(col*s,row*s,s,s,texH(col,row)));});
-  // 2. Highlight cap: rows 0-1 cols 4-7, rows 2-3 cols 3-5
-  for(var hc=4;hc<=7;hc++){o.push(R(hc*s,0,s,s,hl));o.push(R(hc*s,1*s,s,s,hl));}
-  for(var hc2=3;hc2<=5;hc2++){o.push(R(hc2*s,2*s,s,s,hl));o.push(R(hc2*s,3*s,s,s,hl));}
-  // 3. Shadow rim: edges of rows 12-13
-  [[5,12],[6,12],[14,12],[15,12],[6,13],[7,13],[13,13],[14,13]].forEach(function(pt){o.push(R(pt[0]*s,pt[1]*s,s,s,sh));});
-  // 4. Ribbon
-  if(rCol)_PRP.forEach(function(pt){o.push(R(pt[0]*s,pt[1]*s,3*s,2*s,rCol));});
-  // 5. Scatter toppings
-  var occ={},total=tl.length*2;
-  for(var pi=0;pi<total;pi++){
-    var tk=tl[pi%tl.length],col=tc[tk]||SEED_TOPPING[tk];
-    if(!col)continue;
-    var shape=_PSHAPES[_PSHMAP[tk]||'default'];
-    for(var att=0;att<30;att++){
-      var row=Math.floor(rng()*_PSR.length),sr=_PSR[row],ac=sr[0]+Math.floor(rng()*(sr[1]-sr[0]+1)),ok=true;
-      for(var si=0;si<shape.length;si++){var pc=ac+shape[si][0],pr=row+shape[si][1];if(pr>=_PSR.length){ok=false;break;}var psr=_PSR[pr];if(pc<psr[0]||pc>psr[1]){ok=false;break;}if(occ[pr*100+pc]){ok=false;break;}}
-      if(ok){for(var si2=0;si2<shape.length;si2++){var pc2=ac+shape[si2][0],pr2=row+shape[si2][1];occ[pr2*100+pc2]=1;o.push(R(pc2*s,pr2*s,s,s,col));}break;}
-    }
-  }
-  // 6. Cone rows 14-27
-  _PCR.forEach(function(cr,ri){var absRow=ri+14;for(var c=cr[0];c<=cr[1];c++){var wc=((absRow+c)%2===0)?cc.waffle:cc.waffle_dark;o.push(R(c*s,absRow*s,s,s,wc));}});
-  // 7. Tip
-  o.push(R(11*s,27*s,3*s,s,CONE_TIP));
-  return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+(24*s)+' '+(28*s)+'" width="'+(24*s)+'" height="'+(28*s)+'" shape-rendering="crispEdges">'+o.join('')+'</svg>';
-}
-
-// Render HD cone using LEGACY_PROFILES (before-state for comparison column)
-function hdLegacy(name, s) {
-  var saved = colorData.profiles;
-  colorData.profiles = LEGACY_PROFILES;
-  var svg = hdCone(name, s);
-  colorData.profiles = saved;
-  return svg;
-}
-
-// Profile equality check for "changed" badge
-function profileChanged(name) {
-  var k = nfk(name);
-  var cur = (colorData.profiles||{})[k];
-  var leg = LEGACY_PROFILES[k];
-  if (!cur && !leg) return false;
-  if (!cur || !leg) return true;
-  return cur.base !== leg.base || cur.ribbon !== leg.ribbon || cur.density !== leg.density ||
-    JSON.stringify(cur.toppings) !== JSON.stringify(leg.toppings);
-}
 
 // ---------------------------------------------------------------------------
 // Build collision section
 // ---------------------------------------------------------------------------
 function buildCollisions() {
   function renderPair(col) {
-    var side=function(s){ return '<div class="col-side"><div class="cname">'+s.name+'</div>'+(s.has_profile?'<span class="badge b-ok">profile</span>':'<span class="badge b-err">no profile</span>')+hdCone(s.name,3)+'<div class="cwhere">'+s.where+'</div></div>'; };
+    var side=function(s){ return '<div class="col-side"><div class="cname">'+s.name+'</div>'+(s.has_profile?'<span class="badge b-ok">profile</span>':'<span class="badge b-err">no profile</span>')+miniCone(s.name,5)+'<div class="cwhere">'+s.where+'</div></div>'; };
     var verdict=col.verdict?'<div style="font-size:11px;color:#9EC5E8;margin:8px 0 4px;line-height:1.4;">'+col.verdict+'</div>':'';
     return '<div class="col-pair"><h3>'+col.label+'</h3>'+verdict+'<div class="col-sides">'+side(col.a)+side(col.b)+'</div></div>';
   }
@@ -824,19 +638,10 @@ function buildRow(flavor) {
   var mkrL='<div class="mp" style="border-color:'+ac+';background:#e8edf5">'+miniCone(name,4)+'</div>';
   var c4='<div class="c"><div class="map-pair"><div class="map-bg-d">'+mkrD+'</div><div class="map-bg-l">'+mkrL+'</div></div></div>';
 
-  // c5: HD ×5 (radar cards)
-  var c5='<div class="c">'+hdCone(name,5)+'</div>';
-
-  // c5b: Before HD ×8 (legacy profile snapshot for comparison)
-  var changed=profileChanged(name);
-  var legacySvg=LEGACY_PROFILES[nfk(name)]?hdLegacy(name,8):'<div style="color:var(--muted);font-size:10px;text-align:center">new</div>';
-  var c5b='<div class="c c-before" style="padding:4px;">'+legacySvg+(changed?'<span class="badge b-changed">changed</span>':'')+'</div>';
-
-  // c6: HD ×8 (hero/OG — documented scale for social cards)
-  var c6='<div class="c" style="padding:4px;">'+hdCone(name,8)+'</div>';
-
-  // c6b: Premium ×6 (24x28 scatter — round dome, texture hash, seeded toppings)
-  var c6b='<div class="c" style="padding:4px;">'+premiumCone(name,6)+'</div>';
+  // c5: L5 AI PNG (288x336 pixel art)
+  var slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  var pngSrc = 'assets/cones/' + slug + '.png';
+  var c5 = '<div class="c" style="padding:4px;"><img src="' + pngSrc + '" alt="' + name + ' AI cone" style="max-height:80px;image-rendering:pixelated;" onerror="this.parentNode.innerHTML=\'<div style=color:var(--err-t);font-size:10px;text-align:center>no PNG</div>\'"></div>';
 
   // c7: quality flags + colors
   var c7;
@@ -859,7 +664,7 @@ function buildRow(flavor) {
   row.dataset.name=name.toLowerCase();
   row.dataset.status=status;
   row.dataset.flagged=flags.length?'1':'0';
-  row.innerHTML=c1+c2+c3+c4+c5+c5b+c6+c6b+c7;
+  row.innerHTML=c1+c2+c3+c4+c5+c7;
   return row;
 }
 
