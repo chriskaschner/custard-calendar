@@ -1329,30 +1329,6 @@ details ol {
   background: var(--hover-bg);
 }
 
-/* Flavor signals */
-.signals-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-
-/* Hero variant: elevated position directly below today card */
-.hero-signal {
-  margin: 0;
-}
-
-.hero-signal .signal-card {
-  border-width: 2px;
-  border-color: #b8d4ed;
-}
-
-.hero-signal .signal-headline {
-  font-size: 1rem;
-}
-
-.hero-signal .signal-explanation {
-  font-size: 0.875rem;
-}
 
 
 .signal-card {
@@ -1660,7 +1636,6 @@ footer a {
 /* Migrated page-scoped button spacing (Phase 21 consolidation) */
 .winner-card .btn-primary.btn--block { margin-top: var(--space-3); }
 .compare-empty .btn-primary { margin-top: var(--space-4); }
-.updates-cta-card .btn-primary { margin-top: var(--space-3); }
 #start-vote-btn { margin-top: var(--space-2); }
 #copy-link-btn { margin: var(--space-1) auto; }
 #see-results-btn { margin-top: var(--space-3); }
@@ -1969,109 +1944,31 @@ footer a {
   margin-top: var(--space-1);
 }
 
-/* Multi-store glance row */
-.multi-store-row {
-  display: flex;
-  gap: var(--space-3);
-  overflow-x: auto;
-  padding: var(--space-2) 0;
-  -webkit-overflow-scrolling: touch;
-  scroll-snap-type: x mandatory;
-}
-
-.multi-store-cell {
-  flex: 0 0 auto;
-  min-width: 100px;
-  max-width: 140px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-1);
-  padding: var(--space-2);
-  border: 1px solid var(--border);
-  border-radius: 0.5rem;
-  background: var(--bg-surface);
-  cursor: pointer;
-  scroll-snap-align: start;
-  text-align: center;
-  font: inherit;
-  color: inherit;
-}
-
-.multi-store-cell:hover,
-.multi-store-cell:focus {
-  border-color: var(--brand);
-  box-shadow: 0 0 0 1px var(--brand);
-  outline: none;
-}
-
-.multi-store-cell.active {
-  border-color: #005696;
-  background: #f0f6fc;
-}
-
-.multi-store-cone {
-  width: 40px;
-  height: 48px;
-}
-
-.multi-store-cone svg {
-  width: 100%;
-  height: 100%;
-}
-
-.multi-store-flavor {
-  font-size: 0.8125rem;
-  font-weight: 600;
-  line-height: 1.2;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-}
-
-.multi-store-name {
-  font-size: var(--text-xs);
-  color: var(--text-muted);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 100%;
-}
-
-/* Updates CTA card */
-.updates-cta-card {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  background: var(--bg-muted); /* override .card base */
-  margin: var(--space-5) auto;
-  padding: var(--space-4);
-  max-width: 24rem;
+/* Below-fold CTA line */
+.below-fold-cta {
+  margin-top: var(--space-5);
   text-align: center;
 }
 
-.updates-cta-card strong {
-  font-size: var(--text-md);
-  color: var(--brand);
-}
-
-.updates-cta-card p {
+.below-fold-cta p {
   font-size: var(--text-base);
-  color: var(--text-secondary);
+  color: var(--text-muted);
   margin: 0;
 }
 
-.updates-cta-card .btn-primary {
-  align-self: flex-start;
-  text-decoration: none;
-  display: inline-block;
+.cta-link-inline {
+  color: var(--brand);
+  text-decoration: underline;
+  font-weight: 700;
+}
+
+.cta-link-inline:hover {
+  color: var(--brand-hover);
 }
 
 /* Section spacing for below-fold flow */
-#updates-cta { margin-top: 1rem; }
-details#week-section { margin-top: 1rem; }
+#updates-cta { margin-top: var(--space-5); }
+details#week-section { margin-top: var(--space-5); }
 
 /* Calendar subscription CTA */
 .calendar-cta {

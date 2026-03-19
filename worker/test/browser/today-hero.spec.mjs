@@ -1,10 +1,10 @@
 import { expect, test } from "@playwright/test";
 
 /**
- * Today page hero card tests (TDAY-01, TDAY-02, TDAY-05, TDAY-06, TDAY-07).
+ * Today page hero card tests (TDAY-01, TDAY-02, TDAY-06, TDAY-07).
  *
- * Covers: hero card display, rarity badge, flavor signal nudge,
- * "Want this every day?" CTA, and absence of removed sections.
+ * Covers: hero card display, rarity badge,
+ * "Get daily flavor alerts" CTA, and absence of removed sections.
  */
 
 // Mock store manifest
@@ -72,11 +72,6 @@ const MOCK_FLAVORS = {
   fetched_at: new Date().toISOString(),
 };
 
-// Mock signals response
-const MOCK_SIGNALS = {
-  signals: [{ headline: "Peaks on Sundays", explanation: "This flavor appears 2x more on Sundays" }],
-};
-
 // Mock geo response
 const MOCK_GEO = { lat: 43.0, lon: -89.4, city: "Madison", regionName: "Wisconsin" };
 
@@ -119,15 +114,6 @@ async function setupTodayPage(page) {
       status: 200,
       contentType: "application/json",
       body: JSON.stringify(MOCK_FLAVORS),
-    });
-  });
-
-  // Mock signals endpoint
-  await context.route("**/api/v1/signals/*", function (route) {
-    route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify(MOCK_SIGNALS),
     });
   });
 
@@ -215,25 +201,9 @@ test("TDAY-02: rarity badge displays when flavor is rare", async ({ page }) => {
 });
 
 // ---------------------------------------------------------------------------
-// TDAY-05: Flavor signal displays when relevant
+// TDAY-06: "Get daily flavor alerts" CTA links to updates
 // ---------------------------------------------------------------------------
-test("TDAY-05: flavor signal displays when relevant", async ({ page }) => {
-  await setupTodayPage(page);
-
-  // Wait a bit for signals to load (async fetch)
-  await page.waitForTimeout(2000);
-
-  var signalsSection = page.locator("#signals-section");
-  await expect(signalsSection).toBeVisible();
-
-  var signalsText = await signalsSection.textContent();
-  expect(signalsText).toMatch(/Peaks on Sundays/);
-});
-
-// ---------------------------------------------------------------------------
-// TDAY-06: "Want this every day?" CTA links to calendar
-// ---------------------------------------------------------------------------
-test("TDAY-06: want this every day CTA links to updates", async ({ page }) => {
+test("TDAY-06: get daily flavor alerts CTA links to updates", async ({ page }) => {
   await setupTodayPage(page);
 
   // Look for the CTA text
@@ -241,9 +211,9 @@ test("TDAY-06: want this every day CTA links to updates", async ({ page }) => {
   await expect(ctaSection).toBeVisible();
 
   var ctaText = await ctaSection.textContent();
-  expect(ctaText).toMatch(/Want this every day/);
+  expect(ctaText).toMatch(/Get daily flavor alerts/);
 
-  // Find link to updates page (changed from calendar.html to updates.html)
+  // Find link to updates page
   var updatesLink = ctaSection.locator("a[href*='updates']");
   await expect(updatesLink).toBeVisible();
 });
