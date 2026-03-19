@@ -167,7 +167,7 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. ML prediction pipeline items (ensemble, XGBoost, confidence intervals) are moved to "Won't Do" in TODO.md with documented rationale
   2. Any other stale TODO items from prior milestones are triaged: either closed with rationale, promoted to v3.0 scope, or explicitly deferred
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
 - [ ] 30-01: Triage TODO.md -- move ML items to Won't Do, review and resolve all stale entries
