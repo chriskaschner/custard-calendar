@@ -157,7 +157,7 @@ Phases 26 is strictly first. Phases 27, 28, and 29 can proceed in parallel after
 | 18-19 | v1.4 | 4/4 | Complete | 2026-03-13 |
 | 20-25 | v1.5 | 10/10 | Complete | 2026-03-18 |
 | 26. AI Cone Generation | 2/3 | In Progress|  | - |
-| 27. Client-Side Art Migration | 2/2 | Complete   | 2026-03-19 | - |
+| 27. Client-Side Art Migration | 2/2 | Complete    | 2026-03-19 | - |
 | 28. Worker Social Card Migration | v2.0 | 0/TBD | Not started | - |
 | 29. Scriptable Widget Unification | v2.0 | 0/TBD | Not started | - |
 
