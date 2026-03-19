@@ -364,7 +364,7 @@ var CustardToday = (function () {
     if (day.type === 'confirmed') {
       todayCard.classList.add('day-card-confirmed');
       todayCard.style.borderLeftColor = color;
-      // Use hero cone PNG with HD SVG fallback
+      // Use hero cone PNG with L0 SVG fallback
       renderHeroCone(day.flavor, todayCone, 6);
       todayCone.hidden = false;
       todayFlavor.textContent = day.flavor;
