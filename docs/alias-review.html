@@ -1,0 +1,3176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Non-Culver's Alias Review (53 Flavors)</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0e1117; color: #e6edf3; font-family: system-ui, sans-serif; padding: 16px; }
+
+  .header { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; flex-wrap: wrap; }
+  h1 { font-size: 18px; }
+  .progress { font-size: 14px; color: #8b949e; }
+  .progress-bar { width: 200px; height: 8px; background: #21262d; border-radius: 4px; overflow: hidden; }
+  .progress-fill { height: 100%; background: #6dd49b; transition: width 0.3s; }
+
+  .filters { display: flex; gap: 8px; margin-bottom: 12px; }
+  .filters button { background: #21262d; color: #e6edf3; border: 1px solid #30363d; padding: 4px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; }
+  .filters button.active { background: #388bfd; border-color: #388bfd; }
+
+  .flavor-row { display: flex; gap: 8px; align-items: flex-start; padding: 12px; margin-bottom: 4px; border: 1px solid #21262d; border-radius: 6px; background: #161b22; }
+  .flavor-row[data-status="assigned"] { border-color: #238636; }
+  .flavor-row[data-status="skipped"] { border-color: #8b949e; opacity: 0.6; }
+  .flavor-row.hidden { display: none; }
+
+  .flavor-info { width: 180px; flex-shrink: 0; }
+  .flavor-name { font-size: 13px; font-weight: 600; }
+  .flavor-desc { display: block; font-size: 11px; color: #8b949e; margin: 4px 0; line-height: 1.3; }
+  .flavor-profile { display: block; font-size: 10px; color: #6e7681; font-family: monospace; }
+
+  .tag { font-size: 9px; padding: 1px 6px; border-radius: 3px; margin-left: 4px; vertical-align: middle; }
+  .tag.pure { background: #1f6feb; color: #fff; }
+  .tag.gen { background: #238636; color: #fff; }
+  .tag.alias { background: #6e40c9; color: #fff; }
+
+  .options { flex: 1; }
+  .section-label { font-size: 10px; color: #8b949e; display: block; margin-bottom: 4px; }
+  .alias-section { margin-bottom: 8px; }
+  .own-section { border-top: 1px solid #21262d; padding-top: 8px; }
+
+  .match-options { display: flex; gap: 8px; }
+  .match-option { cursor: pointer; border: 3px solid transparent; border-radius: 4px; text-align: center; transition: border-color 0.15s; }
+  .match-option:hover { border-color: #58a6ff; }
+  .match-option.selected { border-color: #6dd49b; }
+  .match-option img { display: block; width: 100px; height: 117px; object-fit: contain; background: repeating-conic-gradient(#2d333b 0% 25%, #22272e 0% 50%) 0 0 / 12px 12px; border-radius: 2px; }
+  .match-label { display: block; font-size: 10px; margin-top: 2px; }
+  .match-score { display: block; font-size: 9px; color: #6e7681; }
+
+  .candidates { display: flex; gap: 6px; }
+  .candidate { position: relative; cursor: pointer; border: 3px solid transparent; border-radius: 4px; transition: border-color 0.15s; }
+  .candidate:hover { border-color: #58a6ff; }
+  .candidate.selected { border-color: #6dd49b; }
+  .candidate img { display: block; width: 100px; height: 117px; object-fit: contain; background: repeating-conic-gradient(#2d333b 0% 25%, #22272e 0% 50%) 0 0 / 12px 12px; border-radius: 2px; }
+  .candidate .label { position: absolute; bottom: 2px; right: 2px; background: rgba(0,0,0,0.7); color: #e6edf3; font-size: 9px; padding: 1px 5px; border-radius: 2px; }
+
+  .actions { width: 50px; flex-shrink: 0; }
+  .skip-btn { background: #21262d; color: #8b949e; border: 1px solid #30363d; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; }
+
+  .export-bar { position: sticky; bottom: 0; background: #0e1117; border-top: 1px solid #30363d; padding: 12px; display: flex; gap: 12px; align-items: center; }
+  .export-bar button { background: #238636; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 14px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Non-Culver's Alias Review</h1>
+  <div class="progress">
+    <span id="count">0</span>/53 assigned
+    <div class="progress-bar"><div class="progress-fill" id="bar" style="width:0%"></div></div>
+  </div>
+</div>
+
+<div class="filters">
+  <button class="active" onclick="filterRows('all', this)">All (53)</button>
+  <button onclick="filterRows('pending', this)">Pending</button>
+  <button onclick="filterRows('assigned', this)">Assigned</button>
+  <button onclick="filterRows('skipped', this)">Skipped</button>
+</div>
+
+
+    <div class="flavor-row" data-flavor="badger-claw" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">Badger Claw</span> <span class="tag gen">has candidates</span>
+        <span class="flavor-desc">Vanilla Fresh Frozen Custard with caramel, cashew pieces, and fudge bits.</span>
+        <span class="flavor-profile">base: vanilla, ribbon: caramel, toppings: cashew, fudge_bits, density: standard</span>
+      </div>
+      <div class="options">
+        <div class="alias-section">
+          <span class="section-label">Reuse Culver's cone:</span>
+          <div class="match-options">
+      <div class="match-option" data-flavor="badger-claw" data-alias="caramel-cashew" onclick="selectAlias(this)">
+        <img src="assets/cones/caramel-cashew.png" loading="lazy" />
+        <span class="match-label">Caramel Cashew</span>
+        <span class="match-score">score: 11</span>
+      </div>
+      <div class="match-option" data-flavor="badger-claw" data-alias="turtle" onclick="selectAlias(this)">
+        <img src="assets/cones/turtle.png" loading="lazy" />
+        <span class="match-label">Turtle</span>
+        <span class="match-score">score: 9</span>
+      </div>
+      <div class="match-option" data-flavor="badger-claw" data-alias="salted-double-caramel-pecan" onclick="selectAlias(this)">
+        <img src="assets/cones/salted-double-caramel-pecan.png" loading="lazy" />
+        <span class="match-label">Salted Double Caramel Pecan</span>
+        <span class="match-score">score: 8</span>
+      </div></div>
+        </div>
+        
+        <div class="own-section">
+          <span class="section-label">Own candidates:</span>
+          <div class="candidates">
+    <div class="candidate" data-flavor="badger-claw" data-file="badger-claw-1.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/badger-claw/badger-claw-1.png" loading="lazy" />
+      <span class="label">#1</span>
+    </div>
+    <div class="candidate" data-flavor="badger-claw" data-file="badger-claw-2.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/badger-claw/badger-claw-2.png" loading="lazy" />
+      <span class="label">#2</span>
+    </div>
+    <div class="candidate" data-flavor="badger-claw" data-file="badger-claw-3.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/badger-claw/badger-claw-3.png" loading="lazy" />
+      <span class="label">#3</span>
+    </div>
+    <div class="candidate" data-flavor="badger-claw" data-file="badger-claw-4.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/badger-claw/badger-claw-4.png" loading="lazy" />
+      <span class="label">#4</span>
+    </div>
+    <div class="candidate" data-flavor="badger-claw" data-file="badger-claw-5.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/badger-claw/badger-claw-5.png" loading="lazy" />
+      <span class="label">#5</span>
+    </div></div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="skip-btn" onclick="skipFlavor('badger-claw')">Skip</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="bailey-s-irish-cream" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">Bailey'S Irish Cream</span> <span class="tag gen">has candidates</span>
+        <span class="flavor-desc">Vanilla Fresh Frozen Custard swirled with chocolate syrup in a smooth Irish cream style.</span>
+        <span class="flavor-profile">base: vanilla, ribbon: chocolate_syrup, density: pure</span>
+      </div>
+      <div class="options">
+        <div class="alias-section">
+          <span class="section-label">Reuse Culver's cone:</span>
+          <div class="match-options">
+      <div class="match-option" data-flavor="bailey-s-irish-cream" data-alias="caramel-cashew" onclick="selectAlias(this)">
+        <img src="assets/cones/caramel-cashew.png" loading="lazy" />
+        <span class="match-label">Caramel Cashew</span>
+        <span class="match-score">score: 6</span>
+      </div>
+      <div class="match-option" data-flavor="bailey-s-irish-cream" data-alias="caramel-fudge-cookie-dough" onclick="selectAlias(this)">
+        <img src="assets/cones/caramel-fudge-cookie-dough.png" loading="lazy" />
+        <span class="match-label">Caramel Fudge Cookie Dough</span>
+        <span class="match-score">score: 6</span>
+      </div>
+      <div class="match-option" data-flavor="bailey-s-irish-cream" data-alias="caramel-peanut-buttercup" onclick="selectAlias(this)">
+        <img src="assets/cones/caramel-peanut-buttercup.png" loading="lazy" />
+        <span class="match-label">Caramel Peanut Buttercup</span>
+        <span class="match-score">score: 6</span>
+      </div></div>
+        </div>
+        
+        <div class="own-section">
+          <span class="section-label">Own candidates:</span>
+          <div class="candidates">
+    <div class="candidate" data-flavor="bailey-s-irish-cream" data-file="bailey-s-irish-cream-1.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/bailey-s-irish-cream/bailey-s-irish-cream-1.png" loading="lazy" />
+      <span class="label">#1</span>
+    </div>
+    <div class="candidate" data-flavor="bailey-s-irish-cream" data-file="bailey-s-irish-cream-2.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/bailey-s-irish-cream/bailey-s-irish-cream-2.png" loading="lazy" />
+      <span class="label">#2</span>
+    </div>
+    <div class="candidate" data-flavor="bailey-s-irish-cream" data-file="bailey-s-irish-cream-3.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/bailey-s-irish-cream/bailey-s-irish-cream-3.png" loading="lazy" />
+      <span class="label">#3</span>
+    </div>
+    <div class="candidate" data-flavor="bailey-s-irish-cream" data-file="bailey-s-irish-cream-4.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/bailey-s-irish-cream/bailey-s-irish-cream-4.png" loading="lazy" />
+      <span class="label">#4</span>
+    </div>
+    <div class="candidate" data-flavor="bailey-s-irish-cream" data-file="bailey-s-irish-cream-5.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/bailey-s-irish-cream/bailey-s-irish-cream-5.png" loading="lazy" />
+      <span class="label">#5</span>
+    </div></div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="skip-btn" onclick="skipFlavor('bailey-s-irish-cream')">Skip</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="banana-cream-pie" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">Banana Cream Pie</span> <span class="tag gen">has candidates</span>
+        <span class="flavor-desc">Banana Fresh Frozen Custard with graham cracker crumbles and cookie crumbs.</span>
+        <span class="flavor-profile">base: banana, toppings: graham_cracker, cookie_crumbs, density: standard</span>
+      </div>
+      <div class="options">
+        <div class="alias-section">
+          <span class="section-label">Reuse Culver's cone:</span>
+          <div class="match-options">
+      <div class="match-option" data-flavor="banana-cream-pie" data-alias="georgia-peach" onclick="selectAlias(this)">
+        <img src="assets/cones/georgia-peach.png" loading="lazy" />
+        <span class="match-label">Georgia Peach</span>
+        <span class="match-score">score: 4</span>
+      </div>
+      <div class="match-option" data-flavor="banana-cream-pie" data-alias="double-strawberry" onclick="selectAlias(this)">
+        <img src="assets/cones/double-strawberry.png" loading="lazy" />
+        <span class="match-label">Double Strawberry</span>
+        <span class="match-score">score: 3</span>
+      </div>
+      <div class="match-option" data-flavor="banana-cream-pie" data-alias="andes-mint-avalanche" onclick="selectAlias(this)">
+        <img src="assets/cones/andes-mint-avalanche.png" loading="lazy" />
+        <span class="match-label">Andes Mint Avalanche</span>
+        <span class="match-score">score: 2</span>
+      </div></div>
+        </div>
+        
+        <div class="own-section">
+          <span class="section-label">Own candidates:</span>
+          <div class="candidates">
+    <div class="candidate" data-flavor="banana-cream-pie" data-file="banana-cream-pie-1.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/banana-cream-pie/banana-cream-pie-1.png" loading="lazy" />
+      <span class="label">#1</span>
+    </div>
+    <div class="candidate" data-flavor="banana-cream-pie" data-file="banana-cream-pie-2.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/banana-cream-pie/banana-cream-pie-2.png" loading="lazy" />
+      <span class="label">#2</span>
+    </div>
+    <div class="candidate" data-flavor="banana-cream-pie" data-file="banana-cream-pie-3.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/banana-cream-pie/banana-cream-pie-3.png" loading="lazy" />
+      <span class="label">#3</span>
+    </div>
+    <div class="candidate" data-flavor="banana-cream-pie" data-file="banana-cream-pie-4.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/banana-cream-pie/banana-cream-pie-4.png" loading="lazy" />
+      <span class="label">#4</span>
+    </div>
+    <div class="candidate" data-flavor="banana-cream-pie" data-file="banana-cream-pie-5.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/banana-cream-pie/banana-cream-pie-5.png" loading="lazy" />
+      <span class="label">#5</span>
+    </div></div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="skip-btn" onclick="skipFlavor('banana-cream-pie')">Skip</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="blue-moon" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">Blue Moon</span> <span class="tag pure">pure base</span>
+        <span class="flavor-desc">Blue Moon Fresh Frozen Custard with a bright fruity-vanilla flavor.</span>
+        <span class="flavor-profile">base: blue_moon, density: pure</span>
+      </div>
+      <div class="options">
+        <div class="alias-section">
+          <span class="section-label">Reuse Culver's cone:</span>
+          <div class="match-options">
+      <div class="match-option" data-flavor="blue-moon" data-alias="dark-chocolate-decadence" onclick="selectAlias(this)">
+        <img src="assets/cones/dark-chocolate-decadence.png" loading="lazy" />
+        <span class="match-label">Dark Chocolate Decadence</span>
+        <span class="match-score">score: 2</span>
+      </div>
+      <div class="match-option" data-flavor="blue-moon" data-alias="vanilla" onclick="selectAlias(this)">
+        <img src="assets/cones/vanilla.png" loading="lazy" />
+        <span class="match-label">Vanilla</span>
+        <span class="match-score">score: 2</span>
+      </div></div>
+        </div>
+        
+        <div class="own-section">
+          <span class="section-label">Own candidates:</span>
+          <div class="candidates">
+    <div class="candidate" data-flavor="blue-moon" data-file="blue-moon-1.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/blue-moon/blue-moon-1.png" loading="lazy" />
+      <span class="label">#1</span>
+    </div>
+    <div class="candidate" data-flavor="blue-moon" data-file="blue-moon-2.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/blue-moon/blue-moon-2.png" loading="lazy" />
+      <span class="label">#2</span>
+    </div>
+    <div class="candidate" data-flavor="blue-moon" data-file="blue-moon-3.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/blue-moon/blue-moon-3.png" loading="lazy" />
+      <span class="label">#3</span>
+    </div>
+    <div class="candidate" data-flavor="blue-moon" data-file="blue-moon-4.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/blue-moon/blue-moon-4.png" loading="lazy" />
+      <span class="label">#4</span>
+    </div>
+    <div class="candidate" data-flavor="blue-moon" data-file="blue-moon-5.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/blue-moon/blue-moon-5.png" loading="lazy" />
+      <span class="label">#5</span>
+    </div></div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="skip-btn" onclick="skipFlavor('blue-moon')">Skip</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="bonfire-s-mores" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">Bonfire S'Mores</span> <span class="tag gen">has candidates</span>
+        <span class="flavor-desc">Chocolate Fresh Frozen Custard with marshmallow swirl and graham cracker pieces.</span>
+        <span class="flavor-profile">base: chocolate, ribbon: marshmallow, toppings: graham_cracker, density: standard</span>
+      </div>
+      <div class="options">
+        <div class="alias-section">
+          <span class="section-label">Reuse Culver's cone:</span>
+          <div class="match-options">
+      <div class="match-option" data-flavor="bonfire-s-mores" data-alias="brownie-thunder" onclick="selectAlias(this)">
+        <img src="assets/cones/brownie-thunder.png" loading="lazy" />
+        <span class="match-label">Brownie Thunder</span>
+        <span class="match-score">score: 8</span>
+      </div>
+      <div class="match-option" data-flavor="bonfire-s-mores" data-alias="chocolate-oreo-volcano" onclick="selectAlias(this)">
+        <img src="assets/cones/chocolate-oreo-volcano.png" loading="lazy" />
+        <span class="match-label">Chocolate Oreo Volcano</span>
+        <span class="match-score">score: 8</span>
+      </div>
+      <div class="match-option" data-flavor="bonfire-s-mores" data-alias="chocolate-caramel-twist" onclick="selectAlias(this)">
+        <img src="assets/cones/chocolate-caramel-twist.png" loading="lazy" />
+        <span class="match-label">Chocolate Caramel Twist</span>
+        <span class="match-score">score: 7</span>
+      </div></div>
+        </div>
+        
+        <div class="own-section">
+          <span class="section-label">Own candidates:</span>
+          <div class="candidates">
+    <div class="candidate" data-flavor="bonfire-s-mores" data-file="bonfire-s-mores-1.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/bonfire-s-mores/bonfire-s-mores-1.png" loading="lazy" />
+      <span class="label">#1</span>
+    </div>
+    <div class="candidate" data-flavor="bonfire-s-mores" data-file="bonfire-s-mores-2.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/bonfire-s-mores/bonfire-s-mores-2.png" loading="lazy" />
+      <span class="label">#2</span>
+    </div>
+    <div class="candidate" data-flavor="bonfire-s-mores" data-file="bonfire-s-mores-3.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/bonfire-s-mores/bonfire-s-mores-3.png" loading="lazy" />
+      <span class="label">#3</span>
+    </div>
+    <div class="candidate" data-flavor="bonfire-s-mores" data-file="bonfire-s-mores-4.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/bonfire-s-mores/bonfire-s-mores-4.png" loading="lazy" />
+      <span class="label">#4</span>
+    </div>
+    <div class="candidate" data-flavor="bonfire-s-mores" data-file="bonfire-s-mores-5.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/bonfire-s-mores/bonfire-s-mores-5.png" loading="lazy" />
+      <span class="label">#5</span>
+    </div></div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="skip-btn" onclick="skipFlavor('bonfire-s-mores')">Skip</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="boston-cream" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">Boston Cream</span> <span class="tag gen">has candidates</span>
+        <span class="flavor-desc">Vanilla Fresh Frozen Custard with chocolate syrup and chocolate cake pieces.</span>
+        <span class="flavor-profile">base: vanilla, ribbon: chocolate_syrup, toppings: cake, density: standard</span>
+      </div>
+      <div class="options">
+        <div class="alias-section">
+          <span class="section-label">Reuse Culver's cone:</span>
+          <div class="match-options">
+      <div class="match-option" data-flavor="boston-cream" data-alias="caramel-cashew" onclick="selectAlias(this)">
+        <img src="assets/cones/caramel-cashew.png" loading="lazy" />
+        <span class="match-label">Caramel Cashew</span>
+        <span class="match-score">score: 7</span>
+      </div>
+      <div class="match-option" data-flavor="boston-cream" data-alias="caramel-fudge-cookie-dough" onclick="selectAlias(this)">
+        <img src="assets/cones/caramel-fudge-cookie-dough.png" loading="lazy" />
+        <span class="match-label">Caramel Fudge Cookie Dough</span>
+        <span class="match-score">score: 7</span>
+      </div>
+      <div class="match-option" data-flavor="boston-cream" data-alias="caramel-peanut-buttercup" onclick="selectAlias(this)">
+        <img src="assets/cones/caramel-peanut-buttercup.png" loading="lazy" />
+        <span class="match-label">Caramel Peanut Buttercup</span>
+        <span class="match-score">score: 7</span>
+      </div></div>
+        </div>
+        
+        <div class="own-section">
+          <span class="section-label">Own candidates:</span>
+          <div class="candidates">
+    <div class="candidate" data-flavor="boston-cream" data-file="boston-cream-1.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/boston-cream/boston-cream-1.png" loading="lazy" />
+      <span class="label">#1</span>
+    </div>
+    <div class="candidate" data-flavor="boston-cream" data-file="boston-cream-2.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/boston-cream/boston-cream-2.png" loading="lazy" />
+      <span class="label">#2</span>
+    </div>
+    <div class="candidate" data-flavor="boston-cream" data-file="boston-cream-3.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/boston-cream/boston-cream-3.png" loading="lazy" />
+      <span class="label">#3</span>
+    </div>
+    <div class="candidate" data-flavor="boston-cream" data-file="boston-cream-4.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/boston-cream/boston-cream-4.png" loading="lazy" />
+      <span class="label">#4</span>
+    </div>
+    <div class="candidate" data-flavor="boston-cream" data-file="boston-cream-5.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/boston-cream/boston-cream-5.png" loading="lazy" />
+      <span class="label">#5</span>
+    </div></div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="skip-btn" onclick="skipFlavor('boston-cream')">Skip</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="brownie-batter-overload" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">Brownie Batter Overload</span> <span class="tag gen">has candidates</span>
+        <span class="flavor-desc">Chocolate Fresh Frozen Custard overloaded with brownie batter chunks.</span>
+        <span class="flavor-profile">base: chocolate, toppings: brownie, density: overload</span>
+      </div>
+      <div class="options">
+        <div class="alias-section">
+          <span class="section-label">Reuse Culver's cone:</span>
+          <div class="match-options">
+      <div class="match-option" data-flavor="brownie-batter-overload" data-alias="brownie-thunder" onclick="selectAlias(this)">
+        <img src="assets/cones/brownie-thunder.png" loading="lazy" />
+        <span class="match-label">Brownie Thunder</span>
+        <span class="match-score">score: 7</span>
+      </div>
+      <div class="match-option" data-flavor="brownie-batter-overload" data-alias="chocolate-heath-crunch" onclick="selectAlias(this)">
+        <img src="assets/cones/chocolate-heath-crunch.png" loading="lazy" />
+        <span class="match-label">Chocolate Heath Crunch</span>
+        <span class="match-score">score: 6</span>
+      </div>
+      <div class="match-option" data-flavor="brownie-batter-overload" data-alias="oreo-cookie-overload" onclick="selectAlias(this)">
+        <img src="assets/cones/oreo-cookie-overload.png" loading="lazy" />
+        <span class="match-label">OREO Cookie Overload</span>
+        <span class="match-score">score: 6</span>
+      </div></div>
+        </div>
+        
+        <div class="own-section">
+          <span class="section-label">Own candidates:</span>
+          <div class="candidates">
+    <div class="candidate" data-flavor="brownie-batter-overload" data-file="brownie-batter-overload-1.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/brownie-batter-overload/brownie-batter-overload-1.png" loading="lazy" />
+      <span class="label">#1</span>
+    </div>
+    <div class="candidate" data-flavor="brownie-batter-overload" data-file="brownie-batter-overload-2.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/brownie-batter-overload/brownie-batter-overload-2.png" loading="lazy" />
+      <span class="label">#2</span>
+    </div>
+    <div class="candidate" data-flavor="brownie-batter-overload" data-file="brownie-batter-overload-3.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/brownie-batter-overload/brownie-batter-overload-3.png" loading="lazy" />
+      <span class="label">#3</span>
+    </div>
+    <div class="candidate" data-flavor="brownie-batter-overload" data-file="brownie-batter-overload-4.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/brownie-batter-overload/brownie-batter-overload-4.png" loading="lazy" />
+      <span class="label">#4</span>
+    </div>
+    <div class="candidate" data-flavor="brownie-batter-overload" data-file="brownie-batter-overload-5.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/brownie-batter-overload/brownie-batter-overload-5.png" loading="lazy" />
+      <span class="label">#5</span>
+    </div></div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="skip-btn" onclick="skipFlavor('brownie-batter-overload')">Skip</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="burgundy-cherry" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">Burgundy Cherry</span> <span class="tag gen">has candidates</span>
+        <span class="flavor-desc">Cherry Fresh Frozen Custard with cherry pieces.</span>
+        <span class="flavor-profile">base: cherry, toppings: cherry_bits, density: standard</span>
+      </div>
+      <div class="options">
+        <div class="alias-section">
+          <span class="section-label">Reuse Culver's cone:</span>
+          <div class="match-options">
+      <div class="match-option" data-flavor="burgundy-cherry" data-alias="georgia-peach" onclick="selectAlias(this)">
+        <img src="assets/cones/georgia-peach.png" loading="lazy" />
+        <span class="match-label">Georgia Peach</span>
+        <span class="match-score">score: 4</span>
+      </div>
+      <div class="match-option" data-flavor="burgundy-cherry" data-alias="double-strawberry" onclick="selectAlias(this)">
+        <img src="assets/cones/double-strawberry.png" loading="lazy" />
+        <span class="match-label">Double Strawberry</span>
+        <span class="match-score">score: 3</span>
+      </div>
+      <div class="match-option" data-flavor="burgundy-cherry" data-alias="andes-mint-avalanche" onclick="selectAlias(this)">
+        <img src="assets/cones/andes-mint-avalanche.png" loading="lazy" />
+        <span class="match-label">Andes Mint Avalanche</span>
+        <span class="match-score">score: 2</span>
+      </div></div>
+        </div>
+        
+        <div class="own-section">
+          <span class="section-label">Own candidates:</span>
+          <div class="candidates">
+    <div class="candidate" data-flavor="burgundy-cherry" data-file="burgundy-cherry-1.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/burgundy-cherry/burgundy-cherry-1.png" loading="lazy" />
+      <span class="label">#1</span>
+    </div>
+    <div class="candidate" data-flavor="burgundy-cherry" data-file="burgundy-cherry-2.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/burgundy-cherry/burgundy-cherry-2.png" loading="lazy" />
+      <span class="label">#2</span>
+    </div>
+    <div class="candidate" data-flavor="burgundy-cherry" data-file="burgundy-cherry-3.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/burgundy-cherry/burgundy-cherry-3.png" loading="lazy" />
+      <span class="label">#3</span>
+    </div>
+    <div class="candidate" data-flavor="burgundy-cherry" data-file="burgundy-cherry-4.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/burgundy-cherry/burgundy-cherry-4.png" loading="lazy" />
+      <span class="label">#4</span>
+    </div>
+    <div class="candidate" data-flavor="burgundy-cherry" data-file="burgundy-cherry-5.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/burgundy-cherry/burgundy-cherry-5.png" loading="lazy" />
+      <span class="label">#5</span>
+    </div></div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="skip-btn" onclick="skipFlavor('burgundy-cherry')">Skip</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="butter-brickle" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">Butter Brickle</span> <span class="tag gen">has candidates</span>
+        <span class="flavor-desc">Butter Pecan Fresh Frozen Custard with Heath toffee bits.</span>
+        <span class="flavor-profile">base: butter_pecan, toppings: heath, density: standard</span>
+      </div>
+      <div class="options">
+        <div class="alias-section">
+          <span class="section-label">Reuse Culver's cone:</span>
+          <div class="match-options">
+      <div class="match-option" data-flavor="butter-brickle" data-alias="butter-pecan" onclick="selectAlias(this)">
+        <img src="assets/cones/butter-pecan.png" loading="lazy" />
+        <span class="match-label">Butter Pecan</span>
+        <span class="match-score">score: 7</span>
+      </div>
+      <div class="match-option" data-flavor="butter-brickle" data-alias="caramel-pecan" onclick="selectAlias(this)">
+        <img src="assets/cones/caramel-pecan.png" loading="lazy" />
+        <span class="match-label">Caramel Pecan</span>
+        <span class="match-score">score: 4</span>
+      </div>
+      <div class="match-option" data-flavor="butter-brickle" data-alias="chocolate-covered-strawberry" onclick="selectAlias(this)">
+        <img src="assets/cones/chocolate-covered-strawberry.png" loading="lazy" />
+        <span class="match-label">Chocolate Covered Strawberry</span>
+        <span class="match-score">score: 4</span>
+      </div></div>
+        </div>
+        
+        <div class="own-section">
+          <span class="section-label">Own candidates:</span>
+          <div class="candidates">
+    <div class="candidate" data-flavor="butter-brickle" data-file="butter-brickle-1.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/butter-brickle/butter-brickle-1.png" loading="lazy" />
+      <span class="label">#1</span>
+    </div>
+    <div class="candidate" data-flavor="butter-brickle" data-file="butter-brickle-2.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/butter-brickle/butter-brickle-2.png" loading="lazy" />
+      <span class="label">#2</span>
+    </div>
+    <div class="candidate" data-flavor="butter-brickle" data-file="butter-brickle-3.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/butter-brickle/butter-brickle-3.png" loading="lazy" />
+      <span class="label">#3</span>
+    </div>
+    <div class="candidate" data-flavor="butter-brickle" data-file="butter-brickle-4.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/butter-brickle/butter-brickle-4.png" loading="lazy" />
+      <span class="label">#4</span>
+    </div>
+    <div class="candidate" data-flavor="butter-brickle" data-file="butter-brickle-5.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/butter-brickle/butter-brickle-5.png" loading="lazy" />
+      <span class="label">#5</span>
+    </div></div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="skip-btn" onclick="skipFlavor('butter-brickle')">Skip</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="butter-finger-blast" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">Butter Finger Blast</span> <span class="tag gen">has candidates</span>
+        <span class="flavor-desc">Vanilla Fresh Frozen Custard packed with Butterfinger crunch pieces.</span>
+        <span class="flavor-profile">base: vanilla, toppings: butterfinger, density: standard</span>
+      </div>
+      <div class="options">
+        <div class="alias-section">
+          <span class="section-label">Reuse Culver's cone:</span>
+          <div class="match-options">
+      <div class="match-option" data-flavor="butter-finger-blast" data-alias="chocolate-covered-strawberry" onclick="selectAlias(this)">
+        <img src="assets/cones/chocolate-covered-strawberry.png" loading="lazy" />
+        <span class="match-label">Chocolate Covered Strawberry</span>
+        <span class="match-score">score: 7</span>
+      </div>
+      <div class="match-option" data-flavor="butter-finger-blast" data-alias="caramel-cashew" onclick="selectAlias(this)">
+        <img src="assets/cones/caramel-cashew.png" loading="lazy" />
+        <span class="match-label">Caramel Cashew</span>
+        <span class="match-score">score: 6</span>
+      </div>
+      <div class="match-option" data-flavor="butter-finger-blast" data-alias="caramel-fudge-cookie-dough" onclick="selectAlias(this)">
+        <img src="assets/cones/caramel-fudge-cookie-dough.png" loading="lazy" />
+        <span class="match-label">Caramel Fudge Cookie Dough</span>
+        <span class="match-score">score: 6</span>
+      </div></div>
+        </div>
+        
+        <div class="own-section">
+          <span class="section-label">Own candidates:</span>
+          <div class="candidates">
+    <div class="candidate" data-flavor="butter-finger-blast" data-file="butter-finger-blast-1.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/butter-finger-blast/butter-finger-blast-1.png" loading="lazy" />
+      <span class="label">#1</span>
+    </div>
+    <div class="candidate" data-flavor="butter-finger-blast" data-file="butter-finger-blast-2.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/butter-finger-blast/butter-finger-blast-2.png" loading="lazy" />
+      <span class="label">#2</span>
+    </div>
+    <div class="candidate" data-flavor="butter-finger-blast" data-file="butter-finger-blast-3.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/butter-finger-blast/butter-finger-blast-3.png" loading="lazy" />
+      <span class="label">#3</span>
+    </div>
+    <div class="candidate" data-flavor="butter-finger-blast" data-file="butter-finger-blast-4.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/butter-finger-blast/butter-finger-blast-4.png" loading="lazy" />
+      <span class="label">#4</span>
+    </div>
+    <div class="candidate" data-flavor="butter-finger-blast" data-file="butter-finger-blast-5.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/butter-finger-blast/butter-finger-blast-5.png" loading="lazy" />
+      <span class="label">#5</span>
+    </div></div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="skip-btn" onclick="skipFlavor('butter-finger-blast')">Skip</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="butterfinger-pecan" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">Butterfinger Pecan</span> <span class="tag gen">has candidates</span>
+        <span class="flavor-desc">Vanilla Fresh Frozen Custard with Butterfinger crunch pieces and pecans.</span>
+        <span class="flavor-profile">base: vanilla, toppings: butterfinger, pecan, density: standard</span>
+      </div>
+      <div class="options">
+        <div class="alias-section">
+          <span class="section-label">Reuse Culver's cone:</span>
+          <div class="match-options">
+      <div class="match-option" data-flavor="butterfinger-pecan" data-alias="double-butter-pecan" onclick="selectAlias(this)">
+        <img src="assets/cones/double-butter-pecan.png" loading="lazy" />
+        <span class="match-label">Double Butter Pecan</span>
+        <span class="match-score">score: 8</span>
+      </div>
+      <div class="match-option" data-flavor="butterfinger-pecan" data-alias="turtle" onclick="selectAlias(this)">
+        <img src="assets/cones/turtle.png" loading="lazy" />
+        <span class="match-label">Turtle</span>
+        <span class="match-score">score: 8</span>
+      </div>
+      <div class="match-option" data-flavor="butterfinger-pecan" data-alias="turtle-dove" onclick="selectAlias(this)">
+        <img src="assets/cones/turtle-dove.png" loading="lazy" />
+        <span class="match-label">Turtle Dove</span>
+        <span class="match-score">score: 8</span>
+      </div></div>
+        </div>
+        
+        <div class="own-section">
+          <span class="section-label">Own candidates:</span>
+          <div class="candidates">
+    <div class="candidate" data-flavor="butterfinger-pecan" data-file="butterfinger-pecan-1.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/butterfinger-pecan/butterfinger-pecan-1.png" loading="lazy" />
+      <span class="label">#1</span>
+    </div>
+    <div class="candidate" data-flavor="butterfinger-pecan" data-file="butterfinger-pecan-2.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/butterfinger-pecan/butterfinger-pecan-2.png" loading="lazy" />
+      <span class="label">#2</span>
+    </div>
+    <div class="candidate" data-flavor="butterfinger-pecan" data-file="butterfinger-pecan-3.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/butterfinger-pecan/butterfinger-pecan-3.png" loading="lazy" />
+      <span class="label">#3</span>
+    </div>
+    <div class="candidate" data-flavor="butterfinger-pecan" data-file="butterfinger-pecan-4.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/butterfinger-pecan/butterfinger-pecan-4.png" loading="lazy" />
+      <span class="label">#4</span>
+    </div>
+    <div class="candidate" data-flavor="butterfinger-pecan" data-file="butterfinger-pecan-5.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/butterfinger-pecan/butterfinger-pecan-5.png" loading="lazy" />
+      <span class="label">#5</span>
+    </div></div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="skip-btn" onclick="skipFlavor('butterfinger-pecan')">Skip</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="cappuccino-almond-fudge" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">Cappuccino Almond Fudge</span> <span class="tag gen">has candidates</span>
+        <span class="flavor-desc">Espresso Fresh Frozen Custard with fudge swirl and cashew pieces.</span>
+        <span class="flavor-profile">base: espresso, ribbon: fudge, toppings: cashew, density: standard</span>
+      </div>
+      <div class="options">
+        <div class="alias-section">
+          <span class="section-label">Reuse Culver's cone:</span>
+          <div class="match-options">
+      <div class="match-option" data-flavor="cappuccino-almond-fudge" data-alias="caramel-cashew" onclick="selectAlias(this)">
+        <img src="assets/cones/caramel-cashew.png" loading="lazy" />
+        <span class="match-label">Caramel Cashew</span>
+        <span class="match-score">score: 4</span>
+      </div>
+      <div class="match-option" data-flavor="cappuccino-almond-fudge" data-alias="caramel-fudge-cookie-dough" onclick="selectAlias(this)">
+        <img src="assets/cones/caramel-fudge-cookie-dough.png" loading="lazy" />
+        <span class="match-label">Caramel Fudge Cookie Dough</span>
+        <span class="match-score">score: 4</span>
+      </div>
+      <div class="match-option" data-flavor="cappuccino-almond-fudge" data-alias="crazy-for-cookie-dough" onclick="selectAlias(this)">
+        <img src="assets/cones/crazy-for-cookie-dough.png" loading="lazy" />
+        <span class="match-label">Crazy for Cookie Dough</span>
+        <span class="match-score">score: 4</span>
+      </div></div>
+        </div>
+        
+        <div class="own-section">
+          <span class="section-label">Own candidates:</span>
+          <div class="candidates">
+    <div class="candidate" data-flavor="cappuccino-almond-fudge" data-file="cappuccino-almond-fudge-1.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/cappuccino-almond-fudge/cappuccino-almond-fudge-1.png" loading="lazy" />
+      <span class="label">#1</span>
+    </div>
+    <div class="candidate" data-flavor="cappuccino-almond-fudge" data-file="cappuccino-almond-fudge-2.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/cappuccino-almond-fudge/cappuccino-almond-fudge-2.png" loading="lazy" />
+      <span class="label">#2</span>
+    </div>
+    <div class="candidate" data-flavor="cappuccino-almond-fudge" data-file="cappuccino-almond-fudge-3.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/cappuccino-almond-fudge/cappuccino-almond-fudge-3.png" loading="lazy" />
+      <span class="label">#3</span>
+    </div>
+    <div class="candidate" data-flavor="cappuccino-almond-fudge" data-file="cappuccino-almond-fudge-4.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/cappuccino-almond-fudge/cappuccino-almond-fudge-4.png" loading="lazy" />
+      <span class="label">#4</span>
+    </div>
+    <div class="candidate" data-flavor="cappuccino-almond-fudge" data-file="cappuccino-almond-fudge-5.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/cappuccino-almond-fudge/cappuccino-almond-fudge-5.png" loading="lazy" />
+      <span class="label">#5</span>
+    </div></div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="skip-btn" onclick="skipFlavor('cappuccino-almond-fudge')">Skip</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="cappuccino-cookie-crumble" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">Cappuccino Cookie Crumble</span> <span class="tag gen">has candidates</span>
+        <span class="flavor-desc">Espresso Fresh Frozen Custard with cookie crumbles.</span>
+        <span class="flavor-profile">base: espresso, toppings: cookie_crumbs, density: standard</span>
+      </div>
+      <div class="options">
+        <div class="alias-section">
+          <span class="section-label">Reuse Culver's cone:</span>
+          <div class="match-options">
+      <div class="match-option" data-flavor="cappuccino-cookie-crumble" data-alias="andes-mint-avalanche" onclick="selectAlias(this)">
+        <img src="assets/cones/andes-mint-avalanche.png" loading="lazy" />
+        <span class="match-label">Andes Mint Avalanche</span>
+        <span class="match-score">score: 2</span>
+      </div>
+      <div class="match-option" data-flavor="cappuccino-cookie-crumble" data-alias="blackberry-cobbler" onclick="selectAlias(this)">
+        <img src="assets/cones/blackberry-cobbler.png" loading="lazy" />
+        <span class="match-label">Blackberry Cobbler</span>
+        <span class="match-score">score: 2</span>
+      </div>
+      <div class="match-option" data-flavor="cappuccino-cookie-crumble" data-alias="butter-pecan" onclick="selectAlias(this)">
+        <img src="assets/cones/butter-pecan.png" loading="lazy" />
+        <span class="match-label">Butter Pecan</span>
+        <span class="match-score">score: 2</span>
+      </div></div>
+        </div>
+        
+        <div class="own-section">
+          <span class="section-label">Own candidates:</span>
+          <div class="candidates">
+    <div class="candidate" data-flavor="cappuccino-cookie-crumble" data-file="cappuccino-cookie-crumble-1.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/cappuccino-cookie-crumble/cappuccino-cookie-crumble-1.png" loading="lazy" />
+      <span class="label">#1</span>
+    </div>
+    <div class="candidate" data-flavor="cappuccino-cookie-crumble" data-file="cappuccino-cookie-crumble-2.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/cappuccino-cookie-crumble/cappuccino-cookie-crumble-2.png" loading="lazy" />
+      <span class="label">#2</span>
+    </div>
+    <div class="candidate" data-flavor="cappuccino-cookie-crumble" data-file="cappuccino-cookie-crumble-3.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/cappuccino-cookie-crumble/cappuccino-cookie-crumble-3.png" loading="lazy" />
+      <span class="label">#3</span>
+    </div>
+    <div class="candidate" data-flavor="cappuccino-cookie-crumble" data-file="cappuccino-cookie-crumble-4.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/cappuccino-cookie-crumble/cappuccino-cookie-crumble-4.png" loading="lazy" />
+      <span class="label">#4</span>
+    </div>
+    <div class="candidate" data-flavor="cappuccino-cookie-crumble" data-file="cappuccino-cookie-crumble-5.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/cappuccino-cookie-crumble/cappuccino-cookie-crumble-5.png" loading="lazy" />
+      <span class="label">#5</span>
+    </div></div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="skip-btn" onclick="skipFlavor('cappuccino-cookie-crumble')">Skip</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="cheri-amour-amaretto" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">Cheri Amour Amaretto</span> <span class="tag gen">has candidates</span>
+        <span class="flavor-desc">Cherry Fresh Frozen Custard with cherry pieces in an amaretto style.</span>
+        <span class="flavor-profile">base: cherry, toppings: cherry_bits, density: standard</span>
+      </div>
+      <div class="options">
+        <div class="alias-section">
+          <span class="section-label">Reuse Culver's cone:</span>
+          <div class="match-options">
+      <div class="match-option" data-flavor="cheri-amour-amaretto" data-alias="georgia-peach" onclick="selectAlias(this)">
+        <img src="assets/cones/georgia-peach.png" loading="lazy" />
+        <span class="match-label">Georgia Peach</span>
+        <span class="match-score">score: 4</span>
+      </div>
+      <div class="match-option" data-flavor="cheri-amour-amaretto" data-alias="double-strawberry" onclick="selectAlias(this)">
+        <img src="assets/cones/double-strawberry.png" loading="lazy" />
+        <span class="match-label">Double Strawberry</span>
+        <span class="match-score">score: 3</span>
+      </div>
+      <div class="match-option" data-flavor="cheri-amour-amaretto" data-alias="andes-mint-avalanche" onclick="selectAlias(this)">
+        <img src="assets/cones/andes-mint-avalanche.png" loading="lazy" />
+        <span class="match-label">Andes Mint Avalanche</span>
+        <span class="match-score">score: 2</span>
+      </div></div>
+        </div>
+        
+        <div class="own-section">
+          <span class="section-label">Own candidates:</span>
+          <div class="candidates">
+    <div class="candidate" data-flavor="cheri-amour-amaretto" data-file="cheri-amour-amaretto-1.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/cheri-amour-amaretto/cheri-amour-amaretto-1.png" loading="lazy" />
+      <span class="label">#1</span>
+    </div>
+    <div class="candidate" data-flavor="cheri-amour-amaretto" data-file="cheri-amour-amaretto-2.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/cheri-amour-amaretto/cheri-amour-amaretto-2.png" loading="lazy" />
+      <span class="label">#2</span>
+    </div>
+    <div class="candidate" data-flavor="cheri-amour-amaretto" data-file="cheri-amour-amaretto-3.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/cheri-amour-amaretto/cheri-amour-amaretto-3.png" loading="lazy" />
+      <span class="label">#3</span>
+    </div>
+    <div class="candidate" data-flavor="cheri-amour-amaretto" data-file="cheri-amour-amaretto-4.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/cheri-amour-amaretto/cheri-amour-amaretto-4.png" loading="lazy" />
+      <span class="label">#4</span>
+    </div>
+    <div class="candidate" data-flavor="cheri-amour-amaretto" data-file="cheri-amour-amaretto-5.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/cheri-amour-amaretto/cheri-amour-amaretto-5.png" loading="lazy" />
+      <span class="label">#5</span>
+    </div></div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="skip-btn" onclick="skipFlavor('cheri-amour-amaretto')">Skip</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="cherry-pecan" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">Cherry Pecan</span> <span class="tag gen">has candidates</span>
+        <span class="flavor-desc">Cherry Fresh Frozen Custard with cherry pieces and pecans.</span>
+        <span class="flavor-profile">base: cherry, toppings: cherry_bits, pecan, density: standard</span>
+      </div>
+      <div class="options">
+        <div class="alias-section">
+          <span class="section-label">Reuse Culver's cone:</span>
+          <div class="match-options">
+      <div class="match-option" data-flavor="cherry-pecan" data-alias="butter-pecan" onclick="selectAlias(this)">
+        <img src="assets/cones/butter-pecan.png" loading="lazy" />
+        <span class="match-label">Butter Pecan</span>
+        <span class="match-score">score: 4</span>
+      </div>
+      <div class="match-option" data-flavor="cherry-pecan" data-alias="caramel-pecan" onclick="selectAlias(this)">
+        <img src="assets/cones/caramel-pecan.png" loading="lazy" />
+        <span class="match-label">Caramel Pecan</span>
+        <span class="match-score">score: 4</span>
+      </div>
+      <div class="match-option" data-flavor="cherry-pecan" data-alias="georgia-peach" onclick="selectAlias(this)">
+        <img src="assets/cones/georgia-peach.png" loading="lazy" />
+        <span class="match-label">Georgia Peach</span>
+        <span class="match-score">score: 4</span>
+      </div></div>
+        </div>
+        
+        <div class="own-section">
+          <span class="section-label">Own candidates:</span>
+          <div class="candidates">
+    <div class="candidate" data-flavor="cherry-pecan" data-file="cherry-pecan-1.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/cherry-pecan/cherry-pecan-1.png" loading="lazy" />
+      <span class="label">#1</span>
+    </div>
+    <div class="candidate" data-flavor="cherry-pecan" data-file="cherry-pecan-2.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/cherry-pecan/cherry-pecan-2.png" loading="lazy" />
+      <span class="label">#2</span>
+    </div>
+    <div class="candidate" data-flavor="cherry-pecan" data-file="cherry-pecan-3.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/cherry-pecan/cherry-pecan-3.png" loading="lazy" />
+      <span class="label">#3</span>
+    </div>
+    <div class="candidate" data-flavor="cherry-pecan" data-file="cherry-pecan-4.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/cherry-pecan/cherry-pecan-4.png" loading="lazy" />
+      <span class="label">#4</span>
+    </div>
+    <div class="candidate" data-flavor="cherry-pecan" data-file="cherry-pecan-5.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/cherry-pecan/cherry-pecan-5.png" loading="lazy" />
+      <span class="label">#5</span>
+    </div></div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="skip-btn" onclick="skipFlavor('cherry-pecan')">Skip</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="chunky-peanut-butter-dream" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">Chunky Peanut Butter Dream</span> <span class="tag gen">has candidates</span>
+        <span class="flavor-desc">Vanilla Fresh Frozen Custard with peanut butter swirl and Reese's cup pieces.</span>
+        <span class="flavor-profile">base: vanilla, ribbon: peanut_butter, toppings: reeses, density: standard</span>
+      </div>
+      <div class="options">
+        <div class="alias-section">
+          <span class="section-label">Reuse Culver's cone:</span>
+          <div class="match-options">
+      <div class="match-option" data-flavor="chunky-peanut-butter-dream" data-alias="caramel-peanut-buttercup" onclick="selectAlias(this)">
+        <img src="assets/cones/caramel-peanut-buttercup.png" loading="lazy" />
+        <span class="match-label">Caramel Peanut Buttercup</span>
+        <span class="match-score">score: 9</span>
+      </div>
+      <div class="match-option" data-flavor="chunky-peanut-butter-dream" data-alias="caramel-cashew" onclick="selectAlias(this)">
+        <img src="assets/cones/caramel-cashew.png" loading="lazy" />
+        <span class="match-label">Caramel Cashew</span>
+        <span class="match-score">score: 7</span>
+      </div>
+      <div class="match-option" data-flavor="chunky-peanut-butter-dream" data-alias="caramel-fudge-cookie-dough" onclick="selectAlias(this)">
+        <img src="assets/cones/caramel-fudge-cookie-dough.png" loading="lazy" />
+        <span class="match-label">Caramel Fudge Cookie Dough</span>
+        <span class="match-score">score: 7</span>
+      </div></div>
+        </div>
+        
+        <div class="own-section">
+          <span class="section-label">Own candidates:</span>
+          <div class="candidates">
+    <div class="candidate" data-flavor="chunky-peanut-butter-dream" data-file="chunky-peanut-butter-dream-1.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/chunky-peanut-butter-dream/chunky-peanut-butter-dream-1.png" loading="lazy" />
+      <span class="label">#1</span>
+    </div>
+    <div class="candidate" data-flavor="chunky-peanut-butter-dream" data-file="chunky-peanut-butter-dream-2.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/chunky-peanut-butter-dream/chunky-peanut-butter-dream-2.png" loading="lazy" />
+      <span class="label">#2</span>
+    </div>
+    <div class="candidate" data-flavor="chunky-peanut-butter-dream" data-file="chunky-peanut-butter-dream-3.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/chunky-peanut-butter-dream/chunky-peanut-butter-dream-3.png" loading="lazy" />
+      <span class="label">#3</span>
+    </div>
+    <div class="candidate" data-flavor="chunky-peanut-butter-dream" data-file="chunky-peanut-butter-dream-4.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/chunky-peanut-butter-dream/chunky-peanut-butter-dream-4.png" loading="lazy" />
+      <span class="label">#4</span>
+    </div>
+    <div class="candidate" data-flavor="chunky-peanut-butter-dream" data-file="chunky-peanut-butter-dream-5.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/chunky-peanut-butter-dream/chunky-peanut-butter-dream-5.png" loading="lazy" />
+      <span class="label">#5</span>
+    </div></div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="skip-btn" onclick="skipFlavor('chunky-peanut-butter-dream')">Skip</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="coconut-cream-pie" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">Coconut Cream Pie</span> <span class="tag gen">has candidates</span>
+        <span class="flavor-desc">Coconut Fresh Frozen Custard with coconut flakes and graham cracker crumbles.</span>
+        <span class="flavor-profile">base: coconut, toppings: coconut_flakes, graham_cracker, density: standard</span>
+      </div>
+      <div class="options">
+        <div class="alias-section">
+          <span class="section-label">Reuse Culver's cone:</span>
+          <div class="match-options">
+      <div class="match-option" data-flavor="coconut-cream-pie" data-alias="andes-mint-avalanche" onclick="selectAlias(this)">
+        <img src="assets/cones/andes-mint-avalanche.png" loading="lazy" />
+        <span class="match-label">Andes Mint Avalanche</span>
+        <span class="match-score">score: 2</span>
+      </div>
+      <div class="match-option" data-flavor="coconut-cream-pie" data-alias="blackberry-cobbler" onclick="selectAlias(this)">
+        <img src="assets/cones/blackberry-cobbler.png" loading="lazy" />
+        <span class="match-label">Blackberry Cobbler</span>
+        <span class="match-score">score: 2</span>
+      </div>
+      <div class="match-option" data-flavor="coconut-cream-pie" data-alias="butter-pecan" onclick="selectAlias(this)">
+        <img src="assets/cones/butter-pecan.png" loading="lazy" />
+        <span class="match-label">Butter Pecan</span>
+        <span class="match-score">score: 2</span>
+      </div></div>
+        </div>
+        
+        <div class="own-section">
+          <span class="section-label">Own candidates:</span>
+          <div class="candidates">
+    <div class="candidate" data-flavor="coconut-cream-pie" data-file="coconut-cream-pie-1.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/coconut-cream-pie/coconut-cream-pie-1.png" loading="lazy" />
+      <span class="label">#1</span>
+    </div>
+    <div class="candidate" data-flavor="coconut-cream-pie" data-file="coconut-cream-pie-2.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/coconut-cream-pie/coconut-cream-pie-2.png" loading="lazy" />
+      <span class="label">#2</span>
+    </div>
+    <div class="candidate" data-flavor="coconut-cream-pie" data-file="coconut-cream-pie-3.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/coconut-cream-pie/coconut-cream-pie-3.png" loading="lazy" />
+      <span class="label">#3</span>
+    </div>
+    <div class="candidate" data-flavor="coconut-cream-pie" data-file="coconut-cream-pie-4.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/coconut-cream-pie/coconut-cream-pie-4.png" loading="lazy" />
+      <span class="label">#4</span>
+    </div>
+    <div class="candidate" data-flavor="coconut-cream-pie" data-file="coconut-cream-pie-5.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/coconut-cream-pie/coconut-cream-pie-5.png" loading="lazy" />
+      <span class="label">#5</span>
+    </div></div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="skip-btn" onclick="skipFlavor('coconut-cream-pie')">Skip</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="cookie-dough-craving" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">Cookie Dough Craving</span> <span class="tag gen">has candidates</span>
+        <span class="flavor-desc">Vanilla Fresh Frozen Custard with cookie dough chunks.</span>
+        <span class="flavor-profile">base: vanilla, toppings: cookie_dough, density: standard</span>
+      </div>
+      <div class="options">
+        <div class="alias-section">
+          <span class="section-label">Reuse Culver's cone:</span>
+          <div class="match-options">
+      <div class="match-option" data-flavor="cookie-dough-craving" data-alias="caramel-fudge-cookie-dough" onclick="selectAlias(this)">
+        <img src="assets/cones/caramel-fudge-cookie-dough.png" loading="lazy" />
+        <span class="match-label">Caramel Fudge Cookie Dough</span>
+        <span class="match-score">score: 8</span>
+      </div>
+      <div class="match-option" data-flavor="cookie-dough-craving" data-alias="crazy-for-cookie-dough" onclick="selectAlias(this)">
+        <img src="assets/cones/crazy-for-cookie-dough.png" loading="lazy" />
+        <span class="match-label">Crazy for Cookie Dough</span>
+        <span class="match-score">score: 8</span>
+      </div>
+      <div class="match-option" data-flavor="cookie-dough-craving" data-alias="chocolate-covered-strawberry" onclick="selectAlias(this)">
+        <img src="assets/cones/chocolate-covered-strawberry.png" loading="lazy" />
+        <span class="match-label">Chocolate Covered Strawberry</span>
+        <span class="match-score">score: 7</span>
+      </div></div>
+        </div>
+        
+        <div class="own-section">
+          <span class="section-label">Own candidates:</span>
+          <div class="candidates">
+    <div class="candidate" data-flavor="cookie-dough-craving" data-file="cookie-dough-craving-1.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/cookie-dough-craving/cookie-dough-craving-1.png" loading="lazy" />
+      <span class="label">#1</span>
+    </div>
+    <div class="candidate" data-flavor="cookie-dough-craving" data-file="cookie-dough-craving-2.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/cookie-dough-craving/cookie-dough-craving-2.png" loading="lazy" />
+      <span class="label">#2</span>
+    </div>
+    <div class="candidate" data-flavor="cookie-dough-craving" data-file="cookie-dough-craving-3.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/cookie-dough-craving/cookie-dough-craving-3.png" loading="lazy" />
+      <span class="label">#3</span>
+    </div>
+    <div class="candidate" data-flavor="cookie-dough-craving" data-file="cookie-dough-craving-4.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/cookie-dough-craving/cookie-dough-craving-4.png" loading="lazy" />
+      <span class="label">#4</span>
+    </div>
+    <div class="candidate" data-flavor="cookie-dough-craving" data-file="cookie-dough-craving-5.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/cookie-dough-craving/cookie-dough-craving-5.png" loading="lazy" />
+      <span class="label">#5</span>
+    </div></div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="skip-btn" onclick="skipFlavor('cookie-dough-craving')">Skip</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="cookies-cream" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">Cookies &amp; Cream</span> <span class="tag gen">has candidates</span>
+        <span class="flavor-desc">Vanilla Fresh Frozen Custard with OREO cookie pieces.</span>
+        <span class="flavor-profile">base: vanilla, toppings: oreo, density: standard</span>
+      </div>
+      <div class="options">
+        <div class="alias-section">
+          <span class="section-label">Reuse Culver's cone:</span>
+          <div class="match-options">
+      <div class="match-option" data-flavor="cookies-cream" data-alias="chocolate-covered-strawberry" onclick="selectAlias(this)">
+        <img src="assets/cones/chocolate-covered-strawberry.png" loading="lazy" />
+        <span class="match-label">Chocolate Covered Strawberry</span>
+        <span class="match-score">score: 7</span>
+      </div>
+      <div class="match-option" data-flavor="cookies-cream" data-alias="caramel-cashew" onclick="selectAlias(this)">
+        <img src="assets/cones/caramel-cashew.png" loading="lazy" />
+        <span class="match-label">Caramel Cashew</span>
+        <span class="match-score">score: 6</span>
+      </div>
+      <div class="match-option" data-flavor="cookies-cream" data-alias="caramel-fudge-cookie-dough" onclick="selectAlias(this)">
+        <img src="assets/cones/caramel-fudge-cookie-dough.png" loading="lazy" />
+        <span class="match-label">Caramel Fudge Cookie Dough</span>
+        <span class="match-score">score: 6</span>
+      </div></div>
+        </div>
+        
+        <div class="own-section">
+          <span class="section-label">Own candidates:</span>
+          <div class="candidates">
+    <div class="candidate" data-flavor="cookies-cream" data-file="cookies-cream-1.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/cookies-cream/cookies-cream-1.png" loading="lazy" />
+      <span class="label">#1</span>
+    </div>
+    <div class="candidate" data-flavor="cookies-cream" data-file="cookies-cream-2.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/cookies-cream/cookies-cream-2.png" loading="lazy" />
+      <span class="label">#2</span>
+    </div>
+    <div class="candidate" data-flavor="cookies-cream" data-file="cookies-cream-3.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/cookies-cream/cookies-cream-3.png" loading="lazy" />
+      <span class="label">#3</span>
+    </div>
+    <div class="candidate" data-flavor="cookies-cream" data-file="cookies-cream-4.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/cookies-cream/cookies-cream-4.png" loading="lazy" />
+      <span class="label">#4</span>
+    </div>
+    <div class="candidate" data-flavor="cookies-cream" data-file="cookies-cream-5.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/cookies-cream/cookies-cream-5.png" loading="lazy" />
+      <span class="label">#5</span>
+    </div></div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="skip-btn" onclick="skipFlavor('cookies-cream')">Skip</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="creamy-lemon-crumble" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">Creamy Lemon Crumble</span> <span class="tag gen">has candidates</span>
+        <span class="flavor-desc">Lemon Fresh Frozen Custard with cookie crumbles.</span>
+        <span class="flavor-profile">base: lemon, toppings: cookie_crumbs, density: standard</span>
+      </div>
+      <div class="options">
+        <div class="alias-section">
+          <span class="section-label">Reuse Culver's cone:</span>
+          <div class="match-options">
+      <div class="match-option" data-flavor="creamy-lemon-crumble" data-alias="lemon-berry-layer-cake" onclick="selectAlias(this)">
+        <img src="assets/cones/lemon-berry-layer-cake.png" loading="lazy" />
+        <span class="match-label">Lemon Berry Layer Cake</span>
+        <span class="match-score">score: 7</span>
+      </div>
+      <div class="match-option" data-flavor="creamy-lemon-crumble" data-alias="lemon-dash-cookie" onclick="selectAlias(this)">
+        <img src="assets/cones/lemon-dash-cookie.png" loading="lazy" />
+        <span class="match-label">Lemon Dash Cookie</span>
+        <span class="match-score">score: 7</span>
+      </div>
+      <div class="match-option" data-flavor="creamy-lemon-crumble" data-alias="andes-mint-avalanche" onclick="selectAlias(this)">
+        <img src="assets/cones/andes-mint-avalanche.png" loading="lazy" />
+        <span class="match-label">Andes Mint Avalanche</span>
+        <span class="match-score">score: 2</span>
+      </div></div>
+        </div>
+        
+        <div class="own-section">
+          <span class="section-label">Own candidates:</span>
+          <div class="candidates">
+    <div class="candidate" data-flavor="creamy-lemon-crumble" data-file="creamy-lemon-crumble-1.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/creamy-lemon-crumble/creamy-lemon-crumble-1.png" loading="lazy" />
+      <span class="label">#1</span>
+    </div>
+    <div class="candidate" data-flavor="creamy-lemon-crumble" data-file="creamy-lemon-crumble-2.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/creamy-lemon-crumble/creamy-lemon-crumble-2.png" loading="lazy" />
+      <span class="label">#2</span>
+    </div>
+    <div class="candidate" data-flavor="creamy-lemon-crumble" data-file="creamy-lemon-crumble-3.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/creamy-lemon-crumble/creamy-lemon-crumble-3.png" loading="lazy" />
+      <span class="label">#3</span>
+    </div>
+    <div class="candidate" data-flavor="creamy-lemon-crumble" data-file="creamy-lemon-crumble-4.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/creamy-lemon-crumble/creamy-lemon-crumble-4.png" loading="lazy" />
+      <span class="label">#4</span>
+    </div>
+    <div class="candidate" data-flavor="creamy-lemon-crumble" data-file="creamy-lemon-crumble-5.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/creamy-lemon-crumble/creamy-lemon-crumble-5.png" loading="lazy" />
+      <span class="label">#5</span>
+    </div></div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="skip-btn" onclick="skipFlavor('creamy-lemon-crumble')">Skip</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="death-by-chocolate" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">Death By Chocolate</span> <span class="tag gen">has candidates</span>
+        <span class="flavor-desc">Dark Chocolate Fresh Frozen Custard with chocolate syrup, brownie chunks, and dark chocolate pieces.</span>
+        <span class="flavor-profile">base: dark_chocolate, ribbon: chocolate_syrup, toppings: brownie, dove, density: explosion</span>
+      </div>
+      <div class="options">
+        <div class="alias-section">
+          <span class="section-label">Reuse Culver's cone:</span>
+          <div class="match-options">
+      <div class="match-option" data-flavor="death-by-chocolate" data-alias="brownie-thunder" onclick="selectAlias(this)">
+        <img src="assets/cones/brownie-thunder.png" loading="lazy" />
+        <span class="match-label">Brownie Thunder</span>
+        <span class="match-score">score: 8</span>
+      </div>
+      <div class="match-option" data-flavor="death-by-chocolate" data-alias="chocolate-volcano" onclick="selectAlias(this)">
+        <img src="assets/cones/chocolate-volcano.png" loading="lazy" />
+        <span class="match-label">Chocolate Volcano</span>
+        <span class="match-score">score: 8</span>
+      </div>
+      <div class="match-option" data-flavor="death-by-chocolate" data-alias="caramel-chocolate-pecan" onclick="selectAlias(this)">
+        <img src="assets/cones/caramel-chocolate-pecan.png" loading="lazy" />
+        <span class="match-label">Caramel Chocolate Pecan</span>
+        <span class="match-score">score: 6</span>
+      </div></div>
+        </div>
+        
+        <div class="own-section">
+          <span class="section-label">Own candidates:</span>
+          <div class="candidates">
+    <div class="candidate" data-flavor="death-by-chocolate" data-file="death-by-chocolate-1.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/death-by-chocolate/death-by-chocolate-1.png" loading="lazy" />
+      <span class="label">#1</span>
+    </div>
+    <div class="candidate" data-flavor="death-by-chocolate" data-file="death-by-chocolate-2.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/death-by-chocolate/death-by-chocolate-2.png" loading="lazy" />
+      <span class="label">#2</span>
+    </div>
+    <div class="candidate" data-flavor="death-by-chocolate" data-file="death-by-chocolate-3.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/death-by-chocolate/death-by-chocolate-3.png" loading="lazy" />
+      <span class="label">#3</span>
+    </div>
+    <div class="candidate" data-flavor="death-by-chocolate" data-file="death-by-chocolate-4.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/death-by-chocolate/death-by-chocolate-4.png" loading="lazy" />
+      <span class="label">#4</span>
+    </div>
+    <div class="candidate" data-flavor="death-by-chocolate" data-file="death-by-chocolate-5.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/death-by-chocolate/death-by-chocolate-5.png" loading="lazy" />
+      <span class="label">#5</span>
+    </div></div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="skip-btn" onclick="skipFlavor('death-by-chocolate')">Skip</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="devil-s-food-cake" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">Devil's Food Cake</span> <span class="tag gen">has candidates</span>
+        <span class="flavor-desc">Dark Chocolate Fresh Frozen Custard swirled with chocolate cake and novelty chocolate.</span>
+        <span class="flavor-profile">base: chocolate_custard, toppings: cake, dove, density: standard</span>
+      </div>
+      <div class="options">
+        <div class="alias-section">
+          <span class="section-label">Reuse Culver's cone:</span>
+          <div class="match-options">
+      <div class="match-option" data-flavor="devil-s-food-cake" data-alias="caramel-chocolate-pecan" onclick="selectAlias(this)">
+        <img src="assets/cones/caramel-chocolate-pecan.png" loading="lazy" />
+        <span class="match-label">Caramel Chocolate Pecan</span>
+        <span class="match-score">score: 7</span>
+      </div>
+      <div class="match-option" data-flavor="devil-s-food-cake" data-alias="chocolate-caramel-twist" onclick="selectAlias(this)">
+        <img src="assets/cones/chocolate-caramel-twist.png" loading="lazy" />
+        <span class="match-label">Chocolate Caramel Twist</span>
+        <span class="match-score">score: 5</span>
+      </div>
+      <div class="match-option" data-flavor="devil-s-food-cake" data-alias="andes-mint-avalanche" onclick="selectAlias(this)">
+        <img src="assets/cones/andes-mint-avalanche.png" loading="lazy" />
+        <span class="match-label">Andes Mint Avalanche</span>
+        <span class="match-score">score: 4</span>
+      </div></div>
+        </div>
+        
+        <div class="own-section">
+          <span class="section-label">Own candidates:</span>
+          <div class="candidates">
+    <div class="candidate" data-flavor="devil-s-food-cake" data-file="devil-s-food-cake-1.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/devil-s-food-cake/devil-s-food-cake-1.png" loading="lazy" />
+      <span class="label">#1</span>
+    </div>
+    <div class="candidate" data-flavor="devil-s-food-cake" data-file="devil-s-food-cake-2.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/devil-s-food-cake/devil-s-food-cake-2.png" loading="lazy" />
+      <span class="label">#2</span>
+    </div>
+    <div class="candidate" data-flavor="devil-s-food-cake" data-file="devil-s-food-cake-3.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/devil-s-food-cake/devil-s-food-cake-3.png" loading="lazy" />
+      <span class="label">#3</span>
+    </div>
+    <div class="candidate" data-flavor="devil-s-food-cake" data-file="devil-s-food-cake-4.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/devil-s-food-cake/devil-s-food-cake-4.png" loading="lazy" />
+      <span class="label">#4</span>
+    </div>
+    <div class="candidate" data-flavor="devil-s-food-cake" data-file="devil-s-food-cake-5.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/devil-s-food-cake/devil-s-food-cake-5.png" loading="lazy" />
+      <span class="label">#5</span>
+    </div></div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="skip-btn" onclick="skipFlavor('devil-s-food-cake')">Skip</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="double-marshmallow-oreo" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">Double Marshmallow OREO</span> <span class="tag gen">has candidates</span>
+        <span class="flavor-desc">Chocolate Fresh Frozen Custard with marshmallow swirl and OREO cookie pieces.</span>
+        <span class="flavor-profile">base: chocolate, ribbon: marshmallow, toppings: oreo, density: double</span>
+      </div>
+      <div class="options">
+        <div class="alias-section">
+          <span class="section-label">Reuse Culver's cone:</span>
+          <div class="match-options">
+      <div class="match-option" data-flavor="double-marshmallow-oreo" data-alias="chocolate-oreo-volcano" onclick="selectAlias(this)">
+        <img src="assets/cones/chocolate-oreo-volcano.png" loading="lazy" />
+        <span class="match-label">Chocolate Oreo Volcano</span>
+        <span class="match-score">score: 10</span>
+      </div>
+      <div class="match-option" data-flavor="double-marshmallow-oreo" data-alias="brownie-thunder" onclick="selectAlias(this)">
+        <img src="assets/cones/brownie-thunder.png" loading="lazy" />
+        <span class="match-label">Brownie Thunder</span>
+        <span class="match-score">score: 8</span>
+      </div>
+      <div class="match-option" data-flavor="double-marshmallow-oreo" data-alias="chocolate-volcano" onclick="selectAlias(this)">
+        <img src="assets/cones/chocolate-volcano.png" loading="lazy" />
+        <span class="match-label">Chocolate Volcano</span>
+        <span class="match-score">score: 8</span>
+      </div></div>
+        </div>
+        
+        <div class="own-section">
+          <span class="section-label">Own candidates:</span>
+          <div class="candidates">
+    <div class="candidate" data-flavor="double-marshmallow-oreo" data-file="double-marshmallow-oreo-1.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/double-marshmallow-oreo/double-marshmallow-oreo-1.png" loading="lazy" />
+      <span class="label">#1</span>
+    </div>
+    <div class="candidate" data-flavor="double-marshmallow-oreo" data-file="double-marshmallow-oreo-2.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/double-marshmallow-oreo/double-marshmallow-oreo-2.png" loading="lazy" />
+      <span class="label">#2</span>
+    </div>
+    <div class="candidate" data-flavor="double-marshmallow-oreo" data-file="double-marshmallow-oreo-3.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/double-marshmallow-oreo/double-marshmallow-oreo-3.png" loading="lazy" />
+      <span class="label">#3</span>
+    </div>
+    <div class="candidate" data-flavor="double-marshmallow-oreo" data-file="double-marshmallow-oreo-4.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/double-marshmallow-oreo/double-marshmallow-oreo-4.png" loading="lazy" />
+      <span class="label">#4</span>
+    </div>
+    <div class="candidate" data-flavor="double-marshmallow-oreo" data-file="double-marshmallow-oreo-5.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/double-marshmallow-oreo/double-marshmallow-oreo-5.png" loading="lazy" />
+      <span class="label">#5</span>
+    </div></div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="skip-btn" onclick="skipFlavor('double-marshmallow-oreo')">Skip</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="grasshopper-fudge" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">Grasshopper Fudge</span> <span class="tag gen">has candidates</span>
+        <span class="flavor-desc">Mint Fresh Frozen Custard swirled with fudge and loaded with OREO cookie pieces.</span>
+        <span class="flavor-profile">base: mint, ribbon: fudge, toppings: oreo, density: standard</span>
+      </div>
+      <div class="options">
+        <div class="alias-section">
+          <span class="section-label">Reuse Culver's cone:</span>
+          <div class="match-options">
+      <div class="match-option" data-flavor="grasshopper-fudge" data-alias="mint-cookie" onclick="selectAlias(this)">
+        <img src="assets/cones/mint-cookie.png" loading="lazy" />
+        <span class="match-label">Mint Cookie</span>
+        <span class="match-score">score: 7</span>
+      </div>
+      <div class="match-option" data-flavor="grasshopper-fudge" data-alias="mint-explosion" onclick="selectAlias(this)">
+        <img src="assets/cones/mint-explosion.png" loading="lazy" />
+        <span class="match-label">Mint Explosion</span>
+        <span class="match-score">score: 7</span>
+      </div>
+      <div class="match-option" data-flavor="grasshopper-fudge" data-alias="caramel-fudge-cookie-dough" onclick="selectAlias(this)">
+        <img src="assets/cones/caramel-fudge-cookie-dough.png" loading="lazy" />
+        <span class="match-label">Caramel Fudge Cookie Dough</span>
+        <span class="match-score">score: 4</span>
+      </div></div>
+        </div>
+        
+        <div class="own-section">
+          <span class="section-label">Own candidates:</span>
+          <div class="candidates">
+    <div class="candidate" data-flavor="grasshopper-fudge" data-file="grasshopper-fudge-1.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/grasshopper-fudge/grasshopper-fudge-1.png" loading="lazy" />
+      <span class="label">#1</span>
+    </div>
+    <div class="candidate" data-flavor="grasshopper-fudge" data-file="grasshopper-fudge-2.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/grasshopper-fudge/grasshopper-fudge-2.png" loading="lazy" />
+      <span class="label">#2</span>
+    </div>
+    <div class="candidate" data-flavor="grasshopper-fudge" data-file="grasshopper-fudge-3.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/grasshopper-fudge/grasshopper-fudge-3.png" loading="lazy" />
+      <span class="label">#3</span>
+    </div>
+    <div class="candidate" data-flavor="grasshopper-fudge" data-file="grasshopper-fudge-4.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/grasshopper-fudge/grasshopper-fudge-4.png" loading="lazy" />
+      <span class="label">#4</span>
+    </div>
+    <div class="candidate" data-flavor="grasshopper-fudge" data-file="grasshopper-fudge-5.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/grasshopper-fudge/grasshopper-fudge-5.png" loading="lazy" />
+      <span class="label">#5</span>
+    </div></div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="skip-btn" onclick="skipFlavor('grasshopper-fudge')">Skip</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="just-drummy" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">Just Drummy</span> <span class="tag gen">has candidates</span>
+        <span class="flavor-desc">Vanilla Fresh Frozen Custard with chocolate cake pieces.</span>
+        <span class="flavor-profile">base: vanilla, toppings: cake, density: standard</span>
+      </div>
+      <div class="options">
+        <div class="alias-section">
+          <span class="section-label">Reuse Culver's cone:</span>
+          <div class="match-options">
+      <div class="match-option" data-flavor="just-drummy" data-alias="chocolate-covered-strawberry" onclick="selectAlias(this)">
+        <img src="assets/cones/chocolate-covered-strawberry.png" loading="lazy" />
+        <span class="match-label">Chocolate Covered Strawberry</span>
+        <span class="match-score">score: 7</span>
+      </div>
+      <div class="match-option" data-flavor="just-drummy" data-alias="caramel-cashew" onclick="selectAlias(this)">
+        <img src="assets/cones/caramel-cashew.png" loading="lazy" />
+        <span class="match-label">Caramel Cashew</span>
+        <span class="match-score">score: 6</span>
+      </div>
+      <div class="match-option" data-flavor="just-drummy" data-alias="caramel-fudge-cookie-dough" onclick="selectAlias(this)">
+        <img src="assets/cones/caramel-fudge-cookie-dough.png" loading="lazy" />
+        <span class="match-label">Caramel Fudge Cookie Dough</span>
+        <span class="match-score">score: 6</span>
+      </div></div>
+        </div>
+        
+        <div class="own-section">
+          <span class="section-label">Own candidates:</span>
+          <div class="candidates">
+    <div class="candidate" data-flavor="just-drummy" data-file="just-drummy-1.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/just-drummy/just-drummy-1.png" loading="lazy" />
+      <span class="label">#1</span>
+    </div>
+    <div class="candidate" data-flavor="just-drummy" data-file="just-drummy-2.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/just-drummy/just-drummy-2.png" loading="lazy" />
+      <span class="label">#2</span>
+    </div>
+    <div class="candidate" data-flavor="just-drummy" data-file="just-drummy-3.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/just-drummy/just-drummy-3.png" loading="lazy" />
+      <span class="label">#3</span>
+    </div>
+    <div class="candidate" data-flavor="just-drummy" data-file="just-drummy-4.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/just-drummy/just-drummy-4.png" loading="lazy" />
+      <span class="label">#4</span>
+    </div>
+    <div class="candidate" data-flavor="just-drummy" data-file="just-drummy-5.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/just-drummy/just-drummy-5.png" loading="lazy" />
+      <span class="label">#5</span>
+    </div></div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="skip-btn" onclick="skipFlavor('just-drummy')">Skip</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="key-lime-custard-pie" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">Key Lime Custard Pie</span> <span class="tag gen">has candidates</span>
+        <span class="flavor-desc">Lemon Fresh Frozen Custard with graham cracker crumbles in a key lime pie style.</span>
+        <span class="flavor-profile">base: lemon, toppings: graham_cracker, density: standard</span>
+      </div>
+      <div class="options">
+        <div class="alias-section">
+          <span class="section-label">Reuse Culver's cone:</span>
+          <div class="match-options">
+      <div class="match-option" data-flavor="key-lime-custard-pie" data-alias="lemon-berry-layer-cake" onclick="selectAlias(this)">
+        <img src="assets/cones/lemon-berry-layer-cake.png" loading="lazy" />
+        <span class="match-label">Lemon Berry Layer Cake</span>
+        <span class="match-score">score: 7</span>
+      </div>
+      <div class="match-option" data-flavor="key-lime-custard-pie" data-alias="lemon-dash-cookie" onclick="selectAlias(this)">
+        <img src="assets/cones/lemon-dash-cookie.png" loading="lazy" />
+        <span class="match-label">Lemon Dash Cookie</span>
+        <span class="match-score">score: 7</span>
+      </div>
+      <div class="match-option" data-flavor="key-lime-custard-pie" data-alias="andes-mint-avalanche" onclick="selectAlias(this)">
+        <img src="assets/cones/andes-mint-avalanche.png" loading="lazy" />
+        <span class="match-label">Andes Mint Avalanche</span>
+        <span class="match-score">score: 2</span>
+      </div></div>
+        </div>
+        
+        <div class="own-section">
+          <span class="section-label">Own candidates:</span>
+          <div class="candidates">
+    <div class="candidate" data-flavor="key-lime-custard-pie" data-file="key-lime-custard-pie-1.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/key-lime-custard-pie/key-lime-custard-pie-1.png" loading="lazy" />
+      <span class="label">#1</span>
+    </div>
+    <div class="candidate" data-flavor="key-lime-custard-pie" data-file="key-lime-custard-pie-2.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/key-lime-custard-pie/key-lime-custard-pie-2.png" loading="lazy" />
+      <span class="label">#2</span>
+    </div>
+    <div class="candidate" data-flavor="key-lime-custard-pie" data-file="key-lime-custard-pie-3.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/key-lime-custard-pie/key-lime-custard-pie-3.png" loading="lazy" />
+      <span class="label">#3</span>
+    </div>
+    <div class="candidate" data-flavor="key-lime-custard-pie" data-file="key-lime-custard-pie-4.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/key-lime-custard-pie/key-lime-custard-pie-4.png" loading="lazy" />
+      <span class="label">#4</span>
+    </div>
+    <div class="candidate" data-flavor="key-lime-custard-pie" data-file="key-lime-custard-pie-5.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/key-lime-custard-pie/key-lime-custard-pie-5.png" loading="lazy" />
+      <span class="label">#5</span>
+    </div></div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="skip-btn" onclick="skipFlavor('key-lime-custard-pie')">Skip</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="kit-kat-bar" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">Kit Kat Bar</span> <span class="tag gen">has candidates</span>
+        <span class="flavor-desc">Vanilla Fresh Frozen Custard with crispy toffee bar pieces.</span>
+        <span class="flavor-profile">base: vanilla, toppings: heath, density: standard</span>
+      </div>
+      <div class="options">
+        <div class="alias-section">
+          <span class="section-label">Reuse Culver's cone:</span>
+          <div class="match-options">
+      <div class="match-option" data-flavor="kit-kat-bar" data-alias="chocolate-covered-strawberry" onclick="selectAlias(this)">
+        <img src="assets/cones/chocolate-covered-strawberry.png" loading="lazy" />
+        <span class="match-label">Chocolate Covered Strawberry</span>
+        <span class="match-score">score: 7</span>
+      </div>
+      <div class="match-option" data-flavor="kit-kat-bar" data-alias="caramel-cashew" onclick="selectAlias(this)">
+        <img src="assets/cones/caramel-cashew.png" loading="lazy" />
+        <span class="match-label">Caramel Cashew</span>
+        <span class="match-score">score: 6</span>
+      </div>
+      <div class="match-option" data-flavor="kit-kat-bar" data-alias="caramel-fudge-cookie-dough" onclick="selectAlias(this)">
+        <img src="assets/cones/caramel-fudge-cookie-dough.png" loading="lazy" />
+        <span class="match-label">Caramel Fudge Cookie Dough</span>
+        <span class="match-score">score: 6</span>
+      </div></div>
+        </div>
+        
+        <div class="own-section">
+          <span class="section-label">Own candidates:</span>
+          <div class="candidates">
+    <div class="candidate" data-flavor="kit-kat-bar" data-file="kit-kat-bar-1.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/kit-kat-bar/kit-kat-bar-1.png" loading="lazy" />
+      <span class="label">#1</span>
+    </div>
+    <div class="candidate" data-flavor="kit-kat-bar" data-file="kit-kat-bar-2.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/kit-kat-bar/kit-kat-bar-2.png" loading="lazy" />
+      <span class="label">#2</span>
+    </div>
+    <div class="candidate" data-flavor="kit-kat-bar" data-file="kit-kat-bar-3.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/kit-kat-bar/kit-kat-bar-3.png" loading="lazy" />
+      <span class="label">#3</span>
+    </div>
+    <div class="candidate" data-flavor="kit-kat-bar" data-file="kit-kat-bar-4.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/kit-kat-bar/kit-kat-bar-4.png" loading="lazy" />
+      <span class="label">#4</span>
+    </div>
+    <div class="candidate" data-flavor="kit-kat-bar" data-file="kit-kat-bar-5.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/kit-kat-bar/kit-kat-bar-5.png" loading="lazy" />
+      <span class="label">#5</span>
+    </div></div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="skip-btn" onclick="skipFlavor('kit-kat-bar')">Skip</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="kit-kat-swirl" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">Kit Kat Swirl</span> <span class="tag gen">has candidates</span>
+        <span class="flavor-desc">Vanilla Fresh Frozen Custard with chocolate syrup swirl and crispy toffee bar pieces.</span>
+        <span class="flavor-profile">base: vanilla, ribbon: chocolate_syrup, toppings: heath, density: standard</span>
+      </div>
+      <div class="options">
+        <div class="alias-section">
+          <span class="section-label">Reuse Culver's cone:</span>
+          <div class="match-options">
+      <div class="match-option" data-flavor="kit-kat-swirl" data-alias="caramel-cashew" onclick="selectAlias(this)">
+        <img src="assets/cones/caramel-cashew.png" loading="lazy" />
+        <span class="match-label">Caramel Cashew</span>
+        <span class="match-score">score: 7</span>
+      </div>
+      <div class="match-option" data-flavor="kit-kat-swirl" data-alias="caramel-fudge-cookie-dough" onclick="selectAlias(this)">
+        <img src="assets/cones/caramel-fudge-cookie-dough.png" loading="lazy" />
+        <span class="match-label">Caramel Fudge Cookie Dough</span>
+        <span class="match-score">score: 7</span>
+      </div>
+      <div class="match-option" data-flavor="kit-kat-swirl" data-alias="caramel-peanut-buttercup" onclick="selectAlias(this)">
+        <img src="assets/cones/caramel-peanut-buttercup.png" loading="lazy" />
+        <span class="match-label">Caramel Peanut Buttercup</span>
+        <span class="match-score">score: 7</span>
+      </div></div>
+        </div>
+        
+        <div class="own-section">
+          <span class="section-label">Own candidates:</span>
+          <div class="candidates">
+    <div class="candidate" data-flavor="kit-kat-swirl" data-file="kit-kat-swirl-1.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/kit-kat-swirl/kit-kat-swirl-1.png" loading="lazy" />
+      <span class="label">#1</span>
+    </div>
+    <div class="candidate" data-flavor="kit-kat-swirl" data-file="kit-kat-swirl-2.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/kit-kat-swirl/kit-kat-swirl-2.png" loading="lazy" />
+      <span class="label">#2</span>
+    </div>
+    <div class="candidate" data-flavor="kit-kat-swirl" data-file="kit-kat-swirl-3.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/kit-kat-swirl/kit-kat-swirl-3.png" loading="lazy" />
+      <span class="label">#3</span>
+    </div>
+    <div class="candidate" data-flavor="kit-kat-swirl" data-file="kit-kat-swirl-4.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/kit-kat-swirl/kit-kat-swirl-4.png" loading="lazy" />
+      <span class="label">#4</span>
+    </div>
+    <div class="candidate" data-flavor="kit-kat-swirl" data-file="kit-kat-swirl-5.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/kit-kat-swirl/kit-kat-swirl-5.png" loading="lazy" />
+      <span class="label">#5</span>
+    </div></div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="skip-btn" onclick="skipFlavor('kit-kat-swirl')">Skip</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="m-m-cookie-dough" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">M&amp;m Cookie Dough</span> <span class="tag gen">has candidates</span>
+        <span class="flavor-desc">Chocolate Fresh Frozen Custard with M&amp;M candy pieces and cookie dough chunks.</span>
+        <span class="flavor-profile">base: chocolate, toppings: m_and_m, cookie_dough, density: standard</span>
+      </div>
+      <div class="options">
+        <div class="alias-section">
+          <span class="section-label">Reuse Culver's cone:</span>
+          <div class="match-options">
+      <div class="match-option" data-flavor="m-m-cookie-dough" data-alias="chocolate-heath-crunch" onclick="selectAlias(this)">
+        <img src="assets/cones/chocolate-heath-crunch.png" loading="lazy" />
+        <span class="match-label">Chocolate Heath Crunch</span>
+        <span class="match-score">score: 7</span>
+      </div>
+      <div class="match-option" data-flavor="m-m-cookie-dough" data-alias="chocolate-volcano" onclick="selectAlias(this)">
+        <img src="assets/cones/chocolate-volcano.png" loading="lazy" />
+        <span class="match-label">Chocolate Volcano</span>
+        <span class="match-score">score: 7</span>
+      </div>
+      <div class="match-option" data-flavor="m-m-cookie-dough" data-alias="chocolate-caramel-twist" onclick="selectAlias(this)">
+        <img src="assets/cones/chocolate-caramel-twist.png" loading="lazy" />
+        <span class="match-label">Chocolate Caramel Twist</span>
+        <span class="match-score">score: 6</span>
+      </div></div>
+        </div>
+        
+        <div class="own-section">
+          <span class="section-label">Own candidates:</span>
+          <div class="candidates">
+    <div class="candidate" data-flavor="m-m-cookie-dough" data-file="m-m-cookie-dough-1.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/m-m-cookie-dough/m-m-cookie-dough-1.png" loading="lazy" />
+      <span class="label">#1</span>
+    </div>
+    <div class="candidate" data-flavor="m-m-cookie-dough" data-file="m-m-cookie-dough-2.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/m-m-cookie-dough/m-m-cookie-dough-2.png" loading="lazy" />
+      <span class="label">#2</span>
+    </div>
+    <div class="candidate" data-flavor="m-m-cookie-dough" data-file="m-m-cookie-dough-3.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/m-m-cookie-dough/m-m-cookie-dough-3.png" loading="lazy" />
+      <span class="label">#3</span>
+    </div>
+    <div class="candidate" data-flavor="m-m-cookie-dough" data-file="m-m-cookie-dough-4.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/m-m-cookie-dough/m-m-cookie-dough-4.png" loading="lazy" />
+      <span class="label">#4</span>
+    </div>
+    <div class="candidate" data-flavor="m-m-cookie-dough" data-file="m-m-cookie-dough-5.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/m-m-cookie-dough/m-m-cookie-dough-5.png" loading="lazy" />
+      <span class="label">#5</span>
+    </div></div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="skip-btn" onclick="skipFlavor('m-m-cookie-dough')">Skip</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="m-m-swirl" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">M&amp;m Swirl</span> <span class="tag gen">has candidates</span>
+        <span class="flavor-desc">Chocolate Fresh Frozen Custard with M&amp;M candy pieces.</span>
+        <span class="flavor-profile">base: chocolate, toppings: m_and_m, density: standard</span>
+      </div>
+      <div class="options">
+        <div class="alias-section">
+          <span class="section-label">Reuse Culver's cone:</span>
+          <div class="match-options">
+      <div class="match-option" data-flavor="m-m-swirl" data-alias="chocolate-heath-crunch" onclick="selectAlias(this)">
+        <img src="assets/cones/chocolate-heath-crunch.png" loading="lazy" />
+        <span class="match-label">Chocolate Heath Crunch</span>
+        <span class="match-score">score: 7</span>
+      </div>
+      <div class="match-option" data-flavor="m-m-swirl" data-alias="chocolate-volcano" onclick="selectAlias(this)">
+        <img src="assets/cones/chocolate-volcano.png" loading="lazy" />
+        <span class="match-label">Chocolate Volcano</span>
+        <span class="match-score">score: 7</span>
+      </div>
+      <div class="match-option" data-flavor="m-m-swirl" data-alias="chocolate-caramel-twist" onclick="selectAlias(this)">
+        <img src="assets/cones/chocolate-caramel-twist.png" loading="lazy" />
+        <span class="match-label">Chocolate Caramel Twist</span>
+        <span class="match-score">score: 6</span>
+      </div></div>
+        </div>
+        
+        <div class="own-section">
+          <span class="section-label">Own candidates:</span>
+          <div class="candidates">
+    <div class="candidate" data-flavor="m-m-swirl" data-file="m-m-swirl-1.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/m-m-swirl/m-m-swirl-1.png" loading="lazy" />
+      <span class="label">#1</span>
+    </div>
+    <div class="candidate" data-flavor="m-m-swirl" data-file="m-m-swirl-2.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/m-m-swirl/m-m-swirl-2.png" loading="lazy" />
+      <span class="label">#2</span>
+    </div>
+    <div class="candidate" data-flavor="m-m-swirl" data-file="m-m-swirl-3.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/m-m-swirl/m-m-swirl-3.png" loading="lazy" />
+      <span class="label">#3</span>
+    </div>
+    <div class="candidate" data-flavor="m-m-swirl" data-file="m-m-swirl-4.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/m-m-swirl/m-m-swirl-4.png" loading="lazy" />
+      <span class="label">#4</span>
+    </div>
+    <div class="candidate" data-flavor="m-m-swirl" data-file="m-m-swirl-5.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/m-m-swirl/m-m-swirl-5.png" loading="lazy" />
+      <span class="label">#5</span>
+    </div></div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="skip-btn" onclick="skipFlavor('m-m-swirl')">Skip</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="maple-pecan" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">Maple Pecan</span> <span class="tag gen">has candidates</span>
+        <span class="flavor-desc">Maple Fresh Frozen Custard with pecan pieces.</span>
+        <span class="flavor-profile">base: maple, toppings: pecan, density: standard</span>
+      </div>
+      <div class="options">
+        <div class="alias-section">
+          <span class="section-label">Reuse Culver's cone:</span>
+          <div class="match-options">
+      <div class="match-option" data-flavor="maple-pecan" data-alias="butter-pecan" onclick="selectAlias(this)">
+        <img src="assets/cones/butter-pecan.png" loading="lazy" />
+        <span class="match-label">Butter Pecan</span>
+        <span class="match-score">score: 4</span>
+      </div>
+      <div class="match-option" data-flavor="maple-pecan" data-alias="caramel-pecan" onclick="selectAlias(this)">
+        <img src="assets/cones/caramel-pecan.png" loading="lazy" />
+        <span class="match-label">Caramel Pecan</span>
+        <span class="match-score">score: 4</span>
+      </div>
+      <div class="match-option" data-flavor="maple-pecan" data-alias="double-butter-pecan" onclick="selectAlias(this)">
+        <img src="assets/cones/double-butter-pecan.png" loading="lazy" />
+        <span class="match-label">Double Butter Pecan</span>
+        <span class="match-score">score: 3</span>
+      </div></div>
+        </div>
+        
+        <div class="own-section">
+          <span class="section-label">Own candidates:</span>
+          <div class="candidates">
+    <div class="candidate" data-flavor="maple-pecan" data-file="maple-pecan-1.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/maple-pecan/maple-pecan-1.png" loading="lazy" />
+      <span class="label">#1</span>
+    </div>
+    <div class="candidate" data-flavor="maple-pecan" data-file="maple-pecan-2.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/maple-pecan/maple-pecan-2.png" loading="lazy" />
+      <span class="label">#2</span>
+    </div>
+    <div class="candidate" data-flavor="maple-pecan" data-file="maple-pecan-3.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/maple-pecan/maple-pecan-3.png" loading="lazy" />
+      <span class="label">#3</span>
+    </div>
+    <div class="candidate" data-flavor="maple-pecan" data-file="maple-pecan-4.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/maple-pecan/maple-pecan-4.png" loading="lazy" />
+      <span class="label">#4</span>
+    </div>
+    <div class="candidate" data-flavor="maple-pecan" data-file="maple-pecan-5.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/maple-pecan/maple-pecan-5.png" loading="lazy" />
+      <span class="label">#5</span>
+    </div></div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="skip-btn" onclick="skipFlavor('maple-pecan')">Skip</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="midnight-toffee" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">Midnight Toffee</span> <span class="tag gen">has candidates</span>
+        <span class="flavor-desc">Dark Chocolate Fresh Frozen Custard with Heath toffee bits.</span>
+        <span class="flavor-profile">base: dark_chocolate, toppings: heath, density: standard</span>
+      </div>
+      <div class="options">
+        <div class="alias-section">
+          <span class="section-label">Reuse Culver's cone:</span>
+          <div class="match-options">
+      <div class="match-option" data-flavor="midnight-toffee" data-alias="chocolate-heath-crunch" onclick="selectAlias(this)">
+        <img src="assets/cones/chocolate-heath-crunch.png" loading="lazy" />
+        <span class="match-label">Chocolate Heath Crunch</span>
+        <span class="match-score">score: 6</span>
+      </div>
+      <div class="match-option" data-flavor="midnight-toffee" data-alias="dark-chocolate-decadence" onclick="selectAlias(this)">
+        <img src="assets/cones/dark-chocolate-decadence.png" loading="lazy" />
+        <span class="match-label">Dark Chocolate Decadence</span>
+        <span class="match-score">score: 6</span>
+      </div>
+      <div class="match-option" data-flavor="midnight-toffee" data-alias="dark-chocolate-pb-crunch" onclick="selectAlias(this)">
+        <img src="assets/cones/dark-chocolate-pb-crunch.png" loading="lazy" />
+        <span class="match-label">Dark Chocolate PB Crunch</span>
+        <span class="match-score">score: 6</span>
+      </div></div>
+        </div>
+        
+        <div class="own-section">
+          <span class="section-label">Own candidates:</span>
+          <div class="candidates">
+    <div class="candidate" data-flavor="midnight-toffee" data-file="midnight-toffee-1.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/midnight-toffee/midnight-toffee-1.png" loading="lazy" />
+      <span class="label">#1</span>
+    </div>
+    <div class="candidate" data-flavor="midnight-toffee" data-file="midnight-toffee-2.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/midnight-toffee/midnight-toffee-2.png" loading="lazy" />
+      <span class="label">#2</span>
+    </div>
+    <div class="candidate" data-flavor="midnight-toffee" data-file="midnight-toffee-3.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/midnight-toffee/midnight-toffee-3.png" loading="lazy" />
+      <span class="label">#3</span>
+    </div>
+    <div class="candidate" data-flavor="midnight-toffee" data-file="midnight-toffee-4.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/midnight-toffee/midnight-toffee-4.png" loading="lazy" />
+      <span class="label">#4</span>
+    </div>
+    <div class="candidate" data-flavor="midnight-toffee" data-file="midnight-toffee-5.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/midnight-toffee/midnight-toffee-5.png" loading="lazy" />
+      <span class="label">#5</span>
+    </div></div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="skip-btn" onclick="skipFlavor('midnight-toffee')">Skip</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="mooey-gooey-twist" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">Mooey Gooey Twist</span> <span class="tag gen">has candidates</span>
+        <span class="flavor-desc">Chocolate Fresh Frozen Custard with caramel swirl and cookie dough chunks.</span>
+        <span class="flavor-profile">base: chocolate, ribbon: caramel, toppings: cookie_dough, density: standard</span>
+      </div>
+      <div class="options">
+        <div class="alias-section">
+          <span class="section-label">Reuse Culver's cone:</span>
+          <div class="match-options">
+      <div class="match-option" data-flavor="mooey-gooey-twist" data-alias="chocolate-caramel-twist" onclick="selectAlias(this)">
+        <img src="assets/cones/chocolate-caramel-twist.png" loading="lazy" />
+        <span class="match-label">Chocolate Caramel Twist</span>
+        <span class="match-score">score: 9</span>
+      </div>
+      <div class="match-option" data-flavor="mooey-gooey-twist" data-alias="snickers-swirl" onclick="selectAlias(this)">
+        <img src="assets/cones/snickers-swirl.png" loading="lazy" />
+        <span class="match-label">Snickers Swirl</span>
+        <span class="match-score">score: 9</span>
+      </div>
+      <div class="match-option" data-flavor="mooey-gooey-twist" data-alias="peanut-butter-cup" onclick="selectAlias(this)">
+        <img src="assets/cones/peanut-butter-cup.png" loading="lazy" />
+        <span class="match-label">Peanut Butter Cup</span>
+        <span class="match-score">score: 7</span>
+      </div></div>
+        </div>
+        
+        <div class="own-section">
+          <span class="section-label">Own candidates:</span>
+          <div class="candidates">
+    <div class="candidate" data-flavor="mooey-gooey-twist" data-file="mooey-gooey-twist-1.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/mooey-gooey-twist/mooey-gooey-twist-1.png" loading="lazy" />
+      <span class="label">#1</span>
+    </div>
+    <div class="candidate" data-flavor="mooey-gooey-twist" data-file="mooey-gooey-twist-2.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/mooey-gooey-twist/mooey-gooey-twist-2.png" loading="lazy" />
+      <span class="label">#2</span>
+    </div>
+    <div class="candidate" data-flavor="mooey-gooey-twist" data-file="mooey-gooey-twist-3.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/mooey-gooey-twist/mooey-gooey-twist-3.png" loading="lazy" />
+      <span class="label">#3</span>
+    </div>
+    <div class="candidate" data-flavor="mooey-gooey-twist" data-file="mooey-gooey-twist-4.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/mooey-gooey-twist/mooey-gooey-twist-4.png" loading="lazy" />
+      <span class="label">#4</span>
+    </div>
+    <div class="candidate" data-flavor="mooey-gooey-twist" data-file="mooey-gooey-twist-5.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/mooey-gooey-twist/mooey-gooey-twist-5.png" loading="lazy" />
+      <span class="label">#5</span>
+    </div></div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="skip-btn" onclick="skipFlavor('mooey-gooey-twist')">Skip</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="mudd-pie" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">Mudd Pie</span> <span class="tag gen">has candidates</span>
+        <span class="flavor-desc">Espresso Fresh Frozen Custard with fudge swirl, OREO cookie chunks, and cookie crumbles.</span>
+        <span class="flavor-profile">base: espresso, ribbon: fudge, toppings: oreo, cookie_crumbs, density: standard</span>
+      </div>
+      <div class="options">
+        <div class="alias-section">
+          <span class="section-label">Reuse Culver's cone:</span>
+          <div class="match-options">
+      <div class="match-option" data-flavor="mudd-pie" data-alias="caramel-fudge-cookie-dough" onclick="selectAlias(this)">
+        <img src="assets/cones/caramel-fudge-cookie-dough.png" loading="lazy" />
+        <span class="match-label">Caramel Fudge Cookie Dough</span>
+        <span class="match-score">score: 4</span>
+      </div>
+      <div class="match-option" data-flavor="mudd-pie" data-alias="crazy-for-cookie-dough" onclick="selectAlias(this)">
+        <img src="assets/cones/crazy-for-cookie-dough.png" loading="lazy" />
+        <span class="match-label">Crazy for Cookie Dough</span>
+        <span class="match-score">score: 4</span>
+      </div>
+      <div class="match-option" data-flavor="mudd-pie" data-alias="caramel-turtle" onclick="selectAlias(this)">
+        <img src="assets/cones/caramel-turtle.png" loading="lazy" />
+        <span class="match-label">Caramel Turtle</span>
+        <span class="match-score">score: 3</span>
+      </div></div>
+        </div>
+        
+        <div class="own-section">
+          <span class="section-label">Own candidates:</span>
+          <div class="candidates">
+    <div class="candidate" data-flavor="mudd-pie" data-file="mudd-pie-1.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/mudd-pie/mudd-pie-1.png" loading="lazy" />
+      <span class="label">#1</span>
+    </div>
+    <div class="candidate" data-flavor="mudd-pie" data-file="mudd-pie-2.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/mudd-pie/mudd-pie-2.png" loading="lazy" />
+      <span class="label">#2</span>
+    </div>
+    <div class="candidate" data-flavor="mudd-pie" data-file="mudd-pie-3.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/mudd-pie/mudd-pie-3.png" loading="lazy" />
+      <span class="label">#3</span>
+    </div>
+    <div class="candidate" data-flavor="mudd-pie" data-file="mudd-pie-4.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/mudd-pie/mudd-pie-4.png" loading="lazy" />
+      <span class="label">#4</span>
+    </div>
+    <div class="candidate" data-flavor="mudd-pie" data-file="mudd-pie-5.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/mudd-pie/mudd-pie-5.png" loading="lazy" />
+      <span class="label">#5</span>
+    </div></div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="skip-btn" onclick="skipFlavor('mudd-pie')">Skip</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="nestle-crunch-swirl" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">Nestle Crunch Swirl</span> <span class="tag gen">has candidates</span>
+        <span class="flavor-desc">Vanilla Fresh Frozen Custard with chocolate syrup swirl and cookie crumbles.</span>
+        <span class="flavor-profile">base: vanilla, ribbon: chocolate_syrup, toppings: cookie_crumbs, density: standard</span>
+      </div>
+      <div class="options">
+        <div class="alias-section">
+          <span class="section-label">Reuse Culver's cone:</span>
+          <div class="match-options">
+      <div class="match-option" data-flavor="nestle-crunch-swirl" data-alias="caramel-cashew" onclick="selectAlias(this)">
+        <img src="assets/cones/caramel-cashew.png" loading="lazy" />
+        <span class="match-label">Caramel Cashew</span>
+        <span class="match-score">score: 7</span>
+      </div>
+      <div class="match-option" data-flavor="nestle-crunch-swirl" data-alias="caramel-fudge-cookie-dough" onclick="selectAlias(this)">
+        <img src="assets/cones/caramel-fudge-cookie-dough.png" loading="lazy" />
+        <span class="match-label">Caramel Fudge Cookie Dough</span>
+        <span class="match-score">score: 7</span>
+      </div>
+      <div class="match-option" data-flavor="nestle-crunch-swirl" data-alias="caramel-peanut-buttercup" onclick="selectAlias(this)">
+        <img src="assets/cones/caramel-peanut-buttercup.png" loading="lazy" />
+        <span class="match-label">Caramel Peanut Buttercup</span>
+        <span class="match-score">score: 7</span>
+      </div></div>
+        </div>
+        
+        <div class="own-section">
+          <span class="section-label">Own candidates:</span>
+          <div class="candidates">
+    <div class="candidate" data-flavor="nestle-crunch-swirl" data-file="nestle-crunch-swirl-1.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/nestle-crunch-swirl/nestle-crunch-swirl-1.png" loading="lazy" />
+      <span class="label">#1</span>
+    </div>
+    <div class="candidate" data-flavor="nestle-crunch-swirl" data-file="nestle-crunch-swirl-2.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/nestle-crunch-swirl/nestle-crunch-swirl-2.png" loading="lazy" />
+      <span class="label">#2</span>
+    </div>
+    <div class="candidate" data-flavor="nestle-crunch-swirl" data-file="nestle-crunch-swirl-3.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/nestle-crunch-swirl/nestle-crunch-swirl-3.png" loading="lazy" />
+      <span class="label">#3</span>
+    </div>
+    <div class="candidate" data-flavor="nestle-crunch-swirl" data-file="nestle-crunch-swirl-4.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/nestle-crunch-swirl/nestle-crunch-swirl-4.png" loading="lazy" />
+      <span class="label">#4</span>
+    </div>
+    <div class="candidate" data-flavor="nestle-crunch-swirl" data-file="nestle-crunch-swirl-5.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/nestle-crunch-swirl/nestle-crunch-swirl-5.png" loading="lazy" />
+      <span class="label">#5</span>
+    </div></div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="skip-btn" onclick="skipFlavor('nestle-crunch-swirl')">Skip</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="nutty-caramel-apple" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">Nutty Caramel Apple</span> <span class="tag gen">has candidates</span>
+        <span class="flavor-desc">Caramel Fresh Frozen Custard with pecans and caramel chips.</span>
+        <span class="flavor-profile">base: caramel, toppings: pecan, caramel_chips, density: standard</span>
+      </div>
+      <div class="options">
+        <div class="alias-section">
+          <span class="section-label">Reuse Culver's cone:</span>
+          <div class="match-options">
+      <div class="match-option" data-flavor="nutty-caramel-apple" data-alias="caramel-pecan" onclick="selectAlias(this)">
+        <img src="assets/cones/caramel-pecan.png" loading="lazy" />
+        <span class="match-label">Caramel Pecan</span>
+        <span class="match-score">score: 9</span>
+      </div>
+      <div class="match-option" data-flavor="nutty-caramel-apple" data-alias="salted-caramel-pecan-pie" onclick="selectAlias(this)">
+        <img src="assets/cones/salted-caramel-pecan-pie.png" loading="lazy" />
+        <span class="match-label">Salted Caramel Pecan Pie</span>
+        <span class="match-score">score: 8</span>
+      </div>
+      <div class="match-option" data-flavor="nutty-caramel-apple" data-alias="caramel-turtle" onclick="selectAlias(this)">
+        <img src="assets/cones/caramel-turtle.png" loading="lazy" />
+        <span class="match-label">Caramel Turtle</span>
+        <span class="match-score">score: 7</span>
+      </div></div>
+        </div>
+        
+        <div class="own-section">
+          <span class="section-label">Own candidates:</span>
+          <div class="candidates">
+    <div class="candidate" data-flavor="nutty-caramel-apple" data-file="nutty-caramel-apple-1.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/nutty-caramel-apple/nutty-caramel-apple-1.png" loading="lazy" />
+      <span class="label">#1</span>
+    </div>
+    <div class="candidate" data-flavor="nutty-caramel-apple" data-file="nutty-caramel-apple-2.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/nutty-caramel-apple/nutty-caramel-apple-2.png" loading="lazy" />
+      <span class="label">#2</span>
+    </div>
+    <div class="candidate" data-flavor="nutty-caramel-apple" data-file="nutty-caramel-apple-3.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/nutty-caramel-apple/nutty-caramel-apple-3.png" loading="lazy" />
+      <span class="label">#3</span>
+    </div>
+    <div class="candidate" data-flavor="nutty-caramel-apple" data-file="nutty-caramel-apple-4.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/nutty-caramel-apple/nutty-caramel-apple-4.png" loading="lazy" />
+      <span class="label">#4</span>
+    </div>
+    <div class="candidate" data-flavor="nutty-caramel-apple" data-file="nutty-caramel-apple-5.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/nutty-caramel-apple/nutty-caramel-apple-5.png" loading="lazy" />
+      <span class="label">#5</span>
+    </div></div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="skip-btn" onclick="skipFlavor('nutty-caramel-apple')">Skip</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="orange-creamsicle" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">Orange Creamsicle</span> <span class="tag pure">pure base</span>
+        <span class="flavor-desc">Orange Fresh Frozen Custard with a smooth creamsicle flavor.</span>
+        <span class="flavor-profile">base: orange, density: pure</span>
+      </div>
+      <div class="options">
+        <div class="alias-section">
+          <span class="section-label">Reuse Culver's cone:</span>
+          <div class="match-options">
+      <div class="match-option" data-flavor="orange-creamsicle" data-alias="dark-chocolate-decadence" onclick="selectAlias(this)">
+        <img src="assets/cones/dark-chocolate-decadence.png" loading="lazy" />
+        <span class="match-label">Dark Chocolate Decadence</span>
+        <span class="match-score">score: 2</span>
+      </div>
+      <div class="match-option" data-flavor="orange-creamsicle" data-alias="vanilla" onclick="selectAlias(this)">
+        <img src="assets/cones/vanilla.png" loading="lazy" />
+        <span class="match-label">Vanilla</span>
+        <span class="match-score">score: 2</span>
+      </div></div>
+        </div>
+        
+        <div class="own-section">
+          <span class="section-label">Own candidates:</span>
+          <div class="candidates">
+    <div class="candidate" data-flavor="orange-creamsicle" data-file="orange-creamsicle-1.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/orange-creamsicle/orange-creamsicle-1.png" loading="lazy" />
+      <span class="label">#1</span>
+    </div>
+    <div class="candidate" data-flavor="orange-creamsicle" data-file="orange-creamsicle-2.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/orange-creamsicle/orange-creamsicle-2.png" loading="lazy" />
+      <span class="label">#2</span>
+    </div>
+    <div class="candidate" data-flavor="orange-creamsicle" data-file="orange-creamsicle-3.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/orange-creamsicle/orange-creamsicle-3.png" loading="lazy" />
+      <span class="label">#3</span>
+    </div>
+    <div class="candidate" data-flavor="orange-creamsicle" data-file="orange-creamsicle-4.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/orange-creamsicle/orange-creamsicle-4.png" loading="lazy" />
+      <span class="label">#4</span>
+    </div>
+    <div class="candidate" data-flavor="orange-creamsicle" data-file="orange-creamsicle-5.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/orange-creamsicle/orange-creamsicle-5.png" loading="lazy" />
+      <span class="label">#5</span>
+    </div></div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="skip-btn" onclick="skipFlavor('orange-creamsicle')">Skip</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="pb-brownie" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">PB Brownie</span> <span class="tag gen">has candidates</span>
+        <span class="flavor-desc">Chocolate Fresh Frozen Custard with peanut butter swirl and brownie chunks.</span>
+        <span class="flavor-profile">base: chocolate, ribbon: peanut_butter, toppings: brownie, density: standard</span>
+      </div>
+      <div class="options">
+        <div class="alias-section">
+          <span class="section-label">Reuse Culver's cone:</span>
+          <div class="match-options">
+      <div class="match-option" data-flavor="pb-brownie" data-alias="peanut-butter-cup" onclick="selectAlias(this)">
+        <img src="assets/cones/peanut-butter-cup.png" loading="lazy" />
+        <span class="match-label">Peanut Butter Cup</span>
+        <span class="match-score">score: 9</span>
+      </div>
+      <div class="match-option" data-flavor="pb-brownie" data-alias="brownie-thunder" onclick="selectAlias(this)">
+        <img src="assets/cones/brownie-thunder.png" loading="lazy" />
+        <span class="match-label">Brownie Thunder</span>
+        <span class="match-score">score: 8</span>
+      </div>
+      <div class="match-option" data-flavor="pb-brownie" data-alias="chocolate-caramel-twist" onclick="selectAlias(this)">
+        <img src="assets/cones/chocolate-caramel-twist.png" loading="lazy" />
+        <span class="match-label">Chocolate Caramel Twist</span>
+        <span class="match-score">score: 7</span>
+      </div></div>
+        </div>
+        
+        <div class="own-section">
+          <span class="section-label">Own candidates:</span>
+          <div class="candidates">
+    <div class="candidate" data-flavor="pb-brownie" data-file="pb-brownie-1.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/pb-brownie/pb-brownie-1.png" loading="lazy" />
+      <span class="label">#1</span>
+    </div>
+    <div class="candidate" data-flavor="pb-brownie" data-file="pb-brownie-2.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/pb-brownie/pb-brownie-2.png" loading="lazy" />
+      <span class="label">#2</span>
+    </div>
+    <div class="candidate" data-flavor="pb-brownie" data-file="pb-brownie-3.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/pb-brownie/pb-brownie-3.png" loading="lazy" />
+      <span class="label">#3</span>
+    </div>
+    <div class="candidate" data-flavor="pb-brownie" data-file="pb-brownie-4.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/pb-brownie/pb-brownie-4.png" loading="lazy" />
+      <span class="label">#4</span>
+    </div>
+    <div class="candidate" data-flavor="pb-brownie" data-file="pb-brownie-5.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/pb-brownie/pb-brownie-5.png" loading="lazy" />
+      <span class="label">#5</span>
+    </div></div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="skip-btn" onclick="skipFlavor('pb-brownie')">Skip</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="peanut-butter-cookie-dough" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">Peanut Butter Cookie Dough</span> <span class="tag gen">has candidates</span>
+        <span class="flavor-desc">Vanilla Fresh Frozen Custard with peanut butter swirl and cookie dough chunks.</span>
+        <span class="flavor-profile">base: vanilla, ribbon: peanut_butter, toppings: cookie_dough, density: standard</span>
+      </div>
+      <div class="options">
+        <div class="alias-section">
+          <span class="section-label">Reuse Culver's cone:</span>
+          <div class="match-options">
+      <div class="match-option" data-flavor="peanut-butter-cookie-dough" data-alias="caramel-fudge-cookie-dough" onclick="selectAlias(this)">
+        <img src="assets/cones/caramel-fudge-cookie-dough.png" loading="lazy" />
+        <span class="match-label">Caramel Fudge Cookie Dough</span>
+        <span class="match-score">score: 9</span>
+      </div>
+      <div class="match-option" data-flavor="peanut-butter-cookie-dough" data-alias="caramel-peanut-buttercup" onclick="selectAlias(this)">
+        <img src="assets/cones/caramel-peanut-buttercup.png" loading="lazy" />
+        <span class="match-label">Caramel Peanut Buttercup</span>
+        <span class="match-score">score: 9</span>
+      </div>
+      <div class="match-option" data-flavor="peanut-butter-cookie-dough" data-alias="crazy-for-cookie-dough" onclick="selectAlias(this)">
+        <img src="assets/cones/crazy-for-cookie-dough.png" loading="lazy" />
+        <span class="match-label">Crazy for Cookie Dough</span>
+        <span class="match-score">score: 9</span>
+      </div></div>
+        </div>
+        
+        <div class="own-section">
+          <span class="section-label">Own candidates:</span>
+          <div class="candidates">
+    <div class="candidate" data-flavor="peanut-butter-cookie-dough" data-file="peanut-butter-cookie-dough-1.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/peanut-butter-cookie-dough/peanut-butter-cookie-dough-1.png" loading="lazy" />
+      <span class="label">#1</span>
+    </div>
+    <div class="candidate" data-flavor="peanut-butter-cookie-dough" data-file="peanut-butter-cookie-dough-2.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/peanut-butter-cookie-dough/peanut-butter-cookie-dough-2.png" loading="lazy" />
+      <span class="label">#2</span>
+    </div>
+    <div class="candidate" data-flavor="peanut-butter-cookie-dough" data-file="peanut-butter-cookie-dough-3.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/peanut-butter-cookie-dough/peanut-butter-cookie-dough-3.png" loading="lazy" />
+      <span class="label">#3</span>
+    </div>
+    <div class="candidate" data-flavor="peanut-butter-cookie-dough" data-file="peanut-butter-cookie-dough-4.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/peanut-butter-cookie-dough/peanut-butter-cookie-dough-4.png" loading="lazy" />
+      <span class="label">#4</span>
+    </div>
+    <div class="candidate" data-flavor="peanut-butter-cookie-dough" data-file="peanut-butter-cookie-dough-5.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/peanut-butter-cookie-dough/peanut-butter-cookie-dough-5.png" loading="lazy" />
+      <span class="label">#5</span>
+    </div></div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="skip-btn" onclick="skipFlavor('peanut-butter-cookie-dough')">Skip</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="pecan-toffee-crunch" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">Pecan Toffee Crunch</span> <span class="tag gen">has candidates</span>
+        <span class="flavor-desc">Vanilla Fresh Frozen Custard with pecan pieces and Heath toffee bits.</span>
+        <span class="flavor-profile">base: vanilla, toppings: pecan, heath, density: standard</span>
+      </div>
+      <div class="options">
+        <div class="alias-section">
+          <span class="section-label">Reuse Culver's cone:</span>
+          <div class="match-options">
+      <div class="match-option" data-flavor="pecan-toffee-crunch" data-alias="double-butter-pecan" onclick="selectAlias(this)">
+        <img src="assets/cones/double-butter-pecan.png" loading="lazy" />
+        <span class="match-label">Double Butter Pecan</span>
+        <span class="match-score">score: 8</span>
+      </div>
+      <div class="match-option" data-flavor="pecan-toffee-crunch" data-alias="turtle" onclick="selectAlias(this)">
+        <img src="assets/cones/turtle.png" loading="lazy" />
+        <span class="match-label">Turtle</span>
+        <span class="match-score">score: 8</span>
+      </div>
+      <div class="match-option" data-flavor="pecan-toffee-crunch" data-alias="turtle-dove" onclick="selectAlias(this)">
+        <img src="assets/cones/turtle-dove.png" loading="lazy" />
+        <span class="match-label">Turtle Dove</span>
+        <span class="match-score">score: 8</span>
+      </div></div>
+        </div>
+        
+        <div class="own-section">
+          <span class="section-label">Own candidates:</span>
+          <div class="candidates">
+    <div class="candidate" data-flavor="pecan-toffee-crunch" data-file="pecan-toffee-crunch-1.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/pecan-toffee-crunch/pecan-toffee-crunch-1.png" loading="lazy" />
+      <span class="label">#1</span>
+    </div>
+    <div class="candidate" data-flavor="pecan-toffee-crunch" data-file="pecan-toffee-crunch-2.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/pecan-toffee-crunch/pecan-toffee-crunch-2.png" loading="lazy" />
+      <span class="label">#2</span>
+    </div>
+    <div class="candidate" data-flavor="pecan-toffee-crunch" data-file="pecan-toffee-crunch-3.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/pecan-toffee-crunch/pecan-toffee-crunch-3.png" loading="lazy" />
+      <span class="label">#3</span>
+    </div>
+    <div class="candidate" data-flavor="pecan-toffee-crunch" data-file="pecan-toffee-crunch-4.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/pecan-toffee-crunch/pecan-toffee-crunch-4.png" loading="lazy" />
+      <span class="label">#4</span>
+    </div>
+    <div class="candidate" data-flavor="pecan-toffee-crunch" data-file="pecan-toffee-crunch-5.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/pecan-toffee-crunch/pecan-toffee-crunch-5.png" loading="lazy" />
+      <span class="label">#5</span>
+    </div></div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="skip-btn" onclick="skipFlavor('pecan-toffee-crunch')">Skip</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="pistachio" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">Pistachio</span> <span class="tag pure">pure base</span>
+        <span class="flavor-desc">Pistachio Fresh Frozen Custard with a smooth, nutty flavor.</span>
+        <span class="flavor-profile">base: pistachio, density: pure</span>
+      </div>
+      <div class="options">
+        <div class="alias-section">
+          <span class="section-label">Reuse Culver's cone:</span>
+          <div class="match-options">
+      <div class="match-option" data-flavor="pistachio" data-alias="dark-chocolate-decadence" onclick="selectAlias(this)">
+        <img src="assets/cones/dark-chocolate-decadence.png" loading="lazy" />
+        <span class="match-label">Dark Chocolate Decadence</span>
+        <span class="match-score">score: 2</span>
+      </div>
+      <div class="match-option" data-flavor="pistachio" data-alias="vanilla" onclick="selectAlias(this)">
+        <img src="assets/cones/vanilla.png" loading="lazy" />
+        <span class="match-label">Vanilla</span>
+        <span class="match-score">score: 2</span>
+      </div></div>
+        </div>
+        
+        <div class="own-section">
+          <span class="section-label">Own candidates:</span>
+          <div class="candidates">
+    <div class="candidate" data-flavor="pistachio" data-file="pistachio-1.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/pistachio/pistachio-1.png" loading="lazy" />
+      <span class="label">#1</span>
+    </div>
+    <div class="candidate" data-flavor="pistachio" data-file="pistachio-2.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/pistachio/pistachio-2.png" loading="lazy" />
+      <span class="label">#2</span>
+    </div>
+    <div class="candidate" data-flavor="pistachio" data-file="pistachio-3.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/pistachio/pistachio-3.png" loading="lazy" />
+      <span class="label">#3</span>
+    </div>
+    <div class="candidate" data-flavor="pistachio" data-file="pistachio-4.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/pistachio/pistachio-4.png" loading="lazy" />
+      <span class="label">#4</span>
+    </div>
+    <div class="candidate" data-flavor="pistachio" data-file="pistachio-5.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/pistachio/pistachio-5.png" loading="lazy" />
+      <span class="label">#5</span>
+    </div></div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="skip-btn" onclick="skipFlavor('pistachio')">Skip</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="polar-bear-tracks" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">Polar Bear Tracks</span> <span class="tag gen">has candidates</span>
+        <span class="flavor-desc">Vanilla Fresh Frozen Custard with fudge swirl and Reese's cup pieces.</span>
+        <span class="flavor-profile">base: vanilla, ribbon: fudge, toppings: reeses, density: standard</span>
+      </div>
+      <div class="options">
+        <div class="alias-section">
+          <span class="section-label">Reuse Culver's cone:</span>
+          <div class="match-options">
+      <div class="match-option" data-flavor="polar-bear-tracks" data-alias="caramel-fudge-cookie-dough" onclick="selectAlias(this)">
+        <img src="assets/cones/caramel-fudge-cookie-dough.png" loading="lazy" />
+        <span class="match-label">Caramel Fudge Cookie Dough</span>
+        <span class="match-score">score: 9</span>
+      </div>
+      <div class="match-option" data-flavor="polar-bear-tracks" data-alias="crazy-for-cookie-dough" onclick="selectAlias(this)">
+        <img src="assets/cones/crazy-for-cookie-dough.png" loading="lazy" />
+        <span class="match-label">Crazy for Cookie Dough</span>
+        <span class="match-score">score: 9</span>
+      </div>
+      <div class="match-option" data-flavor="polar-bear-tracks" data-alias="caramel-cashew" onclick="selectAlias(this)">
+        <img src="assets/cones/caramel-cashew.png" loading="lazy" />
+        <span class="match-label">Caramel Cashew</span>
+        <span class="match-score">score: 7</span>
+      </div></div>
+        </div>
+        
+        <div class="own-section">
+          <span class="section-label">Own candidates:</span>
+          <div class="candidates">
+    <div class="candidate" data-flavor="polar-bear-tracks" data-file="polar-bear-tracks-1.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/polar-bear-tracks/polar-bear-tracks-1.png" loading="lazy" />
+      <span class="label">#1</span>
+    </div>
+    <div class="candidate" data-flavor="polar-bear-tracks" data-file="polar-bear-tracks-2.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/polar-bear-tracks/polar-bear-tracks-2.png" loading="lazy" />
+      <span class="label">#2</span>
+    </div>
+    <div class="candidate" data-flavor="polar-bear-tracks" data-file="polar-bear-tracks-3.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/polar-bear-tracks/polar-bear-tracks-3.png" loading="lazy" />
+      <span class="label">#3</span>
+    </div>
+    <div class="candidate" data-flavor="polar-bear-tracks" data-file="polar-bear-tracks-4.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/polar-bear-tracks/polar-bear-tracks-4.png" loading="lazy" />
+      <span class="label">#4</span>
+    </div>
+    <div class="candidate" data-flavor="polar-bear-tracks" data-file="polar-bear-tracks-5.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/polar-bear-tracks/polar-bear-tracks-5.png" loading="lazy" />
+      <span class="label">#5</span>
+    </div></div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="skip-btn" onclick="skipFlavor('polar-bear-tracks')">Skip</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="pumpkin-pecan" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">Pumpkin Pecan</span> <span class="tag gen">has candidates</span>
+        <span class="flavor-desc">Pumpkin Fresh Frozen Custard with pecan pieces and pumpkin spice.</span>
+        <span class="flavor-profile">base: pumpkin, toppings: pecan, pumpkin_spice, density: standard</span>
+      </div>
+      <div class="options">
+        <div class="alias-section">
+          <span class="section-label">Reuse Culver's cone:</span>
+          <div class="match-options">
+      <div class="match-option" data-flavor="pumpkin-pecan" data-alias="butter-pecan" onclick="selectAlias(this)">
+        <img src="assets/cones/butter-pecan.png" loading="lazy" />
+        <span class="match-label">Butter Pecan</span>
+        <span class="match-score">score: 4</span>
+      </div>
+      <div class="match-option" data-flavor="pumpkin-pecan" data-alias="caramel-pecan" onclick="selectAlias(this)">
+        <img src="assets/cones/caramel-pecan.png" loading="lazy" />
+        <span class="match-label">Caramel Pecan</span>
+        <span class="match-score">score: 4</span>
+      </div>
+      <div class="match-option" data-flavor="pumpkin-pecan" data-alias="double-butter-pecan" onclick="selectAlias(this)">
+        <img src="assets/cones/double-butter-pecan.png" loading="lazy" />
+        <span class="match-label">Double Butter Pecan</span>
+        <span class="match-score">score: 3</span>
+      </div></div>
+        </div>
+        
+        <div class="own-section">
+          <span class="section-label">Own candidates:</span>
+          <div class="candidates">
+    <div class="candidate" data-flavor="pumpkin-pecan" data-file="pumpkin-pecan-1.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/pumpkin-pecan/pumpkin-pecan-1.png" loading="lazy" />
+      <span class="label">#1</span>
+    </div>
+    <div class="candidate" data-flavor="pumpkin-pecan" data-file="pumpkin-pecan-2.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/pumpkin-pecan/pumpkin-pecan-2.png" loading="lazy" />
+      <span class="label">#2</span>
+    </div>
+    <div class="candidate" data-flavor="pumpkin-pecan" data-file="pumpkin-pecan-3.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/pumpkin-pecan/pumpkin-pecan-3.png" loading="lazy" />
+      <span class="label">#3</span>
+    </div>
+    <div class="candidate" data-flavor="pumpkin-pecan" data-file="pumpkin-pecan-4.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/pumpkin-pecan/pumpkin-pecan-4.png" loading="lazy" />
+      <span class="label">#4</span>
+    </div>
+    <div class="candidate" data-flavor="pumpkin-pecan" data-file="pumpkin-pecan-5.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/pumpkin-pecan/pumpkin-pecan-5.png" loading="lazy" />
+      <span class="label">#5</span>
+    </div></div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="skip-btn" onclick="skipFlavor('pumpkin-pecan')">Skip</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="pumpkin-pie" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">Pumpkin Pie</span> <span class="tag gen">has candidates</span>
+        <span class="flavor-desc">Pumpkin Fresh Frozen Custard with graham cracker crumbles and pumpkin spice.</span>
+        <span class="flavor-profile">base: pumpkin, toppings: graham_cracker, pumpkin_spice, density: standard</span>
+      </div>
+      <div class="options">
+        <div class="alias-section">
+          <span class="section-label">Reuse Culver's cone:</span>
+          <div class="match-options">
+      <div class="match-option" data-flavor="pumpkin-pie" data-alias="andes-mint-avalanche" onclick="selectAlias(this)">
+        <img src="assets/cones/andes-mint-avalanche.png" loading="lazy" />
+        <span class="match-label">Andes Mint Avalanche</span>
+        <span class="match-score">score: 2</span>
+      </div>
+      <div class="match-option" data-flavor="pumpkin-pie" data-alias="blackberry-cobbler" onclick="selectAlias(this)">
+        <img src="assets/cones/blackberry-cobbler.png" loading="lazy" />
+        <span class="match-label">Blackberry Cobbler</span>
+        <span class="match-score">score: 2</span>
+      </div>
+      <div class="match-option" data-flavor="pumpkin-pie" data-alias="butter-pecan" onclick="selectAlias(this)">
+        <img src="assets/cones/butter-pecan.png" loading="lazy" />
+        <span class="match-label">Butter Pecan</span>
+        <span class="match-score">score: 2</span>
+      </div></div>
+        </div>
+        
+        <div class="own-section">
+          <span class="section-label">Own candidates:</span>
+          <div class="candidates">
+    <div class="candidate" data-flavor="pumpkin-pie" data-file="pumpkin-pie-1.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/pumpkin-pie/pumpkin-pie-1.png" loading="lazy" />
+      <span class="label">#1</span>
+    </div>
+    <div class="candidate" data-flavor="pumpkin-pie" data-file="pumpkin-pie-2.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/pumpkin-pie/pumpkin-pie-2.png" loading="lazy" />
+      <span class="label">#2</span>
+    </div>
+    <div class="candidate" data-flavor="pumpkin-pie" data-file="pumpkin-pie-3.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/pumpkin-pie/pumpkin-pie-3.png" loading="lazy" />
+      <span class="label">#3</span>
+    </div>
+    <div class="candidate" data-flavor="pumpkin-pie" data-file="pumpkin-pie-4.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/pumpkin-pie/pumpkin-pie-4.png" loading="lazy" />
+      <span class="label">#4</span>
+    </div>
+    <div class="candidate" data-flavor="pumpkin-pie" data-file="pumpkin-pie-5.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/pumpkin-pie/pumpkin-pie-5.png" loading="lazy" />
+      <span class="label">#5</span>
+    </div></div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="skip-btn" onclick="skipFlavor('pumpkin-pie')">Skip</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="raspberry-cordial" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">Raspberry Cordial</span> <span class="tag gen">has candidates</span>
+        <span class="flavor-desc">Vanilla Fresh Frozen Custard with raspberry pieces and dark chocolate chunks.</span>
+        <span class="flavor-profile">base: vanilla, toppings: raspberry, dove, density: standard</span>
+      </div>
+      <div class="options">
+        <div class="alias-section">
+          <span class="section-label">Reuse Culver's cone:</span>
+          <div class="match-options">
+      <div class="match-option" data-flavor="raspberry-cordial" data-alias="chocolate-covered-strawberry" onclick="selectAlias(this)">
+        <img src="assets/cones/chocolate-covered-strawberry.png" loading="lazy" />
+        <span class="match-label">Chocolate Covered Strawberry</span>
+        <span class="match-score">score: 9</span>
+      </div>
+      <div class="match-option" data-flavor="raspberry-cordial" data-alias="caramel-peanut-buttercup" onclick="selectAlias(this)">
+        <img src="assets/cones/caramel-peanut-buttercup.png" loading="lazy" />
+        <span class="match-label">Caramel Peanut Buttercup</span>
+        <span class="match-score">score: 8</span>
+      </div>
+      <div class="match-option" data-flavor="raspberry-cordial" data-alias="turtle" onclick="selectAlias(this)">
+        <img src="assets/cones/turtle.png" loading="lazy" />
+        <span class="match-label">Turtle</span>
+        <span class="match-score">score: 8</span>
+      </div></div>
+        </div>
+        
+        <div class="own-section">
+          <span class="section-label">Own candidates:</span>
+          <div class="candidates">
+    <div class="candidate" data-flavor="raspberry-cordial" data-file="raspberry-cordial-1.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/raspberry-cordial/raspberry-cordial-1.png" loading="lazy" />
+      <span class="label">#1</span>
+    </div>
+    <div class="candidate" data-flavor="raspberry-cordial" data-file="raspberry-cordial-2.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/raspberry-cordial/raspberry-cordial-2.png" loading="lazy" />
+      <span class="label">#2</span>
+    </div>
+    <div class="candidate" data-flavor="raspberry-cordial" data-file="raspberry-cordial-3.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/raspberry-cordial/raspberry-cordial-3.png" loading="lazy" />
+      <span class="label">#3</span>
+    </div>
+    <div class="candidate" data-flavor="raspberry-cordial" data-file="raspberry-cordial-4.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/raspberry-cordial/raspberry-cordial-4.png" loading="lazy" />
+      <span class="label">#4</span>
+    </div>
+    <div class="candidate" data-flavor="raspberry-cordial" data-file="raspberry-cordial-5.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/raspberry-cordial/raspberry-cordial-5.png" loading="lazy" />
+      <span class="label">#5</span>
+    </div></div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="skip-btn" onclick="skipFlavor('raspberry-cordial')">Skip</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="red-raspberry" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">Red Raspberry</span> <span class="tag gen">has candidates</span>
+        <span class="flavor-desc">Vanilla Fresh Frozen Custard with raspberry pieces.</span>
+        <span class="flavor-profile">base: vanilla, toppings: raspberry, density: standard</span>
+      </div>
+      <div class="options">
+        <div class="alias-section">
+          <span class="section-label">Reuse Culver's cone:</span>
+          <div class="match-options">
+      <div class="match-option" data-flavor="red-raspberry" data-alias="chocolate-covered-strawberry" onclick="selectAlias(this)">
+        <img src="assets/cones/chocolate-covered-strawberry.png" loading="lazy" />
+        <span class="match-label">Chocolate Covered Strawberry</span>
+        <span class="match-score">score: 7</span>
+      </div>
+      <div class="match-option" data-flavor="red-raspberry" data-alias="caramel-cashew" onclick="selectAlias(this)">
+        <img src="assets/cones/caramel-cashew.png" loading="lazy" />
+        <span class="match-label">Caramel Cashew</span>
+        <span class="match-score">score: 6</span>
+      </div>
+      <div class="match-option" data-flavor="red-raspberry" data-alias="caramel-fudge-cookie-dough" onclick="selectAlias(this)">
+        <img src="assets/cones/caramel-fudge-cookie-dough.png" loading="lazy" />
+        <span class="match-label">Caramel Fudge Cookie Dough</span>
+        <span class="match-score">score: 6</span>
+      </div></div>
+        </div>
+        
+        <div class="own-section">
+          <span class="section-label">Own candidates:</span>
+          <div class="candidates">
+    <div class="candidate" data-flavor="red-raspberry" data-file="red-raspberry-1.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/red-raspberry/red-raspberry-1.png" loading="lazy" />
+      <span class="label">#1</span>
+    </div>
+    <div class="candidate" data-flavor="red-raspberry" data-file="red-raspberry-2.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/red-raspberry/red-raspberry-2.png" loading="lazy" />
+      <span class="label">#2</span>
+    </div>
+    <div class="candidate" data-flavor="red-raspberry" data-file="red-raspberry-3.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/red-raspberry/red-raspberry-3.png" loading="lazy" />
+      <span class="label">#3</span>
+    </div>
+    <div class="candidate" data-flavor="red-raspberry" data-file="red-raspberry-4.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/red-raspberry/red-raspberry-4.png" loading="lazy" />
+      <span class="label">#4</span>
+    </div>
+    <div class="candidate" data-flavor="red-raspberry" data-file="red-raspberry-5.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/red-raspberry/red-raspberry-5.png" loading="lazy" />
+      <span class="label">#5</span>
+    </div></div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="skip-btn" onclick="skipFlavor('red-raspberry')">Skip</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="rice-krispie-treat" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">Rice Krispie Treat</span> <span class="tag gen">has candidates</span>
+        <span class="flavor-desc">Vanilla Fresh Frozen Custard with marshmallow swirl and cookie crumbles.</span>
+        <span class="flavor-profile">base: vanilla, ribbon: marshmallow, toppings: cookie_crumbs, density: standard</span>
+      </div>
+      <div class="options">
+        <div class="alias-section">
+          <span class="section-label">Reuse Culver's cone:</span>
+          <div class="match-options">
+      <div class="match-option" data-flavor="rice-krispie-treat" data-alias="turtle-dove" onclick="selectAlias(this)">
+        <img src="assets/cones/turtle-dove.png" loading="lazy" />
+        <span class="match-label">Turtle Dove</span>
+        <span class="match-score">score: 9</span>
+      </div>
+      <div class="match-option" data-flavor="rice-krispie-treat" data-alias="caramel-cashew" onclick="selectAlias(this)">
+        <img src="assets/cones/caramel-cashew.png" loading="lazy" />
+        <span class="match-label">Caramel Cashew</span>
+        <span class="match-score">score: 7</span>
+      </div>
+      <div class="match-option" data-flavor="rice-krispie-treat" data-alias="caramel-fudge-cookie-dough" onclick="selectAlias(this)">
+        <img src="assets/cones/caramel-fudge-cookie-dough.png" loading="lazy" />
+        <span class="match-label">Caramel Fudge Cookie Dough</span>
+        <span class="match-score">score: 7</span>
+      </div></div>
+        </div>
+        
+        <div class="own-section">
+          <span class="section-label">Own candidates:</span>
+          <div class="candidates">
+    <div class="candidate" data-flavor="rice-krispie-treat" data-file="rice-krispie-treat-1.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/rice-krispie-treat/rice-krispie-treat-1.png" loading="lazy" />
+      <span class="label">#1</span>
+    </div>
+    <div class="candidate" data-flavor="rice-krispie-treat" data-file="rice-krispie-treat-2.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/rice-krispie-treat/rice-krispie-treat-2.png" loading="lazy" />
+      <span class="label">#2</span>
+    </div>
+    <div class="candidate" data-flavor="rice-krispie-treat" data-file="rice-krispie-treat-3.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/rice-krispie-treat/rice-krispie-treat-3.png" loading="lazy" />
+      <span class="label">#3</span>
+    </div>
+    <div class="candidate" data-flavor="rice-krispie-treat" data-file="rice-krispie-treat-4.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/rice-krispie-treat/rice-krispie-treat-4.png" loading="lazy" />
+      <span class="label">#4</span>
+    </div>
+    <div class="candidate" data-flavor="rice-krispie-treat" data-file="rice-krispie-treat-5.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/rice-krispie-treat/rice-krispie-treat-5.png" loading="lazy" />
+      <span class="label">#5</span>
+    </div></div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="skip-btn" onclick="skipFlavor('rice-krispie-treat')">Skip</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="rocky-road" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">Rocky Road</span> <span class="tag gen">has candidates</span>
+        <span class="flavor-desc">Chocolate Fresh Frozen Custard with marshmallow swirl, cashew pieces, and chocolate chips.</span>
+        <span class="flavor-profile">base: chocolate, ribbon: marshmallow, toppings: cashew, chocolate_chip, density: standard</span>
+      </div>
+      <div class="options">
+        <div class="alias-section">
+          <span class="section-label">Reuse Culver's cone:</span>
+          <div class="match-options">
+      <div class="match-option" data-flavor="rocky-road" data-alias="brownie-thunder" onclick="selectAlias(this)">
+        <img src="assets/cones/brownie-thunder.png" loading="lazy" />
+        <span class="match-label">Brownie Thunder</span>
+        <span class="match-score">score: 8</span>
+      </div>
+      <div class="match-option" data-flavor="rocky-road" data-alias="chocolate-oreo-volcano" onclick="selectAlias(this)">
+        <img src="assets/cones/chocolate-oreo-volcano.png" loading="lazy" />
+        <span class="match-label">Chocolate Oreo Volcano</span>
+        <span class="match-score">score: 8</span>
+      </div>
+      <div class="match-option" data-flavor="rocky-road" data-alias="chocolate-caramel-twist" onclick="selectAlias(this)">
+        <img src="assets/cones/chocolate-caramel-twist.png" loading="lazy" />
+        <span class="match-label">Chocolate Caramel Twist</span>
+        <span class="match-score">score: 7</span>
+      </div></div>
+        </div>
+        
+        <div class="own-section">
+          <span class="section-label">Own candidates:</span>
+          <div class="candidates">
+    <div class="candidate" data-flavor="rocky-road" data-file="rocky-road-1.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/rocky-road/rocky-road-1.png" loading="lazy" />
+      <span class="label">#1</span>
+    </div>
+    <div class="candidate" data-flavor="rocky-road" data-file="rocky-road-2.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/rocky-road/rocky-road-2.png" loading="lazy" />
+      <span class="label">#2</span>
+    </div>
+    <div class="candidate" data-flavor="rocky-road" data-file="rocky-road-3.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/rocky-road/rocky-road-3.png" loading="lazy" />
+      <span class="label">#3</span>
+    </div>
+    <div class="candidate" data-flavor="rocky-road" data-file="rocky-road-4.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/rocky-road/rocky-road-4.png" loading="lazy" />
+      <span class="label">#4</span>
+    </div>
+    <div class="candidate" data-flavor="rocky-road" data-file="rocky-road-5.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/rocky-road/rocky-road-5.png" loading="lazy" />
+      <span class="label">#5</span>
+    </div></div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="skip-btn" onclick="skipFlavor('rocky-road')">Skip</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="root-beer-float" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">Root Beer Float</span> <span class="tag gen">has candidates</span>
+        <span class="flavor-desc">Root Beer Fresh Frozen Custard with marshmallow bits.</span>
+        <span class="flavor-profile">base: root_beer, toppings: marshmallow_bits, density: standard</span>
+      </div>
+      <div class="options">
+        <div class="alias-section">
+          <span class="section-label">Reuse Culver's cone:</span>
+          <div class="match-options">
+      <div class="match-option" data-flavor="root-beer-float" data-alias="andes-mint-avalanche" onclick="selectAlias(this)">
+        <img src="assets/cones/andes-mint-avalanche.png" loading="lazy" />
+        <span class="match-label">Andes Mint Avalanche</span>
+        <span class="match-score">score: 2</span>
+      </div>
+      <div class="match-option" data-flavor="root-beer-float" data-alias="blackberry-cobbler" onclick="selectAlias(this)">
+        <img src="assets/cones/blackberry-cobbler.png" loading="lazy" />
+        <span class="match-label">Blackberry Cobbler</span>
+        <span class="match-score">score: 2</span>
+      </div>
+      <div class="match-option" data-flavor="root-beer-float" data-alias="butter-pecan" onclick="selectAlias(this)">
+        <img src="assets/cones/butter-pecan.png" loading="lazy" />
+        <span class="match-label">Butter Pecan</span>
+        <span class="match-score">score: 2</span>
+      </div></div>
+        </div>
+        
+        <div class="own-section">
+          <span class="section-label">Own candidates:</span>
+          <div class="candidates">
+    <div class="candidate" data-flavor="root-beer-float" data-file="root-beer-float-1.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/root-beer-float/root-beer-float-1.png" loading="lazy" />
+      <span class="label">#1</span>
+    </div>
+    <div class="candidate" data-flavor="root-beer-float" data-file="root-beer-float-2.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/root-beer-float/root-beer-float-2.png" loading="lazy" />
+      <span class="label">#2</span>
+    </div>
+    <div class="candidate" data-flavor="root-beer-float" data-file="root-beer-float-3.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/root-beer-float/root-beer-float-3.png" loading="lazy" />
+      <span class="label">#3</span>
+    </div>
+    <div class="candidate" data-flavor="root-beer-float" data-file="root-beer-float-4.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/root-beer-float/root-beer-float-4.png" loading="lazy" />
+      <span class="label">#4</span>
+    </div>
+    <div class="candidate" data-flavor="root-beer-float" data-file="root-beer-float-5.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/root-beer-float/root-beer-float-5.png" loading="lazy" />
+      <span class="label">#5</span>
+    </div></div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="skip-btn" onclick="skipFlavor('root-beer-float')">Skip</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="tiramisu" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">Tiramisu</span> <span class="tag gen">has candidates</span>
+        <span class="flavor-desc">Espresso Fresh Frozen Custard with marshmallow swirl, cake pieces, and dark chocolate chunks.</span>
+        <span class="flavor-profile">base: espresso, ribbon: marshmallow, toppings: cake, dove, density: standard</span>
+      </div>
+      <div class="options">
+        <div class="alias-section">
+          <span class="section-label">Reuse Culver's cone:</span>
+          <div class="match-options">
+      <div class="match-option" data-flavor="tiramisu" data-alias="turtle-dove" onclick="selectAlias(this)">
+        <img src="assets/cones/turtle-dove.png" loading="lazy" />
+        <span class="match-label">Turtle Dove</span>
+        <span class="match-score">score: 6</span>
+      </div>
+      <div class="match-option" data-flavor="tiramisu" data-alias="brownie-thunder" onclick="selectAlias(this)">
+        <img src="assets/cones/brownie-thunder.png" loading="lazy" />
+        <span class="match-label">Brownie Thunder</span>
+        <span class="match-score">score: 5</span>
+      </div>
+      <div class="match-option" data-flavor="tiramisu" data-alias="chocolate-oreo-volcano" onclick="selectAlias(this)">
+        <img src="assets/cones/chocolate-oreo-volcano.png" loading="lazy" />
+        <span class="match-label">Chocolate Oreo Volcano</span>
+        <span class="match-score">score: 5</span>
+      </div></div>
+        </div>
+        
+        <div class="own-section">
+          <span class="section-label">Own candidates:</span>
+          <div class="candidates">
+    <div class="candidate" data-flavor="tiramisu" data-file="tiramisu-1.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/tiramisu/tiramisu-1.png" loading="lazy" />
+      <span class="label">#1</span>
+    </div>
+    <div class="candidate" data-flavor="tiramisu" data-file="tiramisu-2.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/tiramisu/tiramisu-2.png" loading="lazy" />
+      <span class="label">#2</span>
+    </div>
+    <div class="candidate" data-flavor="tiramisu" data-file="tiramisu-3.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/tiramisu/tiramisu-3.png" loading="lazy" />
+      <span class="label">#3</span>
+    </div>
+    <div class="candidate" data-flavor="tiramisu" data-file="tiramisu-4.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/tiramisu/tiramisu-4.png" loading="lazy" />
+      <span class="label">#4</span>
+    </div>
+    <div class="candidate" data-flavor="tiramisu" data-file="tiramisu-5.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/tiramisu/tiramisu-5.png" loading="lazy" />
+      <span class="label">#5</span>
+    </div></div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="skip-btn" onclick="skipFlavor('tiramisu')">Skip</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="toffee-pecan" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">Toffee Pecan</span> <span class="tag gen">has candidates</span>
+        <span class="flavor-desc">Butter Pecan Fresh Frozen Custard with Heath toffee bits and pecan pieces.</span>
+        <span class="flavor-profile">base: butter_pecan, toppings: heath, pecan, density: standard</span>
+      </div>
+      <div class="options">
+        <div class="alias-section">
+          <span class="section-label">Reuse Culver's cone:</span>
+          <div class="match-options">
+      <div class="match-option" data-flavor="toffee-pecan" data-alias="butter-pecan" onclick="selectAlias(this)">
+        <img src="assets/cones/butter-pecan.png" loading="lazy" />
+        <span class="match-label">Butter Pecan</span>
+        <span class="match-score">score: 9</span>
+      </div>
+      <div class="match-option" data-flavor="toffee-pecan" data-alias="caramel-pecan" onclick="selectAlias(this)">
+        <img src="assets/cones/caramel-pecan.png" loading="lazy" />
+        <span class="match-label">Caramel Pecan</span>
+        <span class="match-score">score: 6</span>
+      </div>
+      <div class="match-option" data-flavor="toffee-pecan" data-alias="double-butter-pecan" onclick="selectAlias(this)">
+        <img src="assets/cones/double-butter-pecan.png" loading="lazy" />
+        <span class="match-label">Double Butter Pecan</span>
+        <span class="match-score">score: 5</span>
+      </div></div>
+        </div>
+        
+        <div class="own-section">
+          <span class="section-label">Own candidates:</span>
+          <div class="candidates">
+    <div class="candidate" data-flavor="toffee-pecan" data-file="toffee-pecan-1.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/toffee-pecan/toffee-pecan-1.png" loading="lazy" />
+      <span class="label">#1</span>
+    </div>
+    <div class="candidate" data-flavor="toffee-pecan" data-file="toffee-pecan-2.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/toffee-pecan/toffee-pecan-2.png" loading="lazy" />
+      <span class="label">#2</span>
+    </div>
+    <div class="candidate" data-flavor="toffee-pecan" data-file="toffee-pecan-3.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/toffee-pecan/toffee-pecan-3.png" loading="lazy" />
+      <span class="label">#3</span>
+    </div>
+    <div class="candidate" data-flavor="toffee-pecan" data-file="toffee-pecan-4.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/toffee-pecan/toffee-pecan-4.png" loading="lazy" />
+      <span class="label">#4</span>
+    </div>
+    <div class="candidate" data-flavor="toffee-pecan" data-file="toffee-pecan-5.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/toffee-pecan/toffee-pecan-5.png" loading="lazy" />
+      <span class="label">#5</span>
+    </div></div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="skip-btn" onclick="skipFlavor('toffee-pecan')">Skip</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="triple-chocolate-kiss" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">Triple Chocolate Kiss</span> <span class="tag gen">has candidates</span>
+        <span class="flavor-desc">Dark Chocolate Fresh Frozen Custard with chocolate syrup swirl and dark chocolate chunks.</span>
+        <span class="flavor-profile">base: dark_chocolate, ribbon: chocolate_syrup, toppings: dove, density: standard</span>
+      </div>
+      <div class="options">
+        <div class="alias-section">
+          <span class="section-label">Reuse Culver's cone:</span>
+          <div class="match-options">
+      <div class="match-option" data-flavor="triple-chocolate-kiss" data-alias="chocolate-volcano" onclick="selectAlias(this)">
+        <img src="assets/cones/chocolate-volcano.png" loading="lazy" />
+        <span class="match-label">Chocolate Volcano</span>
+        <span class="match-score">score: 7</span>
+      </div>
+      <div class="match-option" data-flavor="triple-chocolate-kiss" data-alias="dark-chocolate-pb-crunch" onclick="selectAlias(this)">
+        <img src="assets/cones/dark-chocolate-pb-crunch.png" loading="lazy" />
+        <span class="match-label">Dark Chocolate PB Crunch</span>
+        <span class="match-score">score: 7</span>
+      </div>
+      <div class="match-option" data-flavor="triple-chocolate-kiss" data-alias="chocolate-caramel-twist" onclick="selectAlias(this)">
+        <img src="assets/cones/chocolate-caramel-twist.png" loading="lazy" />
+        <span class="match-label">Chocolate Caramel Twist</span>
+        <span class="match-score">score: 6</span>
+      </div></div>
+        </div>
+        
+        <div class="own-section">
+          <span class="section-label">Own candidates:</span>
+          <div class="candidates">
+    <div class="candidate" data-flavor="triple-chocolate-kiss" data-file="triple-chocolate-kiss-1.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/triple-chocolate-kiss/triple-chocolate-kiss-1.png" loading="lazy" />
+      <span class="label">#1</span>
+    </div>
+    <div class="candidate" data-flavor="triple-chocolate-kiss" data-file="triple-chocolate-kiss-2.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/triple-chocolate-kiss/triple-chocolate-kiss-2.png" loading="lazy" />
+      <span class="label">#2</span>
+    </div>
+    <div class="candidate" data-flavor="triple-chocolate-kiss" data-file="triple-chocolate-kiss-3.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/triple-chocolate-kiss/triple-chocolate-kiss-3.png" loading="lazy" />
+      <span class="label">#3</span>
+    </div>
+    <div class="candidate" data-flavor="triple-chocolate-kiss" data-file="triple-chocolate-kiss-4.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/triple-chocolate-kiss/triple-chocolate-kiss-4.png" loading="lazy" />
+      <span class="label">#4</span>
+    </div>
+    <div class="candidate" data-flavor="triple-chocolate-kiss" data-file="triple-chocolate-kiss-5.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/triple-chocolate-kiss/triple-chocolate-kiss-5.png" loading="lazy" />
+      <span class="label">#5</span>
+    </div></div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="skip-btn" onclick="skipFlavor('triple-chocolate-kiss')">Skip</button>
+      </div>
+    </div>
+
+    <div class="flavor-row" data-flavor="twix-mix" data-status="pending">
+      <div class="flavor-info">
+        <span class="flavor-name">Twix Mix</span> <span class="tag gen">has candidates</span>
+        <span class="flavor-desc">Chocolate Fresh Frozen Custard with caramel swirl and cookie crumbles.</span>
+        <span class="flavor-profile">base: chocolate, ribbon: caramel, toppings: cookie_crumbs, density: standard</span>
+      </div>
+      <div class="options">
+        <div class="alias-section">
+          <span class="section-label">Reuse Culver's cone:</span>
+          <div class="match-options">
+      <div class="match-option" data-flavor="twix-mix" data-alias="chocolate-caramel-twist" onclick="selectAlias(this)">
+        <img src="assets/cones/chocolate-caramel-twist.png" loading="lazy" />
+        <span class="match-label">Chocolate Caramel Twist</span>
+        <span class="match-score">score: 9</span>
+      </div>
+      <div class="match-option" data-flavor="twix-mix" data-alias="snickers-swirl" onclick="selectAlias(this)">
+        <img src="assets/cones/snickers-swirl.png" loading="lazy" />
+        <span class="match-label">Snickers Swirl</span>
+        <span class="match-score">score: 9</span>
+      </div>
+      <div class="match-option" data-flavor="twix-mix" data-alias="peanut-butter-cup" onclick="selectAlias(this)">
+        <img src="assets/cones/peanut-butter-cup.png" loading="lazy" />
+        <span class="match-label">Peanut Butter Cup</span>
+        <span class="match-score">score: 7</span>
+      </div></div>
+        </div>
+        
+        <div class="own-section">
+          <span class="section-label">Own candidates:</span>
+          <div class="candidates">
+    <div class="candidate" data-flavor="twix-mix" data-file="twix-mix-1.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/twix-mix/twix-mix-1.png" loading="lazy" />
+      <span class="label">#1</span>
+    </div>
+    <div class="candidate" data-flavor="twix-mix" data-file="twix-mix-2.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/twix-mix/twix-mix-2.png" loading="lazy" />
+      <span class="label">#2</span>
+    </div>
+    <div class="candidate" data-flavor="twix-mix" data-file="twix-mix-3.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/twix-mix/twix-mix-3.png" loading="lazy" />
+      <span class="label">#3</span>
+    </div>
+    <div class="candidate" data-flavor="twix-mix" data-file="twix-mix-4.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/twix-mix/twix-mix-4.png" loading="lazy" />
+      <span class="label">#4</span>
+    </div>
+    <div class="candidate" data-flavor="twix-mix" data-file="twix-mix-5.png" onclick="selectOwn(this)">
+      <img src="assets/ai-candidates/twix-mix/twix-mix-5.png" loading="lazy" />
+      <span class="label">#5</span>
+    </div></div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="skip-btn" onclick="skipFlavor('twix-mix')">Skip</button>
+      </div>
+    </div>
+
+<div class="export-bar">
+  <button onclick="exportAliases()">Export Alias Map JSON</button>
+  <span id="export-status" style="color:#8b949e;font-size:12px;"></span>
+</div>
+
+<script>
+const TOTAL = 53;
+const state = JSON.parse(localStorage.getItem('ai-cone-aliases') || '{}');
+
+document.querySelectorAll('.flavor-row').forEach(row => {
+  const s = row.dataset.flavor;
+  if (state[s]) {
+    row.dataset.status = state[s].status;
+    if (state[s].alias) {
+      const el = row.querySelector('.match-option[data-alias="' + state[s].alias + '"]');
+      if (el) el.classList.add('selected');
+    }
+    if (state[s].ownFile) {
+      const el = row.querySelector('.candidate[data-file="' + state[s].ownFile + '"]');
+      if (el) el.classList.add('selected');
+    }
+  }
+});
+updateProgress();
+
+function selectAlias(el) {
+  const slug = el.dataset.flavor;
+  const alias = el.dataset.alias;
+  const row = el.closest('.flavor-row');
+  row.querySelectorAll('.match-option, .candidate').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  row.dataset.status = 'assigned';
+  state[slug] = { status: 'assigned', type: 'alias', alias: alias, ownFile: null };
+  localStorage.setItem('ai-cone-aliases', JSON.stringify(state));
+  updateProgress();
+}
+
+function selectOwn(el) {
+  const slug = el.dataset.flavor;
+  const file = el.dataset.file;
+  const row = el.closest('.flavor-row');
+  row.querySelectorAll('.match-option, .candidate').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  row.dataset.status = 'assigned';
+  state[slug] = { status: 'assigned', type: 'own', alias: null, ownFile: file };
+  localStorage.setItem('ai-cone-aliases', JSON.stringify(state));
+  updateProgress();
+}
+
+function skipFlavor(slug) {
+  const row = document.querySelector('.flavor-row[data-flavor="' + slug + '"]');
+  row.querySelectorAll('.match-option, .candidate').forEach(c => c.classList.remove('selected'));
+  row.dataset.status = 'skipped';
+  state[slug] = { status: 'skipped', type: null, alias: null, ownFile: null };
+  localStorage.setItem('ai-cone-aliases', JSON.stringify(state));
+  updateProgress();
+}
+
+function updateProgress() {
+  const assigned = Object.values(state).filter(s => s.status === 'assigned').length;
+  document.getElementById('count').textContent = assigned;
+  document.getElementById('bar').style.width = (assigned / TOTAL * 100) + '%';
+}
+
+function filterRows(filter, btn) {
+  document.querySelectorAll('.filters button').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  document.querySelectorAll('.flavor-row').forEach(row => {
+    if (filter === 'all') { row.classList.remove('hidden'); return; }
+    row.classList.toggle('hidden', row.dataset.status !== filter);
+  });
+}
+
+function exportAliases() {
+  const out = { aliases: {}, own: {}, skipped: [] };
+  for (const [slug, s] of Object.entries(state)) {
+    if (s.status === 'assigned' && s.type === 'alias') out.aliases[slug] = s.alias;
+    else if (s.status === 'assigned' && s.type === 'own') out.own[slug] = s.ownFile;
+    else if (s.status === 'skipped') out.skipped.push(slug);
+  }
+  const blob = new Blob([JSON.stringify(out, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'cone-alias-map.json';
+  a.click();
+  const total = Object.keys(out.aliases).length + Object.keys(out.own).length;
+  document.getElementById('export-status').textContent = 'Exported ' + total + ' assigned, ' + out.skipped.length + ' skipped';
+}
+</script>
+</body>
+</html>
