@@ -88,7 +88,7 @@
 
 **Milestone Goal:** Simplify the product to its essential experience, fix performance, and optimize for discoverability -- the first milestone focused on finding users rather than adding features.
 
-- [ ] **Phase 30: Housekeeping & Closure** - Formally close ML prediction roadmap items and clean up deferred tech debt
+- [x] **Phase 30: Housekeeping & Closure** - Formally close ML prediction roadmap items and clean up deferred tech debt
 - [ ] **Phase 31: Homepage Redesign** - Rebuild the homepage around a single hero card showing today's flavor at the user's store
 - [ ] **Phase 32: Page Consolidation** - Consolidate zero-traffic pages and simplify navigation to reflect actual usage
 - [ ] **Phase 33: Performance** - Fix cold-start LCP to under 3 seconds
@@ -170,7 +170,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 30-01: Triage TODO.md -- move ML items to Won't Do, review and resolve all stale entries
+- [x] 30-01: Triage TODO.md -- move ML items to Won't Do, review and resolve all stale entries
 
 ### Phase 31: Homepage Redesign
 **Goal**: Users see today's flavor at their store immediately upon landing, with a clean information hierarchy that eliminates visual noise
@@ -241,7 +241,7 @@ Phases execute sequentially: 30 -> 31 -> 32 -> 33 -> 34.
 | 18-19 | v1.4 | 4/4 | Complete | 2026-03-13 |
 | 20-25 | v1.5 | 10/10 | Complete | 2026-03-18 |
 | 26-29 | v2.0 | 8/8 | Complete | 2026-03-19 |
-| 30. Housekeeping & Closure | v3.0 | 0/1 | Not started | - |
+| 30. Housekeeping & Closure | v3.0 | 1/1 | Complete | 2026-03-19 |
 | 31. Homepage Redesign | v3.0 | 0/2 | Not started | - |
 | 32. Page Consolidation | v3.0 | 0/2 | Not started | - |
 | 33. Performance | v3.0 | 0/1 | Not started | - |

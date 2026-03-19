@@ -18,7 +18,7 @@ Simplify the product, fix performance, optimize for discoverability. First miles
 
 - [ ] **SIMP-01**: Zero-traffic pages (compare, forecast-map, fun) are consolidated or redirected
 - [ ] **SIMP-02**: Navigation reflects reduced page count with no more than 4 items
-- [ ] **SIMP-03**: ML prediction roadmap items formally closed (moved to Won't Do in TODO.md)
+- [x] **SIMP-03**: ML prediction roadmap items formally closed (moved to Won't Do in TODO.md)
 
 ### Performance
 
@@ -58,7 +58,7 @@ Tracked but not in current roadmap. Promote only after 10 real users provide fee
 | HOME-04 | Phase 31 | Pending |
 | SIMP-01 | Phase 32 | Pending |
 | SIMP-02 | Phase 32 | Pending |
-| SIMP-03 | Phase 30 | Pending |
+| SIMP-03 | Phase 30 | Complete |
 | PERF-01 | Phase 33 | Pending |
 | SHARE-01 | Phase 34 | Pending |
 | SHARE-02 | Phase 34 | Pending |
