@@ -1,7 +1,16 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { handleSocialCard } from '../src/social-card.js';
 
 const CORS = { 'Access-Control-Allow-Origin': '*' };
+
+// Minimal valid 1x1 transparent PNG for mocking fetch responses
+const TINY_PNG_B64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+function tinyPngBuffer() {
+  const binary = atob(TINY_PNG_B64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return bytes.buffer;
+}
 
 function createMockD1({ snapshot = null, appearances = 0, storeCount = 0, failSnapshot = false } = {}) {
   return {
@@ -21,7 +30,40 @@ function createMockD1({ snapshot = null, appearances = 0, storeCount = 0, failSn
   };
 }
 
+// Default fetch mock: return a tiny PNG for any cone PNG request
+function mockFetchSuccess() {
+  return vi.fn(async (url) => {
+    if (typeof url === 'string' && url.includes('/assets/cones/')) {
+      return { ok: true, arrayBuffer: async () => tinyPngBuffer() };
+    }
+    // Pass through for non-cone URLs (shouldn't happen in tests)
+    return { ok: false, status: 404, arrayBuffer: async () => new ArrayBuffer(0) };
+  });
+}
+
+// Fetch mock that fails for cone PNGs (404)
+function mockFetch404() {
+  return vi.fn(async () => ({ ok: false, status: 404, arrayBuffer: async () => new ArrayBuffer(0) }));
+}
+
+// Fetch mock that throws for cone PNGs (network error)
+function mockFetchError() {
+  return vi.fn(async () => { throw new Error('Network error'); });
+}
+
 describe('handleSocialCard', () => {
+  let originalFetch;
+
+  beforeEach(() => {
+    originalFetch = globalThis.fetch;
+    // Default: all PNG fetches succeed
+    globalThis.fetch = mockFetchSuccess();
+  });
+
+  afterEach(() => {
+    globalThis.fetch = originalFetch;
+  });
+
   it('returns null for non-matching paths', async () => {
     const res = await handleSocialCard('/api/flavors', {}, CORS);
     expect(res).toBeNull();
@@ -98,7 +140,51 @@ describe('handleSocialCard', () => {
     expect(res.headers.get('Cache-Control')).toBe('public, max-age=86400');
   });
 
-  it('contains pixel-art cone rect elements instead of emoji', async () => {
+  it('embeds L5 PNG cone as base64 <image> element', async () => {
+    const env = {
+      DB: createMockD1({
+        snapshot: { flavor: 'Mint Explosion', description: '' },
+      }),
+    };
+    const res = await handleSocialCard('/og/mt-horeb/2026-02-22.svg', env, CORS);
+    const body = await res.text();
+    expect(body).toContain('<image');
+    expect(body).toContain('data:image/png;base64,');
+    expect(body).not.toContain('\uD83C\uDF66'); // no ice cream emoji
+  });
+
+  it('page route: embeds L5 PNG cone as base64 <image> element', async () => {
+    const res = await handleSocialCard('/og/page/forecast.svg', {}, CORS);
+    expect(res.status).toBe(200);
+    const body = await res.text();
+    expect(body).toContain('<image');
+    expect(body).toContain('data:image/png;base64,');
+  });
+
+  it('trivia route: embeds L5 PNG cone as base64 <image> element', async () => {
+    const res = await handleSocialCard('/og/trivia/top-flavor.svg', {}, CORS);
+    expect(res.status).toBe(200);
+    const body = await res.text();
+    expect(body).toContain('<image');
+    expect(body).toContain('data:image/png;base64,');
+  });
+
+  it('falls back to L0 SVG cone when PNG fetch fails (network error)', async () => {
+    globalThis.fetch = mockFetchError();
+    const env = {
+      DB: createMockD1({
+        snapshot: { flavor: 'Mint Explosion', description: '' },
+      }),
+    };
+    const res = await handleSocialCard('/og/mt-horeb/2026-02-22.svg', env, CORS);
+    const body = await res.text();
+    // Fallback should use L0 mini SVG cone with <rect> elements
+    expect(body).toContain('<rect');
+    expect(body).not.toContain('data:image/png;base64,');
+  });
+
+  it('falls back to L0 SVG cone when PNG fetch returns 404', async () => {
+    globalThis.fetch = mockFetch404();
     const env = {
       DB: createMockD1({
         snapshot: { flavor: 'Mint Explosion', description: '' },
@@ -107,8 +193,7 @@ describe('handleSocialCard', () => {
     const res = await handleSocialCard('/og/mt-horeb/2026-02-22.svg', env, CORS);
     const body = await res.text();
     expect(body).toContain('<rect');
-    expect(body).toContain('<g transform="translate(');
-    expect(body).not.toContain('\uD83C\uDF66'); // no ice cream emoji
+    expect(body).not.toContain('data:image/png;base64,');
   });
 
   it('trivia route: returns 404 for unknown trivia slug', async () => {
@@ -187,11 +272,10 @@ describe('handleSocialCard', () => {
     const body = await res.text();
     expect(body).toContain('<svg');
     expect(body).toContain("Today's Flavor Forecast");
-    expect(body).toContain('<rect'); // pixel-art cone
   });
 
-  it('page route: all nine page slugs return 200 SVG', async () => {
-    const slugs = ['forecast', 'calendar', 'alerts', 'map', 'quiz', 'radar', 'siri', 'widget', 'fronts'];
+  it('page route: all eleven page slugs return 200 SVG', async () => {
+    const slugs = ['forecast', 'calendar', 'alerts', 'map', 'quiz', 'radar', 'siri', 'widget', 'fronts', 'scoop', 'group'];
     for (const slug of slugs) {
       const res = await handleSocialCard(`/og/page/${slug}.svg`, {}, CORS);
       expect(res.status, `slug "${slug}" should return 200`).toBe(200);
@@ -213,7 +297,7 @@ describe('handleSocialCard', () => {
     expect(triviaRes.status).toBe(200);
   });
 
-  it('produces different fill colors for different flavors', async () => {
+  it('produces different accent colors for different flavors', async () => {
     const peachEnv = {
       DB: createMockD1({
         snapshot: { flavor: 'Georgia Peach', description: '' },
