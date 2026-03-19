@@ -124,11 +124,11 @@ Plans:
   1. social-card.js generates OG images using L5 PNG data (base64 in KV or equivalent) instead of calling renderConeHDSVG()
   2. renderConeHDSVG, renderConeHeroSVG, and renderConePremiumSVG are deleted from worker/src/flavor-colors.js with no remaining callers
   3. All Worker tests pass (cd worker && npm test) after renderer removal
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 28-01: TBD
-- [ ] 28-02: TBD
+- [ ] 28-01-PLAN.md -- Embed L5 PNG cone art in social cards via base64 fetch, replace renderConeHDSVG usage
+- [ ] 28-02-PLAN.md -- Delete dead HD/Hero/Premium SVG renderers from flavor-colors.js, update tests and golden baselines
 
 ### Phase 29: Scriptable Widget Unification
 **Goal**: The Scriptable widget uses the shared art pipeline (L5 PNG online, L0 SVG-aligned fallback offline) instead of its own independent drawConeIcon renderer
@@ -158,7 +158,7 @@ Phases 26 is strictly first. Phases 27, 28, and 29 can proceed in parallel after
 | 20-25 | v1.5 | 10/10 | Complete | 2026-03-18 |
 | 26. AI Cone Generation | 2/3 | In Progress|  | - |
 | 27. Client-Side Art Migration | 2/2 | Complete    | 2026-03-19 | - |
-| 28. Worker Social Card Migration | v2.0 | 0/TBD | Not started | - |
+| 28. Worker Social Card Migration | v2.0 | 0/2 | Not started | - |
 | 29. Scriptable Widget Unification | v2.0 | 0/TBD | Not started | - |
 
-**Total: 29 phases, 58+ plans across 7 milestones**
+**Total: 29 phases, 60+ plans across 7 milestones**
