@@ -181,11 +181,11 @@ Plans:
   2. A week-ahead forecast section exists below the hero card, collapsed by default, and expands on tap to show upcoming flavors
   3. The page loads with no visible layout shift -- skeleton or placeholder occupies the hero card space until data arrives (CLS < 0.1)
   4. All homepage sections (hero card, week-ahead, any CTAs) use the existing card system with consistent design token spacing and borders -- no one-off styles
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 31-01: Hero card and above-the-fold layout
-- [ ] 31-02: Week-ahead collapsible section and visual unification
+- [ ] 31-01-PLAN.md -- Hero card with CTAs/meta footer, simplified empty state, CLS-preventing skeleton
+- [ ] 31-02-PLAN.md -- CTA text line replacement, dead CSS cleanup, Playwright tests, visual verification
 
 ### Phase 32: Page Consolidation
 **Goal**: The site contains only pages that serve real users, and navigation reflects the reduced footprint
