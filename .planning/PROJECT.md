@@ -59,6 +59,8 @@ A family in the car (or on the couch) can instantly see what flavors are at thei
 - Dead HD/Hero/Premium SVG renderers removed (~990 lines deleted) -- v2.0
 - Scriptable widget unified into shared art pipeline with canonical 23-color palette -- v2.0
 
+- ML prediction pipeline formally closed (Won't Do with rationale); TODO.md backlog triaged to reflect reality -- v3.0 Phase 30
+
 ### Active
 
 ## Current Milestone: v3.0 Sharpen the Core
@@ -160,4 +162,4 @@ Tech stack: Cloudflare Worker (API), vanilla JS (4-file IIFE pattern), Playwrigh
 | SW mock (no-op sw.js) for Playwright tests | SW intercepts page-level route handlers; mock prevents registration | Good -- reliable test mocking |
 
 ---
-*Last updated: 2026-03-19 after v3.0 milestone started*
+*Last updated: 2026-03-19 after Phase 30 (Housekeeping & Closure) complete*
