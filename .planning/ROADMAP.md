@@ -8,7 +8,8 @@
 - Shipped **v1.3 Asset Parity** -- Phases 13-17 (shipped 2026-03-12)
 - Shipped **v1.4 Bug Fixes** -- Phases 18-19 (shipped 2026-03-13)
 - Shipped **v1.5 Visual Polish** -- Phases 20-25 (shipped 2026-03-18)
-- Active **v2.0 Art Quality** -- Phases 26-29 (in progress)
+- Shipped **v2.0 Art Quality** -- Phases 26-29 (shipped 2026-03-19)
+- Active **v3.0 Sharpen the Core** -- Phases 30-34 (in progress)
 
 ## Phases
 
@@ -73,16 +74,30 @@
 
 </details>
 
-### v2.0 Art Quality (In Progress)
+<details>
+<summary>Shipped v2.0 Art Quality (Phases 26-29) -- SHIPPED 2026-03-19</summary>
 
-**Milestone Goal:** Replace multi-tier algorithmic cone renderers with a two-tier art pipeline: L0 micro SVG for small displays, L5 AI-generated PNGs for everything else.
+- [x] Phase 26: AI Cone Generation (3/3 plans) -- L5 pixel art PNGs for all 94 flavors
+- [x] Phase 27: Client-Side Art Migration (2/2 plans) -- L5 PNGs primary, dead renderers removed
+- [x] Phase 28: Worker Social Card Migration (2/2 plans) -- L5 PNGs in OG cards, dead Worker SVG removed
+- [x] Phase 29: Scriptable Widget Unification (1/1 plan) -- shared art pipeline for widget
 
-- [ ] **Phase 26: AI Cone Generation** - Generate, curate, and commit L5 pixel art PNGs for all 94 profiled flavors
-- [x] **Phase 27: Client-Side Art Migration** - Swap all client-side rendering to L5 PNGs, remove dead renderers, update baselines (completed 2026-03-19)
-- [x] **Phase 28: Worker Social Card Migration** - Embed L5 PNGs in OG social cards and remove dead Worker-side SVG renderers (completed 2026-03-19)
-- [x] **Phase 29: Scriptable Widget Unification** - Unify Scriptable widget cone rendering into the shared L0/L5 art pipeline (completed 2026-03-19)
+</details>
+
+### v3.0 Sharpen the Core (In Progress)
+
+**Milestone Goal:** Simplify the product to its essential experience, fix performance, and optimize for discoverability -- the first milestone focused on finding users rather than adding features.
+
+- [ ] **Phase 30: Housekeeping & Closure** - Formally close ML prediction roadmap items and clean up deferred tech debt
+- [ ] **Phase 31: Homepage Redesign** - Rebuild the homepage around a single hero card showing today's flavor at the user's store
+- [ ] **Phase 32: Page Consolidation** - Consolidate zero-traffic pages and simplify navigation to reflect actual usage
+- [ ] **Phase 33: Performance** - Fix cold-start LCP to under 3 seconds
+- [ ] **Phase 34: Social Sharing** - Optimize quiz results and flavor stats for social platform sharing
 
 ## Phase Details
+
+<details>
+<summary>v2.0 Phase Details (shipped)</summary>
 
 ### Phase 26: AI Cone Generation
 **Goal**: All 94 profiled flavors have AI-generated pixel art cone PNGs that pass human visual review, with generation prompts version-controlled and post-processing automated
@@ -93,60 +108,129 @@
   2. A generation manifest JSON file is committed alongside images recording model, prompt, parameters, and timestamp per flavor
   3. A QA gallery HTML page renders all 94 cones in a grid for side-by-side visual comparison, and a human has reviewed and approved all 94
   4. Post-processing pipeline (trim, resize, nearest-neighbor, optimize) runs via a single script invocation with no manual steps
-**Plans:** 2/3 plans executed
+**Plans:** 3/3 plans complete
 
 Plans:
-- [ ] 26-01-PLAN.md -- Prompt data foundation: author 93 premium overrides, 54 descriptions, verification script
-- [ ] 26-02-PLAN.md -- Generation pipeline + trial: new generate_cone_art.mjs for Azure gpt-image-1.5, post-processing, trial run with quality checkpoint
-- [ ] 26-03-PLAN.md -- Full batch + QA + finalize: generate 282 candidates, QA gallery, human review, deploy to cones/
+- [x] 26-01-PLAN.md -- Prompt data foundation: author 93 premium overrides, 54 descriptions, verification script
+- [x] 26-02-PLAN.md -- Generation pipeline + trial: new generate_cone_art.mjs for Azure gpt-image-1.5, post-processing, trial run with quality checkpoint
+- [x] 26-03-PLAN.md -- Full batch + QA + finalize: generate 282 candidates, QA gallery, human review, deploy to cones/
 
 ### Phase 27: Client-Side Art Migration
 **Goal**: Every client-side rendering site displays L5 AI PNGs as the primary art, with L0 micro SVG as the only fallback, and all dead intermediate renderers are removed
-**Depends on**: Phase 26 (all 94 PNGs must exist before integration begins)
+**Depends on**: Phase 26
 **Requirements**: INT-01, INT-02, INT-05, CLN-01, CLN-03, CLN-04
 **Success Criteria** (what must be TRUE):
-  1. Today page hero cone and quiz result cone both display the AI-generated L5 PNG for any of the 94 profiled flavors -- no HD SVG rendering path exists
+  1. Today page hero cone and quiz result cone both display the AI-generated L5 PNG for any of the 94 profiled flavors
   2. renderHeroCone() falls back to L0 mini SVG (not HD SVG) when a flavor has no PNG
   3. renderMiniConeHDSVG() and all HD scatter utilities are deleted from cone-renderer.js with zero references remaining
   4. flavor-audit.html shows exactly two tiers (L0 micro SVG and L5 AI PNG) with no intermediate columns
-  5. Service worker cache version is bumped and pixelmatch golden baselines are regenerated -- all visual regression tests pass at zero tolerance
+  5. Service worker cache version is bumped and pixelmatch golden baselines are regenerated
 **Plans:** 2/2 plans complete
 
 Plans:
-- [ ] 27-01-PLAN.md -- Remove HD SVG renderer from cone-renderer.js, wire quiz engine to renderHeroCone, delete scatter utilities
-- [ ] 27-02-PLAN.md -- Rewrite flavor-audit.html to two-tier grid (L0 + L5), bump service worker cache to v21
+- [x] 27-01-PLAN.md -- Remove HD SVG renderer, wire quiz to renderHeroCone, delete scatter utilities
+- [x] 27-02-PLAN.md -- Rewrite flavor-audit.html to two-tier grid, bump SW cache to v21
 
 ### Phase 28: Worker Social Card Migration
 **Goal**: OG social card images embed L5 AI PNGs instead of inline SVG cones, and all dead SVG renderers are removed from the Worker codebase
-**Depends on**: Phase 26 (L5 PNGs must exist), can run in parallel with Phase 27
+**Depends on**: Phase 26
 **Requirements**: INT-04, CLN-02
 **Success Criteria** (what must be TRUE):
-  1. social-card.js generates OG images using L5 PNG data (base64 in KV or equivalent) instead of calling renderConeHDSVG()
-  2. renderConeHDSVG, renderConeHeroSVG, and renderConePremiumSVG are deleted from worker/src/flavor-colors.js with no remaining callers
-  3. All Worker tests pass (cd worker && npm test) after renderer removal
+  1. social-card.js generates OG images using L5 PNG data instead of calling renderConeHDSVG()
+  2. renderConeHDSVG, renderConeHeroSVG, and renderConePremiumSVG are deleted from worker/src/flavor-colors.js
+  3. All Worker tests pass after renderer removal
 **Plans:** 2/2 plans complete
 
 Plans:
-- [ ] 28-01-PLAN.md -- Embed L5 PNG cone art in social cards via base64 fetch, replace renderConeHDSVG usage
-- [ ] 28-02-PLAN.md -- Delete dead HD/Hero/Premium SVG renderers from flavor-colors.js, update tests and golden baselines
+- [x] 28-01-PLAN.md -- Embed L5 PNG cone art in social cards via base64 fetch
+- [x] 28-02-PLAN.md -- Delete dead HD/Hero/Premium SVG renderers from flavor-colors.js
 
 ### Phase 29: Scriptable Widget Unification
-**Goal**: The Scriptable widget uses the shared art pipeline (L5 PNG online, L0 SVG-aligned fallback offline) instead of its own independent drawConeIcon renderer
-**Depends on**: Phase 26 (L5 PNGs must exist), independent of Phases 27-28
+**Goal**: The Scriptable widget uses the shared art pipeline (L5 PNG online, L0 SVG-aligned fallback offline)
+**Depends on**: Phase 26
 **Requirements**: INT-03
 **Success Criteria** (what must be TRUE):
-  1. Scriptable widget displays L5 AI PNG cones when the device is online, loaded via Image.fromURL() from the GitHub Pages asset path
-  2. Offline fallback renders a color-aligned cone using the canonical 23-entry BASE_COLORS palette (not the drifted 15-color FLAVOR_SCOOP_COLORS)
-  3. Both docs/assets/custard-today.js and widgets/custard-today.js are updated and kept in sync
+  1. Scriptable widget displays L5 AI PNG cones when online via Image.fromURL()
+  2. Offline fallback renders using the canonical 23-entry BASE_COLORS palette
+  3. Both docs/assets/custard-today.js and widgets/custard-today.js are updated and in sync
 **Plans:** 1/1 plans complete
 
 Plans:
-- [ ] 29-01-PLAN.md -- Add L5 PNG loading via getConeImage(), replace 15-color palette with 23-entry BASE_COLORS, sync both widget copies
+- [x] 29-01-PLAN.md -- Add L5 PNG loading via getConeImage(), replace 15-color palette with 23-entry BASE_COLORS
+
+</details>
+
+### Phase 30: Housekeeping & Closure
+**Goal**: Deferred roadmap items are formally resolved so the project backlog reflects reality
+**Depends on**: Nothing (first phase of v3.0)
+**Requirements**: SIMP-03
+**Success Criteria** (what must be TRUE):
+  1. ML prediction pipeline items (ensemble, XGBoost, confidence intervals) are moved to "Won't Do" in TODO.md with documented rationale
+  2. Any other stale TODO items from prior milestones are triaged: either closed with rationale, promoted to v3.0 scope, or explicitly deferred
+**Plans**: TBD
+
+Plans:
+- [ ] 30-01: Triage TODO.md -- move ML items to Won't Do, review and resolve all stale entries
+
+### Phase 31: Homepage Redesign
+**Goal**: Users see today's flavor at their store immediately upon landing, with a clean information hierarchy that eliminates visual noise
+**Depends on**: Phase 30
+**Requirements**: HOME-01, HOME-02, HOME-03, HOME-04
+**Success Criteria** (what must be TRUE):
+  1. A user with a saved store sees a single hero card with today's flavor name, cone art, and store name above the fold at 375px -- no scrolling required
+  2. A week-ahead forecast section exists below the hero card, collapsed by default, and expands on tap to show upcoming flavors
+  3. The page loads with no visible layout shift -- skeleton or placeholder occupies the hero card space until data arrives (CLS < 0.1)
+  4. All homepage sections (hero card, week-ahead, any CTAs) use the existing card system with consistent design token spacing and borders -- no one-off styles
+**Plans**: TBD
+
+Plans:
+- [ ] 31-01: Hero card and above-the-fold layout
+- [ ] 31-02: Week-ahead collapsible section and visual unification
+
+### Phase 32: Page Consolidation
+**Goal**: The site contains only pages that serve real users, and navigation reflects the reduced footprint
+**Depends on**: Phase 31 (homepage redesign informs which pages remain)
+**Requirements**: SIMP-01, SIMP-02
+**Success Criteria** (what must be TRUE):
+  1. Zero-traffic pages (compare, forecast-map, fun) are either consolidated into remaining pages or replaced with redirect stubs pointing to the best alternative
+  2. Navigation contains no more than 4 items and every nav item links to a page that serves an active use case
+  3. All existing external links and bookmarks to removed pages land on a functioning redirect (no 404s)
+**Plans**: TBD
+
+Plans:
+- [ ] 32-01: Audit page traffic, decide keep/consolidate/redirect for each page
+- [ ] 32-02: Execute consolidation -- redirects, nav update, dead page removal
+
+### Phase 33: Performance
+**Goal**: The site loads fast enough that a user checking their phone in the car gets an answer before losing patience
+**Depends on**: Phase 32 (fewer pages to optimize, consolidated assets)
+**Requirements**: PERF-01
+**Success Criteria** (what must be TRUE):
+  1. Homepage LCP P90 is under 3 seconds as measured by a Lighthouse audit on mobile throttling (currently ~10s due to Worker cold starts)
+  2. The critical rendering path for the hero card does not depend on the Worker API -- a skeleton or cached response renders first, then hydrates when data arrives
+**Plans**: TBD
+
+Plans:
+- [ ] 33-01: Diagnose cold-start bottleneck and implement LCP fix
+
+### Phase 34: Social Sharing
+**Goal**: Users who discover a fun result or rare flavor can share it on social platforms with a rich preview that drives clicks back to the site
+**Depends on**: Phase 32 (share URLs must point to final page structure)
+**Requirements**: SHARE-01, SHARE-02
+**Success Criteria** (what must be TRUE):
+  1. Quiz results page generates a unique shareable URL per result that, when pasted into Twitter/Facebook/iMessage, renders an og:image card showing the result with cone art
+  2. Individual flavor rarity stats have a shareable URL that renders an OG card showing the flavor name, cone art, and rarity classification (e.g., "Served 3 times this year")
+  3. Shared URLs load a standalone page (not the full quiz flow) so recipients see the content without completing the quiz themselves
+**Plans**: TBD
+
+Plans:
+- [ ] 34-01: Quiz result shareable URLs with OG cards
+- [ ] 34-02: Flavor rarity OG cards and share links
 
 ## Progress
 
 **Execution Order:**
-Phases 26 is strictly first. Phases 27, 28, and 29 can proceed in parallel after Phase 26 completes. Recommended order: 26 -> 27 -> 28 -> 29.
+Phases execute sequentially: 30 -> 31 -> 32 -> 33 -> 34.
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
@@ -156,9 +240,11 @@ Phases 26 is strictly first. Phases 27, 28, and 29 can proceed in parallel after
 | 13-17 | v1.3 | 11/11 | Complete | 2026-03-12 |
 | 18-19 | v1.4 | 4/4 | Complete | 2026-03-13 |
 | 20-25 | v1.5 | 10/10 | Complete | 2026-03-18 |
-| 26. AI Cone Generation | 2/3 | In Progress|  | - |
-| 27. Client-Side Art Migration | 2/2 | Complete    | 2026-03-19 | - |
-| 28. Worker Social Card Migration | 2/2 | Complete    | 2026-03-19 | - |
-| 29. Scriptable Widget Unification | 1/1 | Complete    | 2026-03-19 | - |
+| 26-29 | v2.0 | 8/8 | Complete | 2026-03-19 |
+| 30. Housekeeping & Closure | v3.0 | 0/1 | Not started | - |
+| 31. Homepage Redesign | v3.0 | 0/2 | Not started | - |
+| 32. Page Consolidation | v3.0 | 0/2 | Not started | - |
+| 33. Performance | v3.0 | 0/1 | Not started | - |
+| 34. Social Sharing | v3.0 | 0/2 | Not started | - |
 
-**Total: 29 phases, 61 plans across 7 milestones**
+**Total: 34 phases, 69 plans across 8 milestones**

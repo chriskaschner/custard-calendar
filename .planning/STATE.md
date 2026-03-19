@@ -1,30 +1,34 @@
 ---
 gsd_state_version: 1.0
-milestone: v2.0
-milestone_name: Art Quality
-status: unknown
-stopped_at: Completed 29-01-PLAN.md
-last_updated: "2026-03-19T19:04:30.067Z"
+milestone: v3.0
+milestone_name: Sharpen the Core
+status: ready_to_plan
+stopped_at: Roadmap created for v3.0
+last_updated: "2026-03-19"
 progress:
-  total_phases: 4
-  completed_phases: 3
+  total_phases: 5
+  completed_phases: 0
   total_plans: 8
-  completed_plans: 7
+  completed_plans: 0
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-18)
+See: .planning/PROJECT.md (updated 2026-03-19)
 
 **Core value:** A family can instantly see what flavors are at their nearby stores and decide where to go
-**Current focus:** Phase 29 — scriptable-widget-unification
+**Current focus:** Phase 30 -- Housekeeping & Closure
 
 ## Current Position
 
-Phase: 29 (scriptable-widget-unification) — COMPLETE
-Plan: 1 of 1 (all complete)
+Phase: 30 of 34 (Housekeeping & Closure)
+Plan: 0 of 1 in current phase
+Status: Ready to plan
+Last activity: 2026-03-19 -- v3.0 roadmap created
+
+Progress: [||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||          ] 88% (61/69 plans)
 
 ## Performance Metrics
 
@@ -36,7 +40,8 @@ Plan: 1 of 1 (all complete)
 - v1.3: 11 plans in ~82 min (~7.5 min/plan)
 - v1.4: 4 plans in ~34 min (~8.5 min/plan)
 - v1.5: 10 plans in ~69 min (~6.9 min/plan)
-- Total: 53 plans across 6 milestones
+- v2.0: 8 plans across 4 phases
+- Total: 61 plans across 7 milestones
 
 **Recent Trend:**
 
@@ -51,20 +56,11 @@ Full decision log in PROJECT.md Key Decisions table.
 
 Recent decisions affecting current work:
 
-- v2.0: Two-tier end state: L0 micro SVG (tiny contexts) + L5 AI PNG (everything else)
-- v2.0: 94/94 hard gate -- no partial migration, all AI PNGs must pass QA before any integration
-- v2.0: Social card migration is in scope (Worker changes explicitly included for v2.0)
-- v2.0: Scriptable widget independent -- can run in parallel after generation
-- 26-01: 56 description fallbacks needed (not 54) -- 2 flavors.json entries lack matching FLAVOR_PROFILES keys
-- 26-01: Force-committed gitignored masterlock output files as intentional plan artifacts
-- 26-02: Medium quality selected for full 94-flavor batch (user compared medium vs high in trial)
-- 26-02: Prompt feedback captured: oreos need cream filling detail, andes mints too white, caramel lumpiness varies
-- [Phase 27]: HD SVG tier fully removed rather than deprecated -- no conditional paths left
-- [Phase 27]: Collision pair rendering switched from hdCone to miniCone after HD tier removal
-- [Phase 28]: PNG fetched from GitHub Pages CDN rather than KV storage for social card cones
-- [Phase 28]: Dead HD/Hero/Premium renderers deleted (766 lines), completing CLN-02
-- [Phase 28]: Dead HD/Hero/Premium renderers deleted (766 lines), completing CLN-02
-- [Phase 29]: Used Scriptable Request.loadImage() for PNG loading; kept drawConeIcon as offline fallback
+- v3.0: Simplification before features -- find 10 real users before adding anything new
+- v3.0: Homepage redesign is highest-impact code work; do it before consolidation
+- v3.0: Page consolidation depends on homepage (need to know which pages survive)
+- v3.0: Performance after consolidation (fewer pages to optimize)
+- v3.0: Sharing last (optimize what remains after simplification)
 
 ### Pending Todos
 
@@ -72,12 +68,12 @@ None.
 
 ### Blockers/Concerns
 
-- AI generation consistency at 94-flavor scale is empirically unproven (budget for 1-2 regeneration iterations)
-- Social card SVG-with-embedded-PNG scrapability on Facebook/Twitter/LinkedIn needs validation before Phase 28 planning
-- Pre-existing map-pan-stability.spec.mjs test failure (carried from v1.5, not blocking v2.0)
+- Worker cold-start is the primary LCP bottleneck (~10s P90); fix may require caching strategy changes on the client side since Worker code is out of scope
+- Zero-traffic page determination needs actual analytics data or reasonable proxy
+- Pre-existing map-pan-stability.spec.mjs test failure (carried from v1.5)
 
 ## Session Continuity
 
-Last session: 2026-03-19T19:01:45.054Z
-Stopped at: Completed 29-01-PLAN.md
+Last session: 2026-03-19
+Stopped at: v3.0 roadmap created, ready to plan Phase 30
 Resume file: None

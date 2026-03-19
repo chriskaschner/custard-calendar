@@ -52,22 +52,22 @@ Tracked but not in current roadmap. Promote only after 10 real users provide fee
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| HOME-01 | TBD | Pending |
-| HOME-02 | TBD | Pending |
-| HOME-03 | TBD | Pending |
-| HOME-04 | TBD | Pending |
-| SIMP-01 | TBD | Pending |
-| SIMP-02 | TBD | Pending |
-| SIMP-03 | TBD | Pending |
-| PERF-01 | TBD | Pending |
-| SHARE-01 | TBD | Pending |
-| SHARE-02 | TBD | Pending |
+| HOME-01 | Phase 31 | Pending |
+| HOME-02 | Phase 31 | Pending |
+| HOME-03 | Phase 31 | Pending |
+| HOME-04 | Phase 31 | Pending |
+| SIMP-01 | Phase 32 | Pending |
+| SIMP-02 | Phase 32 | Pending |
+| SIMP-03 | Phase 30 | Pending |
+| PERF-01 | Phase 33 | Pending |
+| SHARE-01 | Phase 34 | Pending |
+| SHARE-02 | Phase 34 | Pending |
 
 **Coverage:**
 - v3.0 requirements: 10 total
-- Mapped to phases: 0
-- Unmapped: 10
+- Mapped to phases: 10
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-19*
-*Last updated: 2026-03-19 after initial definition*
+*Last updated: 2026-03-19 after roadmap creation*
