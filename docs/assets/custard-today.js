@@ -12,8 +12,12 @@
 // Small widget:  Cone icon, flavor name, description, rarity badge
 // Medium widget: 3-day cards with cone icons, flavor names, and descriptions
 // Medium widget (MODE="multi"): today's flavor at 3 stores side by side
+//
+// Art pipeline: L5 AI PNG (online) with L0-aligned DrawContext fallback (offline).
+// PNG slugs resolve through FLAVOR_ALIASES to match docs/assets/cones/ filenames.
 
 var API_BASE = "https://custard.chriskaschner.com/api/v1";
+var CONE_PNG_BASE = "https://custard.chriskaschner.com/assets/cones";
 var slug = (args.widgetParameter || "mt-horeb").trim();
 
 var BRAND_COLORS = {
@@ -33,37 +37,123 @@ var RARITY_COLORS = {
   "Staple":     "#2E7D32"
 };
 
-// Base flavor colors for cone scoop -- matches the Forecast page palette
-var FLAVOR_SCOOP_COLORS = {
-  "vanilla":    "#F5DEB3",
-  "chocolate":  "#6F4E37",
-  "mint":       "#2ECC71",
-  "strawberry": "#FF6B9D",
-  "caramel":    "#D4A056",
-  "peanut":     "#C8A96E",
-  "cookie":     "#C4A882",
-  "lemon":      "#FFE066",
-  "raspberry":  "#E91E63",
-  "turtle":     "#8B6914",
-  "pecan":      "#A67B5B",
-  "oreo":       "#3E3E3E",
-  "cheesecake": "#FFF8DC",
-  "peach":      "#FFAB76",
-  "butter":     "#E8C872"
+// Flavor alias map for slug resolution -- variant names to canonical PNG filenames
+var FLAVOR_ALIASES = {
+  "reeses peanut butter cup": "really reese's",
+  "reese's peanut butter cup": "really reese's",
+  "pb cup": "really reese's",
+  "georgia peach pecan": "georgia peach",
+  "oreo cookies and cream": "oreo cookie cheesecake",
+  "cookie dough craze": "crazy for cookie dough",
+  "chocolate decadence": "dark chocolate decadence",
+  "dark chocolate peanut butter crunch": "dark chocolate pb crunch",
+  "snickers": "snickers swirl",
+  "salted caramel pecan": "salted double caramel pecan",
+  "vanilla custard": "vanilla",
+  "butter pecan custard": "butter pecan",
+  "turtle sundae": "turtle",
+  "caramel turtle sundae": "caramel turtle",
+  "double strawberry custard": "double strawberry",
+  "brownie batter": "brownie thunder",
+  "mint oreo": "mint cookie",
+  "oreo mint": "mint cookie",
+  "oreo cheesecake cookie": "oreo cookie cheesecake",
+  "heath bar crunch": "chocolate heath crunch",
+  "choc m&m": "m&m swirl",
+  "bonfire smores": "bonfire s'mores",
+  "s'mores": "bonfire s'mores",
+  "raspberry cream": "red raspberry",
+  "butterfinger": "butter finger blast",
+  "cookies and cream": "cookies & cream",
+  "oreo cookies & cream": "cookies & cream",
+  "kit kat": "kit kat bar",
+  "rice krispy treat": "rice krispie treat",
+  "rice krispie": "rice krispie treat",
+  "baileys irish cream": "bailey's irish cream",
+  "grasshopper": "grasshopper fudge",
+  "root beer": "root beer float",
+  "key lime pie": "key lime custard pie",
+  "key lime": "key lime custard pie",
+  "coconut pie": "coconut cream pie",
+  "banana pie": "banana cream pie"
+};
+
+// Canonical 23-entry base color palette for offline cone fallback (matches cone-renderer.js)
+var BASE_COLORS = {
+  vanilla: '#F5DEB3',
+  chocolate: '#6F4E37',
+  chocolate_custard: '#5A3825',
+  dark_chocolate: '#3B1F0B',
+  mint: '#2ECC71',
+  mint_andes: '#1A8A4A',
+  strawberry: '#FF6B9D',
+  cheesecake: '#FFF5E1',
+  caramel: '#C68E17',
+  butter_pecan: '#F2E7D1',
+  peach: '#FFE5B4',
+  lemon: '#FFF176',
+  blackberry: '#6B3FA0',
+  espresso: '#2C1503',
+  cherry: '#C41E3A',
+  pumpkin: '#D2691E',
+  banana: '#F0E68C',
+  coconut: '#FFFAF0',
+  root_beer: '#5C3317',
+  pistachio: '#93C572',
+  orange: '#FF8C00',
+  blue_moon: '#5B9BD5',
+  maple: '#C9882C'
 };
 
 // Guess scoop color from flavor name keywords
 function scoopColor(flavorName) {
   if (!flavorName) return "#F5DEB3";
   var lower = flavorName.toLowerCase();
-  var keys = Object.keys(FLAVOR_SCOOP_COLORS);
+  var keys = Object.keys(BASE_COLORS);
   for (var i = 0; i < keys.length; i++) {
-    if (lower.indexOf(keys[i]) !== -1) return FLAVOR_SCOOP_COLORS[keys[i]];
+    if (lower.indexOf(keys[i]) !== -1) return BASE_COLORS[keys[i]];
   }
+  // Extended keyword fallbacks for palette entries with underscored keys
+  if (lower.indexOf("blackberry") !== -1 || lower.indexOf("berry") !== -1) return BASE_COLORS.blackberry;
+  if (lower.indexOf("espresso") !== -1 || lower.indexOf("coffee") !== -1 || lower.indexOf("cappuccino") !== -1) return BASE_COLORS.espresso;
+  if (lower.indexOf("cherry") !== -1) return BASE_COLORS.cherry;
+  if (lower.indexOf("pumpkin") !== -1) return BASE_COLORS.pumpkin;
+  if (lower.indexOf("banana") !== -1) return BASE_COLORS.banana;
+  if (lower.indexOf("coconut") !== -1) return BASE_COLORS.coconut;
+  if (lower.indexOf("root beer") !== -1) return BASE_COLORS.root_beer;
+  if (lower.indexOf("pistachio") !== -1) return BASE_COLORS.pistachio;
+  if (lower.indexOf("orange") !== -1 || lower.indexOf("creamsicle") !== -1) return BASE_COLORS.orange;
+  if (lower.indexOf("blue moon") !== -1) return BASE_COLORS.blue_moon;
+  if (lower.indexOf("maple") !== -1) return BASE_COLORS.maple;
   // Broad category fallbacks
   if (lower.indexOf("choc") !== -1 || lower.indexOf("fudge") !== -1) return "#6F4E37";
   if (lower.indexOf("cream") !== -1) return "#FFF8DC";
   return "#F5DEB3";
+}
+
+// Convert flavor name to PNG filename slug, resolving aliases first
+function flavorToSlug(name) {
+  if (!name) return null;
+  var key = name.toLowerCase().replace(/[\u00ae\u2122]/g, '').replace(/[\u2018\u2019]/g, "'").replace(/\s+/g, ' ').trim();
+  var canonical = FLAVOR_ALIASES[key];
+  var nameForSlug = canonical || key;
+  var slug = nameForSlug.replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  return slug || null;
+}
+
+// Try loading L5 AI PNG from CDN; fall back to drawConeIcon on failure
+async function getConeImage(flavorName, size) {
+  var slug = flavorToSlug(flavorName);
+  if (slug) {
+    try {
+      var url = CONE_PNG_BASE + "/" + slug + ".png";
+      var img = await new Request(url).loadImage();
+      return img;
+    } catch (e) {
+      // Network error or 404 -- fall through to drawConeIcon
+    }
+  }
+  return drawConeIcon(flavorName, size);
 }
 
 // Draw a mini cone icon using DrawContext and return as Image
@@ -161,13 +251,13 @@ function rarityTextColor(label) {
 }
 
 // Shared medium-row renderer so 3-day and 3-store views stay in visual sync.
-function addMediumRow(body, row) {
+async function addMediumRow(body, row) {
   var card = body.addStack();
   card.layoutHorizontally();
   card.centerAlignContent();
   card.spacing = 8;
 
-  var coneImg = drawConeIcon(row.flavor, 28);
+  var coneImg = await getConeImage(row.flavor, 28);
   var coneEl = card.addImage(coneImg);
   coneEl.imageSize = new Size(28, 28);
 
@@ -260,7 +350,7 @@ async function buildSmall() {
   mainRow.centerAlignContent();
   mainRow.spacing = 10;
 
-  var coneImg = drawConeIcon(data.flavor, 36);
+  var coneImg = await getConeImage(data.flavor, 36);
   var coneEl = mainRow.addImage(coneImg);
   coneEl.imageSize = new Size(36, 36);
 
@@ -359,7 +449,7 @@ async function buildMedium() {
       if (todayData && f.date === todayData.date && f.title === todayData.flavor) {
         rarityLabel = todayRarity;
       }
-      addMediumRow(body, {
+      await addMediumRow(body, {
         label: formatDate(f.date),
         flavor: f.title || "TBD",
         description: f.description || "",
@@ -423,7 +513,7 @@ async function buildMultiStore(slugs) {
     var city = data ? cityFromStore(data.store) : (storeSlug || "Store");
     var flavorName = data ? (data.flavor || "TBD") : "\u2014";
     var rarityLabel = data && data.rarity ? data.rarity.label : null;
-    addMediumRow(body, {
+    await addMediumRow(body, {
       label: city,
       flavor: flavorName,
       description: data ? (data.description || "") : "",
