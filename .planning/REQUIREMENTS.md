@@ -9,10 +9,10 @@ Simplify the product, fix performance, optimize for discoverability. First miles
 
 ### Homepage
 
-- [ ] **HOME-01**: User sees one primary card with today's flavor at their saved store above the fold
-- [ ] **HOME-02**: Week-ahead section is collapsed by default, expandable on tap
-- [ ] **HOME-03**: Page layout does not visibly shift during data load (CLS < 0.1)
-- [ ] **HOME-04**: All homepage sections use a single visual language (unified card system, consistent spacing/borders)
+- [x] **HOME-01**: User sees one primary card with today's flavor at their saved store above the fold
+- [x] **HOME-02**: Week-ahead section is collapsed by default, expandable on tap
+- [x] **HOME-03**: Page layout does not visibly shift during data load (CLS < 0.1)
+- [x] **HOME-04**: All homepage sections use a single visual language (unified card system, consistent spacing/borders)
 
 ### Simplification
 
@@ -52,10 +52,10 @@ Tracked but not in current roadmap. Promote only after 10 real users provide fee
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| HOME-01 | Phase 31 | Pending |
-| HOME-02 | Phase 31 | Pending |
-| HOME-03 | Phase 31 | Pending |
-| HOME-04 | Phase 31 | Pending |
+| HOME-01 | Phase 31 | Complete |
+| HOME-02 | Phase 31 | Complete |
+| HOME-03 | Phase 31 | Complete |
+| HOME-04 | Phase 31 | Complete |
 | SIMP-01 | Phase 32 | Pending |
 | SIMP-02 | Phase 32 | Pending |
 | SIMP-03 | Phase 30 | Complete |

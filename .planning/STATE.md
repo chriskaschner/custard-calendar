@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Sharpen the Core
 status: unknown
-stopped_at: Phase 31 UI-SPEC approved
-last_updated: "2026-03-19T23:01:58.340Z"
+stopped_at: Completed 31-01-PLAN.md
+last_updated: "2026-03-19T23:38:50.120Z"
 progress:
   total_phases: 9
   completed_phases: 4
-  total_plans: 9
-  completed_plans: 8
+  total_plans: 11
+  completed_plans: 9
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-19)
 
 **Core value:** A family can instantly see what flavors are at their nearby stores and decide where to go
-**Current focus:** Phase 30 — Housekeeping & Closure
+**Current focus:** Phase 31 — Homepage Redesign
 
 ## Current Position
 
-Phase: 30 (Housekeeping & Closure) — COMPLETE
-Plan: 1 of 1 (done)
+Phase: 31 (Homepage Redesign) — EXECUTING
+Plan: 2 of 2
 
 ## Performance Metrics
 
@@ -41,8 +41,8 @@ Plan: 1 of 1 (done)
 
 **Recent Trend:**
 
-- Last 5 plans: 12 min, 4 min, 6 min, 7 min, 3 min
-- Trend: Stable (~6 min avg)
+- Last 5 plans: 4 min, 6 min, 7 min, 3 min, 6 min
+- Trend: Stable (~5 min avg)
 
 ## Accumulated Context
 
@@ -60,6 +60,7 @@ Recent decisions affecting current work:
 - Phase 30: ML prediction pipeline permanently closed -- confirmed schedule IS the product (100% vs 3.2% ML)
 - Phase 30: Homepage audit items superseded by Phase 31 redesign
 - Phase 30: Sync architecture deferred indefinitely -- find users first
+- [Phase 31]: Hero card is sole above-fold content with action CTAs and meta footer wired in
 
 ### Pending Todos
 
@@ -73,6 +74,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-19T23:01:58.330Z
-Stopped at: Phase 31 UI-SPEC approved
-Resume file: .planning/phases/31-homepage-redesign/31-UI-SPEC.md
+Last session: 2026-03-19T23:38:50.118Z
+Stopped at: Completed 31-01-PLAN.md
+Resume file: None
