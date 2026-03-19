@@ -25,7 +25,7 @@ Requirements for the two-tier cone art pipeline: L0 micro SVG + L5 AI-generated 
 ### Cleanup
 
 - [x] **CLN-01**: Dead SVG renderers removed from cone-renderer.js (renderMiniConeHDSVG, HD scatter utilities)
-- [ ] **CLN-02**: Dead SVG renderers removed from worker/src/flavor-colors.js (renderConeHeroSVG, renderConePremiumSVG, renderConeHDSVG)
+- [x] **CLN-02**: Dead SVG renderers removed from worker/src/flavor-colors.js (renderConeHeroSVG, renderConePremiumSVG, renderConeHDSVG)
 - [x] **CLN-03**: flavor-audit.html updated to show L0 + L5 tiers only, intermediate columns removed
 - [x] **CLN-04**: Pixelmatch golden baselines regenerated for new L5 PNGs
 
@@ -61,7 +61,7 @@ Requirements for the two-tier cone art pipeline: L0 micro SVG + L5 AI-generated 
 | INT-04 | Phase 28 | Complete |
 | INT-05 | Phase 27 | Complete |
 | CLN-01 | Phase 27 | Complete |
-| CLN-02 | Phase 28 | Pending |
+| CLN-02 | Phase 28 | Complete |
 | CLN-03 | Phase 27 | Complete |
 | CLN-04 | Phase 27 | Complete |
 

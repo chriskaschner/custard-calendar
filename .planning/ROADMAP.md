@@ -79,7 +79,7 @@
 
 - [ ] **Phase 26: AI Cone Generation** - Generate, curate, and commit L5 pixel art PNGs for all 94 profiled flavors
 - [x] **Phase 27: Client-Side Art Migration** - Swap all client-side rendering to L5 PNGs, remove dead renderers, update baselines (completed 2026-03-19)
-- [ ] **Phase 28: Worker Social Card Migration** - Embed L5 PNGs in OG social cards and remove dead Worker-side SVG renderers
+- [x] **Phase 28: Worker Social Card Migration** - Embed L5 PNGs in OG social cards and remove dead Worker-side SVG renderers (completed 2026-03-19)
 - [ ] **Phase 29: Scriptable Widget Unification** - Unify Scriptable widget cone rendering into the shared L0/L5 art pipeline
 
 ## Phase Details
@@ -124,7 +124,7 @@ Plans:
   1. social-card.js generates OG images using L5 PNG data (base64 in KV or equivalent) instead of calling renderConeHDSVG()
   2. renderConeHDSVG, renderConeHeroSVG, and renderConePremiumSVG are deleted from worker/src/flavor-colors.js with no remaining callers
   3. All Worker tests pass (cd worker && npm test) after renderer removal
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 
 Plans:
 - [ ] 28-01-PLAN.md -- Embed L5 PNG cone art in social cards via base64 fetch, replace renderConeHDSVG usage
@@ -158,7 +158,7 @@ Phases 26 is strictly first. Phases 27, 28, and 29 can proceed in parallel after
 | 20-25 | v1.5 | 10/10 | Complete | 2026-03-18 |
 | 26. AI Cone Generation | 2/3 | In Progress|  | - |
 | 27. Client-Side Art Migration | 2/2 | Complete    | 2026-03-19 | - |
-| 28. Worker Social Card Migration | 1/2 | In Progress|  | - |
+| 28. Worker Social Card Migration | 2/2 | Complete   | 2026-03-19 | - |
 | 29. Scriptable Widget Unification | v2.0 | 0/TBD | Not started | - |
 
 **Total: 29 phases, 60+ plans across 7 milestones**
