@@ -6,17 +6,78 @@
  *   - Per-page static cards:        GET /og/page/{page-slug}.svg
  *   - Trivia/Did-you-know cards:    GET /og/trivia/{slug}.svg
  *
- * All cards embed pixel-art cones colored to the flavor profile.
+ * Cards embed L5 AI PNG cones (fetched from GitHub Pages CDN) as base64
+ * <image> elements. Falls back to L0 mini SVG cone when PNG unavailable.
  */
 
 import { normalize } from './flavor-matcher.js';
-import { getFlavorProfile, renderConeHDSVG, BASE_COLORS, CONE_COLORS, TOPPING_COLORS, RIBBON_COLORS } from './flavor-colors.js';
+import { getFlavorProfile, renderConeSVG, BASE_COLORS, CONE_COLORS, TOPPING_COLORS, RIBBON_COLORS } from './flavor-colors.js';
 import { TRIVIA_METRICS_SEED } from './trivia-metrics-seed.js';
 
 const MONTH_NAMES_TRIVIA = [
   '', 'January', 'February', 'March', 'April', 'May', 'June',
   'July', 'August', 'September', 'October', 'November', 'December',
 ];
+
+// ---------------------------------------------------------------------------
+// PNG cone embedding helpers
+// ---------------------------------------------------------------------------
+
+const CONE_PNG_BASE = 'https://custard.chriskaschner.com/assets/cones';
+
+/**
+ * Convert a flavor name to a URL-safe slug matching the PNG filename convention.
+ * E.g. "Really Reese's" -> "really-reese-s", "Mint Explosion" -> "mint-explosion"
+ */
+function flavorToSlug(name) {
+  return String(name || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+}
+
+/**
+ * Fetch a cone PNG from the GitHub Pages CDN and return as base64 string.
+ * Returns null on any failure (404, network error, etc.) so callers can fall back.
+ */
+async function fetchConePngBase64(flavorName) {
+  const slug = flavorToSlug(flavorName);
+  if (!slug) return null;
+  try {
+    const resp = await fetch(`${CONE_PNG_BASE}/${slug}.png`);
+    if (!resp.ok) return null;
+    const buffer = await resp.arrayBuffer();
+    const bytes = new Uint8Array(buffer);
+    let binary = '';
+    for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+    return btoa(binary);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Render a cone embed element for the social card SVG.
+ * Attempts L5 PNG first; falls back to L0 mini SVG cone on failure.
+ *
+ * @param {string} flavorName
+ * @param {number} x - X position in SVG
+ * @param {number} y - Y position in SVG
+ * @param {number} width - Target width
+ * @param {number} height - Target height
+ * @returns {Promise<string>} SVG markup (<image> or <g> with rects)
+ */
+async function renderConeEmbed(flavorName, x, y, width, height) {
+  const b64 = await fetchConePngBase64(flavorName);
+  if (b64) {
+    return `<image x="${x}" y="${y}" width="${width}" height="${height}" href="data:image/png;base64,${b64}" preserveAspectRatio="xMidYMid meet"/>`;
+  }
+  // Fallback: L0 mini SVG cone scaled to fit
+  const svg = renderConeSVG(flavorName, Math.round(width / 9));
+  const inner = svg.replace(/<svg[^>]*>/, '').replace(/<\/svg>/, '');
+  return `<g transform="translate(${x},${y})">${inner}</g>`;
+}
+
+// ---------------------------------------------------------------------------
+// Trivia card definitions
+// ---------------------------------------------------------------------------
 
 const TRIVIA_CARD_DEFS = {
   'top-flavor': (seed) => {
@@ -133,11 +194,11 @@ const PAGE_CARD_DEFS = {
   },
 };
 
-function renderPageCard({ headline, subhead, flavorName }) {
+async function renderPageCard({ headline, subhead, flavorName }) {
   const esc = (s) => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   const profile = getFlavorProfile(flavorName || '');
   const accentColor = BASE_COLORS[profile.base] || '#005696';
-  const coneGroup = flavorName ? renderConeGroup(flavorName, 1050, 130, 6) : '';
+  const coneMarkup = flavorName ? await renderConeEmbed(flavorName, 1000, 100, 150, 175) : '';
 
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
   <defs>
@@ -148,14 +209,14 @@ function renderPageCard({ headline, subhead, flavorName }) {
   </defs>
   <rect width="1200" height="630" fill="url(#bg)"/>
   <rect y="0" width="1200" height="8" fill="${accentColor}"/>
-  ${coneGroup}
+  ${coneMarkup}
   <text x="80" y="220" font-size="52" font-weight="bold" fill="#ffffff" font-family="system-ui, -apple-system, sans-serif">${esc(headline)}</text>
   <text x="80" y="310" font-size="28" fill="#9EC5E8" font-family="system-ui, -apple-system, sans-serif">${esc(subhead)}</text>
   <text x="80" y="590" font-size="22" fill="#4a4a5a" font-family="system-ui, -apple-system, sans-serif">custard.chriskaschner.com</text>
 </svg>`;
 }
 
-function handlePageCard(pageSlug, corsHeaders) {
+async function handlePageCard(pageSlug, corsHeaders) {
   const def = PAGE_CARD_DEFS[pageSlug];
   if (!def) {
     return new Response(JSON.stringify({ error: 'Page card not found.' }), {
@@ -163,7 +224,7 @@ function handlePageCard(pageSlug, corsHeaders) {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
-  const svg = renderPageCard(def);
+  const svg = await renderPageCard(def);
   return new Response(svg, {
     status: 200,
     headers: {
@@ -174,9 +235,9 @@ function handlePageCard(pageSlug, corsHeaders) {
   });
 }
 
-function renderTriviaCard({ headline, fact, flavorName }) {
+async function renderTriviaCard({ headline, fact, flavorName }) {
   const esc = (s) => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-  const coneGroup = flavorName ? renderConeGroup(flavorName, 1050, 160, 6) : '';
+  const coneMarkup = flavorName ? await renderConeEmbed(flavorName, 1000, 130, 150, 175) : '';
   const maxLen = 52;
   const displayHeadline = headline.length > maxLen ? headline.slice(0, maxLen - 1) + '\u2026' : headline;
 
@@ -189,7 +250,7 @@ function renderTriviaCard({ headline, fact, flavorName }) {
   </defs>
   <rect width="1200" height="630" fill="url(#bg)"/>
   <rect y="0" width="1200" height="8" fill="#9EC5E8"/>
-  ${coneGroup}
+  ${coneMarkup}
   <text x="80" y="130" font-size="32" fill="#ffffff" font-family="system-ui, -apple-system, sans-serif">Did you know?</text>
   <text x="80" y="220" font-size="52" font-weight="bold" fill="#ffffff" font-family="system-ui, -apple-system, sans-serif">${esc(displayHeadline)}</text>
   <text x="80" y="310" font-size="28" fill="#9EC5E8" font-family="system-ui, -apple-system, sans-serif">${esc(fact)}</text>
@@ -197,7 +258,7 @@ function renderTriviaCard({ headline, fact, flavorName }) {
 </svg>`;
 }
 
-function handleTriviaCard(slug, corsHeaders) {
+async function handleTriviaCard(slug, corsHeaders) {
   const def = TRIVIA_CARD_DEFS[slug];
   if (!def) {
     return new Response(JSON.stringify({ error: 'Trivia card not found.' }), {
@@ -212,7 +273,7 @@ function handleTriviaCard(slug, corsHeaders) {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
-  const svg = renderTriviaCard(cardData);
+  const svg = await renderTriviaCard(cardData);
   return new Response(svg, {
     status: 200,
     headers: {
@@ -231,11 +292,11 @@ function handleTriviaCard(slug, corsHeaders) {
  * @returns {Promise<Response|null>} Response if matched, null otherwise
  */
 export async function handleSocialCard(path, env, corsHeaders) {
-  // Match /og/page/{slug}.svg — page-level static cards
+  // Match /og/page/{slug}.svg -- page-level static cards
   const pageMatch = path.match(/^\/og\/page\/([\w-]+)\.svg$/);
   if (pageMatch) return handlePageCard(pageMatch[1], corsHeaders);
 
-  // Match /og/trivia/{slug}.svg — must be checked before the store/date pattern
+  // Match /og/trivia/{slug}.svg -- must be checked before the store/date pattern
   const triviaMatch = path.match(/^\/og\/trivia\/([\w-]+)\.svg$/);
   if (triviaMatch) return handleTriviaCard(triviaMatch[1], corsHeaders);
 
@@ -276,7 +337,7 @@ export async function handleSocialCard(path, env, corsHeaders) {
       appearances = freqResult?.n || 0;
       storeCount = storeResult?.n || 0;
     } catch {
-      // Metrics unavailable — card still works without them
+      // Metrics unavailable -- card still works without them
     }
   }
 
@@ -289,7 +350,7 @@ export async function handleSocialCard(path, env, corsHeaders) {
   const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const dateDisplay = `${dayNames[dateObj.getUTCDay()]}, ${monthNames[dateObj.getUTCMonth()]} ${dateObj.getUTCDate()}`;
 
-  const svg = renderCard({
+  const svg = await renderCard({
     flavor: flavor || 'No flavor data',
     storeName,
     dateDisplay,
@@ -308,20 +369,9 @@ export async function handleSocialCard(path, env, corsHeaders) {
 }
 
 /**
- * Render a pixel-art cone SVG group for embedding in the social card.
- * Extracts the inner SVG content from renderConeSVG and wraps it in a <g>.
+ * Render a 1200x630 SVG social card with L5 PNG cone art.
  */
-function renderConeGroup(flavorName, x, y, scale) {
-  const svg = renderConeHDSVG(flavorName, scale);
-  // Extract inner content between <svg...> and </svg>
-  const inner = svg.replace(/<svg[^>]*>/, '').replace(/<\/svg>/, '');
-  return `<g transform="translate(${x},${y})">${inner}</g>`;
-}
-
-/**
- * Render a 1200x630 SVG social card.
- */
-function renderCard({ flavor, storeName, dateDisplay, appearances, storeCount }) {
+async function renderCard({ flavor, storeName, dateDisplay, appearances, storeCount }) {
   // Escape XML special characters
   const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
@@ -346,8 +396,8 @@ function renderCard({ flavor, storeName, dateDisplay, appearances, storeCount })
   const profile = getFlavorProfile(flavor);
   const accentColor = BASE_COLORS[profile.base] || '#e94560';
 
-  // Render HD pixel-art cone (scale=6 -> 108x132 pixels)
-  const coneGroup = renderConeGroup(flavor, 70, 160, 6);
+  // Embed L5 PNG cone (or L0 SVG fallback)
+  const coneMarkup = await renderConeEmbed(flavor, 50, 120, 150, 175);
 
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
   <defs>
@@ -363,8 +413,8 @@ function renderCard({ flavor, storeName, dateDisplay, appearances, storeCount })
   <!-- Accent bar (tinted to flavor base color) -->
   <rect y="0" width="1200" height="8" fill="${accentColor}"/>
 
-  <!-- Pixel-art cone -->
-  ${coneGroup}
+  <!-- Cone art (L5 PNG or L0 SVG fallback) -->
+  ${coneMarkup}
 
   <!-- Flavor name -->
   <text x="280" y="240" font-size="64" font-weight="bold" fill="#ffffff" font-family="system-ui, -apple-system, sans-serif">${esc(displayFlavor)}</text>
