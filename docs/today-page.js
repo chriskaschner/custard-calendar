@@ -1,9 +1,9 @@
 /**
  * CustardToday -- today page logic for the simplified flavor hero view.
  *
- * Extracted from inline JS in index.html. Handles hero card rendering,
- * rarity badges, week-ahead strip, multi-store glance row, flavor signals,
- * and the "Want this every day?" CTA.
+ * Extracted from inline JS in index.html. Handles hero card rendering
+ * with action CTAs and meta footer, rarity badges, week-ahead strip,
+ * and the updates CTA.
  *
  * Usage: <script src="today-page.js"></script> (after planner-shared.js, shared-nav.js, cone-renderer.js)
  * Exposes: window.CustardToday (var, no build step required)
@@ -47,15 +47,11 @@ var CustardToday = (function () {
   var todayCone = null;
   var todayDesc = null;
   var todayRarity = null;
+  var todayCtas = null;
+  var todayMeta = null;
   var weekSection = null;
   var weekStrip = null;
-  var quickStartWrap = null;
-  var quickStartStores = null;
   var findStoreBtn = null;
-  var signalsSection = null;
-  var signalsList = null;
-  var multiStoreSection = null;
-  var multiStoreRow = null;
   var updatesCta = null;
 
   function cacheDomRefs() {
@@ -70,15 +66,11 @@ var CustardToday = (function () {
     todayCone = document.getElementById('today-cone');
     todayDesc = document.getElementById('today-desc');
     todayRarity = document.getElementById('today-rarity');
+    todayCtas = document.getElementById('today-ctas');
+    todayMeta = document.getElementById('today-meta');
     weekSection = document.getElementById('week-section');
     weekStrip = document.getElementById('week-strip');
-    quickStartWrap = document.getElementById('quick-start-wrap');
-    quickStartStores = document.getElementById('quick-start-stores');
     findStoreBtn = document.getElementById('find-store-btn');
-    signalsSection = document.getElementById('signals-section');
-    signalsList = document.getElementById('signals-list');
-    multiStoreSection = document.getElementById('multi-store-section');
-    multiStoreRow = document.getElementById('multi-store-row');
     updatesCta = document.getElementById('updates-cta');
   }
 
@@ -117,84 +109,6 @@ var CustardToday = (function () {
       .then(function (resp) { return resp.json(); })
       .then(function (data) { _allStores = data.stores || []; })
       .catch(function (err) { console.error('Failed to load stores:', err); });
-  }
-
-  // ---------------------------------------------------------------------------
-  // Quick start stores (empty state)
-  // ---------------------------------------------------------------------------
-
-  function firstStoreMatching(predicate, usedSlugs) {
-    for (var i = 0; i < _allStores.length; i++) {
-      var store = _allStores[i];
-      if (usedSlugs[store.slug]) continue;
-      if (predicate(store)) return store;
-    }
-    return null;
-  }
-
-  function buildQuickStartStores() {
-    if (!_allStores.length) return [];
-    var picks = [];
-    var used = {};
-
-    function addPick(store) {
-      if (!store || used[store.slug]) return;
-      picks.push(store);
-      used[store.slug] = true;
-    }
-
-    var cityTargets = ['Madison', 'Milwaukee', 'Chicago', 'Minneapolis', 'Indianapolis'];
-    for (var c = 0; c < cityTargets.length; c++) {
-      var city = cityTargets[c];
-      addPick(firstStoreMatching(
-        function (s) { return (s.city || '').toLowerCase() === city.toLowerCase(); },
-        used
-      ));
-      if (picks.length >= 5) break;
-    }
-
-    if (picks.length < 5) {
-      var wiStores = _allStores
-        .filter(function (s) { return s.state === 'WI'; })
-        .sort(function (a, b) { return (a.city || '').localeCompare(b.city || ''); });
-      for (var w = 0; w < wiStores.length; w++) {
-        addPick(wiStores[w]);
-        if (picks.length >= 5) break;
-      }
-    }
-
-    if (picks.length < 5) {
-      var fallback = _allStores.slice().sort(function (a, b) { return (a.city || '').localeCompare(b.city || ''); });
-      for (var f = 0; f < fallback.length; f++) {
-        addPick(fallback[f]);
-        if (picks.length >= 5) break;
-      }
-    }
-
-    return picks;
-  }
-
-  function renderQuickStartStores() {
-    if (!quickStartWrap || !quickStartStores) return;
-    var picks = buildQuickStartStores();
-    if (picks.length === 0) {
-      quickStartWrap.hidden = true;
-      return;
-    }
-    quickStartStores.innerHTML = '';
-    for (var i = 0; i < picks.length; i++) {
-      var store = picks[i];
-      var btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'quick-start-chip';
-      var brand = store.brand ? (BRAND_DISPLAY[store.brand] || store.brand) + ' \u2014 ' : '';
-      btn.textContent = brand + store.city + ', ' + store.state;
-      btn.addEventListener('click', (function (slug) {
-        return function () { selectStore(slug); };
-      })(store.slug));
-      quickStartStores.appendChild(btn);
-    }
-    quickStartWrap.hidden = false;
   }
 
   // ---------------------------------------------------------------------------
@@ -262,7 +176,6 @@ var CustardToday = (function () {
     errorState.hidden = true;
     todayLoading.hidden = false;
     if (updatesCta) updatesCta.hidden = true;
-    if (multiStoreSection) multiStoreSection.hidden = true;
 
     Promise.all([
       fetch(WORKER_BASE + '/api/v1/flavors?slug=' + encodeURIComponent(slug))
@@ -300,12 +213,6 @@ var CustardToday = (function () {
       } else {
         renderHeroCard({ date: toISODate(today), type: 'none' }, slug, fetchedAt, forecastData, todayData);
       }
-
-      // Fetch and render flavor signals
-      CustardPlanner.fetchSignals(WORKER_BASE, slug, signalsSection, signalsList, 1);
-
-      // Render multi-store row
-      renderMultiStoreRow();
 
       // Show CTA
       if (updatesCta) updatesCta.hidden = false;
@@ -388,7 +295,40 @@ var CustardToday = (function () {
       todayDesc.textContent = 'Check back later \u2014 flavor data updates throughout the day.';
       todayDesc.hidden = false;
       renderRarity(null, null);
+      if (todayCtas) todayCtas.innerHTML = '';
     }
+
+    // Wire action CTAs (confirmed and predicted only)
+    if (todayCtas && day.type !== 'none') {
+      if (store) {
+        todayCtas.innerHTML = CustardPlanner.actionCTAsHTML({
+          actions: ['directions', 'alert', 'calendar'],
+          lat: store.lat,
+          lon: store.lon || store.lng,
+          storeName: store.name || (store.city + ', ' + store.state),
+          slug: slug,
+          workerBase: WORKER_BASE
+        });
+      } else {
+        todayCtas.innerHTML = CustardPlanner.actionCTAsHTML({
+          actions: ['alert', 'calendar'],
+          slug: slug,
+          workerBase: WORKER_BASE
+        });
+      }
+    }
+
+    // Render meta footer: store name + freshness timestamp
+    if (todayMeta) {
+      var storeName = store ? (store.name || store.city + ', ' + store.state) : slug;
+      var freshness = fetchedAt ? timeSince(fetchedAt) : '';
+      todayMeta.innerHTML =
+        '<span class="today-store">' + escapeHtml(storeName) + '</span>' +
+        (freshness ? '<span class="freshness-ts">Updated ' + escapeHtml(freshness) + '</span>' : '');
+    }
+
+    // Fade-in transition
+    todayCard.classList.add('today-card-enter');
 
     todaySection.hidden = false;
   }
@@ -461,102 +401,6 @@ var CustardToday = (function () {
     } else {
       weekSection.hidden = true;
     }
-  }
-
-  // ---------------------------------------------------------------------------
-  // Multi-store glance row
-  // ---------------------------------------------------------------------------
-
-  function renderMultiStoreRow() {
-    if (!multiStoreSection || !multiStoreRow) return;
-
-    // Only show multi-store row if user has explicitly saved preferences with 2+ stores.
-    // getDrivePreferences() returns defaults from the manifest even with 0 saved prefs,
-    // so we check the raw localStorage entry first.
-    var storeSlugs = [];
-    try {
-      var raw = localStorage.getItem('custard:v1:preferences');
-      if (raw) {
-        var parsed = JSON.parse(raw);
-        if (parsed && parsed.activeRoute && Array.isArray(parsed.activeRoute.stores)) {
-          storeSlugs = parsed.activeRoute.stores;
-        }
-      }
-    } catch (e) {}
-
-    if (!storeSlugs || storeSlugs.length < 2) {
-      multiStoreSection.hidden = true;
-      return;
-    }
-
-    var fetchPromises = storeSlugs.map(function (slug) {
-      return fetch(WORKER_BASE + '/api/v1/today?slug=' + encodeURIComponent(slug))
-        .then(function (r) { return r.ok ? r.json() : null; })
-        .catch(function () { return null; });
-    });
-
-    Promise.all(fetchPromises).then(function (results) {
-      multiStoreRow.innerHTML = '';
-      var cellCount = 0;
-      var anySuccess = false;
-
-      for (var i = 0; i < storeSlugs.length; i++) {
-        var slug = storeSlugs[i];
-        var data = results[i];
-
-        var store = _allStores.find(function (s) { return s.slug === slug; });
-        var storeName = store ? (store.city + ', ' + store.state) : slug;
-
-        var cell = document.createElement('button');
-        cell.type = 'button';
-        cell.className = 'multi-store-cell';
-        if (slug === _currentSlug) {
-          cell.className += ' active';
-        }
-        cell.dataset.slug = slug;
-
-        if (data && data.flavor) {
-          anySuccess = true;
-          var coneSvg = (typeof renderMiniConeSVG === 'function') ? renderMiniConeSVG(data.flavor) : '';
-          cell.innerHTML =
-            '<div class="multi-store-cone">' + coneSvg + '</div>'
-            + '<div class="multi-store-flavor">' + escapeHtml(data.flavor) + '</div>'
-            + '<div class="multi-store-name">' + escapeHtml(storeName) + '</div>';
-        } else {
-          cell.innerHTML =
-            '<div class="multi-store-cone"></div>'
-            + '<div class="multi-store-flavor text-estimated">No data</div>'
-            + '<div class="multi-store-name">' + escapeHtml(storeName) + '</div>';
-        }
-
-        cell.addEventListener('click', (function (storeSlug) {
-          return function () {
-            // Move .active class to the tapped cell
-            var cells = multiStoreRow.querySelectorAll('.multi-store-cell');
-            for (var c = 0; c < cells.length; c++) {
-              cells[c].classList.remove('active');
-            }
-            this.classList.add('active');
-
-            document.dispatchEvent(new CustomEvent('sharednav:storechange', {
-              detail: { slug: storeSlug },
-            }));
-            selectStore(storeSlug);
-          };
-        })(slug));
-
-        multiStoreRow.appendChild(cell);
-        cellCount++;
-      }
-
-      if (cellCount >= 2 && anySuccess) {
-        multiStoreSection.hidden = false;
-      } else {
-        multiStoreSection.hidden = true;
-      }
-    }).catch(function () {
-      multiStoreSection.hidden = true;
-    });
   }
 
   // ---------------------------------------------------------------------------
@@ -648,8 +492,6 @@ var CustardToday = (function () {
     // will be confirmed below after manifest loads)
 
     Promise.all([loadStores(), loadFlavorColors()]).then(function () {
-      renderQuickStartStores();
-
       if (savedSlug) {
         var storeExists = _allStores.find(function (s) { return s.slug === savedSlug; });
         if (storeExists && _currentSlug !== savedSlug) {
