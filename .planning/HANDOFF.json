@@ -1,0 +1,26 @@
+{
+  "version": "1.0",
+  "timestamp": "2026-03-19T20:41:42.782Z",
+  "phase": "31",
+  "phase_name": "Homepage Redesign",
+  "phase_dir": ".planning/phases/31-homepage-redesign",
+  "plan": 0,
+  "task": 0,
+  "total_tasks": 0,
+  "status": "paused",
+  "completed_tasks": [],
+  "remaining_tasks": [],
+  "blockers": [],
+  "human_actions_pending": [],
+  "decisions": [
+    {"decision": "Hero card includes CTAs (Directions/Alert/Calendar) as full decision-making unit", "rationale": "User can see flavor and act without scrolling", "phase": "31"},
+    {"decision": "Side-by-side cone layout (120px cone left, text right)", "rationale": "Proven layout, fits above fold at 375px", "phase": "31"},
+    {"decision": "Hero card is ONLY content above the fold, strip header/subtitle", "rationale": "One screen, one answer principle", "phase": "31"},
+    {"decision": "Remove signals and multi-store glance sections", "rationale": "Near-zero traffic, power user features without users", "phase": "31"},
+    {"decision": "Keep week-ahead (collapsed) and simplified CTA line below fold", "rationale": "HOME-02 requirement, natural follow-up question", "phase": "31"},
+    {"decision": "Minimal first-visit: one sentence + store picker + nearby stores", "rationale": "Product explains itself via hero card, not instructions", "phase": "31"}
+  ],
+  "uncommitted_files": [],
+  "next_action": "Run /gsd:plan-phase 31 to create execution plans from the CONTEXT.md decisions",
+  "context_notes": "Phase 30 (Housekeeping) completed and verified. Phase 31 CONTEXT.md captured with all design decisions. Ready to plan. No plans or research exist yet for Phase 31."
+}
