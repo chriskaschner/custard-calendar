@@ -54,18 +54,23 @@ A family in the car (or on the couch) can instantly see what flavors are at thei
 - HD and Hero cone renderers upgraded to Mulberry32 PRNG + collision detection -- v1.5
 - 94 Hero cone PNGs regenerated with SW cache v20 -- v1.5
 
+- Two-tier art pipeline: L0 micro SVG + L5 AI-generated PNGs for all 94 flavors -- v2.0
+- All client/server/widget surfaces migrated to shared L5 PNG art pipeline -- v2.0
+- Dead HD/Hero/Premium SVG renderers removed (~990 lines deleted) -- v2.0
+- Scriptable widget unified into shared art pipeline with canonical 23-color palette -- v2.0
+
 ### Active
 
-## Current Milestone: v2.0 Art Quality
+## Current Milestone: v3.0 Sharpen the Core
 
-**Goal:** Replace the multi-tier algorithmic cone renderers with a two-tier art pipeline: L0 micro SVG for small displays, L5 AI-generated PNGs for everything else.
+**Goal:** Simplify the product to its essential experience, fix performance, and optimize for discoverability -- the first milestone focused on finding users rather than adding features.
 
 **Target features:**
-- Generate L5-quality pixel art PNGs for all 94 profiled flavors via AI image generation
-- Wire L5 PNGs as the single art source for hero, radar, quiz, social cards, and Scriptable widget
-- Unify Scriptable widget cone rendering into the shared art pipeline (L0 or L5)
-- Remove dead intermediate renderers (HD SVG, Hero SVG, Premium SVG)
-- Update flavor-audit.html to reflect the two-tier pipeline
+- Redesign homepage with clear information hierarchy (one card: your store's flavor today)
+- Consolidate zero-traffic pages and simplify navigation
+- Fix LCP cold-start performance (P90 from 10s to <3s)
+- Eliminate layout shift during page load (CLS <0.1)
+- Optimize quiz/flavor content for social sharing
 
 ### Out of Scope
 
@@ -81,8 +86,12 @@ A family in the car (or on the couch) can instantly see what flavors are at thei
 - ES modules for refactoring -- too disruptive; IIFE namespace extension preserves existing patterns
 - Shared exclusion state between Map and Compare -- different user intents on different pages
 - Server-side redirects via Cloudflare Worker -- worker is out of scope; client-side redirects sufficient
-- Premium tier cone rendering -- being removed in v2.0, not upgraded
+- Premium tier cone rendering -- removed in v2.0
 - Test cleanup (dead skipped tests) -- carried from v1.5 Phase 25, low priority
+- ML prediction pipeline improvements (ensemble, XGBoost, confidence intervals) -- 3.2% accuracy not useful; confirmed data IS the product
+- New quiz modes -- 7 modes sufficient, polish over expansion
+- New API endpoints -- 27+ is sufficient surface area
+- Feature additions before finding 10 real users -- distribution before features
 
 ## Context
 
@@ -151,4 +160,4 @@ Tech stack: Cloudflare Worker (API), vanilla JS (4-file IIFE pattern), Playwrigh
 | SW mock (no-op sw.js) for Playwright tests | SW intercepts page-level route handlers; mock prevents registration | Good -- reliable test mocking |
 
 ---
-*Last updated: 2026-03-18 after v2.0 milestone started*
+*Last updated: 2026-03-19 after v3.0 milestone started*

@@ -1,75 +1,73 @@
-# Requirements: Custard Calendar v2.0 Art Quality
+# Requirements: Custard Calendar v3.0 Sharpen the Core
 
-**Defined:** 2026-03-18
+**Defined:** 2026-03-19
 **Core Value:** A family can instantly see what flavors are at their nearby stores and decide where to go
 
-## v2.0 Requirements
+## v3.0 Requirements
 
-Requirements for the two-tier cone art pipeline: L0 micro SVG + L5 AI-generated PNGs.
+Simplify the product, fix performance, optimize for discoverability. First milestone focused on finding users rather than adding features.
 
-### Generation
+### Homepage
 
-- [ ] **GEN-01**: All 94 profiled flavors have L5-quality AI-generated pixel art PNGs with transparent backgrounds
-- [x] **GEN-02**: Generation prompts are version-controlled in a prompt manifest file per flavor
-- [ ] **GEN-03**: QA gallery HTML page displays all 94 generated PNGs side-by-side for visual review before deploy
-- [x] **GEN-04**: Generated PNGs are post-processed (trimmed, resized, optimized) via sharp pipeline
+- [ ] **HOME-01**: User sees one primary card with today's flavor at their saved store above the fold
+- [ ] **HOME-02**: Week-ahead section is collapsed by default, expandable on tap
+- [ ] **HOME-03**: Page layout does not visibly shift during data load (CLS < 0.1)
+- [ ] **HOME-04**: All homepage sections use a single visual language (unified card system, consistent spacing/borders)
 
-### Integration
+### Simplification
 
-- [x] **INT-01**: Today page hero cone displays L5 PNG for all 94 flavors (no HD SVG fallback)
-- [x] **INT-02**: Quiz result cone displays L5 PNG instead of HD SVG
-- [x] **INT-03**: Scriptable widget uses shared art pipeline (L0 or L5 PNG) instead of its own drawConeIcon renderer
-- [x] **INT-04**: Worker social-card.js embeds L5 PNGs instead of inline SVG rects for OG images
-- [x] **INT-05**: Service worker cache version bumped to serve fresh L5 PNGs
+- [ ] **SIMP-01**: Zero-traffic pages (compare, forecast-map, fun) are consolidated or redirected
+- [ ] **SIMP-02**: Navigation reflects reduced page count with no more than 4 items
+- [ ] **SIMP-03**: ML prediction roadmap items formally closed (moved to Won't Do in TODO.md)
 
-### Cleanup
+### Performance
 
-- [x] **CLN-01**: Dead SVG renderers removed from cone-renderer.js (renderMiniConeHDSVG, HD scatter utilities)
-- [x] **CLN-02**: Dead SVG renderers removed from worker/src/flavor-colors.js (renderConeHeroSVG, renderConePremiumSVG, renderConeHDSVG)
-- [x] **CLN-03**: flavor-audit.html updated to show L0 + L5 tiers only, intermediate columns removed
-- [x] **CLN-04**: Pixelmatch golden baselines regenerated for new L5 PNGs
+- [ ] **PERF-01**: LCP P90 under 3 seconds (currently 10s due to Worker cold starts)
+
+### Sharing
+
+- [ ] **SHARE-01**: Quiz results page has optimized og:image and shareable URL for social platforms
+- [ ] **SHARE-02**: Flavor rarity stats are shareable as standalone social content (OG card per flavor)
 
 ## Future Requirements
 
-### Enhancements
+Tracked but not in current roadmap. Promote only after 10 real users provide feedback.
 
-- **ENH-01**: WebP format with format negotiation for 25-35% size reduction
-- **ENH-02**: Retina-resolution PNGs (2x or 3x) for high-DPI displays
-- **ENH-03**: L0 topping-edge-clipping fix (toppings intersecting scoop boundary at small sizes)
+- **DIST-01**: Weekly "flavor intel" social content cadence leveraging historical data moat
+- **DIST-02**: Culver's subreddit / local food group outreach for early adopter recruitment
+- **SYNC-01**: Anonymous cross-device sync (Level 2 model with tokenized links)
+- **ROUTE-01**: Named multi-route profiles (work/weekend)
 
 ## Out of Scope
 
 | Feature | Reason |
 |---------|--------|
-| New flavor profile authoring | Existing 94 profiles are complete; new flavors added as discovered |
-| Animated cone assets | Complexity far exceeds value; static PNGs sufficient |
-| Per-store custom cone art | One cone per flavor, not per store |
-| Dark mode cone variants | Same art works on both backgrounds |
-| 3D/WebGL cone rendering | Over-engineered for a flavor tracker |
+| ML prediction pipeline (ensemble, XGBoost, confidence intervals) | 3.2% top-1 accuracy; confirmed schedule IS the product |
+| New quiz modes beyond current 7 | Sufficient variety; polish over expansion |
+| New API endpoints | 27+ endpoints is sufficient surface area |
+| Android/Alexa widgets | Find web users first before expanding platforms |
+| Feature additions before user validation | Distribution before features |
 
 ## Traceability
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| GEN-01 | Phase 26 | Pending |
-| GEN-02 | Phase 26 | Complete |
-| GEN-03 | Phase 26 | Pending |
-| GEN-04 | Phase 26 | Complete |
-| INT-01 | Phase 27 | Complete |
-| INT-02 | Phase 27 | Complete |
-| INT-03 | Phase 29 | Complete |
-| INT-04 | Phase 28 | Complete |
-| INT-05 | Phase 27 | Complete |
-| CLN-01 | Phase 27 | Complete |
-| CLN-02 | Phase 28 | Complete |
-| CLN-03 | Phase 27 | Complete |
-| CLN-04 | Phase 27 | Complete |
+| HOME-01 | TBD | Pending |
+| HOME-02 | TBD | Pending |
+| HOME-03 | TBD | Pending |
+| HOME-04 | TBD | Pending |
+| SIMP-01 | TBD | Pending |
+| SIMP-02 | TBD | Pending |
+| SIMP-03 | TBD | Pending |
+| PERF-01 | TBD | Pending |
+| SHARE-01 | TBD | Pending |
+| SHARE-02 | TBD | Pending |
 
 **Coverage:**
-- v2.0 requirements: 13 total
-- Mapped to phases: 13
-- Unmapped: 0
+- v3.0 requirements: 10 total
+- Mapped to phases: 0
+- Unmapped: 10
 
 ---
-*Requirements defined: 2026-03-18*
-*Last updated: 2026-03-18 after roadmap creation*
+*Requirements defined: 2026-03-19*
+*Last updated: 2026-03-19 after initial definition*
