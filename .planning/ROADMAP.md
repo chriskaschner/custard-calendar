@@ -138,10 +138,10 @@ Plans:
   1. Scriptable widget displays L5 AI PNG cones when the device is online, loaded via Image.fromURL() from the GitHub Pages asset path
   2. Offline fallback renders a color-aligned cone using the canonical 23-entry BASE_COLORS palette (not the drifted 15-color FLAVOR_SCOOP_COLORS)
   3. Both docs/assets/custard-today.js and widgets/custard-today.js are updated and kept in sync
-**Plans**: TBD
+**Plans:** 1 plan
 
 Plans:
-- [ ] 29-01: TBD
+- [ ] 29-01-PLAN.md -- Add L5 PNG loading via getConeImage(), replace 15-color palette with 23-entry BASE_COLORS, sync both widget copies
 
 ## Progress
 
@@ -159,6 +159,6 @@ Phases 26 is strictly first. Phases 27, 28, and 29 can proceed in parallel after
 | 26. AI Cone Generation | 2/3 | In Progress|  | - |
 | 27. Client-Side Art Migration | 2/2 | Complete    | 2026-03-19 | - |
 | 28. Worker Social Card Migration | 2/2 | Complete    | 2026-03-19 | - |
-| 29. Scriptable Widget Unification | v2.0 | 0/TBD | Not started | - |
+| 29. Scriptable Widget Unification | v2.0 | 0/1 | Not started | - |
 
-**Total: 29 phases, 60+ plans across 7 milestones**
+**Total: 29 phases, 61 plans across 7 milestones**
