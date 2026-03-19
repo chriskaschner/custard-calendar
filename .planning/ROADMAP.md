@@ -110,7 +110,7 @@ Plans:
   3. renderMiniConeHDSVG() and all HD scatter utilities are deleted from cone-renderer.js with zero references remaining
   4. flavor-audit.html shows exactly two tiers (L0 micro SVG and L5 AI PNG) with no intermediate columns
   5. Service worker cache version is bumped and pixelmatch golden baselines are regenerated -- all visual regression tests pass at zero tolerance
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 
 Plans:
 - [ ] 27-01-PLAN.md -- Remove HD SVG renderer from cone-renderer.js, wire quiz engine to renderHeroCone, delete scatter utilities
@@ -157,7 +157,7 @@ Phases 26 is strictly first. Phases 27, 28, and 29 can proceed in parallel after
 | 18-19 | v1.4 | 4/4 | Complete | 2026-03-13 |
 | 20-25 | v1.5 | 10/10 | Complete | 2026-03-18 |
 | 26. AI Cone Generation | 2/3 | In Progress|  | - |
-| 27. Client-Side Art Migration | v2.0 | 0/2 | Not started | - |
+| 27. Client-Side Art Migration | 1/2 | In Progress|  | - |
 | 28. Worker Social Card Migration | v2.0 | 0/TBD | Not started | - |
 | 29. Scriptable Widget Unification | v2.0 | 0/TBD | Not started | - |
 

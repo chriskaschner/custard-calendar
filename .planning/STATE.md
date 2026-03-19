@@ -2,16 +2,14 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Art Quality
-status: executing
-stopped_at: Completed 26-02-PLAN.md
-last_updated: "2026-03-19T01:33:09.625Z"
-last_activity: 2026-03-18 -- Completed Plan 02 (generation pipeline + trial)
+status: unknown
+stopped_at: Completed 27-01-PLAN.md
+last_updated: "2026-03-19T18:11:04.689Z"
 progress:
   total_phases: 4
   completed_phases: 0
-  total_plans: 3
-  completed_plans: 2
-  percent: 67
+  total_plans: 5
+  completed_plans: 3
 ---
 
 # Project State
@@ -21,20 +19,17 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-18)
 
 **Core value:** A family can instantly see what flavors are at their nearby stores and decide where to go
-**Current focus:** v2.0 Art Quality -- Phase 26 AI Cone Generation
+**Current focus:** Phase 27 — client-side-art-migration
 
 ## Current Position
 
-Phase: 26 of 29 (AI Cone Generation)
-Plan: 3 of 3 (next: 26-03)
-Status: Executing
-Last activity: 2026-03-18 -- Completed Plan 02 (generation pipeline + trial)
-
-Progress: [######....] 67%
+Phase: 27 (client-side-art-migration) — EXECUTING
+Plan: 2 of 2
 
 ## Performance Metrics
 
 **Velocity:**
+
 - v1.0: 15 plans in ~2 hours (~8 min/plan)
 - v1.1: 4 plans in ~28 min (~7 min/plan)
 - v1.2: 9 plans in ~1 day (~11 min avg)
@@ -44,6 +39,7 @@ Progress: [######....] 67%
 - Total: 53 plans across 6 milestones
 
 **Recent Trend:**
+
 - Last 5 plans: 3 min, 12 min, 12 min, 4 min, 6 min
 - Trend: Stable (~7 min avg)
 
@@ -54,6 +50,7 @@ Progress: [######....] 67%
 Full decision log in PROJECT.md Key Decisions table.
 
 Recent decisions affecting current work:
+
 - v2.0: Two-tier end state: L0 micro SVG (tiny contexts) + L5 AI PNG (everything else)
 - v2.0: 94/94 hard gate -- no partial migration, all AI PNGs must pass QA before any integration
 - v2.0: Social card migration is in scope (Worker changes explicitly included for v2.0)
@@ -62,6 +59,7 @@ Recent decisions affecting current work:
 - 26-01: Force-committed gitignored masterlock output files as intentional plan artifacts
 - 26-02: Medium quality selected for full 94-flavor batch (user compared medium vs high in trial)
 - 26-02: Prompt feedback captured: oreos need cream filling detail, andes mints too white, caramel lumpiness varies
+- [Phase 27]: HD SVG tier fully removed rather than deprecated -- no conditional paths left
 
 ### Pending Todos
 
@@ -75,6 +73,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-19T01:33:09.622Z
-Stopped at: Completed 26-02-PLAN.md
-Resume file: .planning/phases/26-ai-cone-generation/26-02-SUMMARY.md
+Last session: 2026-03-19T18:11:04.687Z
+Stopped at: Completed 27-01-PLAN.md
+Resume file: None

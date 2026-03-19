@@ -16,15 +16,15 @@ Requirements for the two-tier cone art pipeline: L0 micro SVG + L5 AI-generated 
 
 ### Integration
 
-- [ ] **INT-01**: Today page hero cone displays L5 PNG for all 94 flavors (no HD SVG fallback)
-- [ ] **INT-02**: Quiz result cone displays L5 PNG instead of HD SVG
+- [x] **INT-01**: Today page hero cone displays L5 PNG for all 94 flavors (no HD SVG fallback)
+- [x] **INT-02**: Quiz result cone displays L5 PNG instead of HD SVG
 - [ ] **INT-03**: Scriptable widget uses shared art pipeline (L0 or L5 PNG) instead of its own drawConeIcon renderer
 - [ ] **INT-04**: Worker social-card.js embeds L5 PNGs instead of inline SVG rects for OG images
 - [ ] **INT-05**: Service worker cache version bumped to serve fresh L5 PNGs
 
 ### Cleanup
 
-- [ ] **CLN-01**: Dead SVG renderers removed from cone-renderer.js (renderMiniConeHDSVG, HD scatter utilities)
+- [x] **CLN-01**: Dead SVG renderers removed from cone-renderer.js (renderMiniConeHDSVG, HD scatter utilities)
 - [ ] **CLN-02**: Dead SVG renderers removed from worker/src/flavor-colors.js (renderConeHeroSVG, renderConePremiumSVG, renderConeHDSVG)
 - [ ] **CLN-03**: flavor-audit.html updated to show L0 + L5 tiers only, intermediate columns removed
 - [ ] **CLN-04**: Pixelmatch golden baselines regenerated for new L5 PNGs
@@ -55,12 +55,12 @@ Requirements for the two-tier cone art pipeline: L0 micro SVG + L5 AI-generated 
 | GEN-02 | Phase 26 | Complete |
 | GEN-03 | Phase 26 | Pending |
 | GEN-04 | Phase 26 | Complete |
-| INT-01 | Phase 27 | Pending |
-| INT-02 | Phase 27 | Pending |
+| INT-01 | Phase 27 | Complete |
+| INT-02 | Phase 27 | Complete |
 | INT-03 | Phase 29 | Pending |
 | INT-04 | Phase 28 | Pending |
 | INT-05 | Phase 27 | Pending |
-| CLN-01 | Phase 27 | Pending |
+| CLN-01 | Phase 27 | Complete |
 | CLN-02 | Phase 28 | Pending |
 | CLN-03 | Phase 27 | Pending |
 | CLN-04 | Phase 27 | Pending |
