@@ -2,7 +2,8 @@
  * Pixelmatch golden baseline visual regression tests (VALD-03).
  *
  * Generates and compares PNG baselines for every profiled flavor across
- * all 4 rendering tiers (Mini 9x11, HD 18x21, Premium 24x28, Hero 36x42).
+ * 1 rendering tier (Mini 9x11). HD/Premium/Hero tiers were removed in
+ * Phase 28 after migrating social cards to L5 AI PNGs.
  *
  * Zero tolerance threshold -- rendering is deterministic (seeded PRNG),
  * so any pixel difference is a real change.
@@ -17,7 +18,7 @@ import { PNG } from 'pngjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import {
-  renderConeSVG, renderConeHDSVG, renderConeHeroSVG, renderConePremiumSVG,
+  renderConeSVG,
   FLAVOR_PROFILES,
 } from '../src/flavor-colors.js';
 import { renderToPixels, pixelMapToRGBA } from './helpers/render-to-pixels.js';
@@ -25,10 +26,7 @@ import { renderToPixels, pixelMapToRGBA } from './helpers/render-to-pixels.js';
 const GOLDENS_DIR = path.join(import.meta.dirname, 'fixtures', 'goldens');
 
 const TIERS = [
-  { name: 'mini',    fn: renderConeSVG,        w: 9,  h: 11 },
-  { name: 'hd',      fn: renderConeHDSVG,      w: 18, h: 21 },
-  { name: 'premium', fn: renderConePremiumSVG,  w: 24, h: 28 },
-  { name: 'hero',    fn: renderConeHeroSVG,     w: 36, h: 42 },
+  { name: 'mini', fn: renderConeSVG, w: 9, h: 11 },
 ];
 
 const ALL_FLAVORS = Object.keys(FLAVOR_PROFILES);
