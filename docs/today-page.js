@@ -31,6 +31,7 @@ var CustardToday = (function () {
   var _allStores = [];
   var _userLat = null;
   var _userLng = null;
+  var _heroCacheRendered = false;
 
   // ---------------------------------------------------------------------------
   // DOM refs
@@ -98,6 +99,40 @@ var CustardToday = (function () {
     if (hrs < 24) return hrs + ' hr ago';
     var days = Math.floor(hrs / 24);
     return days + 'd ago';
+  }
+
+  // ---------------------------------------------------------------------------
+  // Hero cache (localStorage) -- instant render for returning users
+  // ---------------------------------------------------------------------------
+
+  function cacheHeroData(slug, day, fetchedAt) {
+    try {
+      localStorage.setItem('custard-hero-cache', JSON.stringify({
+        slug: slug,
+        flavor: day.flavor || '',
+        description: day.description || '',
+        date: day.date,
+        type: day.type,
+        fetchedAt: fetchedAt,
+        ts: Date.now()
+      }));
+    } catch (e) {}
+  }
+
+  function readHeroCache(slug) {
+    try {
+      var raw = localStorage.getItem('custard-hero-cache');
+      if (!raw) return null;
+      var data = JSON.parse(raw);
+      if (!data || data.slug !== slug) return null;
+      var today = new Date();
+      today.setHours(12, 0, 0, 0);
+      var todayStr = today.toISOString().slice(0, 10);
+      if (data.date !== todayStr) return null;
+      return data;
+    } catch (e) {
+      return null;
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -170,11 +205,14 @@ var CustardToday = (function () {
   // ---------------------------------------------------------------------------
 
   function loadForecast(slug) {
-    // Show loading
-    todaySection.hidden = true;
+    // If hero was rendered from cache, keep it visible during background refresh
+    // instead of flashing the loading skeleton
+    if (!_heroCacheRendered) {
+      todaySection.hidden = true;
+      todayLoading.hidden = false;
+    }
     if (weekSection) weekSection.hidden = true;
     errorState.hidden = true;
-    todayLoading.hidden = false;
     if (updatesCta) updatesCta.hidden = true;
 
     Promise.all([
@@ -210,7 +248,13 @@ var CustardToday = (function () {
       if (timeline.length > 0) {
         renderHeroCard(timeline[0], slug, fetchedAt, forecastData, todayData);
         renderWeekStrip(timeline.slice(1), fetchedAt);
-      } else {
+        // Write cache for instant render on next visit (confirmed flavors only)
+        if (timeline[0].type === 'confirmed') {
+          cacheHeroData(slug, timeline[0], fetchedAt);
+        }
+        _heroCacheRendered = false;
+      } else if (!_heroCacheRendered) {
+        // Only show "no data" if we don't already have a cached render visible
         renderHeroCard({ date: toISODate(today), type: 'none' }, slug, fetchedAt, forecastData, todayData);
       }
 
@@ -219,8 +263,11 @@ var CustardToday = (function () {
     }).catch(function (err) {
       console.error('Forecast load error:', err);
       todayLoading.hidden = true;
-      if (errorMessage) errorMessage.textContent = 'Something went wrong loading the flavor data.';
-      errorState.hidden = false;
+      // If hero was rendered from cache, keep it visible instead of showing error
+      if (!_heroCacheRendered) {
+        if (errorMessage) errorMessage.textContent = 'Something went wrong loading the flavor data.';
+        errorState.hidden = false;
+      }
     });
   }
 
@@ -481,12 +528,44 @@ var CustardToday = (function () {
     try { savedSlug = localStorage.getItem('custard-primary'); } catch (e) {}
 
     if (savedSlug) {
-      // Returning user: show loading skeleton, keep empty-state hidden
-      if (emptyState) emptyState.hidden = true;
-      if (todayLoading) todayLoading.hidden = false;
-      if (todaySection) todaySection.hidden = true;
-      if (weekSection) weekSection.hidden = true;
-      if (updatesCta) updatesCta.hidden = true;
+      var heroCache = readHeroCache(savedSlug);
+      if (heroCache) {
+        // Instant render from cache -- skip skeleton entirely
+        _heroCacheRendered = true;
+        if (emptyState) emptyState.hidden = true;
+        if (todayLoading) todayLoading.hidden = true;
+        if (todaySection) todaySection.hidden = false;
+        if (todayFlavor) todayFlavor.textContent = heroCache.flavor;
+        if (todayDesc) {
+          todayDesc.textContent = heroCache.description || '';
+          todayDesc.hidden = !heroCache.description;
+        }
+        if (todayCard) {
+          todayCard.classList.remove('day-card-confirmed', 'day-card-estimated', 'day-card-none');
+          todayCard.classList.add('day-card-confirmed');
+        }
+        if (todayCone && typeof renderHeroCone === 'function') {
+          renderHeroCone(heroCache.flavor, todayCone, 6);
+          todayCone.hidden = false;
+        }
+        if (todayMeta) {
+          var freshness = heroCache.fetchedAt ? timeSince(heroCache.fetchedAt) : '';
+          todayMeta.innerHTML =
+            '<span class="today-store">' + escapeHtml(savedSlug) + '</span>' +
+            (freshness ? '<span class="freshness-ts">Updated ' + escapeHtml(freshness) + '</span>' : '');
+        }
+        if (todayRarity) todayRarity.hidden = true;
+        if (todayCtas) todayCtas.innerHTML = '';
+        if (weekSection) weekSection.hidden = true;
+        if (updatesCta) updatesCta.hidden = true;
+      } else {
+        // No valid cache -- show skeleton as before
+        if (emptyState) emptyState.hidden = true;
+        if (todayLoading) todayLoading.hidden = false;
+        if (todaySection) todaySection.hidden = true;
+        if (weekSection) weekSection.hidden = true;
+        if (updatesCta) updatesCta.hidden = true;
+      }
     }
     // If no savedSlug, leave DOM as-is (empty-state starts visible in HTML,
     // will be confirmed below after manifest loads)

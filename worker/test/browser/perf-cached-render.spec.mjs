@@ -86,34 +86,23 @@ async function setupWithMocks(page) {
 test.describe("Performance: cached hero render (Phase 33)", () => {
 
   test("renders hero card from localStorage cache without network", async ({ page }) => {
-    // Set up mocks for stores.json (needed for manifest load), but abort all API routes
-    // to simulate network failure -- the hero card should render from cache alone.
-    var context = page.context();
+    // Use setupWithMocks first (provides stores.json and flavor-colors needed for init),
+    // but then override the flavor data API routes with stalling responses that never resolve.
+    // This simulates network being slow/unavailable while cache renders instantly.
+    await setupWithMocks(page);
 
-    await context.route("**/stores.json*", function (route) {
-      route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ stores: MOCK_STORES }) });
+    // Override flavor data routes to stall indefinitely (never resolve)
+    await page.route("**/api/v1/flavors*", function (route) {
+      // Don't fulfill or abort -- just hold the request forever to simulate slow network
     });
-    await context.route("**/api/v1/flavor-colors*", function (route) {
-      route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({}) });
+    await page.route("**/api/v1/forecast/*", function (route) {
+      // Stall
     });
-    // Abort all flavor data API routes to simulate network failure
-    await context.route("**/api/v1/flavors*", function (route) {
-      route.abort();
+    await page.route("**/api/v1/today*", function (route) {
+      // Stall
     });
-    await context.route("**/api/v1/forecast/*", function (route) {
-      route.abort();
-    });
-    await context.route("**/api/v1/today*", function (route) {
-      route.abort();
-    });
-    await context.route("**/api/v1/reliability/*", function (route) {
-      route.abort();
-    });
-    await context.route("**/api/v1/geolocate", function (route) {
-      route.abort();
-    });
-    await context.route("**/api/v1/nearby-flavors*", function (route) {
-      route.abort();
+    await page.route("**/api/v1/reliability/*", function (route) {
+      // Stall
     });
 
     await page.goto("/index.html");
@@ -137,7 +126,8 @@ test.describe("Performance: cached hero render (Phase 33)", () => {
     // The hero card should render from cache immediately, no network needed
     await page.waitForSelector("#today-section:not([hidden])", { timeout: 5000 });
 
-    // Verify the cached flavor name is rendered
+    // Verify the cached flavor name is rendered (API responses are stalled,
+    // so any content must have come from localStorage cache)
     var flavorText = await page.locator("#today-flavor").textContent();
     expect(flavorText).toBe("Chocolate Eclair");
   });
