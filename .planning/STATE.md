@@ -19,12 +19,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-19)
 
 **Core value:** A family can instantly see what flavors are at their nearby stores and decide where to go
-**Current focus:** Phase 31 — Homepage Redesign
+**Current focus:** Phase 33 — Performance
 
 ## Current Position
 
-Phase: 31 (Homepage Redesign) — COMPLETE
-Plan: 2 of 2 (all plans complete)
+Phase: 33 of 34 (Performance)
+Plan: 0 of 1 in current phase
+Status: Ready to plan
+Note: Phase 32 (Page Consolidation) deferred to last -- needs real traffic data. Execution order: 33 -> 34 -> 32.
 
 ## Performance Metrics
 

@@ -89,10 +89,10 @@
 **Milestone Goal:** Simplify the product to its essential experience, fix performance, and optimize for discoverability -- the first milestone focused on finding users rather than adding features.
 
 - [x] **Phase 30: Housekeeping & Closure** - Formally close ML prediction roadmap items and clean up deferred tech debt
-- [ ] **Phase 31: Homepage Redesign** - Rebuild the homepage around a single hero card showing today's flavor at the user's store
-- [ ] **Phase 32: Page Consolidation** - Consolidate zero-traffic pages and simplify navigation to reflect actual usage
+- [x] **Phase 31: Homepage Redesign** - Rebuild the homepage around a single hero card showing today's flavor at the user's store
 - [ ] **Phase 33: Performance** - Fix cold-start LCP to under 3 seconds
 - [ ] **Phase 34: Social Sharing** - Optimize quiz results and flavor stats for social platform sharing
+- [ ] **Phase 32: Page Consolidation** - Consolidate zero-traffic pages and simplify navigation to reflect actual usage (deferred -- needs real traffic data)
 
 ## Phase Details
 
@@ -189,7 +189,7 @@ Plans:
 
 ### Phase 32: Page Consolidation
 **Goal**: The site contains only pages that serve real users, and navigation reflects the reduced footprint
-**Depends on**: Phase 31 (homepage redesign informs which pages remain)
+**Depends on**: Phase 34 (deferred until real traffic data available)
 **Requirements**: SIMP-01, SIMP-02
 **Success Criteria** (what must be TRUE):
   1. Zero-traffic pages (compare, forecast-map, fun) are either consolidated into remaining pages or replaced with redirect stubs pointing to the best alternative
@@ -203,7 +203,7 @@ Plans:
 
 ### Phase 33: Performance
 **Goal**: The site loads fast enough that a user checking their phone in the car gets an answer before losing patience
-**Depends on**: Phase 32 (fewer pages to optimize, consolidated assets)
+**Depends on**: Phase 31 (homepage redesign complete)
 **Requirements**: PERF-01
 **Success Criteria** (what must be TRUE):
   1. Homepage LCP P90 is under 3 seconds as measured by a Lighthouse audit on mobile throttling (currently ~10s due to Worker cold starts)
@@ -215,7 +215,7 @@ Plans:
 
 ### Phase 34: Social Sharing
 **Goal**: Users who discover a fun result or rare flavor can share it on social platforms with a rich preview that drives clicks back to the site
-**Depends on**: Phase 32 (share URLs must point to final page structure)
+**Depends on**: Phase 33 (performance fixes complete)
 **Requirements**: SHARE-01, SHARE-02
 **Success Criteria** (what must be TRUE):
   1. Quiz results page generates a unique shareable URL per result that, when pasted into Twitter/Facebook/iMessage, renders an og:image card showing the result with cone art
@@ -230,7 +230,7 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute sequentially: 30 -> 31 -> 32 -> 33 -> 34.
+Phases execute sequentially: 30 -> 31 -> 33 -> 34 -> 32. (Page Consolidation deferred to last -- needs real traffic data.)
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
