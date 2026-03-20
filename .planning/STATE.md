@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Sharpen the Core
-status: unknown
-stopped_at: Completed 31-02-PLAN.md (Phase 31 complete)
-last_updated: "2026-03-20T00:57:09.565Z"
+status: executing
+stopped_at: Completed 33-01-PLAN.md (Phase 33 complete)
+last_updated: "2026-03-20T02:35:00.000Z"
 progress:
   total_phases: 9
-  completed_phases: 5
-  total_plans: 11
-  completed_plans: 10
+  completed_phases: 6
+  total_plans: 12
+  completed_plans: 11
 ---
 
 # Project State
@@ -19,14 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-19)
 
 **Core value:** A family can instantly see what flavors are at their nearby stores and decide where to go
-**Current focus:** Phase 33 — Performance
+**Current focus:** Phase 33 — Performance (complete)
 
 ## Current Position
 
-Phase: 33 of 34 (Performance)
-Plan: 0 of 1 in current phase
-Status: Ready to plan
-Note: Phase 32 (Page Consolidation) deferred to last -- needs real traffic data. Execution order: 33 -> 34 -> 32.
+Phase: 33 (Performance) — COMPLETE
+Plan: 1 of 1 (done)
 
 ## Performance Metrics
 
@@ -39,12 +37,13 @@ Note: Phase 32 (Page Consolidation) deferred to last -- needs real traffic data.
 - v1.4: 4 plans in ~34 min (~8.5 min/plan)
 - v1.5: 10 plans in ~69 min (~6.9 min/plan)
 - v2.0: 8 plans across 4 phases
-- Total: 61 plans across 7 milestones
+- v3.0: Phase 33 — 1 plan in 16 min
+- Total: 62 plans across 7 milestones
 
 **Recent Trend:**
 
-- Last 5 plans: 4 min, 6 min, 7 min, 3 min, 6 min
-- Trend: Stable (~5 min avg)
+- Last 5 plans: 6 min, 7 min, 3 min, 6 min, 16 min
+- Trend: Variable (TDD + debugging cycle extended this plan)
 
 ## Accumulated Context
 
@@ -65,6 +64,9 @@ Recent decisions affecting current work:
 - [Phase 31]: Hero card is sole above-fold content with action CTAs and meta footer wired in
 - [Phase 31]: CTA simplified to single text line -- simplicity over engagement
 - [Phase 31]: Dead CSS from all removed sections cleaned in one pass
+- [Phase 33]: localStorage hero cache renders instantly; loadForecast runs as background refresh
+- [Phase 33]: SW API caching uses allowlist + explicit deny list for location-sensitive endpoints
+- [Phase 33]: CACHE_VERSION bumped to custard-v22 for SW update propagation
 
 ### Pending Todos
 
@@ -72,12 +74,12 @@ None.
 
 ### Blockers/Concerns
 
-- Worker cold-start is the primary LCP bottleneck (~10s P90); fix may require caching strategy changes on the client side since Worker code is out of scope
+- Worker cold-start LCP mitigated by localStorage hero cache + SW API caching (Phase 33); Lighthouse LCP phase gate pending post-deploy
 - Zero-traffic page determination needs actual analytics data or reasonable proxy
 - Pre-existing map-pan-stability.spec.mjs test failure (carried from v1.5)
 
 ## Session Continuity
 
-Last session: 2026-03-20T00:00:00Z
-Stopped at: Completed 31-02-PLAN.md (Phase 31 complete)
+Last session: 2026-03-20T02:35:00Z
+Stopped at: Completed 33-01-PLAN.md (Phase 33 complete)
 Resume file: None

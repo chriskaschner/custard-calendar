@@ -22,7 +22,7 @@ Simplify the product, fix performance, optimize for discoverability. First miles
 
 ### Performance
 
-- [ ] **PERF-01**: LCP P90 under 3 seconds (currently 10s due to Worker cold starts)
+- [x] **PERF-01**: LCP P90 under 3 seconds (currently 10s due to Worker cold starts)
 
 ### Sharing
 
@@ -59,7 +59,7 @@ Tracked but not in current roadmap. Promote only after 10 real users provide fee
 | SIMP-01 | Phase 32 | Pending |
 | SIMP-02 | Phase 32 | Pending |
 | SIMP-03 | Phase 30 | Complete |
-| PERF-01 | Phase 33 | Pending |
+| PERF-01 | Phase 33 | Complete |
 | SHARE-01 | Phase 34 | Pending |
 | SHARE-02 | Phase 34 | Pending |
 
