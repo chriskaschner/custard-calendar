@@ -184,8 +184,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 31-01-PLAN.md -- Hero card with CTAs/meta footer, simplified empty state, CLS-preventing skeleton
-- [ ] 31-02-PLAN.md -- CTA text line replacement, dead CSS cleanup, Playwright tests, visual verification
+- [x] 31-01-PLAN.md -- Hero card with CTAs/meta footer, simplified empty state, CLS-preventing skeleton
+- [x] 31-02-PLAN.md -- CTA text line replacement, dead CSS cleanup, Playwright tests, visual verification
 
 ### Phase 32: Page Consolidation
 **Goal**: The site contains only pages that serve real users, and navigation reflects the reduced footprint
@@ -242,7 +242,7 @@ Phases execute sequentially: 30 -> 31 -> 32 -> 33 -> 34.
 | 20-25 | v1.5 | 10/10 | Complete | 2026-03-18 |
 | 26-29 | v2.0 | 8/8 | Complete | 2026-03-19 |
 | 30. Housekeeping & Closure | v3.0 | Complete    | 2026-03-19 | 2026-03-19 |
-| 31. Homepage Redesign | 1/2 | In Progress|  | - |
+| 31. Homepage Redesign | v3.0 | 2/2 | Complete | 2026-03-19 |
 | 32. Page Consolidation | v3.0 | 0/2 | Not started | - |
 | 33. Performance | v3.0 | 0/1 | Not started | - |
 | 34. Social Sharing | v3.0 | 0/2 | Not started | - |
