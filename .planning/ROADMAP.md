@@ -242,7 +242,7 @@ Phases execute sequentially: 30 -> 31 -> 32 -> 33 -> 34.
 | 20-25 | v1.5 | 10/10 | Complete | 2026-03-18 |
 | 26-29 | v2.0 | 8/8 | Complete | 2026-03-19 |
 | 30. Housekeeping & Closure | v3.0 | Complete    | 2026-03-19 | 2026-03-19 |
-| 31. Homepage Redesign | v3.0 | 2/2 | Complete | 2026-03-19 |
+| 31. Homepage Redesign | v3.0 | Complete    | 2026-03-20 | 2026-03-19 |
 | 32. Page Consolidation | v3.0 | 0/2 | Not started | - |
 | 33. Performance | v3.0 | 0/1 | Not started | - |
 | 34. Social Sharing | v3.0 | 0/2 | Not started | - |
