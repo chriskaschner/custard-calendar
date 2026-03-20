@@ -27,16 +27,17 @@ created: 2026-03-20
 
 ## Spacing Scale
 
-Declared values from existing `style.css` custom properties (rem-based, converted to px at 16px base):
+Declared values from existing `style.css` custom properties (rem-based, converted to px at 16px base). Phase 34 uses only tokens from the standard set (multiples of 4 within 4, 8, 16, 24, 32, 48, 64):
 
 | Token | Value | CSS Variable | Usage |
 |-------|-------|-------------|-------|
 | xs | 4px | `--space-1` (0.25rem) | Icon gaps, inline padding |
-| sm | 8px | `--space-2` (0.5rem) | Compact element spacing |
-| md | 12px | `--space-3` (0.75rem) | Button padding, share button gaps |
+| sm | 8px | `--space-2` (0.5rem) | Compact element spacing, button padding, share button gaps |
 | lg | 16px | `--space-4` (1rem) | Default card padding, section spacing |
 | xl | 24px | `--space-5` (1.5rem) | Hero card padding |
 | 2xl | 32px | `--space-6` (2rem) | Header vertical padding |
+
+Note: The codebase defines `--space-3` (12px / 0.75rem) as a pre-existing token. Phase 34 does not introduce or require this value. All Phase 34 components use `--space-2` (8px) or `--space-4` (16px) where intermediate spacing is needed.
 
 Exceptions: OG card SVG/PNG layout uses pixel values directly (80px left margin, 60px top padding, 40px inter-element gap) because satori renders from absolute pixel dimensions, not CSS custom properties.
 
@@ -50,10 +51,10 @@ Exceptions: OG card SVG/PNG layout uses pixel values directly (80px left margin,
 |------|------|--------|-------------|-------------|
 | Body | 14px | 400 | 1.45 | `--text-base` (0.875rem) |
 | Label | 12px | 700 | 1.3 | `--text-sm` (0.75rem) |
-| Heading | 24px | 800 | 1.15 | `--text-xl` (1.5rem) |
+| Heading | 24px | 700 | 1.15 | `--text-xl` (1.5rem) |
 | Display | 28px | 700 | 1.2 | `--text-2xl` (1.75rem) |
 
-Source: existing style.css `:root` tokens.
+Source: existing style.css `:root` tokens. Two weights only: 400 (body) and 700 (label, heading, display). The codebase uses weight 800 for some headings, but Phase 34 normalizes to 700 -- the visual distinction between heading and display comes from size (24px vs 28px), not weight.
 
 ### OG Cards (Worker PNG via workers-og)
 
