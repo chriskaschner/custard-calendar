@@ -61,6 +61,7 @@ A family in the car (or on the couch) can instantly see what flavors are at thei
 
 - ML prediction pipeline formally closed (Won't Do with rationale); TODO.md backlog triaged to reflect reality -- v3.0 Phase 30
 - Homepage redesigned around single hero card with CTAs, simplified empty state, CLS skeleton; signals/multi-store/header removed -- v3.0 Phase 31
+- localStorage hero cache + SW API stale-while-revalidate for instant return-visit render; Lighthouse LCP gate pending post-deploy -- v3.0 Phase 33
 
 ### Active
 
@@ -163,4 +164,4 @@ Tech stack: Cloudflare Worker (API), vanilla JS (4-file IIFE pattern), Playwrigh
 | SW mock (no-op sw.js) for Playwright tests | SW intercepts page-level route handlers; mock prevents registration | Good -- reliable test mocking |
 
 ---
-*Last updated: 2026-03-20 after Phase 31 (Homepage Redesign) complete*
+*Last updated: 2026-03-20 after Phase 33 (Performance) complete*
