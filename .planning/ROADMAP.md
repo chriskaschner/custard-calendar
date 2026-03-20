@@ -208,10 +208,10 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. Homepage LCP P90 is under 3 seconds as measured by a Lighthouse audit on mobile throttling (currently ~10s due to Worker cold starts)
   2. The critical rendering path for the hero card does not depend on the Worker API -- a skeleton or cached response renders first, then hydrates when data arrives
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 33-01: Diagnose cold-start bottleneck and implement LCP fix
+- [ ] 33-01-PLAN.md -- localStorage hero cache + service worker API caching for instant return-visit render
 
 ### Phase 34: Social Sharing
 **Goal**: Users who discover a fun result or rare flavor can share it on social platforms with a rich preview that drives clicks back to the site
@@ -247,4 +247,4 @@ Phases execute sequentially: 30 -> 31 -> 33 -> 34 -> 32. (Page Consolidation def
 | 33. Performance | v3.0 | 0/1 | Not started | - |
 | 34. Social Sharing | v3.0 | 0/2 | Not started | - |
 
-**Total: 34 phases, 69 plans across 8 milestones**
+**Total: 34 phases, 70 plans across 8 milestones**
