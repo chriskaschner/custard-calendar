@@ -1,26 +1,30 @@
 {
   "version": "1.0",
-  "timestamp": "2026-03-19T20:41:42.782Z",
-  "phase": "31",
-  "phase_name": "Homepage Redesign",
-  "phase_dir": ".planning/phases/31-homepage-redesign",
+  "timestamp": "2026-03-21T14:49:18.739Z",
+  "phase": "34",
+  "phase_name": "Social Sharing",
+  "phase_dir": ".planning/phases/34-social-sharing",
   "plan": 0,
   "task": 0,
-  "total_tasks": 0,
+  "total_tasks": 5,
   "status": "paused",
   "completed_tasks": [],
-  "remaining_tasks": [],
+  "remaining_tasks": [
+    {"id": 1, "plan": "34-01", "name": "OG card PNG generation (quiz + flavor rarity)", "status": "not_started"},
+    {"id": 2, "plan": "34-01", "name": "Crawler interception for social platforms", "status": "not_started"},
+    {"id": 3, "plan": "34-02", "name": "Quiz skip-to-result mode and share text", "status": "not_started"},
+    {"id": 4, "plan": "34-02", "name": "Radar flavor share icons", "status": "not_started"},
+    {"id": 5, "plan": "34-02", "name": "Visual checkpoint (manual verification)", "status": "not_started"}
+  ],
   "blockers": [],
   "human_actions_pending": [],
   "decisions": [
-    {"decision": "Hero card includes CTAs (Directions/Alert/Calendar) as full decision-making unit", "rationale": "User can see flavor and act without scrolling", "phase": "31"},
-    {"decision": "Side-by-side cone layout (120px cone left, text right)", "rationale": "Proven layout, fits above fold at 375px", "phase": "31"},
-    {"decision": "Hero card is ONLY content above the fold, strip header/subtitle", "rationale": "One screen, one answer principle", "phase": "31"},
-    {"decision": "Remove signals and multi-store glance sections", "rationale": "Near-zero traffic, power user features without users", "phase": "31"},
-    {"decision": "Keep week-ahead (collapsed) and simplified CTA line below fold", "rationale": "HOME-02 requirement, natural follow-up question", "phase": "31"},
-    {"decision": "Minimal first-visit: one sentence + store picker + nearby stores", "rationale": "Product explains itself via hero card, not instructions", "phase": "31"}
+    {"decision": "PNG not SVG for OG cards", "rationale": "Research confirmed SVG og:image is not rendered by any social platform (Twitter, Facebook, iMessage, WhatsApp, Discord, Slack). Using workers-og (satori + resvg-wasm) for PNG generation.", "phase": "34"},
+    {"decision": "Crawler interception server-side", "rationale": "Social crawlers do not execute JavaScript. Worker detects crawler User-Agents and returns minimal HTML with correct og:meta tags.", "phase": "34"},
+    {"decision": "Share URLs use radar.html path", "rationale": "CONTEXT.md locked decision: flavor share links land on radar.html?flavor=X. radar.html redirects to index.html preserving params. Checker caught initial plan targeting Today page instead.", "phase": "34"},
+    {"decision": "UI-SPEC approved with .png endpoints overriding .svg from CONTEXT.md", "rationale": "Research-justified technical override. CONTEXT.md specified .svg but that would produce non-functional social cards.", "phase": "34"}
   ],
-  "uncommitted_files": [],
-  "next_action": "Run /gsd:plan-phase 31 to create execution plans from the CONTEXT.md decisions",
-  "context_notes": "Phase 30 (Housekeeping) completed and verified. Phase 31 CONTEXT.md captured with all design decisions. Ready to plan. No plans or research exist yet for Phase 31."
+  "uncommitted_files": [".planning/STATE.md"],
+  "next_action": "Run /gsd:execute-phase 34 to execute both plans (wave 1: Worker OG cards, wave 2: frontend share UX)",
+  "context_notes": "Phase 34 fully planned. Research, UI-SPEC (6/6 dimensions passed after 1 revision), and 2 plans created and verified by checker (passed after 1 revision fixing Radar vs Today page targeting). Plans are clean with no file overlap between waves. Ready for execution."
 }
