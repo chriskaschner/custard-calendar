@@ -221,11 +221,11 @@ Plans:
   1. Quiz results page generates a unique shareable URL per result that, when pasted into Twitter/Facebook/iMessage, renders an og:image card showing the result with cone art
   2. Individual flavor rarity stats have a shareable URL that renders an OG card showing the flavor name, cone art, and rarity classification (e.g., "Served 3 times this year")
   3. Shared URLs load a standalone page (not the full quiz flow) so recipients see the content without completing the quiz themselves
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 34-01: Quiz result shareable URLs with OG cards
-- [ ] 34-02: Flavor rarity OG cards and share links
+- [ ] 34-01-PLAN.md -- Worker OG card PNG generation (quiz + flavor rarity) and crawler interception
+- [ ] 34-02-PLAN.md -- Quiz skip-to-result mode, flavor-themed share text, per-flavor share icons
 
 ## Progress
 
@@ -247,4 +247,4 @@ Phases execute sequentially: 30 -> 31 -> 33 -> 34 -> 32. (Page Consolidation def
 | 33. Performance | 1/1 | Complete    | 2026-03-20 | - |
 | 34. Social Sharing | v3.0 | 0/2 | Not started | - |
 
-**Total: 34 phases, 70 plans across 8 milestones**
+**Total: 34 phases, 72 plans across 8 milestones**
