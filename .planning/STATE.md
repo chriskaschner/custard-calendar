@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Sharpen the Core
 status: unknown
-stopped_at: Phase 34 UI-SPEC approved
-last_updated: "2026-03-20T20:00:31.714Z"
+stopped_at: Phase 33.1 context gathered
+last_updated: "2026-03-22T14:22:01.027Z"
 progress:
-  total_phases: 9
+  total_phases: 10
   completed_phases: 6
-  total_plans: 12
+  total_plans: 14
   completed_plans: 11
 ---
 
@@ -68,6 +68,10 @@ Recent decisions affecting current work:
 - [Phase 33]: SW API caching uses allowlist + explicit deny list for location-sensitive endpoints
 - [Phase 33]: CACHE_VERSION bumped to custard-v22 for SW update propagation
 
+### Roadmap Evolution
+
+- Phase 33.1 inserted after Phase 33: Bug Fixes -- Store Disambiguation, Rarity Logic, Art Migration, Stale Signals (URGENT)
+
 ### Pending Todos
 
 None.
@@ -80,6 +84,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-20T20:00:31.706Z
-Stopped at: Phase 34 UI-SPEC approved
-Resume file: .planning/phases/34-social-sharing/34-UI-SPEC.md
+Last session: 2026-03-22T14:22:01.023Z
+Stopped at: Phase 33.1 context gathered
+Resume file: .planning/phases/33.1-bug-fixes-store-disambiguation-rarity-logic-art-migration-stale-signals/33.1-CONTEXT.md
