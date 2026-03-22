@@ -1757,7 +1757,7 @@ footer a {
 /* Week-ahead strip: downscale L5 hero PNG to fit the 140px card */
 .week-day-cone .hero-cone-img {
   width: 40px !important;
-  transform: rotate(-20deg);
+  transform: rotate(-30deg);
   transition: transform 0.2s ease;
 }
 
@@ -1952,6 +1952,13 @@ footer a {
   border-left: 3px solid var(--border);
 }
 
+.week-day-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: var(--space-1);
+}
+
 .week-day-name {
   font-size: var(--text-sm);
   font-weight: 700;
@@ -1963,7 +1970,6 @@ footer a {
 .week-day-date {
   font-size: var(--text-xs);
   color: var(--text-subtle);
-  margin-bottom: var(--space-2);
 }
 
 .week-day-flavor {

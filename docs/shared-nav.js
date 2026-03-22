@@ -187,17 +187,25 @@ var SharedNav = (function () {
         + '</div>';
     }
     if (!store) return '';
-    var nameText = escapeHtml(store.name);
+    // Use disambiguated display name when available (e.g., "Mineral Point Rd — Madison")
+    var displayName = '';
+    if (typeof CustardPlanner !== 'undefined' && typeof CustardPlanner.getDisplayName === 'function' && _stores && _stores.length > 0) {
+      var storeObj = _stores.find(function (s) { return s.slug === store.slug; }) || store;
+      displayName = CustardPlanner.getDisplayName(storeObj, _stores);
+    }
+    var nameText = escapeHtml(displayName || store.name);
     var cityState = '';
-    if (store.city && store.state) {
-      var suffix = store.city + ', ' + store.state;
-      // Only append city/state if name does not already contain it
-      if (store.name.indexOf(suffix) === -1) {
-        cityState = ', ' + escapeHtml(store.city) + ', ' + escapeHtml(store.state);
-      }
-    } else if (store.city) {
-      if (store.name.indexOf(store.city) === -1) {
-        cityState = ', ' + escapeHtml(store.city);
+    // Only append city/state if not already in the display name
+    if (!displayName || displayName.indexOf('\u2014') === -1) {
+      if (store.city && store.state) {
+        var suffix = store.city + ', ' + store.state;
+        if ((displayName || store.name).indexOf(suffix) === -1) {
+          cityState = ', ' + escapeHtml(store.city) + ', ' + escapeHtml(store.state);
+        }
+      } else if (store.city) {
+        if ((displayName || store.name).indexOf(store.city) === -1) {
+          cityState = ', ' + escapeHtml(store.city);
+        }
       }
     }
     return '<div class="store-indicator">'

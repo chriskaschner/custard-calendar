@@ -295,8 +295,6 @@ var CustardToday = (function () {
       if (rarity.avg_gap_days && !isSeasonal) {
         html += 'Shows up roughly every ' + rarity.avg_gap_days + ' days at your store';
       }
-    } else if (rarity.avg_gap_days && !isSeasonal) {
-      html += 'Back in about ' + rarity.avg_gap_days + ' days';
     }
     if (html) {
       todayRarity.innerHTML = html;
@@ -371,20 +369,15 @@ var CustardToday = (function () {
       }
     }
 
-    // Render meta footer: store name (only when disambiguated) + freshness timestamp
+    // Render meta footer: freshness timestamp only (store name lives in header)
     if (todayMeta) {
-      var storeName = store
-        ? (typeof CustardPlanner.getDisplayName === 'function'
-          ? CustardPlanner.getDisplayName(store, _allStores)
-          : (store.name || store.city + ', ' + store.state))
-        : slug;
       var freshness = fetchedAt ? timeSince(fetchedAt) : '';
-      // Only show store label in footer when it provides disambiguation (street-qualified)
-      var showStoreName = storeName && storeName.indexOf('\u2014') !== -1;
-      todayMeta.innerHTML =
-        (showStoreName ? '<span class="today-store">' + escapeHtml(storeName) + '</span>' : '') +
-        (freshness ? '<span class="freshness-ts">Updated ' + escapeHtml(freshness) + '</span>' : '');
-      todayMeta.hidden = !showStoreName && !freshness;
+      if (freshness) {
+        todayMeta.innerHTML = '<span class="freshness-ts">Updated ' + escapeHtml(freshness) + '</span>';
+        todayMeta.hidden = false;
+      } else {
+        todayMeta.hidden = true;
+      }
     }
 
     // Fade-in transition
@@ -429,8 +422,8 @@ var CustardToday = (function () {
         card.className = 'card card--accent-sm week-day-card';
         card.innerHTML =
           '<div class="' + certaintyStripClass(day) + '"></div>'
-          + '<div class="week-day-name">' + escapeHtml(dayName) + '</div>'
-          + '<div class="week-day-date">' + escapeHtml(dateLabel) + '</div>'
+          + '<div class="week-day-header"><span class="week-day-name">' + escapeHtml(dayName) + '</span>'
+          + '<span class="week-day-date">' + escapeHtml(dateLabel) + '</span></div>'
           + '<div class="week-day-cone cone-sm"></div>'
           + '<div class="week-day-flavor">' + escapeHtml(day.flavor) + '</div>';
       } else if (day.type === 'predicted') {
@@ -438,16 +431,16 @@ var CustardToday = (function () {
         card.className = 'card card--accent-sm week-day-card week-day-card-estimated';
         card.innerHTML =
           '<div class="' + certaintyStripClass(day) + '"></div>'
-          + '<div class="week-day-name">' + escapeHtml(dayName) + '</div>'
-          + '<div class="week-day-date">' + escapeHtml(dateLabel) + '</div>'
+          + '<div class="week-day-header"><span class="week-day-name">' + escapeHtml(dayName) + '</span>'
+          + '<span class="week-day-date">' + escapeHtml(dateLabel) + '</span></div>'
           + '<div class="week-day-cone cone-sm"></div>'
           + '<div class="week-day-flavor">' + escapeHtml(day.flavor) + '</div>';
       } else {
         card.className = 'card card--accent-sm week-day-card week-day-card-none';
         card.innerHTML =
           '<div class="' + certaintyStripClass(day) + '"></div>'
-          + '<div class="week-day-name">' + escapeHtml(dayName) + '</div>'
-          + '<div class="week-day-date">' + escapeHtml(dateLabel) + '</div>'
+          + '<div class="week-day-header"><span class="week-day-name">' + escapeHtml(dayName) + '</span>'
+          + '<span class="week-day-date">' + escapeHtml(dateLabel) + '</span></div>'
           + '<div class="week-day-flavor text-estimated">No data</div>';
       }
 
