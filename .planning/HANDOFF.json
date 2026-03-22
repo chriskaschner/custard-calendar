@@ -1,30 +1,32 @@
 {
   "version": "1.0",
-  "timestamp": "2026-03-21T14:49:18.739Z",
-  "phase": "34",
-  "phase_name": "Social Sharing",
-  "phase_dir": ".planning/phases/34-social-sharing",
+  "timestamp": "2026-03-22T14:30:25.451Z",
+  "phase": "33.1",
+  "phase_name": "Bug Fixes: Store Disambiguation, Rarity Logic, Art Migration, Stale Signals",
+  "phase_dir": ".planning/phases/33.1-bug-fixes-store-disambiguation-rarity-logic-art-migration-stale-signals",
   "plan": 0,
   "task": 0,
-  "total_tasks": 5,
+  "total_tasks": 0,
   "status": "paused",
-  "completed_tasks": [],
+  "completed_tasks": [
+    {"id": 1, "name": "CONTEXT.md -- discuss-phase decisions captured", "status": "done", "commit": "743cbf4"},
+    {"id": 2, "name": "UI-SPEC.md -- design contract approved (5/6 PASS, 1 FLAG)", "status": "done", "commit": "f4d0e69"}
+  ],
   "remaining_tasks": [
-    {"id": 1, "plan": "34-01", "name": "OG card PNG generation (quiz + flavor rarity)", "status": "not_started"},
-    {"id": 2, "plan": "34-01", "name": "Crawler interception for social platforms", "status": "not_started"},
-    {"id": 3, "plan": "34-02", "name": "Quiz skip-to-result mode and share text", "status": "not_started"},
-    {"id": 4, "plan": "34-02", "name": "Radar flavor share icons", "status": "not_started"},
-    {"id": 5, "plan": "34-02", "name": "Visual checkpoint (manual verification)", "status": "not_started"}
+    {"id": 3, "name": "Plan phase (/gsd:plan-phase 33.1)", "status": "not_started"},
+    {"id": 4, "name": "Execute phase (/gsd:execute-phase 33.1)", "status": "not_started"}
   ],
   "blockers": [],
   "human_actions_pending": [],
   "decisions": [
-    {"decision": "PNG not SVG for OG cards", "rationale": "Research confirmed SVG og:image is not rendered by any social platform (Twitter, Facebook, iMessage, WhatsApp, Discord, Slack). Using workers-og (satori + resvg-wasm) for PNG generation.", "phase": "34"},
-    {"decision": "Crawler interception server-side", "rationale": "Social crawlers do not execute JavaScript. Worker detects crawler User-Agents and returns minimal HTML with correct og:meta tags.", "phase": "34"},
-    {"decision": "Share URLs use radar.html path", "rationale": "CONTEXT.md locked decision: flavor share links land on radar.html?flavor=X. radar.html redirects to index.html preserving params. Checker caught initial plan targeting Today page instead.", "phase": "34"},
-    {"decision": "UI-SPEC approved with .png endpoints overriding .svg from CONTEXT.md", "rationale": "Research-justified technical override. CONTEXT.md specified .svg but that would produce non-functional social cards.", "phase": "34"}
+    {"decision": "Store disambiguation uses slug-derived street name + city", "rationale": "Slug is Culver's own identifier. Format: 'Mineral Point Rd - Madison, WI'. Only disambiguate when multiple stores share a city. Apply everywhere consistently.", "phase": "33.1"},
+    {"decision": "Three-gate hybrid rarity system", "rationale": "Gate 1: min 10 appearances / 90 days (data quality). Gate 2: >100 stores in 30 days = not rare (network-wide). Gate 3: Ultra Rare >150d, Rare 90-150d (higher thresholds). Kills Turtle/Caramel Pecan false positives.", "phase": "33.1"},
+    {"decision": "Remove Compare page rarity banner", "rationale": "buildRarityNudge() is redundant with per-row badges. Keep inline badges only.", "phase": "33.1"},
+    {"decision": "Insight card only for today's flavor", "rationale": "DOW pattern signal only renders if signal flavor matches today's actual FOTD. No fallback to other flavors.", "phase": "33.1"},
+    {"decision": "Week Ahead reuses renderHeroCone()", "rationale": "Same L5 PNG + L0 SVG fallback as hero card. CSS handles sizing.", "phase": "33.1"},
+    {"decision": "Widget: fix PNG loading AND improve fallback", "rationale": "Debug getConeImage() runtime failures. Also improve DrawContext fallback to look like cone art, not map pins.", "phase": "33.1"}
   ],
-  "uncommitted_files": [".planning/STATE.md"],
-  "next_action": "Run /gsd:execute-phase 34 to execute both plans (wave 1: Worker OG cards, wave 2: frontend share UX)",
-  "context_notes": "Phase 34 fully planned. Research, UI-SPEC (6/6 dimensions passed after 1 revision), and 2 plans created and verified by checker (passed after 1 revision fixing Radar vs Today page targeting). Plans are clean with no file overlap between waves. Ready for execution."
+  "uncommitted_files": [],
+  "next_action": "Run /gsd:plan-phase 33.1 to create executable plans from CONTEXT.md and UI-SPEC.md",
+  "context_notes": "Phase 33.1 inserted after Phase 33 (Performance). Seven user-reported bugs triaged from screenshots. Deep rarity analysis completed by background agent -- recommended hybrid three-gate system. CONTEXT.md and UI-SPEC.md both approved. Phase 34 (Social Sharing) remains paused at plan 0/5. Ready for planning."
 }
