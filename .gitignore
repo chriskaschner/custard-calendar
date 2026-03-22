@@ -97,6 +97,7 @@ docs/masterlock-audit.html
 docs/Custard_Arcade_Sprite_System_Guide.md
 
 # ── GSD baseline (auto-generated) ──
+.gsd
 *.code-workspace
 .env.*
 !.env.example

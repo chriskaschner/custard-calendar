@@ -371,7 +371,7 @@ var CustardToday = (function () {
       }
     }
 
-    // Render meta footer: store name + freshness timestamp
+    // Render meta footer: store name (only when disambiguated) + freshness timestamp
     if (todayMeta) {
       var storeName = store
         ? (typeof CustardPlanner.getDisplayName === 'function'
@@ -379,9 +379,12 @@ var CustardToday = (function () {
           : (store.name || store.city + ', ' + store.state))
         : slug;
       var freshness = fetchedAt ? timeSince(fetchedAt) : '';
+      // Only show store label in footer when it provides disambiguation (street-qualified)
+      var showStoreName = storeName && storeName.indexOf('\u2014') !== -1;
       todayMeta.innerHTML =
-        '<span class="today-store">' + escapeHtml(storeName) + '</span>' +
+        (showStoreName ? '<span class="today-store">' + escapeHtml(storeName) + '</span>' : '') +
         (freshness ? '<span class="freshness-ts">Updated ' + escapeHtml(freshness) + '</span>' : '');
+      todayMeta.hidden = !showStoreName && !freshness;
     }
 
     // Fade-in transition
@@ -429,8 +432,7 @@ var CustardToday = (function () {
           + '<div class="week-day-name">' + escapeHtml(dayName) + '</div>'
           + '<div class="week-day-date">' + escapeHtml(dateLabel) + '</div>'
           + '<div class="week-day-cone cone-sm"></div>'
-          + '<div class="week-day-flavor">' + escapeHtml(day.flavor) + '</div>'
-          + '<div class="week-day-confidence text-success">Confirmed</div>';
+          + '<div class="week-day-flavor">' + escapeHtml(day.flavor) + '</div>';
       } else if (day.type === 'predicted') {
         hasAnyData = true;
         card.className = 'card card--accent-sm week-day-card week-day-card-estimated';
@@ -439,8 +441,7 @@ var CustardToday = (function () {
           + '<div class="week-day-name">' + escapeHtml(dayName) + '</div>'
           + '<div class="week-day-date">' + escapeHtml(dateLabel) + '</div>'
           + '<div class="week-day-cone cone-sm"></div>'
-          + '<div class="week-day-flavor">' + escapeHtml(day.flavor) + '</div>'
-          + '<div class="week-day-confidence">Estimated</div>';
+          + '<div class="week-day-flavor">' + escapeHtml(day.flavor) + '</div>';
       } else {
         card.className = 'card card--accent-sm week-day-card week-day-card-none';
         card.innerHTML =

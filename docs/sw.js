@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'custard-v23';
+const CACHE_VERSION = 'custard-v24';
 const STATIC_ASSETS = [
   './',
   './index.html',

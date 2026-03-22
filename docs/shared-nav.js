@@ -378,13 +378,11 @@ var SharedNav = (function () {
     if (stores) {
       for (var i = 0; i < stores.length; i++) {
         var s = stores[i];
-        var label = escapeHtml(s.name);
-        if (s.city && s.state) {
-          label += ' <span class="store-picker-meta">' + escapeHtml(s.city) + ', ' + escapeHtml(s.state) + '</span>';
-        }
+        var label = '';
         if (s.address) {
-          label += ' <span class="store-picker-address">' + escapeHtml(s.address) + '</span>';
+          label += '<span class="store-picker-address-primary">' + escapeHtml(s.address) + '</span>';
         }
+        label += '<span class="store-picker-city">' + escapeHtml(s.name) + '</span>';
         html += '<li class="store-picker-item" data-slug="' + escapeHtml(s.slug) + '"'
           + ' data-name="' + escapeHtml(s.name) + '"'
           + ' data-city="' + escapeHtml(s.city || '') + '"'

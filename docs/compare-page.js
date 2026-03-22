@@ -558,10 +558,11 @@ var CustardCompare = (function () {
 
       var label = document.createElement('span');
       label.className = 'compare-picker-label';
-      var labelText = escapeHtml(s.name);
-      if (s.city && s.state) {
-        labelText += ' <span class="store-picker-meta">' + escapeHtml(s.city) + ', ' + escapeHtml(s.state) + '</span>';
+      var labelText = '';
+      if (s.address) {
+        labelText += '<span class="store-picker-address-primary">' + escapeHtml(s.address) + '</span>';
       }
+      labelText += '<span class="store-picker-city">' + escapeHtml(s.name) + '</span>';
       label.innerHTML = labelText;
 
       li.appendChild(checkbox);
