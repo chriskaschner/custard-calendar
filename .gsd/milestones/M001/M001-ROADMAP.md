@@ -1,4 +1,4 @@
-# M001: Prior Milestones (v1.0–v2.0)
+# M001: Prior Milestones (v1.0-v2.0)
 
 **Vision:** Custard Calendar tracks daily "Flavor of the Day" schedules across 1,000+ frozen custard stores -- primarily Culver's nationwide, plus Milwaukee-area independents (Kopp's, Gille's, Hefner's, Kraverz, Oscar's).
 
