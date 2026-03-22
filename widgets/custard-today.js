@@ -143,14 +143,15 @@ function flavorToSlug(name) {
 
 // Try loading L5 AI PNG from CDN; fall back to drawConeIcon on failure
 async function getConeImage(flavorName, size) {
-  var slug = flavorToSlug(flavorName);
-  if (slug) {
+  var coneSlug = flavorToSlug(flavorName);
+  if (coneSlug) {
     try {
-      var url = CONE_PNG_BASE + "/" + slug + ".png";
+      var url = CONE_PNG_BASE + "/" + coneSlug + ".png";
       var img = await new Request(url).loadImage();
       return img;
     } catch (e) {
       // Network error or 404 -- fall through to drawConeIcon
+      console.log("[custard] getConeImage failed for '" + flavorName + "': " + (e && e.message || e));
     }
   }
   return drawConeIcon(flavorName, size);

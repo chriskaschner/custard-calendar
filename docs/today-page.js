@@ -175,11 +175,17 @@ var CustardToday = (function () {
 
           var dist = haversine(lat, lng, store.lat, store.lon);
           var coneSvg = (typeof renderMiniConeSVG === 'function') ? renderMiniConeSVG(store.flavor, 5) : '';
+          var storeDisplayName = (typeof CustardPlanner.getDisplayName === 'function' && _allStores.length > 0)
+            ? CustardPlanner.getDisplayName(
+                _allStores.find(function (s) { return s.slug === store.slug; }) || store,
+                _allStores
+              )
+            : (store.name || store.city || store.slug || '');
 
           card.innerHTML = coneSvg +
             '<div class="near-me-card-text">' +
               '<div class="near-me-card-flavor">' + escapeHtml(store.flavor || 'No flavor listed') + '</div>' +
-              '<div class="near-me-card-store">' + escapeHtml(store.name) + '</div>' +
+              '<div class="near-me-card-store">' + escapeHtml(storeDisplayName) + '</div>' +
             '</div>' +
             '<div class="near-me-card-dist">' + dist.toFixed(1) + ' mi</div>';
 
@@ -367,7 +373,11 @@ var CustardToday = (function () {
 
     // Render meta footer: store name + freshness timestamp
     if (todayMeta) {
-      var storeName = store ? (store.name || store.city + ', ' + store.state) : slug;
+      var storeName = store
+        ? (typeof CustardPlanner.getDisplayName === 'function'
+          ? CustardPlanner.getDisplayName(store, _allStores)
+          : (store.name || store.city + ', ' + store.state))
+        : slug;
       var freshness = fetchedAt ? timeSince(fetchedAt) : '';
       todayMeta.innerHTML =
         '<span class="today-store">' + escapeHtml(storeName) + '</span>' +
@@ -418,7 +428,7 @@ var CustardToday = (function () {
           '<div class="' + certaintyStripClass(day) + '"></div>'
           + '<div class="week-day-name">' + escapeHtml(dayName) + '</div>'
           + '<div class="week-day-date">' + escapeHtml(dateLabel) + '</div>'
-          + '<div class="week-day-cone cone-sm">' + renderMiniConeSVG(day.flavor) + '</div>'
+          + '<div class="week-day-cone cone-sm"></div>'
           + '<div class="week-day-flavor">' + escapeHtml(day.flavor) + '</div>'
           + '<div class="week-day-confidence text-success">Confirmed</div>';
       } else if (day.type === 'predicted') {
@@ -428,7 +438,7 @@ var CustardToday = (function () {
           '<div class="' + certaintyStripClass(day) + '"></div>'
           + '<div class="week-day-name">' + escapeHtml(dayName) + '</div>'
           + '<div class="week-day-date">' + escapeHtml(dateLabel) + '</div>'
-          + '<div class="week-day-cone cone-sm">' + renderMiniConeSVG(day.flavor) + '</div>'
+          + '<div class="week-day-cone cone-sm"></div>'
           + '<div class="week-day-flavor">' + escapeHtml(day.flavor) + '</div>'
           + '<div class="week-day-confidence">Estimated</div>';
       } else {
@@ -441,6 +451,13 @@ var CustardToday = (function () {
       }
 
       weekStrip.appendChild(card);
+
+      // Render hero cone PNG (L5) into the .week-day-cone placeholder; falls back
+      // to L0 SVG via renderHeroCone's onerror handler when PNG is unavailable.
+      if (day.flavor && typeof renderHeroCone === 'function') {
+        var coneEl = card.querySelector('.week-day-cone');
+        if (coneEl) renderHeroCone(day.flavor, coneEl, 3);
+      }
     }
 
     if (hasAnyData || !days.every(function (d) { return d.type === 'none'; })) {

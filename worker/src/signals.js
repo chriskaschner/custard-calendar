@@ -415,12 +415,23 @@ export function computeSignals(opts = {}) {
     ...detectStreaks(history, today),
   ];
 
+  // Filter DOW pattern signals: only surface when the pattern flavor matches
+  // today's confirmed FOTD. DOW insights are only relevant when the user is
+  // actually looking at that flavor today -- irrelevant day-of-week patterns
+  // for past or future flavors create noise rather than actionable insight.
+  const filteredSignals = todayFlavor
+    ? signals.filter(sig => {
+        if (sig.type !== 'dow_pattern') return true;
+        return normalizeFlavorKey(sig.flavor) === normalizeFlavorKey(todayFlavor);
+      })
+    : signals.filter(sig => sig.type !== 'dow_pattern');
+
   const rare = detectRareFind(todayFlavor, todayFlavorStoreCount);
-  if (rare) signals.push(rare);
+  if (rare) filteredSignals.push(rare);
 
   // Deduplicate: keep highest-scoring signal per flavor
   const best = new Map();
-  for (const signal of signals) {
+  for (const signal of filteredSignals) {
     const key = `${signal.flavor}:${signal.type}`;
     if (!best.has(key) || signal.score > best.get(key).score) {
       best.set(key, signal);

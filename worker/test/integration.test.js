@@ -1142,7 +1142,7 @@ describe('/api/today endpoint', () => {
   let env;
 
   // Mock D1 with snapshot data for mt-horeb
-  function createMockDB(snapshotRows, countRows) {
+  function createMockDB(snapshotRows, countRows, networkCount = 5) {
     return {
       prepare: (sql) => ({
         bind: (...args) => ({
@@ -1151,6 +1151,13 @@ describe('/api/today endpoint', () => {
               return { results: snapshotRows || [] };
             }
             return { results: countRows || [] };
+          },
+          first: async () => {
+            // Network-wide store count query (gate 2)
+            if (sql.includes('COUNT(DISTINCT slug)')) {
+              return { cnt: networkCount };
+            }
+            return null;
           },
         }),
       }),

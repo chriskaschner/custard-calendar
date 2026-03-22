@@ -83,17 +83,119 @@
   /**
    * Derive a rarity label from avg_gap_days (per-store cadence).
    * This keeps the badge consistent with the "Every N days" cadence text.
-   * Thresholds:
-   *   > 120 days  -> Ultra Rare  (appears less than ~3x/year)
-   *   > 60 days   -> Rare        (appears roughly every 2-4 months)
-   *   <= 60 days  -> null        (appears frequently enough to not be notable)
+   * Thresholds (tightened to reduce false-positive rare badges):
+   *   > 150 days  -> Ultra Rare  (appears less than ~2.5x/year)
+   *   90-150 days -> Rare        (appears roughly every 3-5 months)
+   *   <= 90 days  -> null        (appears frequently enough to not be notable)
    */
   function rarityLabelFromGapDays(avgGapDays) {
     var days = Math.round(Number(avgGapDays));
     if (!Number.isFinite(days) || days < 2) return null;
-    if (days > 120) return 'Ultra Rare';
-    if (days > 60) return 'Rare';
+    if (days > 150) return 'Ultra Rare';
+    if (days > 90) return 'Rare';
     return null;
+  }
+
+  /**
+   * Build a display name for a store that disambiguates cities with multiple
+   * Culver's locations. For unique cities, returns just the city name.
+   * For cities with >1 store, prepends the street name from the slug.
+   *
+   * Slug format: "<city>-<state>-<street-segment>" or legacy "<city-name>"
+   * Example: "madison-wi-mineral-point-rd" -> "Mineral Point Rd - Madison"
+   * Example: "verona" (single store) -> "Verona"
+   *
+   * @param {Object} store - Store object from stores.json { slug, city, state, ... }
+   * @param {Array} allStores - Full array of store objects (for uniqueness check)
+   * @returns {string} Display name
+   */
+  function getDisplayName(store, allStores) {
+    if (!store) return '';
+    var city = store.city || '';
+    var state = store.state || '';
+    if (!city) return store.slug || '';
+
+    // Count stores in the same city+state
+    var sameCity = 0;
+    if (allStores && allStores.length > 0) {
+      for (var i = 0; i < allStores.length; i++) {
+        var s = allStores[i];
+        if (s.city === city && s.state === state) sameCity++;
+      }
+    }
+
+    // Single-store city: return short city name only
+    if (sameCity <= 1) return city;
+
+    // Multiple stores in this city: extract street segment from slug
+    var slug = store.slug || '';
+    var street = _streetFromSlug(slug, city, state);
+    if (street) return street + ' \u2014 ' + city;
+
+    // If address is present, use first word(s) of the street address
+    if (store.address) {
+      var addrStreet = _streetFromAddress(store.address);
+      if (addrStreet) return addrStreet + ' \u2014 ' + city;
+    }
+
+    // Fallback: city + state
+    return city + ', ' + state;
+  }
+
+  /**
+   * Extract a human-readable street name from a slug.
+   * Slug pattern: city-state-streetpart (e.g. "madison-wi-mineral-point-rd")
+   * or legacy city-only (e.g. "madison")
+   */
+  function _streetFromSlug(slug, city, state) {
+    if (!slug) return '';
+    // Build prefix from city+state to strip it
+    var cityNorm = (city || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    var stateNorm = (state || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
+    // Try to strip city-state prefix: "madison-wi-mineral-point-rd" -> "mineral-point-rd"
+    var withState = cityNorm + '-' + stateNorm + '-';
+    var withoutState = cityNorm + '-';
+
+    var remainder = '';
+    if (slug.indexOf(withState) === 0) {
+      remainder = slug.slice(withState.length);
+    } else if (slug.indexOf(withoutState) === 0) {
+      var after = slug.slice(withoutState.length);
+      // Check if 'after' starts with state abbreviation
+      if (stateNorm && after.indexOf(stateNorm + '-') === 0) {
+        remainder = after.slice(stateNorm.length + 1);
+      } else if (after && after !== stateNorm) {
+        remainder = after;
+      }
+    }
+
+    if (!remainder) return '';
+    // Title-case the street segment (replace hyphens with spaces)
+    return remainder.replace(/-/g, ' ').replace(/\b\w/g, function (c) { return c.toUpperCase(); });
+  }
+
+  /**
+   * Extract a short street descriptor from a full address string.
+   * E.g. "7206 Mineral Point Road" -> "Mineral Point Rd"
+   */
+  function _streetFromAddress(address) {
+    if (!address) return '';
+    // Strip leading house number
+    var clean = address.trim().replace(/^\d+\s+/, '');
+    // Abbreviate common suffixes to save space
+    clean = clean.replace(/\bRoad\b/gi, 'Rd').replace(/\bStreet\b/gi, 'St').replace(/\bAvenue\b/gi, 'Ave')
+      .replace(/\bBoulevard\b/gi, 'Blvd').replace(/\bDrive\b/gi, 'Dr').replace(/\bHighway\b/gi, 'Hwy')
+      .replace(/\bLane\b/gi, 'Ln').replace(/\bCourt\b/gi, 'Ct').replace(/\bParkway\b/gi, 'Pkwy');
+    // Limit to first ~25 chars to avoid overly long labels
+    if (clean.length > 28) {
+      // Try to cut at a word boundary
+      var truncated = clean.slice(0, 25);
+      var lastSpace = truncated.lastIndexOf(' ');
+      if (lastSpace > 8) truncated = truncated.slice(0, lastSpace);
+      return truncated;
+    }
+    return clean;
   }
 
   // Keep percentile helpers for trivia/leaderboard usage (not rarity badges)
@@ -800,6 +902,9 @@
     rarityLabelFromPercentile: rarityLabelFromPercentile,
     rarityLabelFromRank: rarityLabelFromRank,
     formatCadenceText: formatCadenceText,
+
+    // Store disambiguation
+    getDisplayName: getDisplayName,
 
     // Reliability
     fetchReliability: fetchReliability,

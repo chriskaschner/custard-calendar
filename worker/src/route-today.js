@@ -112,13 +112,28 @@ export async function handleApiToday(url, env, corsHeaders, fetchFlavorsFn = def
           'SELECT normalized_flavor, COUNT(*) as cnt FROM snapshots WHERE slug = ? GROUP BY normalized_flavor'
         ).bind(slug).all();
 
+        // Query 3: network-wide store count for this flavor in last 30 days
+        const networkCount = await env.DB.prepare(
+          'SELECT COUNT(DISTINCT slug) as cnt FROM snapshots WHERE normalized_flavor = ? AND date >= date(\'now\', \'-30 days\')'
+        ).bind(normalizedFlavor).first();
+
         if (flavorDates.results && flavorDates.results.length > 0 && allCounts.results && allCounts.results.length > 0) {
           const appearances = flavorDates.results.length;
+          const dates = flavorDates.results.map(r => new Date(r.date + 'T00:00:00Z'));
+
+          // Gate 1: data quality -- need at least 10 appearances AND 90+ day span
+          const spanDays = appearances >= 2
+            ? (dates[dates.length - 1] - dates[0]) / (1000 * 60 * 60 * 24)
+            : 0;
+          const meetsDataQuality = appearances >= 10 && spanDays >= 90;
+
+          // Gate 2: network-wide -- suppress if served at >100 stores in last 30 days
+          const networkStoreCount = networkCount?.cnt || 0;
+          const meetsNetworkGate = networkStoreCount <= 100;
 
           // Compute average gap between consecutive appearances
           let avgGapDays = null;
           if (appearances >= 2) {
-            const dates = flavorDates.results.map(r => new Date(r.date + 'T00:00:00Z'));
             let totalGap = 0;
             for (let i = 1; i < dates.length; i++) {
               totalGap += (dates[i] - dates[i - 1]) / (1000 * 60 * 60 * 24);
@@ -126,14 +141,12 @@ export async function handleApiToday(url, env, corsHeaders, fetchFlavorsFn = def
             avgGapDays = Math.round(totalGap / (dates.length - 1));
           }
 
-          // Derive rarity label from avg_gap_days so it stays consistent with
-          // the "Every N days" cadence text shown to the user. A count-based
-          // percentile rank produces contradictory labels when D1 data is sparse
-          // (a flavor with few D1 rows ranks "Ultra Rare" even if avg_gap is 47d).
+          // Gate 3: derive rarity label from avg_gap_days with tightened thresholds
+          // Ultra Rare: >150 days (was 120); Rare: 90-150 days (was 60-120)
           let label = null;
-          if (avgGapDays !== null) {
-            if (avgGapDays > 120) label = 'Ultra Rare';
-            else if (avgGapDays > 60) label = 'Rare';
+          if (meetsDataQuality && meetsNetworkGate && avgGapDays !== null) {
+            if (avgGapDays > 150) label = 'Ultra Rare';
+            else if (avgGapDays > 90) label = 'Rare';
           }
 
           rarity = { appearances, avg_gap_days: avgGapDays, label };

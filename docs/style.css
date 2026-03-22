@@ -1754,6 +1754,9 @@ footer a {
 /* Shared cone icon sizing -- override inline SVG width/height attrs */
 .cone-sm svg { width: 27px !important; height: 30px !important; display: block; }
 
+/* Week-ahead strip: downscale L5 hero PNG to fit the 140px card */
+.week-day-cone .hero-cone-img { width: 40px !important; }
+
 .week-day-cone {
   text-align: center;
   margin: var(--space-1) 0;

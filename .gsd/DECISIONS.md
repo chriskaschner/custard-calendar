@@ -1,0 +1,71 @@
+- Used --state-confirmed (blue) for structural borders/strips and --state-success (green) for badges/match indicators, preserving the existing intentional split
+- Replaced map marker glow rgba() values with color-mix() derived from state tokens, consistent with quiz.html precedent
+- Watch banner text color mapped to --state-watch-text (#f57f17) replacing the brown #5d4037 for consistency
+- prediction-bar-estimated uses --state-estimated rather than a new derived token since the semantic intent aligns
+- Derived .flavor-map-marker-default glow from --state-confirmed at 34% opacity via color-mix(), matching the original rgba alpha
+- Derived .flavor-map-marker-nearest glow from --state-confirmed at 70% opacity, replacing the Google-blue rgba(66,133,244,0.7)
+- Drive dashboard bucket colors tokenized: great->--state-success, ok->--state-watch, hard_pass->--state-danger; pass bucket left as neutral #757575 (no matching token)
+- Error card background and text use --state-danger-bg and --state-danger tokens
+- Baseline count approach for inline style tests -- starts at current violation count, Plan 03 drives to 0
+- Legacy button allowlist (btn-google, btn-apple, btn-search, btn-retry) permits gradual migration
+- Added .card--overlay to design token color allowlist since it is part of fronts dark theme
+- Migrated page-scoped card styles (vote-card, winner-card, share-panel, madlibs-card, linkout-card) to style.css with token-based colors
+- Added .madlibs-card to design token color allowlist for unique teal accent (#0d7377) and active state (#dde9f5)
+- Replaced hardcoded hex values in migrated styles: #fff -> var(--bg-surface), #2e7d32 -> var(--state-success), #f9f9f9 -> var(--bg-muted), #eef4fb -> var(--state-confirmed-bg)
+- Used card--accent-sm for 3px border-left cards (signal, week-day, drive) and card--accent for 4px border-left cards (day-card)
+- Kept .fronts-play-btn as gradient modifier on .btn-secondary.btn--icon.btn--circle (unique gradient background not mappable to base types)
+- Parent-scoped CSS handles button spacing (e.g., #start-vote-btn margin, .compare-empty .btn-primary margin) instead of inline styles
+- Shared footer inline styles replaced with .shared-footer, .shared-footer-links, .shared-footer-link CSS classes
+- .brand-chip.active gets background: var(--brand) in CSS, removing last inline button style on map.html
+- JS querySelector selectors updated from domain-specific class names to new base type classes
+- header-subtitle class with --space-1 margin (not --space-2) to match original inline 0.25rem spacing
+- compare-empty-heading uses raw 1.25rem (no exact token) with comment noting gap between --text-lg and --text-xl
+- CTA card text reuses .header-subtitle class (DRY per user decision -- same visual treatment)
+- updates-cta-card absorbs text-align, margin-auto, padding, max-width from compare inline styles
+- today-page.js dynamic brand colors kept as .style assignments (Option B) -- truly dynamic per-store values from BRAND_COLORS lookup
+- innerHTML family color spans and hotspot-dot backgrounds remain inline -- dynamic runtime values that vary per flavor family
+- .text-danger uses var(--state-danger) matching original #c62828 hex; .text-success already existed with var(--state-success-text)
+- .fronts-tick-row span base rule gets explicit font-weight:400 for clean toggle with .fronts-tick--confirmed
+- SharedNav suppression via data-page attribute check (no new events needed)
+- Compare runs its own geo call (not reusing SharedNav's), accessing SharedNav.manifestPromise for store list
+- cloneNode pattern to override SharedNav's change button handler without modifying SharedNav binding
+- Existing tests updated to use addInitScript and geoFail option to avoid geo race conditions
+- 33 TOPPING_COLORS keys (not 36 as plan estimated) -- all mapped in canonical shape map
+- Hero scoop rows use pr * 100 + pc hash for collision detection (same formula as premium)
+- Premium renderer switched to canonical maps; old _PREM_SHAPE_MAP/_PREM_TOPPING_SHAPES kept as dead code
+- HD scatter uses 10/12/14/10 piece counts (scaled down from hero's 16/20/24/16 to fit smaller grid)
+- HD shapes render at full resolution (dot 2x2, chunk 3x2, sliver 1x3, flake 3x1) -- grid is large enough
+- Client-side uses object literal {} instead of Set for occupied tracking (ES5 compat, no build step)
+- 56 description fallbacks needed (not 54) due to 2 flavors.json entries not matching FLAVOR_PROFILES keys
+- Force-committed gitignored masterlock output files since they are intentional plan artifacts
+- Medium quality selected over high for full 94-flavor batch (user decision based on trial comparison)
+- Best trial candidates: vanilla-medium-3, mint-explosion-medium-3, caramel-turtle-medium-2
+- Prompt feedback captured for future tuning: mint oreo/andes rendering needs improvement, caramel scoop lumpiness varies by candidate
+- HD SVG tier fully removed rather than deprecated -- no conditional paths left
+- masterlock-audit.html hdCone() updated to L0 SVG since it was calling deleted function
+- Removed lh/dk color utility functions as dead code (only used by deleted HD/Premium renderers)
+- Collision pair rendering switched from hdCone to miniCone (L0 SVG) since HD tier no longer exists
+- PNG fetched from GitHub Pages CDN (custard.chriskaschner.com/assets/cones) rather than KV storage
+- L0 mini SVG fallback uses renderConeSVG with scale derived from target width (width/9)
+- Deleted all code from lightenHex onward (lines 443-1207) as a single contiguous block
+- Kept Mini golden baselines unchanged since renderConeSVG was not modified
+- Used Scriptable Request.loadImage() for PNG fetching instead of Image.fromURL (correct Scriptable API)
+- Kept drawConeIcon as offline fallback renderer rather than removing it
+- ML prediction pipeline (ensemble, confidence intervals, cluster transfer, cluster emails) permanently closed -- confirmed schedule IS the product at ~100% accuracy vs 3.2% ML top-1
+- Homepage visual coherence audit items superseded by Phase 31 redesign rather than fixed independently
+- Sync architecture deferred indefinitely -- find 10 real users before adding features
+- Mad Libs quality moved to Someday/Maybe rather than closed -- still has potential value after v3.0
+- Moved SharedNav div outside header to be direct child of body above main
+- Action CTAs shown for confirmed and predicted types, cleared for no-data state
+- Reused existing store lookup from renderHeroCard instead of duplicate find
+- CTA replaced with single text line rather than redesigned card -- simplicity over engagement
+- Dead CSS from all removed sections cleaned in one pass -- no orphan styles remain
+- Cached hero render is a fast preview only -- loadForecast still runs and overwrites with full data
+- API routes stalled (not aborted) in tests to properly verify cache-first render
+- _heroCacheRendered flag prevents loadForecast from hiding cached hero card during background refresh
+- Three-gate rarity system: Gate 1 (≥10 appearances AND ≥90-day span), Gate 2 (≤100 distinct stores in 30 days), Gate 3 (Ultra Rare >150d, Rare 90–150d avg gap) — all must pass for a label; eliminates false-positive Rare badges on Turtle/Caramel Pecan
+- getDisplayName() derives street segment from slug (city-state-street pattern) rather than address field — slug parsing is always available and faster
+- DOW signal filter applied at computeSignals() level (not rendering) so alert-checker and all consumers benefit
+- buildRarityNudge kept as no-op stub to prevent JS reference errors; function should be fully deleted once all callers confirmed removed
+- Week Ahead uses post-append querySelector pattern for renderHeroCone: card built with placeholder in innerHTML, appended to DOM, then renderHeroCone() called on live element
+- sw.js cache bumped to custard-v23 after Week Ahead art migration and style.css changes

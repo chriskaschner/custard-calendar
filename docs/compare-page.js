@@ -239,47 +239,15 @@ var CustardCompare = (function () {
   }
 
   // ---------------------------------------------------------------------------
-  // Rarity nudge banner
+  // Rarity nudge banner -- REMOVED (S06-T01)
+  // The compare rarity banner (buildRarityNudge) produced duplicate rarity
+  // information alongside row-level badges and was removed. Rarity information
+  // is shown only on the row badge (renderRarityBadge). The #compare-nudge
+  // element is kept in HTML for backward compatibility but stays hidden.
   // ---------------------------------------------------------------------------
 
   function buildRarityNudge() {
-    if (!compareNudge || !compareNudgeContent) return;
-    var nudges = [];
-    for (var slug in _storeData) {
-      if (!_storeData.hasOwnProperty(slug)) continue;
-      var todayResp = _storeData[slug].today;
-      if (!todayResp || !todayResp.rarity) continue;
-      var label = todayResp.rarity.label;
-      if (label === 'Ultra Rare' || label === 'Rare') {
-        var store = _storeManifest[slug];
-        var storeName = store ? store.city : slug;
-        var gap = todayResp.rarity.avg_gap_days;
-        nudges.push({
-          label: label,
-          flavor: todayResp.flavor,
-          store: storeName,
-          gap: gap,
-        });
-      }
-    }
-
-    if (nudges.length === 0) {
-      compareNudge.hidden = true;
-      return;
-    }
-
-    var html = '';
-    for (var i = 0; i < nudges.length; i++) {
-      var n = nudges[i];
-      if (i > 0) html += '<br>';
-      html += '<strong>' + escapeHtml(n.label) + ':</strong> ';
-      html += escapeHtml(n.flavor) + ' at ' + escapeHtml(n.store);
-      if (n.gap) {
-        html += ' \u2014 only every ' + n.gap + ' days!';
-      }
-    }
-    compareNudgeContent.innerHTML = html;
-    compareNudge.hidden = false;
+    if (compareNudge) compareNudge.hidden = true;
   }
 
   // ---------------------------------------------------------------------------
@@ -465,7 +433,11 @@ var CustardCompare = (function () {
     for (var i = 0; i < _stores.length; i++) {
       var slug = _stores[i];
       var store = _storeManifest[slug];
-      var name = store ? store.city : slug.replace(/-/g, ' ').replace(/\b\w/g, function (c) { return c.toUpperCase(); });
+      var name = store
+        ? (typeof CustardPlanner.getDisplayName === 'function'
+          ? CustardPlanner.getDisplayName(store, _allStoresArr)
+          : store.city)
+        : slug.replace(/-/g, ' ').replace(/\b\w/g, function (c) { return c.toUpperCase(); });
 
       var chip = document.createElement('span');
       chip.className = 'compare-store-chip';
@@ -742,7 +714,11 @@ var CustardCompare = (function () {
         var slug = _stores[si];
         var data = _storeData[slug];
         var store = _storeManifest[slug];
-        var storeName = store ? store.city : slug;
+        var storeName = store
+          ? (typeof CustardPlanner.getDisplayName === 'function'
+            ? CustardPlanner.getDisplayName(store, _allStoresArr)
+            : store.city)
+          : slug;
 
         // Get flavor for this date
         var flavorEntry = null;
@@ -961,7 +937,6 @@ var CustardCompare = (function () {
       renderGrid();
       renderFilterChips();
       applyExclusions();
-      buildRarityNudge();
     }).catch(function (err) {
       console.error('Compare data load error:', err);
       showState('error');
