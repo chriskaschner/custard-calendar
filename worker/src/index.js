@@ -250,9 +250,151 @@ async function withRequestIdInServerErrorBody(response, requestId) {
   }
 }
 
+/**
+ * Social crawler User-Agent pattern.
+ * Matches bots from major platforms that process og:image, og:title etc.
+ * Does NOT match Googlebot or other search crawlers (they render JS).
+ */
+const SOCIAL_CRAWLER_UA = /facebookexternalhit|Twitterbot|LinkedInBot|WhatsApp|Slackbot|Discordbot|TelegramBot|iframely|embedly|curl\/|python-requests/i;
+
+/**
+ * Returns true if the request User-Agent looks like a social platform crawler.
+ * @param {Request} request
+ * @returns {boolean}
+ */
+function isSocialCrawler(request) {
+  const ua = request.headers.get('User-Agent') || '';
+  return SOCIAL_CRAWLER_UA.test(ua);
+}
+
+/**
+ * Build a minimal OG HTML page for social platform crawlers.
+ * Includes og:image, og:title, og:description, twitter card meta tags.
+ * Does NOT include full page content — crawlers only need meta tags.
+ *
+ * @param {Object} params
+ * @param {string} params.title       og:title value
+ * @param {string} params.description og:description value
+ * @param {string} params.imageUrl    Absolute URL to OG PNG image
+ * @param {string} params.canonicalUrl Canonical URL of the shared page
+ * @returns {string} HTML string
+ */
+function buildCrawlerHtml({ title, description, imageUrl, canonicalUrl }) {
+  const esc = (s) => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  return `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>${esc(title)}</title>
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="${esc(title)}">
+  <meta property="og:description" content="${esc(description)}">
+  <meta property="og:image" content="${esc(imageUrl)}">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:url" content="${esc(canonicalUrl)}">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="${esc(title)}">
+  <meta name="twitter:description" content="${esc(description)}">
+  <meta name="twitter:image" content="${esc(imageUrl)}">
+  <link rel="canonical" href="${esc(canonicalUrl)}">
+</head>
+<body></body>
+</html>`;
+}
+
+/**
+ * Handle social crawler interception for shared quiz and flavor URLs.
+ *
+ * Intercepts:
+ *   /quiz.html?archetype=X&flavor=Y  → quiz result OG card
+ *   /radar.html?flavor=X             → flavor rarity OG card
+ *   /index.html?flavor=X             → flavor rarity OG card
+ *
+ * Returns null if request is not a crawler or does not match share param patterns.
+ *
+ * @param {Request} request
+ * @param {URL} url
+ * @returns {Response|null}
+ */
+function handleCrawlerInterception(request, url) {
+  if (!isSocialCrawler(request)) return null;
+
+  const BASE = 'https://custard.chriskaschner.com';
+  const pathname = url.pathname;
+
+  // Quiz result share: /quiz.html?archetype=X&flavor=Y
+  if (pathname === '/quiz.html' || pathname === '/quiz') {
+    const archetype = url.searchParams.get('archetype');
+    const flavor = url.searchParams.get('flavor');
+    if (!archetype || !flavor) return null;
+
+    // Build OG image URL using the quiz card endpoint
+    const archetypeSlug = archetype.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    const flavorSlug = encodeURIComponent(flavor);
+    const imageUrl = `${BASE}/og/quiz/${archetypeSlug}/${flavorSlug}.png`;
+    const canonicalUrl = `${BASE}/quiz.html?archetype=${encodeURIComponent(archetype)}&flavor=${encodeURIComponent(flavor)}`;
+
+    // Derive archetype display name
+    const archetypeName = archetype
+      .split('-')
+      .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(' ');
+
+    const html = buildCrawlerHtml({
+      title: `${archetypeName}: ${flavor} — Custard Personality Engine`,
+      description: `Your custard personality match is ${flavor}. Take the quiz at custard.chriskaschner.com`,
+      imageUrl,
+      canonicalUrl,
+    });
+
+    return new Response(html, {
+      status: 200,
+      headers: {
+        'Content-Type': 'text/html; charset=utf-8',
+        'Cache-Control': 'public, max-age=3600',
+        'X-Crawler-Intercepted': 'quiz',
+      },
+    });
+  }
+
+  // Flavor rarity share: /radar.html?flavor=X or /index.html?flavor=X
+  if (pathname === '/radar.html' || pathname === '/radar' ||
+      pathname === '/index.html' || pathname === '/') {
+    const flavor = url.searchParams.get('flavor');
+    if (!flavor) return null;
+
+    const flavorSlug = encodeURIComponent(flavor);
+    const imageUrl = `${BASE}/og/flavor/${flavorSlug}.png`;
+    const canonicalUrl = pathname.includes('radar')
+      ? `${BASE}/radar.html?flavor=${encodeURIComponent(flavor)}`
+      : `${BASE}/index.html?flavor=${encodeURIComponent(flavor)}`;
+
+    const html = buildCrawlerHtml({
+      title: `${flavor} — Flavor Rarity | Custard Calendar`,
+      description: `See how rare ${flavor} is across Wisconsin custard stands. Track it on custard.chriskaschner.com`,
+      imageUrl,
+      canonicalUrl,
+    });
+
+    return new Response(html, {
+      status: 200,
+      headers: {
+        'Content-Type': 'text/html; charset=utf-8',
+        'Cache-Control': 'public, max-age=3600',
+        'X-Crawler-Intercepted': 'flavor',
+      },
+    });
+  }
+
+  return null;
+}
+
 export { isValidSlug } from './slug-validation.js';
 export { getFetcherForSlug, getBrandForSlug } from './brand-registry.js';
 export { getFlavorsCached } from './kv-cache.js';
+export { isSocialCrawler, buildCrawlerHtml, handleCrawlerInterception };
+
 
 /**
  * Handle an incoming request.
@@ -718,6 +860,15 @@ function handleApiSchema(corsHeaders) {
 // Cloudflare Worker default export
 export default {
   async fetch(request, env, ctx) {
+    // Social crawler interception: detect bots from Twitter, Facebook, etc.
+    // and serve minimal HTML with correct og:image meta tags for shared URLs.
+    // Human browsers are not intercepted and fall through to normal handling.
+    if (request.method === 'GET') {
+      const crawlerUrl = new URL(request.url);
+      const crawlerResponse = handleCrawlerInterception(request, crawlerUrl);
+      if (crawlerResponse) return crawlerResponse;
+    }
+
     // Only cache GET requests to /calendar.ics (or /v1/calendar.ics)
     const url = new URL(request.url);
     const { canonical } = normalizePath(url.pathname);

@@ -22,5 +22,8 @@
     "pngjs": "^7.0.0",
     "vitest": "^3.0.0",
     "wrangler": "^4.0.0"
+  },
+  "dependencies": {
+    "workers-og": "^0.0.27"
   }
 }

@@ -8,7 +8,7 @@
 
 ## Tasks
 
-- [ ] **T01: 34-social-sharing 01**
+- [x] **T01: 34-social-sharing 01**
   - Add PNG OG card generation for quiz results and flavor rarity stats, plus Worker-level crawler interception for shared URLs.
 
 Purpose: Social platforms (Twitter, Facebook, iMessage, WhatsApp) require PNG og:image URLs and do not execute JavaScript. This plan creates the server-side infrastructure that makes shared links render rich preview cards on social platforms.

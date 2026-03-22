@@ -1,18 +1,25 @@
 /**
- * Dynamic SVG social card generator.
+ * Dynamic social card generator.
  *
- * Generates 1200x630 OG-image-compatible SVG cards for:
- *   - Per-store/date flavor cards:  GET /og/{slug}/{date}.svg
- *   - Per-page static cards:        GET /og/page/{page-slug}.svg
- *   - Trivia/Did-you-know cards:    GET /og/trivia/{slug}.svg
+ * Generates 1200x630 OG-image-compatible cards for:
+ *   - Per-store/date flavor cards:  GET /og/{slug}/{date}.svg   (SVG)
+ *   - Per-page static cards:        GET /og/page/{page-slug}.svg (SVG)
+ *   - Trivia/Did-you-know cards:    GET /og/trivia/{slug}.svg   (SVG)
+ *   - Quiz result cards:            GET /og/quiz/{archetype}/{flavor}.png (PNG)
+ *   - Flavor rarity cards:          GET /og/flavor/{flavor-name}.png     (PNG)
  *
- * Cards embed L5 AI PNG cones (fetched from GitHub Pages CDN) as base64
- * <image> elements. Falls back to L0 mini SVG cone when PNG unavailable.
+ * SVG cards embed L5 AI PNG cones as base64 <image> elements.
+ * PNG cards are generated via workers-og (satori + resvg-wasm) so social
+ * platforms (Twitter, Facebook, iMessage) can actually render them.
+ *
+ * Note: SVG og:image is NOT supported by Twitter, Facebook, iMessage, WhatsApp,
+ * Discord, or Slack. New quiz/flavor endpoints use .png to ensure actual rendering.
  */
 
 import { normalize } from './flavor-matcher.js';
 import { getFlavorProfile, renderConeSVG, BASE_COLORS, CONE_COLORS, TOPPING_COLORS, RIBBON_COLORS } from './flavor-colors.js';
 import { TRIVIA_METRICS_SEED } from './trivia-metrics-seed.js';
+import { ImageResponse } from 'workers-og';
 
 const MONTH_NAMES_TRIVIA = [
   '', 'January', 'February', 'March', 'April', 'May', 'June',
@@ -284,6 +291,243 @@ async function handleTriviaCard(slug, corsHeaders) {
   });
 }
 
+// ---------------------------------------------------------------------------
+// Rarity classification (mirrors rarityLabelFromGapDays in planner-domain.js)
+// ---------------------------------------------------------------------------
+
+/**
+ * Returns a rarity label given the average gap in days between appearances.
+ * Mirrors the client-side logic in docs/planner-domain.js.
+ * @param {number|null} avgGapDays
+ * @returns {string|null}
+ */
+function rarityLabel(avgGapDays) {
+  const days = Math.round(Number(avgGapDays));
+  if (!Number.isFinite(days) || days < 2) return null;
+  if (days > 120) return 'Ultra Rare';
+  if (days > 60) return 'Rare';
+  return null;
+}
+
+// ---------------------------------------------------------------------------
+// Quiz result OG card (PNG via workers-og)
+// Endpoint: GET /og/quiz/{archetype}/{flavor}.png
+// ---------------------------------------------------------------------------
+
+/**
+ * Render a 1200x630 PNG OG card for a quiz result.
+ * Archetype name appears as the headline, flavor name as subhead,
+ * cone art is embedded as base64.
+ *
+ * @param {Object} params
+ * @param {string} params.archetypeName  Display name, e.g. "Cool Front"
+ * @param {string} params.flavorName     Matched flavor, e.g. "Andes Mint Avalanche"
+ * @param {string|null} params.conePngBase64  Pre-fetched cone PNG as base64 (or null)
+ * @param {string} params.accentColor    Hex color for accent bar
+ * @returns {Promise<Response>} PNG image response
+ */
+async function renderQuizCardPng({ archetypeName, flavorName, conePngBase64, accentColor }) {
+  const esc = (s) => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  const coneImg = conePngBase64
+    ? `<img src="data:image/png;base64,${conePngBase64}" width="150" height="175" style="object-fit:contain;" />`
+    : '';
+  const html = `
+    <div style="display:flex; flex-direction:column; width:1200px; height:630px;
+                background:linear-gradient(180deg,#1a1a2e,#16213e); position:relative;">
+      <div style="height:8px; background:${esc(accentColor)}; width:100%;"></div>
+      <div style="display:flex; flex-direction:row; padding:60px 80px; align-items:center; flex:1;">
+        <div style="display:flex; margin-right:40px;">${coneImg}</div>
+        <div style="display:flex; flex-direction:column;">
+          <div style="font-size:28px; color:#9EC5E8; font-family:sans-serif; margin-bottom:12px;">
+            Your custard personality is…
+          </div>
+          <div style="font-size:60px; font-weight:bold; color:#ffffff; font-family:sans-serif; margin-bottom:16px; line-height:1.1;">
+            ${esc(archetypeName)}
+          </div>
+          <div style="font-size:36px; color:#9EC5E8; font-family:sans-serif; margin-bottom:24px;">
+            Matched with: ${esc(flavorName)}
+          </div>
+          <div style="font-size:22px; color:#4a4a5a; font-family:sans-serif;">
+            Take the quiz at custard.chriskaschner.com
+          </div>
+        </div>
+      </div>
+    </div>`;
+  return new ImageResponse(html, { width: 1200, height: 630 });
+}
+
+async function handleQuizCard(archetypeSlug, flavorSlug, corsHeaders) {
+  // Validate archetype slug
+  const VALID_ARCHETYPES = new Set([
+    'cool-front', 'bold-storm', 'steady-classic', 'candy-burst',
+    'berry-sunrise', 'caramel-architect', 'cheesecake-signal', 'explorer-jetstream',
+  ]);
+  if (!VALID_ARCHETYPES.has(archetypeSlug)) {
+    return new Response(JSON.stringify({ error: 'Unknown archetype.' }), {
+      status: 404,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+
+  // Derive display name from slug: cool-front → Cool Front
+  const archetypeName = archetypeSlug
+    .split('-')
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ');
+
+  // Decode flavor name from URL slug
+  const flavorName = decodeURIComponent(flavorSlug.replace(/-/g, ' '));
+
+  // Get accent color from flavor profile
+  const profile = getFlavorProfile(flavorName);
+  const accentColor = BASE_COLORS[profile.base] || '#005696';
+
+  // Pre-fetch cone PNG (best-effort; null triggers text-only fallback)
+  const conePngBase64 = await fetchConePngBase64(flavorName);
+
+  const response = await renderQuizCardPng({ archetypeName, flavorName, conePngBase64, accentColor });
+
+  // Return with appropriate headers (ImageResponse is already a Response)
+  const headers = new Headers(response.headers);
+  for (const [k, v] of Object.entries(corsHeaders)) {
+    headers.set(k, v);
+  }
+  headers.set('Cache-Control', 'public, max-age=86400');
+  return new Response(response.body, {
+    status: response.status,
+    headers,
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Flavor rarity OG card (PNG via workers-og)
+// Endpoint: GET /og/flavor/{flavor-name}.png
+// ---------------------------------------------------------------------------
+
+/**
+ * Render a 1200x630 PNG OG card for a flavor's rarity stats.
+ * Shows flavor name, rarity label, appearance count, and cone art.
+ *
+ * @param {Object} params
+ * @param {string} params.flavorName        Display name, e.g. "Mint Explosion"
+ * @param {string|null} params.rarityTag    Label from rarityLabel() or null
+ * @param {number} params.appearances       Total appearance count from D1
+ * @param {number} params.avgGapDays        Average gap between appearances
+ * @param {string|null} params.conePngBase64 Pre-fetched cone PNG as base64
+ * @param {string} params.accentColor       Hex color for accent bar
+ * @returns {Promise<Response>} PNG image response
+ */
+async function renderFlavorRarityCardPng({ flavorName, rarityTag, appearances, avgGapDays, conePngBase64, accentColor }) {
+  const esc = (s) => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  const coneImg = conePngBase64
+    ? `<img src="data:image/png;base64,${conePngBase64}" width="150" height="175" style="object-fit:contain;" />`
+    : '';
+
+  // Build rarity badge
+  const rarityBadge = rarityTag
+    ? `<div style="display:inline-flex; background:${esc(accentColor)}; color:#fff; font-size:22px; font-weight:bold;
+                   font-family:sans-serif; padding:6px 18px; border-radius:4px; margin-bottom:16px;">
+         ${esc(rarityTag)}
+       </div>`
+    : '';
+
+  // Build stats line
+  let statsLine = '';
+  if (appearances > 0) {
+    statsLine = `<div style="font-size:26px; color:#6c6c80; font-family:sans-serif; margin-top:12px;">
+      Seen ${appearances} time${appearances === 1 ? '' : 's'} in our database
+    </div>`;
+    if (avgGapDays > 0) {
+      statsLine += `<div style="font-size:22px; color:#4a4a5a; font-family:sans-serif; margin-top:8px;">
+        Appears about every ${Math.round(avgGapDays)} days
+      </div>`;
+    }
+  }
+
+  const html = `
+    <div style="display:flex; flex-direction:column; width:1200px; height:630px;
+                background:linear-gradient(180deg,#1a1a2e,#16213e);">
+      <div style="height:8px; background:${esc(accentColor)}; width:100%;"></div>
+      <div style="display:flex; flex-direction:row; padding:60px 80px; align-items:center; flex:1;">
+        <div style="display:flex; margin-right:40px;">${coneImg}</div>
+        <div style="display:flex; flex-direction:column;">
+          <div style="font-size:24px; color:#9EC5E8; font-family:sans-serif; margin-bottom:12px;">
+            Flavor Rarity
+          </div>
+          <div style="font-size:56px; font-weight:bold; color:#ffffff; font-family:sans-serif;
+                       margin-bottom:16px; line-height:1.1;">
+            ${esc(flavorName)}
+          </div>
+          ${rarityBadge}
+          ${statsLine}
+          <div style="font-size:20px; color:#4a4a5a; font-family:sans-serif; margin-top:16px;">
+            custard.chriskaschner.com
+          </div>
+        </div>
+      </div>
+    </div>`;
+  return new ImageResponse(html, { width: 1200, height: 630 });
+}
+
+async function handleFlavorCard(flavorSlug, env, corsHeaders) {
+  // Decode flavor name from URL slug (reverse of flavorToSlug)
+  const flavorName = decodeURIComponent(flavorSlug.replace(/-/g, ' '));
+  if (!flavorName.trim()) {
+    return new Response(JSON.stringify({ error: 'Missing flavor name.' }), {
+      status: 400,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+
+  // Look up network-wide stats from D1
+  let appearances = 0;
+  let avgGapDays = 0;
+  const db = env.DB;
+  if (db) {
+    const normalized = normalize(flavorName);
+    try {
+      const [countResult, gapResult] = await Promise.all([
+        db.prepare('SELECT COUNT(*) as n FROM snapshots WHERE normalized_flavor = ?')
+          .bind(normalized).first(),
+        db.prepare(
+          'SELECT AVG(gap_days) as avg_gap FROM (' +
+          '  SELECT slug, julianday(date) - julianday(lag(date) OVER (PARTITION BY slug ORDER BY date)) AS gap_days' +
+          '  FROM snapshots WHERE normalized_flavor = ?' +
+          ') WHERE gap_days IS NOT NULL'
+        ).bind(normalized).first(),
+      ]);
+      appearances = countResult?.n || 0;
+      avgGapDays = gapResult?.avg_gap || 0;
+    } catch {
+      // Stats unavailable — card still renders without them
+    }
+  }
+
+  const rarityTag = rarityLabel(avgGapDays);
+  const profile = getFlavorProfile(flavorName);
+  const accentColor = BASE_COLORS[profile.base] || '#005696';
+  const conePngBase64 = await fetchConePngBase64(flavorName);
+
+  const response = await renderFlavorRarityCardPng({
+    flavorName,
+    rarityTag,
+    appearances,
+    avgGapDays,
+    conePngBase64,
+    accentColor,
+  });
+
+  const headers = new Headers(response.headers);
+  for (const [k, v] of Object.entries(corsHeaders)) {
+    headers.set(k, v);
+  }
+  headers.set('Cache-Control', 'public, max-age=86400');
+  return new Response(response.body, {
+    status: response.status,
+    headers,
+  });
+}
+
 /**
  * Route handler for social card requests.
  * @param {string} path - Canonical path (already normalized from /api/ prefix)
@@ -292,6 +536,14 @@ async function handleTriviaCard(slug, corsHeaders) {
  * @returns {Promise<Response|null>} Response if matched, null otherwise
  */
 export async function handleSocialCard(path, env, corsHeaders) {
+  // Match /og/quiz/{archetype-slug}/{flavor-slug}.png -- quiz result PNG cards
+  const quizMatch = path.match(/^\/og\/quiz\/([\w-]+)\/(.+)\.png$/);
+  if (quizMatch) return handleQuizCard(quizMatch[1], quizMatch[2], corsHeaders);
+
+  // Match /og/flavor/{flavor-slug}.png -- flavor rarity PNG cards
+  const flavorMatch = path.match(/^\/og\/flavor\/(.+)\.png$/);
+  if (flavorMatch) return handleFlavorCard(flavorMatch[1], env, corsHeaders);
+
   // Match /og/page/{slug}.svg -- page-level static cards
   const pageMatch = path.match(/^\/og\/page\/([\w-]+)\.svg$/);
   if (pageMatch) return handlePageCard(pageMatch[1], corsHeaders);

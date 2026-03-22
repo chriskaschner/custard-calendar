@@ -319,3 +319,176 @@ describe('handleSocialCard', () => {
     expect(peachBody).not.toContain('#3B1F0B');
   });
 });
+
+// ---------------------------------------------------------------------------
+// Quiz OG card endpoint: /og/quiz/{archetype}/{flavor}.png
+// ---------------------------------------------------------------------------
+
+describe('handleSocialCard - quiz PNG card', () => {
+  let originalFetch;
+
+  beforeEach(() => {
+    originalFetch = globalThis.fetch;
+    globalThis.fetch = mockFetchSuccess();
+  });
+
+  afterEach(() => {
+    globalThis.fetch = originalFetch;
+  });
+
+  it('returns null for non-matching path (no flavor slug)', async () => {
+    const res = await handleSocialCard('/og/quiz/cool-front', {}, CORS);
+    expect(res).toBeNull();
+  });
+
+  it('returns 404 for unknown archetype slug', async () => {
+    const res = await handleSocialCard('/og/quiz/not-real/Mint%20Explosion.png', {}, CORS);
+    expect(res.status).toBe(404);
+    const body = await res.json();
+    expect(body.error).toBeTruthy();
+  });
+
+  it('returns a PNG response for a valid archetype and flavor', async () => {
+    const res = await handleSocialCard('/og/quiz/cool-front/Andes%20Mint%20Avalanche.png', {}, CORS);
+    expect(res.status).toBe(200);
+    expect(res.headers.get('Content-Type')).toMatch(/image\/png/);
+  });
+
+  it('sets 24h cache TTL', async () => {
+    const res = await handleSocialCard('/og/quiz/bold-storm/Dark%20Chocolate%20Decadence.png', {}, CORS);
+    expect(res.headers.get('Cache-Control')).toBe('public, max-age=86400');
+  });
+
+  it('includes CORS headers in response', async () => {
+    const cors = { 'Access-Control-Allow-Origin': 'https://custard.chriskaschner.com' };
+    const res = await handleSocialCard('/og/quiz/steady-classic/Vanilla.png', {}, cors);
+    expect(res.headers.get('Access-Control-Allow-Origin')).toBe('https://custard.chriskaschner.com');
+  });
+
+  it('returns PNG for all 8 valid archetypes', async () => {
+    const archetypes = [
+      'cool-front', 'bold-storm', 'steady-classic', 'candy-burst',
+      'berry-sunrise', 'caramel-architect', 'cheesecake-signal', 'explorer-jetstream',
+    ];
+    for (const arch of archetypes) {
+      const res = await handleSocialCard(`/og/quiz/${arch}/Turtle.png`, {}, CORS);
+      expect(res.status, `archetype "${arch}" should return 200`).toBe(200);
+    }
+  });
+
+  it('handles flavor names with spaces encoded as %20', async () => {
+    const res = await handleSocialCard('/og/quiz/candy-burst/Really%20Reese%27s.png', {}, CORS);
+    expect(res.status).toBe(200);
+    expect(res.headers.get('Content-Type')).toMatch(/image\/png/);
+  });
+
+  it('falls back gracefully when cone PNG fetch fails (404)', async () => {
+    globalThis.fetch = mockFetch404();
+    const res = await handleSocialCard('/og/quiz/cool-front/Mint%20Explosion.png', {}, CORS);
+    expect(res.status).toBe(200);
+    expect(res.headers.get('Content-Type')).toMatch(/image\/png/);
+  });
+
+  it('does not interfere with existing SVG store/date routes', async () => {
+    const env = {
+      DB: createMockD1({ snapshot: { flavor: 'Vanilla' } }),
+    };
+    const svgRes = await handleSocialCard('/og/mt-horeb/2026-02-22.svg', env, CORS);
+    expect(svgRes.status).toBe(200);
+    expect(svgRes.headers.get('Content-Type')).toBe('image/svg+xml');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Flavor rarity OG card endpoint: /og/flavor/{flavor-name}.png
+// ---------------------------------------------------------------------------
+
+describe('handleSocialCard - flavor rarity PNG card', () => {
+  let originalFetch;
+
+  beforeEach(() => {
+    originalFetch = globalThis.fetch;
+    globalThis.fetch = mockFetchSuccess();
+  });
+
+  afterEach(() => {
+    globalThis.fetch = originalFetch;
+  });
+
+  function createFlavorD1({ appearances = 0, avgGap = 0, failQuery = false } = {}) {
+    return {
+      prepare: vi.fn((sql) => ({
+        bind: vi.fn(() => ({
+          first: vi.fn(async () => {
+            if (failQuery) throw new Error('D1 query failed');
+            if (sql.includes('COUNT(*) as n')) return { n: appearances };
+            if (sql.includes('AVG(gap_days)')) return { avg_gap: avgGap };
+            return null;
+          }),
+        })),
+      })),
+    };
+  }
+
+  it('returns null for non-matching path (no flavor)', async () => {
+    const res = await handleSocialCard('/og/flavor/', {}, CORS);
+    expect(res).toBeNull();
+  });
+
+  it('returns a PNG for a valid flavor name', async () => {
+    const env = { DB: createFlavorD1({ appearances: 25, avgGap: 14 }) };
+    const res = await handleSocialCard('/og/flavor/Mint%20Explosion.png', env, CORS);
+    expect(res.status).toBe(200);
+    expect(res.headers.get('Content-Type')).toMatch(/image\/png/);
+  });
+
+  it('sets 24h cache TTL', async () => {
+    const env = { DB: createFlavorD1() };
+    const res = await handleSocialCard('/og/flavor/Turtle.png', env, CORS);
+    expect(res.headers.get('Cache-Control')).toBe('public, max-age=86400');
+  });
+
+  it('includes CORS headers in response', async () => {
+    const cors = { 'Access-Control-Allow-Origin': 'https://custard.chriskaschner.com' };
+    const env = { DB: createFlavorD1() };
+    const res = await handleSocialCard('/og/flavor/Vanilla.png', env, cors);
+    expect(res.headers.get('Access-Control-Allow-Origin')).toBe('https://custard.chriskaschner.com');
+  });
+
+  it('renders PNG without D1 bindings', async () => {
+    const res = await handleSocialCard('/og/flavor/Turtle.png', {}, CORS);
+    expect(res.status).toBe(200);
+    expect(res.headers.get('Content-Type')).toMatch(/image\/png/);
+  });
+
+  it('renders PNG when D1 query throws', async () => {
+    const env = { DB: createFlavorD1({ failQuery: true }) };
+    const res = await handleSocialCard('/og/flavor/Vanilla.png', env, CORS);
+    expect(res.status).toBe(200);
+  });
+
+  it('handles flavor names with special characters', async () => {
+    const envRare = { DB: createFlavorD1({ appearances: 2, avgGap: 150 }) };
+    const res = await handleSocialCard('/og/flavor/Really%20Reese%27s.png', envRare, CORS);
+    expect(res.status).toBe(200);
+    expect(res.headers.get('Content-Type')).toMatch(/image\/png/);
+  });
+
+  it('falls back gracefully when cone PNG fetch fails', async () => {
+    globalThis.fetch = mockFetch404();
+    const env = { DB: createFlavorD1({ appearances: 10 }) };
+    const res = await handleSocialCard('/og/flavor/Mint%20Explosion.png', env, CORS);
+    expect(res.status).toBe(200);
+    expect(res.headers.get('Content-Type')).toMatch(/image\/png/);
+  });
+
+  it('does not interfere with page or trivia SVG routes', async () => {
+    const pageRes = await handleSocialCard('/og/page/quiz.svg', {}, CORS);
+    expect(pageRes.status).toBe(200);
+    expect(pageRes.headers.get('Content-Type')).toBe('image/svg+xml');
+
+    const triviaRes = await handleSocialCard('/og/trivia/top-flavor.svg', {}, CORS);
+    expect(triviaRes.status).toBe(200);
+    expect(triviaRes.headers.get('Content-Type')).toBe('image/svg+xml');
+  });
+});

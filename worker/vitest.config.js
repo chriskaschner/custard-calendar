@@ -3,6 +3,7 @@ import { configDefaults, defineConfig } from 'vitest/config';
 export default defineConfig({
   test: {
     globals: true,
+    setupFiles: ['./test/setup.js'],
     exclude: [...configDefaults.exclude, 'test/browser/**'],
     coverage: {
       provider: 'v8',
