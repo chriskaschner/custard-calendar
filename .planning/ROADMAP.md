@@ -213,6 +213,16 @@ Plans:
 Plans:
 - [ ] 33-01-PLAN.md -- localStorage hero cache + service worker API caching for instant return-visit render
 
+### Phase 33.1: Bug Fixes: Store Disambiguation, Rarity Logic, Art Migration, Stale Signals (INSERTED)
+
+**Goal:** [Urgent work - to be planned]
+**Requirements**: TBD
+**Depends on:** Phase 33
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 33.1 to break down)
+
 ### Phase 34: Social Sharing
 **Goal**: Users who discover a fun result or rare flavor can share it on social platforms with a rich preview that drives clicks back to the site
 **Depends on**: Phase 33 (performance fixes complete)
