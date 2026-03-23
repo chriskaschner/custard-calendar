@@ -153,7 +153,7 @@ Visual asset catalog (formats, resolutions, color profiles) lives at `docs/ASSET
 
 | # | Risk | Mitigation | Status |
 |---|---|---|---|
-| 1 | **Contract drift** — sibling repos (custard-tidbyt, custard-scriptable) implement their own API response mapping; a Worker shape change silently breaks them | Machine-readable schema at `GET /api/v1/schema` (see `worker/src/api-schema.json`); `schema_version` field bumped on breaking changes; sibling repos have smoke tests hitting live API | Mitigated |
+| 1 | **Contract drift** — sibling repo (custard-tidbyt) implements its own API response mapping; a Worker shape change silently breaks it | Machine-readable schema at `GET /api/v1/schema` (see `worker/src/api-schema.json`); `schema_version` field bumped on breaking changes; sibling repo has smoke tests hitting live API | Mitigated |
 | 2 | **Duplicate client logic** — haversine, flavorMatchScore, and store-lookup exist in multiple repos | `haversine` and `escapeHtml` consolidated into `planner-shared.js`; WORKER_BASE single source in same file. Remaining gap: flavor families in planner-shared.js fallback — monitor, no action needed now | Partial |
 | 3 | **CI asymmetry** — Worker has 595+ tests; Python pipeline has pytest but no live-API integration gate | `ci.yml` runs both `cd worker && npm test` and `uv run pytest` on every push/PR to main | Mitigated |
 | 4 | **Doc drift** — CLAUDE.md and inline comments are sole architecture truth | This file (`ARCHITECTURE.md`) is now the canonical layer contract; required update before any cross-layer interface change | Mitigated |

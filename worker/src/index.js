@@ -822,7 +822,7 @@ function handleFlavorColors(corsHeaders) {
 /**
  * Handle GET /api/schema requests.
  * Returns the machine-readable API contract for v1 endpoints.
- * Consumers (custard-tidbyt, custard-scriptable) can use schema_version
+ * Consumers (custard-tidbyt) can use schema_version
  * to detect breaking changes before they manifest as runtime errors.
  */
 function handleApiSchema(corsHeaders) {

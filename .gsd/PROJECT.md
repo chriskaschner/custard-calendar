@@ -169,5 +169,9 @@ Tech stack: Cloudflare Worker (API), vanilla JS (4-file IIFE pattern), Playwrigh
 | PNG-only OG cards (no SVG) | SVG og:image unsupported by all social platforms | Good -- cards render on Twitter/Facebook/iMessage |
 | UA regex crawler interception in Worker fetch handler | Cheapest possible hot-path check; null pass-through for humans | Good -- zero overhead for browser requests |
 
+## Next Milestone: M003 Widget Polish
+
+**Goal:** Fix the broken widget setup flow (widget.html dead loop), improve widget cone art (larger PNGs, better offline fallback), and retire the legacy custard-scriptable.js widget. **Status: Queued.**
+
 ---
-*Last updated: 2026-03-22 after S03 (Page Consolidation) complete — M002 milestone finished*
+*Last updated: 2026-03-22 after M003 queued — widget instructions + art improvements*

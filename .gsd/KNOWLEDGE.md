@@ -16,7 +16,7 @@ When adding new D1 queries to Worker route handlers, the mock D1 objects in inte
 
 ## Service worker cache version discipline
 
-Every change to files cached by sw.js (style.css, JS files, PNGs) needs a CACHE_VERSION bump. The `png-asset-count.test.js` test validates the version string — update the test expectation when bumping. Current version: custard-v26.
+Every change to files cached by sw.js (style.css, JS files, PNGs) needs a CACHE_VERSION bump. The `png-asset-count.test.js` test validates the version string — update the test expectation when bumping. Current version: custard-v27.
 
 ## Rarity gate ordering matters for diagnostics
 

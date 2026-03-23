@@ -157,56 +157,123 @@ async function getConeImage(flavorName, size) {
   return drawConeIcon(flavorName, size);
 }
 
+// Darken a hex color by a fraction (0-1) for shadow tones
+function darkenHex(hex, amount) {
+  var r = parseInt(hex.slice(1, 3), 16);
+  var g = parseInt(hex.slice(3, 5), 16);
+  var b = parseInt(hex.slice(5, 7), 16);
+  r = Math.max(0, Math.round(r * (1 - amount)));
+  g = Math.max(0, Math.round(g * (1 - amount)));
+  b = Math.max(0, Math.round(b * (1 - amount)));
+  return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+}
+
 // Draw a mini cone icon using DrawContext and return as Image
 function drawConeIcon(flavorName, size) {
-  var s = size || 28;
+  var s = size || 44;
   var ctx = new DrawContext();
   ctx.size = new Size(s, s);
   ctx.opaque = false;
   ctx.respectScreenScale = true;
 
-  var scoopR = s * 0.32;
+  var scoopR = s * 0.30;
   var scoopCx = s / 2;
-  var scoopCy = s * 0.30;
-  var sc = new Color(scoopColor(flavorName));
+  var scoopCy = s * 0.28;
+  var scoopHex = scoopColor(flavorName);
+  var sc = new Color(scoopHex);
 
   // Cone body (waffle triangle)
+  var coneTopY = scoopCy + scoopR * 0.35;
+  var coneBotY = s * 0.94;
   var conePath = new Path();
-  conePath.move(new Point(scoopCx - scoopR * 0.85, scoopCy + scoopR * 0.4));
-  conePath.addLine(new Point(scoopCx, s * 0.92));
-  conePath.addLine(new Point(scoopCx + scoopR * 0.85, scoopCy + scoopR * 0.4));
+  conePath.move(new Point(scoopCx - scoopR * 0.90, coneTopY));
+  conePath.addLine(new Point(scoopCx, coneBotY));
+  conePath.addLine(new Point(scoopCx + scoopR * 0.90, coneTopY));
   conePath.closeSubpath();
   ctx.addPath(conePath);
   ctx.setFillColor(new Color("#D2691E"));
   ctx.fillPath();
 
-  // Waffle crosshatch lines
+  // Waffle crosshatch — horizontal lines
+  var coneH = coneBotY - coneTopY;
   ctx.setStrokeColor(new Color("#B8860B"));
-  ctx.setLineWidth(0.5);
-  var coneTop = scoopCy + scoopR * 0.4;
-  var coneBot = s * 0.92;
-  var coneH = coneBot - coneTop;
-  for (var li = 1; li <= 3; li++) {
-    var yLine = coneTop + (coneH * li / 4);
-    var frac = (yLine - coneTop) / coneH;
-    var halfW = scoopR * 0.85 * (1 - frac);
-    var linePath = new Path();
-    linePath.move(new Point(scoopCx - halfW, yLine));
-    linePath.addLine(new Point(scoopCx + halfW, yLine));
-    ctx.addPath(linePath);
+  ctx.setLineWidth(Math.max(0.5, s * 0.015));
+  for (var li = 1; li <= 4; li++) {
+    var yLine = coneTopY + (coneH * li / 5);
+    var frac = (yLine - coneTopY) / coneH;
+    var halfW = scoopR * 0.90 * (1 - frac);
+    var hPath = new Path();
+    hPath.move(new Point(scoopCx - halfW, yLine));
+    hPath.addLine(new Point(scoopCx + halfW, yLine));
+    ctx.addPath(hPath);
     ctx.strokePath();
   }
 
-  // Scoop (filled circle)
+  // Waffle crosshatch — diagonal lines (left-to-right and right-to-left)
+  ctx.setLineWidth(Math.max(0.4, s * 0.012));
+  var diagStep = scoopR * 0.45;
+  for (var di = -2; di <= 2; di++) {
+    var offset = di * diagStep;
+    // Left-leaning diagonal
+    var d1 = new Path();
+    d1.move(new Point(scoopCx + offset - scoopR * 0.3, coneTopY));
+    d1.addLine(new Point(scoopCx + offset * 0.2, coneBotY - coneH * 0.15));
+    ctx.addPath(d1);
+    ctx.strokePath();
+  }
+
+  // Scoop shadow (darker ellipse slightly below and right of scoop)
+  var shadowR = scoopR * 1.05;
+  var shadowRect = new Rect(
+    scoopCx - shadowR + s * 0.02,
+    scoopCy - shadowR + s * 0.03,
+    shadowR * 2, shadowR * 2
+  );
+  ctx.setFillColor(new Color("#000000", 0.15));
+  ctx.fillEllipse(shadowRect);
+
+  // Main scoop (filled circle)
   var scoopRect = new Rect(scoopCx - scoopR, scoopCy - scoopR, scoopR * 2, scoopR * 2);
   ctx.setFillColor(sc);
   ctx.fillEllipse(scoopRect);
 
-  // Scoop highlight (lighter circle in upper-left)
-  var hlR = scoopR * 0.3;
-  var hlRect = new Rect(scoopCx - scoopR * 0.4, scoopCy - scoopR * 0.5, hlR * 2, hlR * 2);
-  ctx.setFillColor(new Color("#FFFFFF", 0.3));
+  // Scoop-cone junction shadow (dark arc where scoop meets cone)
+  var junctionRect = new Rect(
+    scoopCx - scoopR * 0.7,
+    scoopCy + scoopR * 0.55,
+    scoopR * 1.4, scoopR * 0.4
+  );
+  ctx.setFillColor(new Color(darkenHex(scoopHex, 0.25), 0.4));
+  ctx.fillEllipse(junctionRect);
+
+  // Specular highlight — upper-left bright spot
+  var hlR = scoopR * 0.28;
+  var hlRect = new Rect(
+    scoopCx - scoopR * 0.45,
+    scoopCy - scoopR * 0.55,
+    hlR * 2, hlR * 2
+  );
+  ctx.setFillColor(new Color("#FFFFFF", 0.45));
   ctx.fillEllipse(hlRect);
+
+  // Secondary highlight — smaller, offset for depth
+  var hl2R = scoopR * 0.14;
+  var hl2Rect = new Rect(
+    scoopCx - scoopR * 0.55,
+    scoopCy - scoopR * 0.35,
+    hl2R * 2, hl2R * 2
+  );
+  ctx.setFillColor(new Color("#FFFFFF", 0.25));
+  ctx.fillEllipse(hl2Rect);
+
+  // Rim highlight — subtle light edge along top of scoop
+  var rimRect = new Rect(
+    scoopCx - scoopR * 0.6,
+    scoopCy - scoopR * 0.92,
+    scoopR * 1.2, scoopR * 0.3
+  );
+  ctx.setFillColor(new Color("#FFFFFF", 0.12));
+  ctx.fillEllipse(rimRect);
 
   return ctx.getImage();
 }
@@ -258,9 +325,9 @@ async function addMediumRow(body, row) {
   card.centerAlignContent();
   card.spacing = 8;
 
-  var coneImg = await getConeImage(row.flavor, 28);
+  var coneImg = await getConeImage(row.flavor, 44);
   var coneEl = card.addImage(coneImg);
-  coneEl.imageSize = new Size(28, 28);
+  coneEl.imageSize = new Size(44, 44);
 
   var textCol = card.addStack();
   textCol.layoutVertically();
@@ -351,9 +418,9 @@ async function buildSmall() {
   mainRow.centerAlignContent();
   mainRow.spacing = 10;
 
-  var coneImg = await getConeImage(data.flavor, 36);
+  var coneImg = await getConeImage(data.flavor, 48);
   var coneEl = mainRow.addImage(coneImg);
-  coneEl.imageSize = new Size(36, 36);
+  coneEl.imageSize = new Size(48, 48);
 
   var textCol = mainRow.addStack();
   textCol.layoutVertically();

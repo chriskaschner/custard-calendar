@@ -1,9 +1,11 @@
 """Tests verifying redirect stub correctness for legacy pages.
 
-Seven legacy HTML pages (scoop, radar, calendar, widget, siri, alerts,
+Six legacy HTML pages (scoop, radar, calendar, siri, alerts,
 forecast-map) have been replaced with minimal redirect stubs. Each stub uses a
 meta-refresh plus a JS fallback that forwards query params and hash fragments
 to the destination.
+
+widget.html is a real page (not a redirect) -- tested separately below.
 """
 
 from pathlib import Path
@@ -15,7 +17,6 @@ REDIRECT_MAP = {
     "scoop.html": "index.html",
     "radar.html": "index.html",
     "calendar.html": "updates.html",
-    "widget.html": "updates.html",
     "siri.html": "updates.html",
     "alerts.html": "updates.html",
     "forecast-map.html": "index.html",
@@ -40,9 +41,11 @@ class TestRedirectStubs:
         content = (DOCS_DIR / "calendar.html").read_text()
         assert 'content="0;url=updates.html"' in content
 
-    def test_widget_redirects_to_updates(self):
+    def test_widget_is_real_page(self):
         content = (DOCS_DIR / "widget.html").read_text()
-        assert 'content="0;url=updates.html"' in content
+        assert 'stores.json' in content, "widget.html should load stores.json for slug search"
+        assert 'Scriptable' in content, "widget.html should mention Scriptable"
+        assert len(content) > 1000, "widget.html should be a real page, not a stub"
 
     def test_siri_redirects_to_updates(self):
         content = (DOCS_DIR / "siri.html").read_text()

@@ -1,16 +1,427 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <meta charset="UTF-8">
-  <meta http-equiv="refresh" content="0;url=updates.html">
-  <title>Redirecting...</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com https://unpkg.com; style-src 'self' 'unsafe-inline' https://unpkg.com; img-src 'self' data: https:; connect-src 'self' https:; font-src 'self' data:; base-uri 'self'; frame-ancestors 'none'">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <title>iOS Widget Setup -- Custard Calendar</title>
+  <meta name="description" content="Add today's Flavor of the Day to your iPhone home screen with a free Scriptable widget. Step-by-step setup guide.">
+  <meta property="og:title" content="iOS Widget Setup -- Custard Calendar">
+  <meta property="og:description" content="See today's flavor right on your home screen. Free Scriptable widget with step-by-step setup.">
+  <meta property="og:url" content="https://custard.chriskaschner.com/widget.html">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://custard.chriskaschner.com/og/page/forecast.svg">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8D%A6%3C/text%3E%3C/svg%3E">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#005696">
+  <link rel="stylesheet" href="style.css">
+  <!-- Cloudflare Web Analytics --><script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "c050ff4e79d54b2abbb60587137d0bb2"}'></script><!-- End Cloudflare Web Analytics -->
+
+  <style>
+    .page-title {
+      color: var(--brand);
+      font-size: var(--text-xl);
+    }
+    .page-subtitle {
+      color: var(--text-muted);
+      margin-top: var(--space-1);
+      font-size: var(--text-base);
+    }
+
+    .widget-section {
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      background: var(--bg-surface);
+      padding: 1.25rem;
+      margin-bottom: var(--space-4);
+    }
+
+    .widget-section h2 {
+      font-size: var(--text-lg);
+      color: var(--brand);
+      margin-bottom: 0.375rem;
+    }
+
+    .widget-section p,
+    .widget-section li {
+      font-size: var(--text-base);
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    .setup-steps {
+      list-style: none;
+      padding: 0;
+      counter-reset: step;
+    }
+
+    .setup-steps li {
+      counter-increment: step;
+      position: relative;
+      padding-left: 2.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .setup-steps li::before {
+      content: counter(step);
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 1.75rem;
+      height: 1.75rem;
+      background: var(--brand);
+      color: #fff;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8125rem;
+      font-weight: 700;
+    }
+
+    .setup-steps li strong {
+      color: var(--text);
+    }
+
+    /* Slug finder */
+    .slug-finder {
+      margin-top: var(--space-3);
+    }
+
+    .slug-finder input {
+      width: 100%;
+      padding: 0.625rem var(--space-3);
+      border: 1px solid var(--border-input);
+      border-radius: 0.375rem;
+      font-size: var(--text-base);
+      box-sizing: border-box;
+    }
+
+    .slug-finder input:focus {
+      outline: none;
+      border-color: var(--brand);
+      box-shadow: 0 0 0 2px rgba(0, 86, 150, 0.15);
+    }
+
+    .slug-finder-results {
+      margin-top: var(--space-2);
+      max-height: 240px;
+      overflow-y: auto;
+    }
+
+    .slug-result {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 0.375rem;
+      background: var(--bg);
+      gap: var(--space-2);
+    }
+
+    .slug-result-info {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    .slug-result-name {
+      font-weight: 600;
+      font-size: var(--text-base);
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .slug-result-address {
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+    }
+
+    .slug-value {
+      font-family: monospace;
+      font-size: 0.8125rem;
+      background: var(--bg-muted);
+      padding: 0.25rem 0.5rem;
+      border-radius: var(--radius);
+      color: var(--brand);
+      white-space: nowrap;
+      cursor: pointer;
+      user-select: all;
+      border: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .slug-value:hover {
+      background: var(--brand);
+      color: #fff;
+    }
+
+    .slug-result-count {
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+      margin-top: var(--space-1);
+    }
+
+    .slug-empty {
+      font-size: var(--text-base);
+      color: var(--text-muted);
+      padding: var(--space-2) 0;
+    }
+
+    .slug-copied-toast {
+      position: fixed;
+      bottom: 1.5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--brand);
+      color: #fff;
+      padding: 0.5rem 1.25rem;
+      border-radius: var(--radius-full);
+      font-size: 0.875rem;
+      font-weight: 600;
+      opacity: 0;
+      transition: opacity 0.2s;
+      pointer-events: none;
+      z-index: 100;
+    }
+
+    .slug-copied-toast.visible {
+      opacity: 1;
+    }
+
+    .code-block {
+      background: var(--bg-muted);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0.75rem 1rem;
+      font-family: monospace;
+      font-size: 0.8125rem;
+      color: var(--text);
+      overflow-x: auto;
+      white-space: pre;
+      margin: var(--space-2) 0;
+    }
+
+    .widget-modes {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: var(--space-3);
+      margin-top: var(--space-3);
+    }
+
+    .widget-mode-card {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem;
+      background: var(--bg);
+    }
+
+    .widget-mode-card h3 {
+      font-size: var(--text-base);
+      color: var(--brand);
+      margin-bottom: 0.25rem;
+    }
+
+    .widget-mode-card p {
+      font-size: 0.8125rem;
+      margin: 0;
+    }
+
+    .back-link {
+      display: inline-block;
+      margin-top: var(--space-3);
+      font-size: var(--text-base);
+      color: var(--brand);
+    }
+  </style>
 </head>
 <body>
-  <p>Redirecting to <a href="updates.html">updates.html</a>...</p>
+  <header class="forecast-header">
+    <h1 class="page-title">iOS Widget Setup</h1>
+    <p class="page-subtitle">Today's flavor on your home screen</p>
+
+    <div id="shared-nav" data-page="updates"></div>
+  </header>
+
+  <main>
+    <!-- Step 1: Find your store slug -->
+    <section class="widget-section">
+      <h2>Step 1: Find Your Store</h2>
+      <p>Search for your Culver's location to get the store slug you'll need for the widget.</p>
+
+      <div class="slug-finder">
+        <input type="text" id="slug-search" placeholder="Search by city, state, or store name..." autocomplete="off" aria-label="Search for your store">
+        <div id="slug-results" class="slug-finder-results"></div>
+        <div id="slug-count" class="slug-result-count"></div>
+      </div>
+    </section>
+
+    <!-- Step 2-5: Setup instructions -->
+    <section class="widget-section">
+      <h2>Setup Instructions</h2>
+      <ol class="setup-steps">
+        <li>
+          <strong>Install Scriptable</strong><br>
+          Download <a href="https://apps.apple.com/app/scriptable/id1405459188" target="_blank" rel="noopener">Scriptable</a> from the App Store. It's free and lets you run JavaScript widgets on your home screen.
+        </li>
+        <li>
+          <strong>Create a new script</strong><br>
+          Open Scriptable, tap the <strong>+</strong> button to create a new script, and name it "Custard Today."
+        </li>
+        <li>
+          <strong>Paste the widget code</strong><br>
+          Copy the full script from <a href="assets/custard-today.js" target="_blank">custard-today.js</a> and paste it into your new Scriptable script. Save it.
+        </li>
+        <li>
+          <strong>Add the widget to your home screen</strong><br>
+          Long-press your home screen → tap <strong>+</strong> → search for <strong>Scriptable</strong> → choose a <strong>Small</strong> or <strong>Medium</strong> widget. Then long-press the widget → <strong>Edit Widget</strong> → set <strong>Script</strong> to "Custard Today."
+        </li>
+        <li>
+          <strong>Set your store slug</strong><br>
+          In the widget edit screen, set <strong>Parameter</strong> to your store's slug from Step 1. For example:
+          <div class="code-block">mt-horeb</div>
+          The widget will start showing today's flavor at your store.
+        </li>
+      </ol>
+    </section>
+
+    <!-- Widget modes -->
+    <section class="widget-section">
+      <h2>Widget Modes</h2>
+      <p>The widget supports three layouts depending on widget size and configuration:</p>
+
+      <div class="widget-modes">
+        <div class="widget-mode-card">
+          <h3>🍦 Today (Small)</h3>
+          <p>Today's flavor with cone art, description, and rarity badge. Set widget size to Small.</p>
+        </div>
+        <div class="widget-mode-card">
+          <h3>📅 This Week (Medium)</h3>
+          <p>Three-day outlook with cone art for each day. Set widget size to Medium.</p>
+        </div>
+        <div class="widget-mode-card">
+          <h3>📍 Multi-Store (Medium)</h3>
+          <p>Compare today's flavor at 3 stores. Requires adding <code>MODE="multi"</code> and a <code>slugs</code> array to the script. See the <a href="assets/custard-today.js" target="_blank">script comments</a> for details.</p>
+        </div>
+      </div>
+    </section>
+
+    <a href="updates.html" class="back-link">← Back to Get Updates</a>
+  </main>
+
+  <footer>
+    <p class="footer-disclaimer">Not affiliated with any restaurant. Flavor data sourced from restaurant websites.</p>
+    <div class="page-share-mount" id="page-share"></div>
+  </footer>
+
+  <div class="slug-copied-toast" id="slug-toast">Copied!</div>
+
+  <script src="planner-shared.js"></script>
+  <script src="planner-data.js"></script>
+  <script src="planner-domain.js"></script>
+  <script src="planner-ui.js"></script>
+  <script src="shared-nav.js"></script>
+  <script>CustardPlanner.initShareButton('page-share');</script>
   <script>
-    var q = window.location.search;
-    var h = window.location.hash;
-    window.location.replace('updates.html' + (q || '') + (h || ''));
+    (function() {
+      var stores = [];
+      var searchInput = document.getElementById('slug-search');
+      var resultsDiv = document.getElementById('slug-results');
+      var countDiv = document.getElementById('slug-count');
+      var toast = document.getElementById('slug-toast');
+
+      // Load stores.json
+      fetch('stores.json')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          stores = data.stores || [];
+          countDiv.textContent = stores.length + ' stores available';
+        })
+        .catch(function() {
+          countDiv.textContent = 'Could not load store data.';
+        });
+
+      searchInput.addEventListener('input', function() {
+        var q = searchInput.value.trim().toLowerCase();
+        if (q.length < 2) {
+          resultsDiv.innerHTML = '';
+          countDiv.textContent = stores.length + ' stores available';
+          return;
+        }
+
+        var matches = stores.filter(function(s) {
+          return (s.name && s.name.toLowerCase().indexOf(q) !== -1) ||
+                 (s.city && s.city.toLowerCase().indexOf(q) !== -1) ||
+                 (s.state && s.state.toLowerCase().indexOf(q) !== -1) ||
+                 (s.slug && s.slug.toLowerCase().indexOf(q) !== -1) ||
+                 (s.address && s.address.toLowerCase().indexOf(q) !== -1);
+        });
+
+        if (matches.length === 0) {
+          resultsDiv.innerHTML = '<div class="slug-empty">No stores found for "' + CustardPlanner.escapeHtml(searchInput.value) + '"</div>';
+          countDiv.textContent = '';
+          return;
+        }
+
+        var shown = matches.slice(0, 20);
+        var html = '';
+        for (var i = 0; i < shown.length; i++) {
+          var s = shown[i];
+          var displayName = CustardPlanner.escapeHtml(s.city + ', ' + s.state);
+          var addr = s.address ? CustardPlanner.escapeHtml(s.address) : '';
+          html += '<div class="slug-result">' +
+            '<div class="slug-result-info">' +
+              '<span class="slug-result-name">' + displayName + '</span>' +
+              (addr ? '<span class="slug-result-address">' + addr + '</span>' : '') +
+            '</div>' +
+            '<span class="slug-value" data-slug="' + CustardPlanner.escapeHtml(s.slug) + '" title="Click to copy">' + CustardPlanner.escapeHtml(s.slug) + '</span>' +
+          '</div>';
+        }
+        resultsDiv.innerHTML = html;
+        countDiv.textContent = matches.length > 20
+          ? 'Showing 20 of ' + matches.length + ' matches'
+          : matches.length + ' match' + (matches.length === 1 ? '' : 'es');
+      });
+
+      // Copy slug on click
+      resultsDiv.addEventListener('click', function(e) {
+        var target = e.target.closest('.slug-value');
+        if (!target) return;
+        var slug = target.getAttribute('data-slug');
+        if (navigator.clipboard) {
+          navigator.clipboard.writeText(slug).then(function() {
+            showToast();
+          });
+        } else {
+          // Fallback: select text
+          var range = document.createRange();
+          range.selectNodeContents(target);
+          var sel = window.getSelection();
+          sel.removeAllRanges();
+          sel.addRange(range);
+          showToast();
+        }
+      });
+
+      function showToast() {
+        toast.classList.add('visible');
+        setTimeout(function() {
+          toast.classList.remove('visible');
+        }, 1500);
+      }
+    })();
+  </script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js').catch(function() {});
+    }
   </script>
 </body>
 </html>
