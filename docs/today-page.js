@@ -407,7 +407,15 @@ var CustardToday = (function () {
     var today = new Date();
     today.setHours(12, 0, 0, 0);
 
+    // Check for ?flavor= param to highlight a matching card
+    var highlightFlavor = null;
+    try {
+      var searchParams = new URLSearchParams(window.location.search);
+      highlightFlavor = searchParams.get('flavor') || null;
+    } catch (e) {}
+
     var hasAnyData = false;
+    var highlightCard = null;
 
     for (var i = 0; i < days.length; i++) {
       var day = days[i];
@@ -444,6 +452,55 @@ var CustardToday = (function () {
           + '<div class="week-day-flavor text-estimated">No data</div>';
       }
 
+      // Add share icon for cards with a flavor (confirmed or predicted)
+      if (day.flavor && (day.type === 'confirmed' || day.type === 'predicted')) {
+        var shareIconBtn = document.createElement('button');
+        shareIconBtn.className = 'week-day-share-btn';
+        shareIconBtn.setAttribute('aria-label', 'Share ' + day.flavor);
+        shareIconBtn.setAttribute('title', 'Copy link for ' + day.flavor);
+        shareIconBtn.innerHTML =
+          '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" aria-hidden="true" focusable="false" width="12" height="12">'
+          + '<circle cx="12" cy="3" r="2" fill="none" stroke="currentColor" stroke-width="1.5"/>'
+          + '<circle cx="4" cy="8" r="2" fill="none" stroke="currentColor" stroke-width="1.5"/>'
+          + '<circle cx="12" cy="13" r="2" fill="none" stroke="currentColor" stroke-width="1.5"/>'
+          + '<line x1="10.2" y1="4.3" x2="5.8" y2="6.7" stroke="currentColor" stroke-width="1.5"/>'
+          + '<line x1="10.2" y1="11.7" x2="5.8" y2="9.3" stroke="currentColor" stroke-width="1.5"/>'
+          + '</svg>';
+        (function (flavorName) {
+          shareIconBtn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            var shareUrl = window.location.protocol + '//' + window.location.host
+              + (window.location.pathname.replace(/index\.html$/, '') || '/')
+              + 'radar.html?flavor=' + encodeURIComponent(flavorName);
+            if (navigator.share) {
+              navigator.share({ title: flavorName + ' \u2014 Custard Radar', url: shareUrl }).catch(function () {});
+            } else {
+              navigator.clipboard.writeText(shareUrl).then(function () {
+                shareIconBtn.classList.add('week-day-share-btn--copied');
+                shareIconBtn.setAttribute('aria-label', 'Link copied!');
+                setTimeout(function () {
+                  shareIconBtn.classList.remove('week-day-share-btn--copied');
+                  shareIconBtn.setAttribute('aria-label', 'Share ' + flavorName);
+                }, 2000);
+              }).catch(function () {
+                window.prompt('Copy this link:', shareUrl);
+              });
+            }
+          });
+        })(day.flavor);
+        card.appendChild(shareIconBtn);
+      }
+
+      // Highlight card if it matches ?flavor= param
+      if (highlightFlavor && day.flavor) {
+        var normHighlight = highlightFlavor.trim().toLowerCase();
+        var normCardFlavor = day.flavor.trim().toLowerCase();
+        if (normCardFlavor === normHighlight) {
+          card.classList.add('week-day-card--highlight');
+          highlightCard = card;
+        }
+      }
+
       weekStrip.appendChild(card);
 
       // Render hero cone PNG (L5) into the .week-day-cone placeholder; falls back
@@ -458,6 +515,13 @@ var CustardToday = (function () {
       weekSection.hidden = false;
     } else {
       weekSection.hidden = true;
+    }
+
+    // Scroll to and announce the highlighted card after the strip is visible
+    if (highlightCard) {
+      setTimeout(function () {
+        highlightCard.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+      }, 200);
     }
   }
 

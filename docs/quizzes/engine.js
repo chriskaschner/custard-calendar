@@ -1230,8 +1230,8 @@ async function runQuiz(evt) {
       shareBtn.className = 'share-btn result-share-btn';
       shareBtn.textContent = 'Share your result';
       const shareTitle = displayFlavor
-        ? `${archetype.name}: ${displayFlavor} -- Custard Personality Engine`
-        : `${archetype.name} -- Custard Personality Engine`;
+        ? `I'm a ${archetype.name} (${displayFlavor}) -- what's your custard personality?`
+        : `I'm a ${archetype.name} -- what's your custard personality?`;
       const shareUrl = window.location.href;
       shareBtn.addEventListener('click', function () {
         if (navigator.share) {
@@ -1323,6 +1323,101 @@ function bindEvents() {
   }
 }
 
+/**
+ * Show a pre-computed result when arriving via shared URL
+ * (?archetype=cool-front&flavor=Turtle). Skips all quiz questions.
+ *
+ * Observability: sets data-skip-result="true" on <body> so QA tooling /
+ * CSS can distinguish the skip-to-result mode. Logs to console.debug.
+ */
+async function showSkipToResult(archetypeId, flavorName) {
+  const archetype = state.archetypes.find((a) => a.id === archetypeId);
+  if (!archetype) {
+    setStatus(`Unknown archetype in shared link: ${archetypeId}`, 'error');
+    return false;
+  }
+
+  // Hide quiz form panel, show result section immediately
+  const quizPanel = document.querySelector('.quiz-panel');
+  if (quizPanel) quizPanel.hidden = true;
+
+  const displayFlavor = flavorName || (archetype.flavors && archetype.flavors[0]) || '';
+
+  // Populate result fields (same DOM structure as runQuiz)
+  els.resultTitle.textContent = `${archetype.name}: ${archetype.headline}`;
+  els.resultFlavor.textContent = displayFlavor || 'Flavor signal unavailable';
+  els.resultBlurb.textContent = archetype.blurb || '';
+
+  if (els.resultCone) {
+    if (displayFlavor && typeof window.renderHeroCone === 'function') {
+      window.renderHeroCone(displayFlavor, els.resultCone, 6);
+    } else if (displayFlavor && typeof window.renderMiniConeSVG === 'function') {
+      els.resultCone.innerHTML = window.renderMiniConeSVG(displayFlavor, 8);
+    } else {
+      els.resultCone.innerHTML = '';
+    }
+  }
+
+  if (els.resultNarrative) els.resultNarrative.hidden = true;
+  if (els.resultTraits) els.resultTraits.textContent = '';
+  if (els.resultAvailability) {
+    els.resultAvailability.textContent = 'Take the quiz to find this flavor scooping near you.';
+  }
+  if (els.resultNearestOutside) els.resultNearestOutside.hidden = true;
+  if (els.resultNearestAny) els.resultNearestAny.hidden = true;
+
+  // Build CTAs: "Take the quiz yourself" primary + share
+  if (els.resultCtas) {
+    els.resultCtas.innerHTML = '';
+    const takeQuizBtn = document.createElement('button');
+    takeQuizBtn.className = 'btn-primary quiz-take-own-btn';
+    takeQuizBtn.textContent = 'Take the quiz yourself';
+    takeQuizBtn.addEventListener('click', function () {
+      // Remove skip params, reload to fresh quiz state
+      history.replaceState(null, '', window.location.pathname);
+      if (quizPanel) quizPanel.hidden = false;
+      els.resultSection.hidden = true;
+      document.body.removeAttribute('data-skip-result');
+      setStatus('Pick a quiz mode, answer five prompts, then get a live in-radius flavor match.', 'neutral');
+    });
+    els.resultCtas.appendChild(takeQuizBtn);
+  }
+
+  // Share button with flavor-themed text
+  if (els.resultShare) {
+    els.resultShare.innerHTML = '';
+    const shareBtn = document.createElement('button');
+    shareBtn.className = 'share-btn result-share-btn';
+    shareBtn.textContent = 'Share your result';
+    const shareTitle = displayFlavor
+      ? `I'm a ${archetype.name} (${displayFlavor}) -- what's your custard personality?`
+      : `I'm a ${archetype.name} -- what's your custard personality?`;
+    const shareUrl = window.location.href;
+    shareBtn.addEventListener('click', function () {
+      if (navigator.share) {
+        navigator.share({ title: shareTitle, url: shareUrl }).catch(function () {});
+      } else {
+        navigator.clipboard.writeText(shareUrl).then(function () {
+          shareBtn.textContent = 'Link copied!';
+          setTimeout(function () { shareBtn.textContent = 'Share your result'; }, 2000);
+        }).catch(function () {
+          window.prompt('Copy this link:', shareUrl);
+        });
+      }
+    });
+    els.resultShare.appendChild(shareBtn);
+  }
+
+  if (els.resultAlternates) els.resultAlternates.innerHTML = '';
+
+  els.resultSection.hidden = false;
+  els.resultSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  document.body.setAttribute('data-skip-result', 'true');
+  console.debug('[quiz] skip-to-result: archetype=%s flavor=%s', archetypeId, displayFlavor);
+  return true;
+}
+
 async function init() {
   try {
     await loadConfigs();
@@ -1343,6 +1438,21 @@ async function init() {
     }
 
     setQuizModeAttribute(state.activeQuiz.id);
+
+    // Skip-to-result: ?archetype=cool-front&flavor=Turtle
+    const archetypeParam = params.get('archetype');
+    const flavorParam = params.get('flavor');
+    if (archetypeParam) {
+      const skipped = await showSkipToResult(archetypeParam, flavorParam || '');
+      if (skipped) {
+        // Still wire up events so the "Take the quiz" button works
+        await setLocationFromCloudflare();
+        await renderQuestions(state.activeQuiz);
+        bindEvents();
+        return;
+      }
+    }
+
     await setLocationFromCloudflare();
     await renderQuestions(state.activeQuiz);
     bindEvents();

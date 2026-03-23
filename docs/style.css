@@ -1985,6 +1985,48 @@ footer a {
   margin-top: var(--space-1);
 }
 
+/* Week strip share icon button */
+.week-day-share-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  margin-top: var(--space-2);
+  border: 1px solid var(--border-light);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.14s, color 0.14s, border-color 0.14s;
+}
+
+.week-day-share-btn:hover {
+  background: var(--bg-muted);
+  color: var(--brand);
+  border-color: #b8d4ed;
+}
+
+.week-day-share-btn--copied {
+  background: #e8f6ff;
+  color: var(--brand);
+  border-color: var(--brand);
+}
+
+/* Week strip flavor highlight (from ?flavor= param) */
+.week-day-card--highlight {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+  animation: flavor-highlight-pulse 1.6s ease-out 2;
+}
+
+@keyframes flavor-highlight-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(0, 86, 150, 0.35); }
+  50% { box-shadow: 0 0 0 6px rgba(0, 86, 150, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(0, 86, 150, 0); }
+}
+
 /* Below-fold CTA line */
 .below-fold-cta {
   margin-top: var(--space-5);
