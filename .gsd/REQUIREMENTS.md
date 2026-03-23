@@ -20,25 +20,27 @@ Zero-traffic pages (compare, forecast-map, fun) are consolidated or redirected
 
 Navigation reflects reduced page count with no more than 4 items
 
+## Validated
+
 ### SHARE-01 — Quiz results page has optimized og:image and shareable URL for social platforms
 
-- Status: active
+- Status: validated
 - Class: core-capability
 - Source: inferred
-- Primary Slice: none yet
+- Primary Slice: S05
+- Validation: PNG og:image via /og/quiz/{archetype}/{flavor}.png (workers-og). Shareable URL quiz.html?archetype=X&flavor=Y triggers skip-to-result. Crawler interception serves og:title/og:image/og:description. 59 Worker tests. Share button generates flavor-themed text.
 
 Quiz results page has optimized og:image and shareable URL for social platforms
 
 ### SHARE-02 — Flavor rarity stats are shareable as standalone social content (OG card per flavor)
 
-- Status: active
+- Status: validated
 - Class: core-capability
 - Source: inferred
-- Primary Slice: none yet
+- Primary Slice: S05
+- Validation: PNG og:image via /og/flavor/{flavor-name}.png with rarity label and appearance stats. Crawler interception routes radar.html?flavor=X and index.html?flavor=X to flavor OG cards. Week strip share icons copy radar.html?flavor=X to clipboard. ?flavor=X on homepage highlights and scrolls to matching card.
 
 Flavor rarity stats are shareable as standalone social content (OG card per flavor)
-
-## Validated
 
 ### HOME-01 — User sees one primary card with today's flavor at their saved store above the fold
 

@@ -63,6 +63,7 @@ A family in the car (or on the couch) can instantly see what flavors are at thei
 - Homepage redesigned around single hero card with CTAs, simplified empty state, CLS skeleton; signals/multi-store/header removed -- v3.0 Phase 31
 - localStorage hero cache + SW API stale-while-revalidate for instant return-visit render; Lighthouse LCP gate pending post-deploy -- v3.0 Phase 33
 - Store disambiguation, three-gate rarity suppression, Week Ahead L5 PNGs, DOW signal filtering, widget diagnostic logging -- v3.0 S06
+- PNG OG cards for quiz results and flavor rarity, crawler interception for social platforms, quiz skip-to-result, week strip share icons, SW cache v25 -- v3.0 S05
 
 ### Active
 
@@ -163,6 +164,9 @@ Tech stack: Cloudflare Worker (API), vanilla JS (4-file IIFE pattern), Playwrigh
 | Position dot interactive:false + zIndexOffset:1000 | Stays above store markers without intercepting clicks | Good -- clean UX |
 | Nearest store by slug cross-reference | Links marker highlighting to results badge without marker refs | Good -- clean separation |
 | SW mock (no-op sw.js) for Playwright tests | SW intercepts page-level route handlers; mock prevents registration | Good -- reliable test mocking |
+| workers-og (satori+resvg-wasm) for PNG OG cards | Only library running natively in CF Workers; WASM mock needed for vitest | Good -- 1200×630 PNG cards generated server-side |
+| PNG-only OG cards (no SVG) | SVG og:image unsupported by all social platforms | Good -- cards render on Twitter/Facebook/iMessage |
+| UA regex crawler interception in Worker fetch handler | Cheapest possible hot-path check; null pass-through for humans | Good -- zero overhead for browser requests |
 
 ---
-*Last updated: 2026-03-20 after Phase 33 (Performance) complete*
+*Last updated: 2026-03-22 after S05 (Social Sharing) complete*
