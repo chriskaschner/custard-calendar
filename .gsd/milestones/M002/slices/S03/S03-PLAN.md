@@ -49,7 +49,7 @@
 
 ## Tasks
 
-- [ ] **T01: Redirect forecast-map.html and update production files** `est:25m`
+- [x] **T01: Redirect forecast-map.html and update production files** `est:25m`
   - Why: Implements the core consolidation — replaces forecast-map.html with a redirect stub, removes the dead Fronts section from fun.html, and updates sw.js to stop precaching the old page.
   - Files: `docs/forecast-map.html`, `docs/fun.html`, `docs/sw.js`, `worker/test/png-asset-count.test.js`
   - Do: (1) Replace docs/forecast-map.html with the established redirect stub pattern (meta-refresh to index.html, JS fallback forwarding query+hash, under 1000 bytes, no shared-nav/style.css/planner-shared.js). (2) Remove the entire `<section id="fronts-section">` block from docs/fun.html. (3) Remove `'./forecast-map.html'` from STATIC_ASSETS array in docs/sw.js. (4) Bump CACHE_VERSION from `custard-v25` to `custard-v26` in docs/sw.js. (5) Update worker/test/png-asset-count.test.js to expect `custard-v26` instead of `custard-v25`. **Constraint:** Do NOT touch radar.html, compare.html, fun-page.js, shared-nav.js NAV_ITEMS, or any compare-related files.

@@ -1,8 +1,7 @@
-const CACHE_VERSION = 'custard-v25';
+const CACHE_VERSION = 'custard-v26';
 const STATIC_ASSETS = [
   './',
   './index.html',
-  './forecast-map.html',
   './quiz.html',
   './quizzes/engine.js',
   './quizzes/flavor-archetypes.json',
