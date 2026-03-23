@@ -2,27 +2,29 @@
 
 ## Active
 
+## Validated
+
 ### SIMP-01 — Zero-traffic pages (compare, forecast-map, fun) are consolidated or redirected
 
-- Status: active
+- Status: validated
 - Class: core-capability
 - Source: inferred
 - Primary Slice: S03
+- Validation: forecast-map.html replaced with 408-byte redirect stub (meta-refresh + JS fallback). compare.html and fun.html kept as live pages per D004. test_redirects.py covers redirect. SW precache updated, CACHE_VERSION custard-v26. 1097 Worker tests pass.
 - Notes: D004 narrowed scope — only forecast-map.html redirected. compare.html (7 browser test suites) and fun.html (quiz discovery hub) kept as live pages.
 
 Zero-traffic pages (compare, forecast-map, fun) are consolidated or redirected
 
 ### SIMP-02 — Navigation reflects reduced page count with no more than 4 items
 
-- Status: active
+- Status: validated
 - Class: core-capability
 - Source: inferred
 - Primary Slice: S03
+- Validation: Nav has exactly 4 items (Today, Compare, Map, Fun). No changes needed — trivially satisfied by existing nav structure. shared-nav.js NAV_ITEMS unchanged.
 - Notes: Nav already has exactly 4 items (Today, Compare, Map, Fun). No changes needed — trivially satisfied.
 
 Navigation reflects reduced page count with no more than 4 items
-
-## Validated
 
 ### SHARE-01 — Quiz results page has optimized og:image and shareable URL for social platforms
 

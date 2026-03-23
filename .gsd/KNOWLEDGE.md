@@ -16,7 +16,7 @@ When adding new D1 queries to Worker route handlers, the mock D1 objects in inte
 
 ## Service worker cache version discipline
 
-Every change to files cached by sw.js (style.css, JS files, PNGs) needs a CACHE_VERSION bump. The `png-asset-count.test.js` test validates the version string — update the test expectation when bumping. Current version: custard-v25.
+Every change to files cached by sw.js (style.css, JS files, PNGs) needs a CACHE_VERSION bump. The `png-asset-count.test.js` test validates the version string — update the test expectation when bumping. Current version: custard-v26.
 
 ## Rarity gate ordering matters for diagnostics
 
@@ -36,4 +36,8 @@ Two sets of rarity thresholds exist in the codebase: `planner-domain.js` and `so
 
 ## radar.html as canonical share entry point (S05)
 
-Share URLs use `radar.html?flavor=X` rather than `index.html?flavor=X` because radar.html is a redirect stub that forwards to index.html preserving query params. This indirection allows the share URL path to stay stable even if the homepage filename changes. Crawler interception in index.js handles both `radar.html` and `index.html` patterns. If S03 (page consolidation) removes radar.html, share URLs will break — the redirect must be preserved or share URL generation updated.
+Share URLs use `radar.html?flavor=X` rather than `index.html?flavor=X` because radar.html is a redirect stub that forwards to index.html preserving query params. This indirection allows the share URL path to stay stable even if the homepage filename changes. Crawler interception in index.js handles both `radar.html` and `index.html` patterns. If a future slice removes radar.html, share URLs will break — the redirect must be preserved or share URL generation updated.
+
+## Page deletion checklist (S03)
+
+When consolidating/redirecting a page, audit these files for stale references: `tests/test_redirects.py` (add redirect entry), `tests/test_static_assets.py` (remove asset tests), `tests/test_inline_style_elimination.py` (remove style tests), `worker/test/browser/*.spec.mjs` (delete or update page-specific specs), `docs/sw.js` (remove from STATIC_ASSETS + bump CACHE_VERSION), and any page that links to the deleted page (e.g. fun.html linked to forecast-map.html via Fronts section).

@@ -64,12 +64,13 @@ A family in the car (or on the couch) can instantly see what flavors are at thei
 - localStorage hero cache + SW API stale-while-revalidate for instant return-visit render; Lighthouse LCP gate pending post-deploy -- v3.0 Phase 33
 - Store disambiguation, three-gate rarity suppression, Week Ahead L5 PNGs, DOW signal filtering, widget diagnostic logging -- v3.0 S06
 - PNG OG cards for quiz results and flavor rarity, crawler interception for social platforms, quiz skip-to-result, week strip share icons, SW cache v25 -- v3.0 S05
+- forecast-map.html consolidated to redirect stub, fun.html Fronts section removed, SW cache v26, nav stable at 4 items -- v3.0 S03
 
 ### Active
 
 ## Current Milestone: v3.0 Sharpen the Core
 
-**Goal:** Simplify the product to its essential experience, fix performance, and optimize for discoverability -- the first milestone focused on finding users rather than adding features.
+**Goal:** Simplify the product to its essential experience, fix performance, and optimize for discoverability -- the first milestone focused on finding users rather than adding features. **Status: COMPLETE** (all 6 slices delivered).
 
 **Target features:**
 - Redesign homepage with clear information hierarchy (one card: your store's flavor today)
@@ -169,4 +170,4 @@ Tech stack: Cloudflare Worker (API), vanilla JS (4-file IIFE pattern), Playwrigh
 | UA regex crawler interception in Worker fetch handler | Cheapest possible hot-path check; null pass-through for humans | Good -- zero overhead for browser requests |
 
 ---
-*Last updated: 2026-03-22 after S05 (Social Sharing) complete*
+*Last updated: 2026-03-22 after S03 (Page Consolidation) complete — M002 milestone finished*

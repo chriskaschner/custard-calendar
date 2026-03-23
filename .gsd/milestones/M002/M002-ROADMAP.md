@@ -17,5 +17,5 @@
   > After this: 7 user-reported bugs fixed across Compare, Today, Widget, and Worker surfaces. Store names disambiguated, rarity false positives eliminated, Week Ahead shows L5 PNGs.
 - [x] **S05: Social Sharing** `risk:medium` `depends:[S06]`
   > After this: Add PNG OG card generation for quiz results and flavor rarity stats, plus Worker-level crawler interception for shared URLs.
-- [ ] **S03: Page Consolidation** `risk:medium` `depends:[S05]`
+- [x] **S03: Page Consolidation** `risk:medium` `depends:[S05]`
   > After this: Zero-traffic pages consolidated or redirected; navigation reflects reduced page count.
