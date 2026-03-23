@@ -1,8 +1,9 @@
 """Tests verifying redirect stub correctness for legacy pages.
 
-Six legacy HTML pages (scoop, radar, calendar, widget, siri, alerts) have been
-replaced with minimal redirect stubs. Each stub uses a meta-refresh plus a JS
-fallback that forwards query params and hash fragments to the destination.
+Seven legacy HTML pages (scoop, radar, calendar, widget, siri, alerts,
+forecast-map) have been replaced with minimal redirect stubs. Each stub uses a
+meta-refresh plus a JS fallback that forwards query params and hash fragments
+to the destination.
 """
 
 from pathlib import Path
@@ -17,6 +18,7 @@ REDIRECT_MAP = {
     "widget.html": "updates.html",
     "siri.html": "updates.html",
     "alerts.html": "updates.html",
+    "forecast-map.html": "index.html",
 }
 
 # JS/CSS files that should NOT appear in redirect stubs
@@ -49,6 +51,10 @@ class TestRedirectStubs:
     def test_alerts_redirects_to_updates(self):
         content = (DOCS_DIR / "alerts.html").read_text()
         assert 'content="0;url=updates.html"' in content
+
+    def test_forecast_map_redirects_to_index(self):
+        content = (DOCS_DIR / "forecast-map.html").read_text()
+        assert 'content="0;url=index.html"' in content
 
 
 class TestRedirectStubMinimal:

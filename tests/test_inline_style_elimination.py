@@ -3,11 +3,9 @@
 Verifies that:
 - compare.html has zero inline style= attributes
 - index.html has zero inline style= attributes
-- forecast-map.html HTML elements (not inline JS) have zero inline style= attributes
 - New CSS classes (.header-subtitle, .footer-disclaimer, .compare-empty-heading) consume design tokens
 - .hidden class exists in style.css
 - JS files: zero .style.display in compare-page.js and shared-nav.js
-- JS files: zero .style.fontWeight/.color/.display in forecast-map.html <script> blocks
 - JS files: zero .style.color in updates-page.js
 - today-page.js: dynamic brand colors documented exception (.style.borderLeftColor/.color)
 """
@@ -55,31 +53,6 @@ def test_index_zero_inline_styles():
             violations.append(f"  index.html:{i}: {m.group(0)}")
     assert len(violations) == 0, (
         f"Found {len(violations)} inline style= attributes in index.html "
-        f"(expected 0):\n" + "\n".join(violations)
-    )
-
-
-# -----------------------------------------------------------------------
-# DTKN-03c: forecast-map.html HTML elements have zero inline style= attributes
-# -----------------------------------------------------------------------
-
-
-def test_forecast_map_zero_html_inline_styles():
-    """forecast-map.html HTML elements (before first <script> tag) have 0 inline style= attributes."""
-    html = (DOCS_DIR / "forecast-map.html").read_text()
-    # Only check the HTML markup section -- stop at the first <script> tag
-    # that contains inline JS (not external src scripts)
-    lines = html.splitlines()
-    violations = []
-    for i, line in enumerate(lines, start=1):
-        # Stop at inline script blocks (not external <script src="...">)
-        stripped = line.strip()
-        if stripped == "<script>" or (stripped.startswith("<script>") and 'src=' not in stripped):
-            break
-        for m in INLINE_STYLE_RE.finditer(line):
-            violations.append(f"  forecast-map.html:{i}: {m.group(0)}")
-    assert len(violations) == 0, (
-        f"Found {len(violations)} inline style= attributes in forecast-map.html HTML "
         f"(expected 0):\n" + "\n".join(violations)
     )
 
@@ -156,60 +129,6 @@ def test_no_style_display_in_shared_nav_js():
     assert len(violations) == 0, (
         f"Found {len(violations)} .style.display assignments in shared-nav.js "
         f"(expected 0):\n" + "\n".join(violations)
-    )
-
-
-# -----------------------------------------------------------------------
-# DTKN-03: JS .style.* enforcement -- forecast-map.html inline JS
-# -----------------------------------------------------------------------
-
-
-def test_no_inline_style_assignments_forecast_map_js():
-    """forecast-map.html inline JS has zero .style.fontWeight, .style.color, .style.display assignments.
-
-    Exception: innerHTML strings that set truly dynamic values (familyColor from data,
-    background color from store data) are excluded because those colors vary per flavor
-    family at runtime and cannot be replaced with static CSS classes.
-    """
-    html = (DOCS_DIR / "forecast-map.html").read_text()
-    lines = html.splitlines()
-
-    # Extract lines inside <script> blocks (not src= external scripts)
-    in_script = False
-    script_lines = []  # (original_line_number, line_text)
-    for i, line in enumerate(lines, start=1):
-        stripped = line.strip()
-        if (stripped == "<script>" or stripped.startswith("<script>")) and 'src=' not in stripped:
-            in_script = True
-            continue
-        if stripped == "</script>" or stripped.startswith("</script>"):
-            in_script = False
-            continue
-        if in_script:
-            script_lines.append((i, line))
-
-    # Check for .style.fontWeight, .style.color, .style.display assignments
-    style_re = re.compile(r'\.style\.(fontWeight|color|display)\s*=')
-    # Exception pattern: style= inside innerHTML strings (dynamic popup/hotspot colors)
-    innerhtml_re = re.compile(r'(innerHTML|innerhtml)\s*[+=]', re.IGNORECASE)
-
-    violations = []
-    for lineno, line in script_lines:
-        if style_re.search(line):
-            # Allow exception for innerHTML dynamic color strings
-            if innerhtml_re.search(line):
-                continue
-            # Also allow exception for lines inside an innerHTML string concatenation
-            # (e.g., 'style="background:' + color + '"')
-            if "style=" in line and ("innerHTML" in line or "'" in line or '"' in line):
-                # Check if this is part of a string literal containing style=
-                if re.search(r"""['"].*style=.*['"]""", line):
-                    continue
-            violations.append(f"  forecast-map.html:{lineno}: {line.strip()}")
-    assert len(violations) == 0, (
-        f"Found {len(violations)} .style.fontWeight/.color/.display assignments in "
-        f"forecast-map.html inline JS (expected 0, excluding innerHTML dynamic colors):\n"
-        + "\n".join(violations)
     )
 
 

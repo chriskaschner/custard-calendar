@@ -121,11 +121,3 @@ class TestFrontendScriptHardening:
             "External scripts must use SRI unless explicitly allowlisted. Missing integrity: "
             f"{missing_sri}"
         )
-
-    def test_leaflet_heat_is_vendored_locally(self):
-        vendor_file = DOCS_DIR / "vendor" / "leaflet-heat-0.2.0.js"
-        assert vendor_file.exists(), "Vendored Leaflet heat plugin missing: docs/vendor/leaflet-heat-0.2.0.js"
-
-        forecast_map = (DOCS_DIR / "forecast-map.html").read_text()
-        assert "vendor/leaflet-heat-0.2.0.js" in forecast_map
-        assert "unpkg.com/leaflet.heat" not in forecast_map

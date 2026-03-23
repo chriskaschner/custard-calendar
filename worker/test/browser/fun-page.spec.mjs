@@ -38,9 +38,3 @@ test("FUN-04: Group Vote card links to group.html", async ({ page }) => {
   const link = page.locator('a[href="group.html"]');
   await expect(link).toBeVisible();
 });
-
-test("FUN-05: Fronts card links to forecast-map.html", async ({ page }) => {
-  await page.goto("/fun.html");
-  const link = page.locator('a[href="forecast-map.html"]');
-  await expect(link).toBeVisible();
-});
