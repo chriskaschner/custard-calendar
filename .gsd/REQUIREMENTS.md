@@ -7,7 +7,8 @@
 - Status: active
 - Class: core-capability
 - Source: inferred
-- Primary Slice: none yet
+- Primary Slice: S03
+- Notes: D004 narrowed scope — only forecast-map.html redirected. compare.html (7 browser test suites) and fun.html (quiz discovery hub) kept as live pages.
 
 Zero-traffic pages (compare, forecast-map, fun) are consolidated or redirected
 
@@ -16,7 +17,8 @@ Zero-traffic pages (compare, forecast-map, fun) are consolidated or redirected
 - Status: active
 - Class: core-capability
 - Source: inferred
-- Primary Slice: none yet
+- Primary Slice: S03
+- Notes: Nav already has exactly 4 items (Today, Compare, Map, Fun). No changes needed — trivially satisfied.
 
 Navigation reflects reduced page count with no more than 4 items
 
