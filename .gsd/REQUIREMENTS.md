@@ -37,17 +37,6 @@ This file is the explicit capability and coverage contract for the project.
 - Validation: Contract verified — WIDGET_VERSION constant + fire-and-forget checkForUpdate() in widget JS; /api/v1/widget/version returns version JSON; 16 widget-routes tests pass. Uses alert-not-overwrite pattern (D007). UAT pending: version mismatch alert on real device.
 - Notes: Self-update uses version-check-and-alert (not auto-overwrite). User is directed to widget.html to re-run bootstrap with updated code.
 
-### R014 — Rarity threshold unification across all surfaces
-- Class: quality-attribute
-- Status: active
-- Description: A single source of truth for rarity thresholds (Ultra Rare / Rare day-gap boundaries) used consistently by route-today.js, social-card.js, and planner-domain.js. A flavor at any given avg_gap_days value shows the same rarity label everywhere.
-- Why it matters: Currently route-today.js uses >150/90 days while social-card.js uses >120/60 days. A flavor at 130 days shows "Ultra Rare" on OG cards but "Rare" on the homepage. This undermines trust in the data.
-- Source: user
-- Primary owning slice: M004/S02
-- Supporting slices: none
-- Validation: unmapped
-- Notes: Need to decide which thresholds to standardize on. planner-domain.js and route-today.js already agree at 150/90. social-card.js is the outlier at 120/60.
-
 ### R015 — PNG og:image on all pages
 - Class: launchability
 - Status: active
@@ -82,6 +71,14 @@ This file is the explicit capability and coverage contract for the project.
 - Notes: Server endpoint is stateless — serves canonical JS unchanged. Config injection is client-side (D006).
 
 ## Validated
+
+### R014 — Rarity threshold unification across all surfaces
+- Status: validated
+- Class: quality-attribute
+- Source: user
+- Primary owning slice: M004/S02
+- Validation: Contract verified — all three files (route-today.js, social-card.js, planner-domain.js) use identical > 150 / > 90 thresholds. 13-assertion boundary-value test in rarity-threshold-consistency.test.js prevents drift. rarityLabel(130) → 'Rare' everywhere. 1122 Worker tests pass.
+- Notes: Standardized on 150/90 (D005). social-card.js was the outlier at 120/60, now aligned.
 
 ### SIMP-01 — Zero-traffic pages consolidated or redirected
 - Status: validated
@@ -211,7 +208,7 @@ This file is the explicit capability and coverage contract for the project.
 | R011 | primary-user-loop | active | M004/S01 | none | contract verified, UAT pending |
 | R012 | primary-user-loop | active | M004/S01 | none | contract verified, UAT pending |
 | R013 | continuity | active | M004/S01 | none | contract verified, UAT pending |
-| R014 | quality-attribute | active | M004/S02 | none | unmapped |
+| R014 | quality-attribute | validated | M004/S02 | none | contract verified, test gate |
 | R015 | launchability | active | M004/S03 | none | unmapped |
 | R016 | operability | active | M004/S04 | none | unmapped |
 | R017 | integration | active | M004/S01 | none | contract verified, UAT pending |
@@ -233,7 +230,7 @@ This file is the explicit capability and coverage contract for the project.
 
 ## Coverage Summary
 
-- Active requirements: 7
-- Mapped to slices: 7
-- Validated: 10
+- Active requirements: 6
+- Mapped to slices: 6
+- Validated: 11
 - Unmapped active requirements: 0

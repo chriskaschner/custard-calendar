@@ -30,9 +30,9 @@ workers-og uses WASM (resvg-wasm) that cannot load in standard Node/Vitest envir
 
 No social platform (Twitter, Facebook, iMessage, WhatsApp, Discord, Slack, Telegram) supports SVG as an og:image format. SVG cards render as blank placeholders. Always use PNG or JPEG for OG card endpoints. The existing `/og/*.svg` endpoints still serve SVG and are effectively broken for social sharing.
 
-## Rarity threshold divergence across files
+## Rarity threshold alignment (resolved in M004/S02)
 
-Two sets of rarity thresholds exist in the codebase: `planner-domain.js` and `social-card.js` use >120 days = Ultra Rare, >60 days = Rare. `route-today.js` uses >150 days = Ultra Rare, >90 days = Rare. A flavor at 130 days shows "Ultra Rare" on OG cards but "Rare" on the homepage. This needs alignment to a single source of truth.
+All three rarity files (`route-today.js`, `social-card.js`, `planner-domain.js`) now use identical thresholds: `> 150` days = Ultra Rare, `> 90` days = Rare. The divergence where `social-card.js` used `> 120` / `> 60` has been fixed. `worker/test/rarity-threshold-consistency.test.js` (13 boundary-value assertions) prevents future drift — it runs in every `npm test` invocation. If thresholds need to change, update all three files and the test.
 
 ## radar.html as canonical share entry point (S05)
 

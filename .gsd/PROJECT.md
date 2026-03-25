@@ -20,8 +20,8 @@ Three milestones complete (M001–M003). The product is shipped and live with:
 
 Known issues being addressed in M004:
 - ~~Widget setup flow requires multiple copy-paste operations and manual code editing~~ → S01 complete: one-paste bootstrap flow with snippet generator
+- ~~Rarity threshold divergence between surfaces~~ → S02 complete: all three files use 150/90 thresholds with drift-prevention test
 - SVG og:image meta tags render blank on all social platforms
-- Rarity threshold divergence between surfaces
 - Widget JS dual-file manual sync (now three-file sync with embedded WIDGET_SCRIPT)
 
 ## Architecture / Key Patterns
