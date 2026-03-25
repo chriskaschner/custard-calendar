@@ -58,7 +58,7 @@
   - Verify: `grep -q 'WIDGET_VERSION' widgets/custard-today.js && diff widgets/custard-today.js docs/assets/custard-today.js && cd worker && npm test`
   - Done when: Both widget JS files contain identical `WIDGET_VERSION` constant and `checkForUpdate()` function; Worker embedded constant matches; all tests pass
 
-- [ ] **T03: Build bootstrap snippet generator on widget.html** `est:1h`
+- [x] **T03: Build bootstrap snippet generator on widget.html** `est:1h`
   - Why: R011 requires a one-paste install flow; R012 requires multi-store setup without code editing. The current 5-step manual process with 628 lines of copy-paste is the biggest friction point in the widget funnel.
   - Files: `docs/widget.html`
   - Do: Replace the existing Steps 2-5 with a snippet generator section. Keep Step 1 (store finder) as-is — it's the input for the generator. Add: (1) a mode toggle (Single Store / Multi-Store), (2) for multi-store, allow selecting up to 3 stores from the finder, (3) a generated snippet `<textarea>` showing the personalized bootstrap code, (4) a "Copy Snippet" button. The snippet template: `let fm; try { fm = FileManager.iCloud(); } catch(e) { fm = FileManager.local(); } let dir = fm.documentsDirectory(); let path = fm.joinPath(dir, "Custard Today.js"); let req = new Request("https://custard.chriskaschner.com/api/v1/widget/script"); let code = await req.loadString(); let config = 'var slug = "SLUG_HERE";\n'; fm.writeString(path, config + code);`. For multi-store, config includes `MODE` and `slugs`. Update the remaining setup instructions to: (1) Find store, (2) Copy snippet, (3) Paste into Scriptable and run, (4) Add widget to home screen. Keep widget modes section and the existing store finder JS functional.

@@ -7,9 +7,9 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com https://unpkg.com; style-src 'self' 'unsafe-inline' https://unpkg.com; img-src 'self' data: https:; connect-src 'self' https:; font-src 'self' data:; base-uri 'self'; frame-ancestors 'none'">
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <title>iOS Widget Setup -- Custard Calendar</title>
-  <meta name="description" content="Add today's Flavor of the Day to your iPhone home screen with a free Scriptable widget. Step-by-step setup guide.">
+  <meta name="description" content="Add today's Flavor of the Day to your iPhone home screen with a free Scriptable widget. One-paste setup guide.">
   <meta property="og:title" content="iOS Widget Setup -- Custard Calendar">
-  <meta property="og:description" content="See today's flavor right on your home screen. Free Scriptable widget with step-by-step setup.">
+  <meta property="og:description" content="See today's flavor right on your home screen. Free Scriptable widget with one-paste setup.">
   <meta property="og:url" content="https://custard.chriskaschner.com/widget.html">
   <meta property="og:type" content="website">
   <meta property="og:image" content="https://custard.chriskaschner.com/og/page/forecast.svg">
@@ -240,6 +240,162 @@
       font-size: var(--text-base);
       color: var(--brand);
     }
+
+    /* ── Snippet generator ─────────────────────────────────────────── */
+
+    .snippet-section-label {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.5rem;
+    }
+
+    /* Mode toggle */
+    .mode-toggle {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: var(--space-3);
+    }
+
+    .mode-btn {
+      flex: 1;
+      padding: 0.5rem 1rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--bg);
+      color: var(--text-secondary);
+      font-size: var(--text-base);
+      font-weight: 500;
+      cursor: pointer;
+      text-align: center;
+      transition: background 0.15s, border-color 0.15s, color 0.15s;
+    }
+
+    .mode-btn:hover {
+      border-color: var(--brand);
+      color: var(--brand);
+    }
+
+    .mode-btn.active {
+      background: var(--brand);
+      border-color: var(--brand);
+      color: #fff;
+    }
+
+    /* Selected store display (single mode) */
+    .selected-store-display {
+      margin-bottom: var(--space-3);
+      min-height: 2.25rem;
+    }
+
+    .selected-store-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      background: var(--bg-muted);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-full);
+      padding: 0.25rem 0.625rem 0.25rem 0.75rem;
+      font-size: 0.875rem;
+      color: var(--brand);
+      font-weight: 600;
+    }
+
+    .selected-store-pill .remove-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text-muted);
+      font-size: 1rem;
+      line-height: 1;
+      padding: 0;
+      display: flex;
+      align-items: center;
+    }
+
+    .selected-store-pill .remove-btn:hover {
+      color: var(--text);
+    }
+
+    .selected-store-placeholder {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      font-style: italic;
+    }
+
+    /* Multi-store list */
+    .multi-store-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.375rem;
+      margin-bottom: var(--space-3);
+      min-height: 2.25rem;
+      align-items: center;
+    }
+
+    /* Snippet textarea */
+    .snippet-textarea {
+      width: 100%;
+      min-height: 9rem;
+      font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+      font-size: 0.8125rem;
+      line-height: 1.5;
+      padding: 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--bg-muted);
+      color: var(--text);
+      resize: vertical;
+      box-sizing: border-box;
+    }
+
+    .snippet-textarea:read-only {
+      cursor: default;
+    }
+
+    .snippet-textarea.placeholder {
+      color: var(--text-muted);
+      font-style: italic;
+    }
+
+    /* Copy button */
+    .copy-snippet-btn {
+      margin-top: 0.625rem;
+      padding: 0.625rem 1.25rem;
+      background: var(--brand);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius);
+      font-size: var(--text-base);
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+
+    .copy-snippet-btn:hover {
+      opacity: 0.88;
+    }
+
+    .copy-snippet-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    /* Install steps */
+    .install-steps {
+      margin-top: var(--space-4);
+      padding-top: var(--space-3);
+      border-top: 1px solid var(--border);
+    }
+
+    .install-steps h3 {
+      font-size: var(--text-base);
+      color: var(--text);
+      font-weight: 600;
+      margin-bottom: var(--space-2);
+    }
   </style>
 </head>
 <body>
@@ -251,10 +407,10 @@
   </header>
 
   <main>
-    <!-- Step 1: Find your store slug -->
+    <!-- Step 1: Find your store -->
     <section class="widget-section">
       <h2>Step 1: Find Your Store</h2>
-      <p>Search for your Culver's location to get the store slug you'll need for the widget.</p>
+      <p>Search for your Culver's location. Click a store to add it to your snippet.</p>
 
       <div class="slug-finder">
         <input type="text" id="slug-search" placeholder="Search by city, state, or store name..." autocomplete="off" aria-label="Search for your store">
@@ -263,36 +419,62 @@
       </div>
     </section>
 
-    <!-- Step 2-5: Setup instructions -->
+    <!-- Step 2: Generate your snippet -->
     <section class="widget-section">
-      <h2>Setup Instructions</h2>
-      <ol class="setup-steps">
-        <li>
-          <strong>Install Scriptable</strong><br>
-          Download <a href="https://apps.apple.com/app/scriptable/id1405459188" target="_blank" rel="noopener">Scriptable</a> from the App Store. It's free and lets you run JavaScript widgets on your home screen.
-        </li>
-        <li>
-          <strong>Create a new script</strong><br>
-          Open Scriptable, tap the <strong>+</strong> button to create a new script, and name it "Custard Today."
-        </li>
-        <li>
-          <strong>Paste the widget code</strong><br>
-          Copy the full script from <a href="assets/custard-today.js" target="_blank">custard-today.js</a> and paste it into your new Scriptable script. Save it.
-        </li>
-        <li>
-          <strong>Add the widget to your home screen</strong><br>
-          Long-press your home screen → tap <strong>+</strong> → search for <strong>Scriptable</strong> → choose a <strong>Small</strong> or <strong>Medium</strong> widget. Then long-press the widget → <strong>Edit Widget</strong> → set <strong>Script</strong> to "Custard Today."
-        </li>
-        <li>
-          <strong>Set your store slug</strong><br>
-          In the widget edit screen, set <strong>Parameter</strong> to your store's slug from Step 1. For example:
-          <div class="code-block">mt-horeb</div>
-          The widget will start showing today's flavor at your store.
-        </li>
-      </ol>
+      <h2>Step 2: Get Your Install Snippet</h2>
+      <p>Choose a mode, then click a store in Step 1 to populate your personalized snippet.</p>
+
+      <!-- Mode toggle -->
+      <div class="snippet-section-label" style="margin-top: var(--space-3);">Mode</div>
+      <div class="mode-toggle" role="group" aria-label="Widget mode">
+        <button class="mode-btn active" id="btn-single" aria-pressed="true">Single Store</button>
+        <button class="mode-btn" id="btn-multi" aria-pressed="false">Multi-Store (up to 3)</button>
+      </div>
+
+      <!-- Single-store selection display -->
+      <div id="single-store-display" class="selected-store-display" aria-live="polite">
+        <span class="selected-store-placeholder">No store selected — click a result above</span>
+      </div>
+
+      <!-- Multi-store selection display -->
+      <div id="multi-store-display" class="multi-store-list" aria-live="polite" style="display:none;">
+        <span class="selected-store-placeholder">Select up to 3 stores above</span>
+      </div>
+
+      <!-- Snippet output -->
+      <div class="snippet-section-label">Your Install Snippet</div>
+      <textarea
+        id="snippet-output"
+        class="snippet-textarea placeholder"
+        readonly
+        spellcheck="false"
+        aria-label="Generated Scriptable install snippet"
+        aria-readonly="true"
+      >Select a store above to generate your snippet</textarea>
+
+      <button class="copy-snippet-btn" id="copy-snippet-btn" disabled aria-label="Copy snippet to clipboard">Copy Snippet</button>
+
+      <!-- Simplified 4-step install instructions -->
+      <div class="install-steps">
+        <h3>How to install</h3>
+        <ol class="setup-steps">
+          <li>
+            <strong>Find your store</strong> — Search above and click your location to pre-configure the snippet.
+          </li>
+          <li>
+            <strong>Copy the snippet</strong> — Tap <em>Copy Snippet</em> above.
+          </li>
+          <li>
+            <strong>Run it in Scriptable</strong> — Open <a href="https://apps.apple.com/app/scriptable/id1405459188" target="_blank" rel="noopener">Scriptable</a>, tap <strong>+</strong>, paste the snippet, then tap <strong>▶</strong> to run it. The full widget script downloads and saves automatically.
+          </li>
+          <li>
+            <strong>Add the widget to your home screen</strong> — Long-press your home screen → tap <strong>+</strong> → search for <strong>Scriptable</strong> → choose a <strong>Small</strong> or <strong>Medium</strong> widget → long-press the widget → <strong>Edit Widget</strong> → set <strong>Script</strong> to "Custard Today."
+          </li>
+        </ol>
+      </div>
     </section>
 
-    <!-- Widget modes -->
+    <!-- Widget modes reference -->
     <section class="widget-section">
       <h2>Widget Modes</h2>
       <p>The widget supports three layouts depending on widget size and configuration:</p>
@@ -308,7 +490,7 @@
         </div>
         <div class="widget-mode-card">
           <h3>📍 Multi-Store (Medium)</h3>
-          <p>Compare today's flavor at 3 stores. Requires adding <code>MODE="multi"</code> and a <code>slugs</code> array to the script. See the <a href="assets/custard-today.js" target="_blank">script comments</a> for details.</p>
+          <p>Compare today's flavor at up to 3 stores side-by-side. Select Multi-Store mode in Step 2 above — the snippet is pre-configured with your chosen stores automatically.</p>
         </div>
       </div>
     </section>
@@ -331,13 +513,24 @@
   <script>CustardPlanner.initShareButton('page-share');</script>
   <script>
     (function() {
+      // ── State ────────────────────────────────────────────────────
       var stores = [];
-      var searchInput = document.getElementById('slug-search');
-      var resultsDiv = document.getElementById('slug-results');
-      var countDiv = document.getElementById('slug-count');
-      var toast = document.getElementById('slug-toast');
+      var selectedMode = 'single';   // 'single' | 'multi'
+      var selectedSlugs = [];        // max 3 in multi mode; max 1 in single
 
-      // Load stores.json
+      // ── DOM refs ─────────────────────────────────────────────────
+      var searchInput      = document.getElementById('slug-search');
+      var resultsDiv       = document.getElementById('slug-results');
+      var countDiv         = document.getElementById('slug-count');
+      var toast            = document.getElementById('slug-toast');
+      var btnSingle        = document.getElementById('btn-single');
+      var btnMulti         = document.getElementById('btn-multi');
+      var singleDisplay    = document.getElementById('single-store-display');
+      var multiDisplay     = document.getElementById('multi-store-display');
+      var snippetOutput    = document.getElementById('snippet-output');
+      var copyBtn          = document.getElementById('copy-snippet-btn');
+
+      // ── Load stores ───────────────────────────────────────────────
       fetch('stores.json')
         .then(function(r) { return r.json(); })
         .then(function(data) {
@@ -348,6 +541,7 @@
           countDiv.textContent = 'Could not load store data.';
         });
 
+      // ── Search ────────────────────────────────────────────────────
       searchInput.addEventListener('input', function() {
         var q = searchInput.value.trim().toLowerCase();
         if (q.length < 2) {
@@ -381,7 +575,7 @@
               '<span class="slug-result-name">' + displayName + '</span>' +
               (addr ? '<span class="slug-result-address">' + addr + '</span>' : '') +
             '</div>' +
-            '<span class="slug-value" data-slug="' + CustardPlanner.escapeHtml(s.slug) + '" title="Click to copy">' + CustardPlanner.escapeHtml(s.slug) + '</span>' +
+            '<span class="slug-value" data-slug="' + CustardPlanner.escapeHtml(s.slug) + '" title="Click to add to snippet">' + CustardPlanner.escapeHtml(s.slug) + '</span>' +
           '</div>';
         }
         resultsDiv.innerHTML = html;
@@ -390,29 +584,191 @@
           : matches.length + ' match' + (matches.length === 1 ? '' : 'es');
       });
 
-      // Copy slug on click
+      // ── Slug click → add to snippet ───────────────────────────────
       resultsDiv.addEventListener('click', function(e) {
         var target = e.target.closest('.slug-value');
         if (!target) return;
         var slug = target.getAttribute('data-slug');
+        addStoreToSnippet(slug);
+      });
+
+      // ── Mode toggle ───────────────────────────────────────────────
+      btnSingle.addEventListener('click', function() {
+        setMode('single');
+      });
+
+      btnMulti.addEventListener('click', function() {
+        setMode('multi');
+      });
+
+      function setMode(mode) {
+        selectedMode = mode;
+        // Reset slugs when switching modes
+        selectedSlugs = [];
+
+        if (mode === 'single') {
+          btnSingle.classList.add('active');
+          btnSingle.setAttribute('aria-pressed', 'true');
+          btnMulti.classList.remove('active');
+          btnMulti.setAttribute('aria-pressed', 'false');
+          singleDisplay.style.display = '';
+          multiDisplay.style.display = 'none';
+        } else {
+          btnMulti.classList.add('active');
+          btnMulti.setAttribute('aria-pressed', 'true');
+          btnSingle.classList.remove('active');
+          btnSingle.setAttribute('aria-pressed', 'false');
+          singleDisplay.style.display = 'none';
+          multiDisplay.style.display = '';
+        }
+
+        renderSelectionDisplay();
+        generateSnippet();
+      }
+
+      // ── Add store to snippet state ────────────────────────────────
+      function addStoreToSnippet(slug) {
+        if (selectedMode === 'single') {
+          selectedSlugs = [slug];
+        } else {
+          // Multi mode: add if not already present and under limit
+          if (selectedSlugs.indexOf(slug) === -1) {
+            if (selectedSlugs.length >= 3) {
+              // Replace the last one when at cap
+              selectedSlugs[2] = slug;
+            } else {
+              selectedSlugs.push(slug);
+            }
+          }
+        }
+        renderSelectionDisplay();
+        generateSnippet();
+      }
+
+      function removeSlug(slug) {
+        selectedSlugs = selectedSlugs.filter(function(s) { return s !== slug; });
+        renderSelectionDisplay();
+        generateSnippet();
+      }
+
+      // ── Render the selected-store pill(s) ────────────────────────
+      function renderSelectionDisplay() {
+        if (selectedMode === 'single') {
+          if (selectedSlugs.length === 0) {
+            singleDisplay.innerHTML = '<span class="selected-store-placeholder">No store selected — click a result above</span>';
+          } else {
+            singleDisplay.innerHTML = renderPill(selectedSlugs[0]);
+          }
+        } else {
+          if (selectedSlugs.length === 0) {
+            multiDisplay.innerHTML = '<span class="selected-store-placeholder">Select up to 3 stores above</span>';
+          } else {
+            var html = '';
+            for (var i = 0; i < selectedSlugs.length; i++) {
+              html += renderPill(selectedSlugs[i]);
+            }
+            multiDisplay.innerHTML = html;
+          }
+        }
+      }
+
+      function renderPill(slug) {
+        return '<span class="selected-store-pill">' +
+          CustardPlanner.escapeHtml(slug) +
+          '<button class="remove-btn" aria-label="Remove ' + CustardPlanner.escapeHtml(slug) + '" data-remove-slug="' + CustardPlanner.escapeHtml(slug) + '">' +
+          '&times;' +
+          '</button>' +
+        '</span>';
+      }
+
+      // Delegate remove-button clicks on both display containers
+      singleDisplay.addEventListener('click', function(e) {
+        var btn = e.target.closest('[data-remove-slug]');
+        if (btn) removeSlug(btn.getAttribute('data-remove-slug'));
+      });
+      multiDisplay.addEventListener('click', function(e) {
+        var btn = e.target.closest('[data-remove-slug]');
+        if (btn) removeSlug(btn.getAttribute('data-remove-slug'));
+      });
+
+      // ── Generate snippet ─────────────────────────────────────────
+      function generateSnippet() {
+        if (selectedSlugs.length === 0) {
+          setSnippetPlaceholder('Select a store above to generate your snippet');
+          return;
+        }
+
+        var snippet;
+
+        if (selectedMode === 'single') {
+          var slug = selectedSlugs[0];
+          snippet = [
+            'let fm; try { fm = FileManager.iCloud(); } catch(e) { fm = FileManager.local(); }',
+            'let dir = fm.documentsDirectory();',
+            'let path = fm.joinPath(dir, "Custard Today.js");',
+            'let req = new Request("https://custard.chriskaschner.com/api/v1/widget/script");',
+            'let code = await req.loadString();',
+            'let config = \'var slug = "' + slug + '";\\n\';',
+            'fm.writeString(path, config + code);'
+          ].join('\n');
+        } else {
+          // Multi-store mode
+          var slugList = selectedSlugs.map(function(s) { return '"' + s + '"'; }).join(', ');
+          var primary = selectedSlugs[0];
+          snippet = [
+            'let fm; try { fm = FileManager.iCloud(); } catch(e) { fm = FileManager.local(); }',
+            'let dir = fm.documentsDirectory();',
+            'let path = fm.joinPath(dir, "Custard Today.js");',
+            'let req = new Request("https://custard.chriskaschner.com/api/v1/widget/script");',
+            'let code = await req.loadString();',
+            'let config = \'var MODE = "multi";\\nvar slugs = [' + slugList + '];\\nvar slug = "' + primary + '";\\n\';',
+            'fm.writeString(path, config + code);'
+          ].join('\n');
+        }
+
+        snippetOutput.value = snippet;
+        snippetOutput.classList.remove('placeholder');
+        copyBtn.disabled = false;
+      }
+
+      function setSnippetPlaceholder(msg) {
+        snippetOutput.value = msg;
+        snippetOutput.classList.add('placeholder');
+        copyBtn.disabled = true;
+      }
+
+      // ── Copy snippet ─────────────────────────────────────────────
+      copyBtn.addEventListener('click', function() {
+        if (copyBtn.disabled) return;
+        var text = snippetOutput.value;
         if (navigator.clipboard) {
-          navigator.clipboard.writeText(slug).then(function() {
-            showToast();
+          navigator.clipboard.writeText(text).then(function() {
+            showToast('Snippet copied!');
+          }).catch(function() {
+            fallbackCopy(text);
           });
         } else {
-          // Fallback: select text
-          var range = document.createRange();
-          range.selectNodeContents(target);
-          var sel = window.getSelection();
-          sel.removeAllRanges();
-          sel.addRange(range);
-          showToast();
+          fallbackCopy(text);
         }
       });
 
-      function showToast() {
+      function fallbackCopy(text) {
+        snippetOutput.select();
+        try {
+          document.execCommand('copy');
+          showToast('Snippet copied!');
+        } catch(e) {
+          showToast('Select and copy manually');
+        }
+      }
+
+      // ── Toast ─────────────────────────────────────────────────────
+      var toastTimer = null;
+      function showToast(msg) {
+        toast.textContent = msg || 'Copied!';
         toast.classList.add('visible');
-        setTimeout(function() {
+        if (toastTimer) clearTimeout(toastTimer);
+        toastTimer = setTimeout(function() {
           toast.classList.remove('visible');
         }, 1500);
       }
