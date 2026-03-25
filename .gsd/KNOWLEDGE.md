@@ -58,6 +58,14 @@ When consolidating/redirecting a page, audit these files for stale references: `
 
 Scriptable's DrawContext API only supports basic primitives (no gradients, no compositing modes). To create depth and richness: (1) layer multiple semi-transparent shapes at slight offsets for shadows, (2) use `darkenHex()` to compute shadow colors from base colors, (3) draw crosshatch patterns with loops over diagonal lines, (4) add specular highlights as small white ellipses with low alpha (0.12–0.45). The key insight is that 5–7 layered primitives with varying alpha values produce surprisingly good results.
 
+## WIDGET_SCRIPT embedding requires script-based regeneration (M004/S01)
+
+`worker/src/widget-routes.js` embeds the full `widgets/custard-today.js` source as a template literal (`WIDGET_SCRIPT`). The source is ~650 lines. Editing this template literal by hand is error-prone — backtick or `${}` escaping issues are invisible until runtime. Instead, regenerate the file from the canonical source using a script that reads `widgets/custard-today.js` and reconstructs `widget-routes.js` (header + template literal + handler functions). Always verify with `cd worker && npx vitest run test/widget-routes.test.js` after regeneration.
+
+## Three-file sync for widget updates (M004/S01)
+
+When updating the widget script, three files must stay in sync: (1) `widgets/custard-today.js` (canonical), (2) `docs/assets/custard-today.js` (byte-identical copy), (3) `worker/src/widget-routes.js` (WIDGET_SCRIPT embedded copy). Edit the canonical file first, `cp` to docs/assets, then regenerate widget-routes.js. Verify: `diff widgets/custard-today.js docs/assets/custard-today.js && cd worker && npm test`.
+
 ## Planning assumptions about existing page state may be stale (M003)
 
 S02 assumed widget.html was a redirect stub needing replacement, but it was already a complete 427-line page. The slice correctly verified before building, avoiding wasted effort. Lesson: always run a quick file inspection (`wc -l`, `head -20`) to verify the actual state of a target file before implementing changes. This is especially important when planning documents reference an older state of the codebase.

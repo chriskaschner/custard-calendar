@@ -12,7 +12,7 @@ This file is the explicit capability and coverage contract for the project.
 - Source: user
 - Primary owning slice: M004/S01
 - Supporting slices: none
-- Validation: unmapped
+- Validation: Contract verified — widget.html generates personalized bootstrap snippet with store slug; 1109 Worker tests pass. UAT pending: real iOS device paste-and-run.
 - Notes: Requires a Worker endpoint to serve the full widget script. Bootstrap must handle naming the script and saving it to the Scriptable directory.
 
 ### R012 — Widget multi-store setup without manual code editing
@@ -23,7 +23,7 @@ This file is the explicit capability and coverage contract for the project.
 - Source: user
 - Primary owning slice: M004/S01
 - Supporting slices: none
-- Validation: unmapped
+- Validation: Contract verified — widget.html multi-store mode toggle generates snippet with MODE="multi" and slugs array (up to 3 stores). UAT pending: real iOS device multi-store install.
 - Notes: Bootstrap snippet must include both MODE and slugs configuration.
 
 ### R013 — Widget self-update from API
@@ -34,8 +34,8 @@ This file is the explicit capability and coverage contract for the project.
 - Source: inferred
 - Primary owning slice: M004/S01
 - Supporting slices: none
-- Validation: unmapped
-- Notes: Self-update must preserve the user's store slug and mode configuration. Frequency TBD — could be weekly check or on every run with caching.
+- Validation: Contract verified — WIDGET_VERSION constant + fire-and-forget checkForUpdate() in widget JS; /api/v1/widget/version returns version JSON; 16 widget-routes tests pass. Uses alert-not-overwrite pattern (D007). UAT pending: version mismatch alert on real device.
+- Notes: Self-update uses version-check-and-alert (not auto-overwrite). User is directed to widget.html to re-run bootstrap with updated code.
 
 ### R014 — Rarity threshold unification across all surfaces
 - Class: quality-attribute
@@ -78,8 +78,8 @@ This file is the explicit capability and coverage contract for the project.
 - Source: inferred
 - Primary owning slice: M004/S01
 - Supporting slices: none
-- Validation: unmapped
-- Notes: Could be as simple as serving the static JS file from the Worker with appropriate headers, or could dynamically inject the store slug. Cache-Control headers important for self-update cadence.
+- Validation: Contract verified — GET /api/v1/widget/script returns text/javascript with 24h cache-control; GET /api/v1/widget/version returns JSON with 1h cache; rate-limited at 60/h and 120/h; 16 vitest tests pass.
+- Notes: Server endpoint is stateless — serves canonical JS unchanged. Config injection is client-side (D006).
 
 ## Validated
 
@@ -208,13 +208,13 @@ This file is the explicit capability and coverage contract for the project.
 
 | ID | Class | Status | Primary owner | Supporting | Proof |
 |---|---|---|---|---|---|
-| R011 | primary-user-loop | active | M004/S01 | none | unmapped |
-| R012 | primary-user-loop | active | M004/S01 | none | unmapped |
-| R013 | continuity | active | M004/S01 | none | unmapped |
+| R011 | primary-user-loop | active | M004/S01 | none | contract verified, UAT pending |
+| R012 | primary-user-loop | active | M004/S01 | none | contract verified, UAT pending |
+| R013 | continuity | active | M004/S01 | none | contract verified, UAT pending |
 | R014 | quality-attribute | active | M004/S02 | none | unmapped |
 | R015 | launchability | active | M004/S03 | none | unmapped |
 | R016 | operability | active | M004/S04 | none | unmapped |
-| R017 | integration | active | M004/S01 | none | unmapped |
+| R017 | integration | active | M004/S01 | none | contract verified, UAT pending |
 | SIMP-01 | core-capability | validated | M002/S03 | none | validated |
 | SIMP-02 | core-capability | validated | M002/S03 | none | validated |
 | SHARE-01 | core-capability | validated | M002/S05 | none | validated |

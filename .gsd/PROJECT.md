@@ -19,10 +19,10 @@ Three milestones complete (M001–M003). The product is shipped and live with:
 - Full telemetry, email alerts, weekly digests, quiz modes
 
 Known issues being addressed in M004:
-- Widget setup flow requires multiple copy-paste operations and manual code editing
+- ~~Widget setup flow requires multiple copy-paste operations and manual code editing~~ → S01 complete: one-paste bootstrap flow with snippet generator
 - SVG og:image meta tags render blank on all social platforms
 - Rarity threshold divergence between surfaces
-- Widget JS dual-file manual sync
+- Widget JS dual-file manual sync (now three-file sync with embedded WIDGET_SCRIPT)
 
 ## Architecture / Key Patterns
 
