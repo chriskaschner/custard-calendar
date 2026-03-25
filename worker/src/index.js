@@ -39,6 +39,7 @@ import { handleApiToday } from './route-today.js';
 import { handleApiNearbyFlavors } from './route-nearby.js';
 import { applyIpRateLimit } from './rate-limit.js';
 import { handleGroupRoute } from './group-routes.js';
+import { handleWidgetScript, handleWidgetVersion } from './widget-routes.js';
 
 const CACHE_MAX_AGE = 3600; // 1 hour (browser + edge cache)
 const API_CSP = "default-src 'none'; base-uri 'none'; frame-ancestors 'none'";
@@ -118,7 +119,7 @@ function getPublicWriteLimitConfig(canonical) {
   return null;
 }
 
-function getExpensiveReadLimitConfig(canonical, method) {
+export function getExpensiveReadLimitConfig(canonical, method) {
   if (method !== 'GET') return null;
   if (canonical.startsWith('/og/')) {
     return {
@@ -167,6 +168,20 @@ function getExpensiveReadLimitConfig(canonical, method) {
       prefix: 'rl:drive:read',
       limit: 120,
       error: 'Rate limit exceeded. Max 120 drive requests per hour.',
+    };
+  }
+  if (canonical === '/api/widget/script') {
+    return {
+      prefix: 'rl:widget:script',
+      limit: 60,
+      error: 'Rate limit exceeded. Max 60 widget script requests per hour.',
+    };
+  }
+  if (canonical === '/api/widget/version') {
+    return {
+      prefix: 'rl:widget:version',
+      limit: 120,
+      error: 'Rate limit exceeded. Max 120 widget version requests per hour.',
     };
   }
   return null;
@@ -644,6 +659,10 @@ export async function handleRequest(request, env, fetchFlavorsFn = defaultFetchF
     if (reliabilityResponse) {
       response = reliabilityResponse;
     }
+  } else if (canonical === '/api/widget/script') {
+    response = handleWidgetScript(corsHeaders);
+  } else if (canonical === '/api/widget/version') {
+    response = handleWidgetVersion(corsHeaders);
   } else if (canonical.startsWith('/og/')) {
     const cardResponse = await handleSocialCard(canonical, env, corsHeaders);
     if (cardResponse) {

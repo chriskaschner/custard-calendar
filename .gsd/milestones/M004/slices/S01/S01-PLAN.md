@@ -27,6 +27,7 @@
 - `grep -q "WIDGET_VERSION" widgets/custard-today.js` — version constant exists in widget script
 - `diff widgets/custard-today.js docs/assets/custard-today.js` — both widget files are identical
 - `grep -q "snippet" docs/widget.html` — snippet generator UI exists in widget page
+- `curl -s -o /dev/null -w "%{http_code}" -X GET -H "CF-Connecting-IP: 1.2.3.4" "https://custard.chriskaschner.com/api/v1/widget/version" | grep -q "200\|429"` — version endpoint is reachable and returns expected status (200 ok or 429 rate-limit on throttle)
 
 ## Observability / Diagnostics
 
@@ -43,7 +44,7 @@
 
 ## Tasks
 
-- [ ] **T01: Add Worker endpoints for widget script and version** `est:1h`
+- [x] **T01: Add Worker endpoints for widget script and version** `est:1h`
   - Why: The bootstrap snippet needs a stable URL to download the full widget script. R017 requires a Worker endpoint; R013 requires a version endpoint for self-update checks.
   - Files: `worker/src/widget-routes.js`, `worker/src/index.js`, `worker/test/widget-routes.test.js`
   - Do: Create `widget-routes.js` with `handleWidgetScript()` (embeds `widgets/custard-today.js` content as a string constant, returns as `text/javascript` with 24h cache) and `handleWidgetVersion()` (returns `{"version":"1.0","updated":"..."}` with 1h cache). Wire both into `index.js` route dispatcher at `/api/widget/script` and `/api/widget/version`. Add rate-limit configs to `getExpensiveReadLimitConfig()`. Write comprehensive vitest tests covering status codes, content-type headers, cache headers, response bodies, and rate-limit config presence.
