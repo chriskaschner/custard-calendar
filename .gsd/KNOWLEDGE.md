@@ -41,3 +41,23 @@ Share URLs use `radar.html?flavor=X` rather than `index.html?flavor=X` because r
 ## Page deletion checklist (S03)
 
 When consolidating/redirecting a page, audit these files for stale references: `tests/test_redirects.py` (add redirect entry), `tests/test_static_assets.py` (remove asset tests), `tests/test_inline_style_elimination.py` (remove style tests), `worker/test/browser/*.spec.mjs` (delete or update page-specific specs), `docs/sw.js` (remove from STATIC_ASSETS + bump CACHE_VERSION), and any page that links to the deleted page (e.g. fun.html linked to forecast-map.html via Fronts section).
+
+## Python test deps require --all-extras
+
+`uv sync` alone does not install `pytest` or `icalendar` because they live in `[project.optional-dependencies].dev`. Run `uv sync --all-extras` (or `uv sync --extra dev --extra analytics`) in worktree environments before running `uv run pytest`. The standard `uv sync` only installs production dependencies.
+
+## test_browser_clickthrough.py requires live environment
+
+`tests/test_browser_clickthrough.py` spawns `wrangler dev` and drives a Chrome/Chromium browser against it. It will timeout/fail in any environment without a Chrome binary and available port. Skip with `SKIP_BROWSER_TESTS=1` env var or `--ignore=tests/test_browser_clickthrough.py`. The test is guarded by a `pytest.mark.skipif` that checks for this env var.
+
+## Widget JS dual-file sync discipline (M003)
+
+`widgets/custard-today.js` is the canonical source; `docs/assets/custard-today.js` must be a byte-identical copy. There is no automated sync — it's a manual copy step. Any edit to one file without copying to the other causes widget behavior divergence between the GitHub Pages-served version (docs/assets/) and the canonical source (widgets/). Verify with `diff widgets/custard-today.js docs/assets/custard-today.js` — exit 0 means sync is intact.
+
+## DrawContext layered rendering technique (M003)
+
+Scriptable's DrawContext API only supports basic primitives (no gradients, no compositing modes). To create depth and richness: (1) layer multiple semi-transparent shapes at slight offsets for shadows, (2) use `darkenHex()` to compute shadow colors from base colors, (3) draw crosshatch patterns with loops over diagonal lines, (4) add specular highlights as small white ellipses with low alpha (0.12–0.45). The key insight is that 5–7 layered primitives with varying alpha values produce surprisingly good results.
+
+## Planning assumptions about existing page state may be stale (M003)
+
+S02 assumed widget.html was a redirect stub needing replacement, but it was already a complete 427-line page. The slice correctly verified before building, avoiding wasted effort. Lesson: always run a quick file inspection (`wc -l`, `head -20`) to verify the actual state of a target file before implementing changes. This is especially important when planning documents reference an older state of the codebase.
