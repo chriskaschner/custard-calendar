@@ -298,14 +298,20 @@ async function handleTriviaCard(slug, corsHeaders) {
 /**
  * Returns a rarity label given the average gap in days between appearances.
  * Mirrors the client-side logic in docs/planner-domain.js.
+ *
+ * Thresholds (must match route-today.js and planner-domain.js):
+ *   > 150 days  -> Ultra Rare  (appears less than ~2.5x/year)
+ *   > 90 days   -> Rare        (appears roughly every 3-5 months)
+ *   <= 90 days  -> null        (not considered rare)
+ *
  * @param {number|null} avgGapDays
  * @returns {string|null}
  */
 function rarityLabel(avgGapDays) {
   const days = Math.round(Number(avgGapDays));
   if (!Number.isFinite(days) || days < 2) return null;
-  if (days > 120) return 'Ultra Rare';
-  if (days > 60) return 'Rare';
+  if (days > 150) return 'Ultra Rare';
+  if (days > 90) return 'Rare';
   return null;
 }
 
@@ -685,3 +691,5 @@ async function renderCard({ flavor, storeName, dateDisplay, appearances, storeCo
   <text x="1100" y="580" font-size="24" fill="#4a4a5a" font-family="system-ui, -apple-system, sans-serif" text-anchor="end">Custard Calendar</text>
 </svg>`;
 }
+
+export { rarityLabel };
