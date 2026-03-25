@@ -69,3 +69,11 @@ When updating the widget script, three files must stay in sync: (1) `widgets/cus
 ## Planning assumptions about existing page state may be stale (M003)
 
 S02 assumed widget.html was a redirect stub needing replacement, but it was already a complete 427-line page. The slice correctly verified before building, avoiding wasted effort. Lesson: always run a quick file inspection (`wc -l`, `head -20`) to verify the actual state of a target file before implementing changes. This is especially important when planning documents reference an older state of the codebase.
+
+## og:image slug accuracy requires per-page verification (M004/S03)
+
+When T02 updated the 8 HTML files, 5 of them had incorrect slugs — compare.html, fun.html, updates.html, and widget.html all pointed to `forecast.svg` instead of their own page-specific slugs. This happened because the original SVG implementation used a generic forecast card for all pages. When adding a new page or changing og:image references, always verify the slug matches a key in `PAGE_CARD_DEFS` in `worker/src/social-card.js`. A mismatched slug silently returns 404 to social crawlers (blank card, no error visible to users). Cross-check command: `rg "og:image.*\.png" docs/*.html | sed 's/.*\/og\/page\///' | sed 's/\.png.*//'` — each slug must exist in PAGE_CARD_DEFS.
+
+## PNG route must precede SVG route in handleSocialCard (M004/S03)
+
+In `worker/src/social-card.js`, the `handleSocialCard` function uses sequential regex matching. The PNG page route (`/og/page/{slug}.png`) must appear **before** the SVG page route (`/og/page/{slug}.svg`) to prevent the more permissive pattern from shadowing it. Same applies to any future format variants — more specific patterns go first.

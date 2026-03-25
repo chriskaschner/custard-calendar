@@ -45,7 +45,7 @@ This file is the explicit capability and coverage contract for the project.
 - Source: user
 - Primary owning slice: M004/S03
 - Supporting slices: none
-- Validation: unmapped
+- Validation: Contract verified — renderPageCardPng() + handlePageCardPng() implemented using workers-og ImageResponse (1200×630 PNG). PNG route `/og/page/{slug}.png` wired before SVG match. All 8 HTML files updated from .svg to .png og:image. 13 PAGE_CARD_DEFS slugs (including new compare/fun entries). 8 new vitest tests covering valid slug, unknown slug 404, CORS, cache TTL, all-slug sweep, cone failure fallback, SVG non-interference. 1097 Worker tests pass. UAT pending: spot-check shared URL preview on Twitter/iMessage after deploy.
 - Notes: Requires converting the SVG renderPageCard function to a PNG renderer using workers-og (ImageResponse). The pattern is already proven by quiz and flavor rarity PNG cards. Affected pages: index, compare, updates, map, quiz, group, fun, widget.
 
 ### R016 — Widget JS file sync automation
@@ -209,7 +209,7 @@ This file is the explicit capability and coverage contract for the project.
 | R012 | primary-user-loop | active | M004/S01 | none | contract verified, UAT pending |
 | R013 | continuity | active | M004/S01 | none | contract verified, UAT pending |
 | R014 | quality-attribute | validated | M004/S02 | none | contract verified, test gate |
-| R015 | launchability | active | M004/S03 | none | unmapped |
+| R015 | launchability | active | M004/S03 | none | contract verified, UAT pending |
 | R016 | operability | active | M004/S04 | none | unmapped |
 | R017 | integration | active | M004/S01 | none | contract verified, UAT pending |
 | SIMP-01 | core-capability | validated | M002/S03 | none | validated |
