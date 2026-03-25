@@ -4,6 +4,7 @@
  * Generates 1200x630 OG-image-compatible cards for:
  *   - Per-store/date flavor cards:  GET /og/{slug}/{date}.svg   (SVG)
  *   - Per-page static cards:        GET /og/page/{page-slug}.svg (SVG)
+ *   - Per-page static cards (PNG):  GET /og/page/{page-slug}.png (PNG)
  *   - Trivia/Did-you-know cards:    GET /og/trivia/{slug}.svg   (SVG)
  *   - Quiz result cards:            GET /og/quiz/{archetype}/{flavor}.png (PNG)
  *   - Flavor rarity cards:          GET /og/flavor/{flavor-name}.png     (PNG)
@@ -199,6 +200,16 @@ const PAGE_CARD_DEFS = {
     subhead: 'Group vote on today\'s flavors. Let the car decide.',
     flavorName: 'Vanilla',
   },
+  compare: {
+    headline: 'Compare Today\'s Flavors',
+    subhead: 'Side-by-side schedules for your favorite stores.',
+    flavorName: 'Turtle',
+  },
+  fun: {
+    headline: 'Custard Fun Zone',
+    subhead: 'Mad Libs, trivia, and flavor surprises.',
+    flavorName: 'Cookie Dough',
+  },
 };
 
 async function renderPageCard({ headline, subhead, flavorName }) {
@@ -240,6 +251,75 @@ async function handlePageCard(pageSlug, corsHeaders) {
       'Cache-Control': 'public, max-age=86400',
     },
   });
+}
+
+// ---------------------------------------------------------------------------
+// Page-level OG cards (PNG via workers-og)
+// Endpoint: GET /og/page/{page-slug}.png
+// ---------------------------------------------------------------------------
+
+/**
+ * Render a 1200x630 PNG OG card for a site page.
+ *
+ * @param {Object} params
+ * @param {string} params.headline       Page headline text
+ * @param {string} params.subhead        Page subhead text
+ * @param {string} params.flavorName     Flavor name for cone art
+ * @param {string|null} params.conePngBase64  Pre-fetched cone PNG as base64 (or null)
+ * @param {string} params.accentColor    Hex color for accent bar
+ * @returns {Promise<Response>} PNG image response
+ */
+async function renderPageCardPng({ headline, subhead, flavorName, conePngBase64, accentColor }) {
+  const esc = (s) => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  const coneImg = conePngBase64
+    ? `<img src="data:image/png;base64,${conePngBase64}" width="150" height="175" style="object-fit:contain;" />`
+    : '';
+  const html = `
+    <div style="display:flex; flex-direction:column; width:1200px; height:630px;
+                background:linear-gradient(180deg,#1a1a2e,#16213e); position:relative;">
+      <div style="height:8px; background:${esc(accentColor)}; width:100%;"></div>
+      <div style="display:flex; flex-direction:row; padding:60px 80px; align-items:center; flex:1;">
+        <div style="display:flex; margin-right:40px;">${coneImg}</div>
+        <div style="display:flex; flex-direction:column;">
+          <div style="font-size:56px; font-weight:bold; color:#ffffff; font-family:sans-serif; margin-bottom:16px; line-height:1.1;">
+            ${esc(headline)}
+          </div>
+          <div style="font-size:28px; color:#9EC5E8; font-family:sans-serif; margin-bottom:24px;">
+            ${esc(subhead)}
+          </div>
+          <div style="font-size:22px; color:#4a4a5a; font-family:sans-serif;">
+            custard.chriskaschner.com
+          </div>
+        </div>
+      </div>
+    </div>`;
+  return new ImageResponse(html, { width: 1200, height: 630 });
+}
+
+async function handlePageCardPng(pageSlug, corsHeaders) {
+  const def = PAGE_CARD_DEFS[pageSlug];
+  if (!def) {
+    return new Response(JSON.stringify({ error: 'Page card not found.' }), {
+      status: 404,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+  const profile = getFlavorProfile(def.flavorName || '');
+  const accentColor = BASE_COLORS[profile.base] || '#005696';
+  const conePngBase64 = await fetchConePngBase64(def.flavorName);
+  const response = await renderPageCardPng({
+    headline: def.headline,
+    subhead: def.subhead,
+    flavorName: def.flavorName,
+    conePngBase64,
+    accentColor,
+  });
+  const headers = new Headers(response.headers);
+  for (const [k, v] of Object.entries(corsHeaders)) {
+    headers.set(k, v);
+  }
+  headers.set('Cache-Control', 'public, max-age=86400');
+  return new Response(response.body, { status: response.status, headers });
 }
 
 async function renderTriviaCard({ headline, fact, flavorName }) {
@@ -549,6 +629,10 @@ export async function handleSocialCard(path, env, corsHeaders) {
   // Match /og/flavor/{flavor-slug}.png -- flavor rarity PNG cards
   const flavorMatch = path.match(/^\/og\/flavor\/(.+)\.png$/);
   if (flavorMatch) return handleFlavorCard(flavorMatch[1], env, corsHeaders);
+
+  // Match /og/page/{slug}.png -- page-level static cards (PNG for social platforms)
+  const pagePngMatch = path.match(/^\/og\/page\/([\w-]+)\.png$/);
+  if (pagePngMatch) return handlePageCardPng(pagePngMatch[1], corsHeaders);
 
   // Match /og/page/{slug}.svg -- page-level static cards
   const pageMatch = path.match(/^\/og\/page\/([\w-]+)\.svg$/);

@@ -148,6 +148,23 @@ Add `renderPageCardPng()` and `handlePageCardPng()` to `worker/src/social-card.j
 - `grep -c 'renderPageCardPng\|handlePageCardPng' worker/src/social-card.js` returns 2+ (functions exist)
 - `grep -c 'pagePngMatch' worker/src/social-card.js` returns 2 (regex + if statement)
 
+## Observability Impact
+
+**What signals change after this task:**
+- A new route `/og/page/{slug}.png` becomes live. Successful responses produce `Content-Type: image/png` and `Cache-Control: public, max-age=86400`. These are observable in Cloudflare Worker request logs via path prefix `/og/page/` and content-type filter.
+- Unknown slugs now return `404 application/json` instead of falling through to `null` (which would yield a Worker 500). This is a tighter failure mode — social crawlers get a clean 404 rather than an unhandled null.
+
+**How a future agent inspects this task:**
+- `curl -si https://custard.chriskaschner.com/og/page/forecast.png | head -5` — verify `Content-Type: image/png` and `200 OK`.
+- `curl -si https://custard.chriskaschner.com/og/page/bogus.png` — verify `HTTP/2 404` and `{"error":"Page card not found."}`.
+- `grep -c 'renderPageCardPng\|handlePageCardPng' worker/src/social-card.js` — returns ≥ 2 (definition + call site each).
+- `grep -c 'pagePngMatch' worker/src/social-card.js` — returns exactly 2 (regex + if guard).
+
+**Failure state visibility:**
+- If `workers-og`'s `ImageResponse` throws (e.g., malformed HTML template), the Worker catches it as an unhandled exception and returns 500. This is visible in Cloudflare Worker tail logs.
+- Cone PNG fetch failures are silent — `fetchConePngBase64` returns `null` and `renderPageCardPng` renders without cone art. The card still renders as a valid PNG. No explicit error logged.
+- If a page slug is present in an HTML `og:image` URL but absent from `PAGE_CARD_DEFS`, live endpoint returns 404. Detectable via: iterate `PAGE_CARD_DEFS` keys vs. slugs referenced in `docs/*.html`.
+
 ## Inputs
 
 - `worker/src/social-card.js` — existing file with `PAGE_CARD_DEFS`, `renderPageCard`, `handlePageCard`, `renderQuizCardPng`, `handleQuizCard`, `handleSocialCard` router

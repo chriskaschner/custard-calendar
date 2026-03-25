@@ -29,7 +29,7 @@
 
 ## Tasks
 
-- [ ] **T01: Add PNG page card renderer, handler, route, and tests** `est:45m`
+- [x] **T01: Add PNG page card renderer, handler, route, and tests** `est:45m`
   - Why: Core backend work — adds the `renderPageCardPng` and `handlePageCardPng` functions mirroring the proven quiz/flavor card pattern, wires the PNG route into `handleSocialCard`, adds `compare`/`fun` entries to `PAGE_CARD_DEFS`, and writes comprehensive vitest tests.
   - Files: `worker/src/social-card.js`, `worker/test/social-card.test.js`
   - Do: Add `compare` and `fun` to `PAGE_CARD_DEFS`. Write `renderPageCardPng()` using `ImageResponse` with the same HTML template structure as `renderQuizCardPng`. Write `handlePageCardPng()` following `handleQuizCard` pattern (lookup def → 404 if missing → get accent color → fetch cone → render → copy CORS + cache headers). Add PNG regex match **before** the existing `.svg` page match in `handleSocialCard`. Add a new describe block in the test file with tests for: valid slug returns 200 PNG, unknown slug returns 404, 24h cache, CORS headers, all 13 slugs return 200, cone fetch failure fallback, no interference with SVG routes.
@@ -43,7 +43,24 @@
   - Verify: `rg "og:image.*\.svg" docs/*.html` returns nothing; `rg "og:image.*\.png" docs/*.html` returns 8 matches; `cd worker && npm test` still green
   - Done when: All 8 pages reference `.png` og:image URLs matching defined `PAGE_CARD_DEFS` slugs, and zero SVG og:image references remain
 
-## Files Likely Touched
+## Observability / Diagnostics
+
+**Runtime signals:**
+- A request to `/og/page/{slug}.png` that returns a non-200 response is observable in Cloudflare Worker analytics as a 4xx (unknown slug) or 5xx (ImageResponse crash). Filter by path prefix `/og/page/` and status ≥ 400.
+- `fetchConePngBase64` failure is silent by design (returns `null`); the card still renders but without cone art. If users report blank cards, check CDN availability at `custard.chriskaschner.com/assets/cones/{slug}.png`.
+
+**Inspection surface:**
+- Curl any page slug: `curl -I https://custard.chriskaschner.com/og/page/forecast.png` — expect `Content-Type: image/png` and `Cache-Control: public, max-age=86400`.
+- Curl an unknown slug: `curl -i https://custard.chriskaschner.com/og/page/bogus.png` — expect HTTP 404 with `{"error":"Page card not found."}`.
+- Full slug inventory: `grep -oP "(?<=\/og\/page\/)[^'\"]+(?=\.png)" docs/*.html` lists which page slugs the HTML files reference.
+
+**Failure visibility:**
+- If `PAGE_CARD_DEFS` is missing a slug that an HTML file references, the live endpoint returns 404. This is silent to users (social platforms show no image). Detect via: `rg "og:image.*\.png" docs/*.html | grep -oP '[\w-]+(?=\.png)'` and verify each slug exists in `PAGE_CARD_DEFS`.
+- `ImageResponse` (workers-og) crashes produce a Worker exception; these surface in Cloudflare error logs and return 500 to social crawlers.
+
+**Redaction:** No user data passes through this endpoint — slugs are static identifiers from `PAGE_CARD_DEFS`. No PII to redact.
+
+
 
 - `worker/src/social-card.js`
 - `worker/test/social-card.test.js`
