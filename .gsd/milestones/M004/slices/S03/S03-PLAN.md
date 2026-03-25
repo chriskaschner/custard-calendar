@@ -36,7 +36,7 @@
   - Verify: `cd worker && npm test -- test/social-card.test.js` passes with new tests
   - Done when: `handleSocialCard('/og/page/forecast.png', {}, cors)` returns a 200 PNG response and all new + existing tests pass
 
-- [ ] **T02: Update HTML og:image meta tags from SVG to PNG** `est:15m`
+- [x] **T02: Update HTML og:image meta tags from SVG to PNG** `est:15m`
   - Why: Closes the loop — the PNG endpoint exists (T01) but pages still reference `.svg`. This task updates all 8 HTML files to point to the correct `.png` URLs with proper per-page slugs.
   - Files: `docs/index.html`, `docs/compare.html`, `docs/fun.html`, `docs/map.html`, `docs/quiz.html`, `docs/group.html`, `docs/updates.html`, `docs/widget.html`
   - Do: Update `og:image` content attribute in each file: index→`forecast.png`, compare→`compare.png`, fun→`fun.png`, map→`map.png`, quiz→`quiz.png`, group→`group.png`, updates→`alerts.png`, widget→`widget.png`. Each change is a single-line `sed` or `edit` replacing `.svg` with `.png` and fixing the slug where needed.
