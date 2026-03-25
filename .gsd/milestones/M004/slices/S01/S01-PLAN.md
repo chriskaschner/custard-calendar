@@ -51,7 +51,7 @@
   - Verify: `cd worker && npm test` — all tests pass including new widget-routes tests
   - Done when: `GET /api/v1/widget/script` returns JS content with correct headers; `GET /api/v1/widget/version` returns version JSON; all Worker tests green
 
-- [ ] **T02: Add self-update version check to widget script** `est:45m`
+- [x] **T02: Add self-update version check to widget script** `est:45m`
   - Why: R013 requires the widget to detect when a newer version is available. The version-check-and-alert approach (not auto-overwrite) avoids config-preservation complexity while still notifying users.
   - Files: `widgets/custard-today.js`, `docs/assets/custard-today.js`
   - Do: Add `var WIDGET_VERSION = "1.0";` near the top of `custard-today.js` (after the existing config vars around line 20). Add a `checkForUpdate()` async function that fetches `/api/v1/widget/version`, compares to `WIDGET_VERSION`, and shows a Scriptable `Alert` if a newer version is available (with "Update" button linking to widget.html). Call `checkForUpdate()` in a non-blocking try/catch near the entry point — failures must not break widget rendering. Copy the identical changes to `docs/assets/custard-today.js`. Update the embedded string constant in `worker/src/widget-routes.js` from T01 to match.

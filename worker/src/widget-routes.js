@@ -38,6 +38,7 @@ export const WIDGET_SCRIPT = `
 var API_BASE = "https://custard.chriskaschner.com/api/v1";
 var CONE_PNG_BASE = "https://custard.chriskaschner.com/assets/cones";
 var slug = (args.widgetParameter || "mt-horeb").trim();
+var WIDGET_VERSION = "1.0";
 
 var BRAND_COLORS = {
   "Culver's": { bg: "#005696", text: "#FFFFFF" },
@@ -613,6 +614,29 @@ async function buildMultiStore(slugs) {
   return w;
 }
 
+// --- Self-update check ---
+// Fetches /api/v1/widget/version and alerts user if a newer version is available.
+// Fire-and-forget — never awaited, so it cannot block widget rendering.
+async function checkForUpdate() {
+  try {
+    var req = new Request(API_BASE + "/widget/version");
+    var data = await req.loadJSON();
+    if (data && data.version && data.version !== WIDGET_VERSION) {
+      var alert = new Alert();
+      alert.title = "Update Available";
+      alert.message = "A new version of Custard Today is available. Visit the widget page to update.";
+      alert.addAction("Open Widget Page");
+      alert.addCancelAction("Later");
+      var idx = await alert.presentAlert();
+      if (idx === 0) {
+        Safari.open("https://custard.chriskaschner.com/widget.html");
+      }
+    }
+  } catch (e) {
+    // Version check failure is silent — never break widget rendering
+  }
+}
+
 // --- Entry point ---
 
 // When running in-app (not on home screen), config.widgetFamily is null.
@@ -644,6 +668,7 @@ if (config.runsInWidget) {
   }
 }
 
+checkForUpdate();
 Script.complete();
 `;
 
