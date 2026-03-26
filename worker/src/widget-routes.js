@@ -1,3 +1,22 @@
+/**
+ * Widget endpoints for the Custard Today Scriptable widget.
+ *
+ * GET /api/v1/widget/script  — returns custard-today.js as text/javascript (24h cache)
+ * GET /api/v1/widget/version — returns {"version":"1.0","updated":"2026-03-25"} (1h cache)
+ *
+ * The bootstrap snippet on widget.html downloads the script from /api/v1/widget/script,
+ * prepends the user's store config, and writes it to Scriptable's directory.
+ * The installed widget checks /api/v1/widget/version on each run for update alerts.
+ *
+ * Rate limits: script 60/hour (rl:widget:script), version 120/hour (rl:widget:version)
+ * Failure mode: 429 with descriptive error on throttle; version-check failures are
+ * caught client-side and do not interrupt widget rendering.
+ */
+
+export const WIDGET_VERSION = "1.0";
+export const WIDGET_UPDATED = "2026-03-25";
+
+export const WIDGET_SCRIPT = `
 // Custard Today -- Scriptable widget for iOS
 // Shows today's Flavor of the Day from Custard Calendar.
 //
@@ -651,3 +670,42 @@ if (config.runsInWidget) {
 
 checkForUpdate();
 Script.complete();
+`;
+
+/**
+ * Handle GET /api/v1/widget/script
+ * Returns the full custard-today.js source as text/javascript with 24h cache.
+ * Rate-limited: 60 requests/hour (rl:widget:script).
+ */
+export function handleWidgetScript(corsHeaders) {
+  return new Response(WIDGET_SCRIPT, {
+    status: 200,
+    headers: {
+      ...corsHeaders,
+      'Content-Type': 'text/javascript; charset=utf-8',
+      'Cache-Control': 'public, max-age=86400',
+    },
+  });
+}
+
+/**
+ * Handle GET /api/v1/widget/version
+ * Returns current widget version as JSON with 1h cache.
+ * Rate-limited: 120 requests/hour (rl:widget:version).
+ * The installed widget calls this on each run to detect available updates.
+ * Version-check failures on the client are caught and silenced — the widget
+ * continues rendering normally if this endpoint is unreachable.
+ */
+export function handleWidgetVersion(corsHeaders) {
+  return Response.json(
+    { version: WIDGET_VERSION, updated: WIDGET_UPDATED },
+    {
+      status: 200,
+      headers: {
+        ...corsHeaders,
+        'Content-Type': 'application/json',
+        'Cache-Control': 'public, max-age=3600',
+      },
+    }
+  );
+}

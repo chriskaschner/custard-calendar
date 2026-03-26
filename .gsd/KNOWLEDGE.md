@@ -30,9 +30,9 @@ workers-og uses WASM (resvg-wasm) that cannot load in standard Node/Vitest envir
 
 No social platform (Twitter, Facebook, iMessage, WhatsApp, Discord, Slack, Telegram) supports SVG as an og:image format. SVG cards render as blank placeholders. Always use PNG or JPEG for OG card endpoints. The existing `/og/*.svg` endpoints still serve SVG and are effectively broken for social sharing.
 
-## Rarity threshold divergence across files
+## Rarity threshold alignment (resolved in M004/S02)
 
-Two sets of rarity thresholds exist in the codebase: `planner-domain.js` and `social-card.js` use >120 days = Ultra Rare, >60 days = Rare. `route-today.js` uses >150 days = Ultra Rare, >90 days = Rare. A flavor at 130 days shows "Ultra Rare" on OG cards but "Rare" on the homepage. This needs alignment to a single source of truth.
+All three rarity files (`route-today.js`, `social-card.js`, `planner-domain.js`) now use identical thresholds: `> 150` days = Ultra Rare, `> 90` days = Rare. The divergence where `social-card.js` used `> 120` / `> 60` has been fixed. `worker/test/rarity-threshold-consistency.test.js` (13 boundary-value assertions) prevents future drift — it runs in every `npm test` invocation. If thresholds need to change, update all three files and the test.
 
 ## radar.html as canonical share entry point (S05)
 
@@ -41,3 +41,39 @@ Share URLs use `radar.html?flavor=X` rather than `index.html?flavor=X` because r
 ## Page deletion checklist (S03)
 
 When consolidating/redirecting a page, audit these files for stale references: `tests/test_redirects.py` (add redirect entry), `tests/test_static_assets.py` (remove asset tests), `tests/test_inline_style_elimination.py` (remove style tests), `worker/test/browser/*.spec.mjs` (delete or update page-specific specs), `docs/sw.js` (remove from STATIC_ASSETS + bump CACHE_VERSION), and any page that links to the deleted page (e.g. fun.html linked to forecast-map.html via Fronts section).
+
+## Python test deps require --all-extras
+
+`uv sync` alone does not install `pytest` or `icalendar` because they live in `[project.optional-dependencies].dev`. Run `uv sync --all-extras` (or `uv sync --extra dev --extra analytics`) in worktree environments before running `uv run pytest`. The standard `uv sync` only installs production dependencies.
+
+## test_browser_clickthrough.py requires live environment
+
+`tests/test_browser_clickthrough.py` spawns `wrangler dev` and drives a Chrome/Chromium browser against it. It will timeout/fail in any environment without a Chrome binary and available port. Skip with `SKIP_BROWSER_TESTS=1` env var or `--ignore=tests/test_browser_clickthrough.py`. The test is guarded by a `pytest.mark.skipif` that checks for this env var.
+
+## Widget JS dual-file sync discipline (M003)
+
+`widgets/custard-today.js` is the canonical source; `docs/assets/custard-today.js` must be a byte-identical copy. There is no automated sync — it's a manual copy step. Any edit to one file without copying to the other causes widget behavior divergence between the GitHub Pages-served version (docs/assets/) and the canonical source (widgets/). Verify with `diff widgets/custard-today.js docs/assets/custard-today.js` — exit 0 means sync is intact.
+
+## DrawContext layered rendering technique (M003)
+
+Scriptable's DrawContext API only supports basic primitives (no gradients, no compositing modes). To create depth and richness: (1) layer multiple semi-transparent shapes at slight offsets for shadows, (2) use `darkenHex()` to compute shadow colors from base colors, (3) draw crosshatch patterns with loops over diagonal lines, (4) add specular highlights as small white ellipses with low alpha (0.12–0.45). The key insight is that 5–7 layered primitives with varying alpha values produce surprisingly good results.
+
+## WIDGET_SCRIPT embedding requires script-based regeneration (M004/S01)
+
+`worker/src/widget-routes.js` embeds the full `widgets/custard-today.js` source as a template literal (`WIDGET_SCRIPT`). The source is ~650 lines. Editing this template literal by hand is error-prone — backtick or `${}` escaping issues are invisible until runtime. Instead, regenerate the file from the canonical source using a script that reads `widgets/custard-today.js` and reconstructs `widget-routes.js` (header + template literal + handler functions). Always verify with `cd worker && npx vitest run test/widget-routes.test.js` after regeneration.
+
+## Three-file sync for widget updates (M004/S01)
+
+When updating the widget script, three files must stay in sync: (1) `widgets/custard-today.js` (canonical), (2) `docs/assets/custard-today.js` (byte-identical copy), (3) `worker/src/widget-routes.js` (WIDGET_SCRIPT embedded copy). Edit the canonical file first, `cp` to docs/assets, then regenerate widget-routes.js. Verify: `diff widgets/custard-today.js docs/assets/custard-today.js && cd worker && npm test`.
+
+## Planning assumptions about existing page state may be stale (M003)
+
+S02 assumed widget.html was a redirect stub needing replacement, but it was already a complete 427-line page. The slice correctly verified before building, avoiding wasted effort. Lesson: always run a quick file inspection (`wc -l`, `head -20`) to verify the actual state of a target file before implementing changes. This is especially important when planning documents reference an older state of the codebase.
+
+## og:image slug accuracy requires per-page verification (M004/S03)
+
+When T02 updated the 8 HTML files, 5 of them had incorrect slugs — compare.html, fun.html, updates.html, and widget.html all pointed to `forecast.svg` instead of their own page-specific slugs. This happened because the original SVG implementation used a generic forecast card for all pages. When adding a new page or changing og:image references, always verify the slug matches a key in `PAGE_CARD_DEFS` in `worker/src/social-card.js`. A mismatched slug silently returns 404 to social crawlers (blank card, no error visible to users). Cross-check command: `rg "og:image.*\.png" docs/*.html | sed 's/.*\/og\/page\///' | sed 's/\.png.*//'` — each slug must exist in PAGE_CARD_DEFS.
+
+## PNG route must precede SVG route in handleSocialCard (M004/S03)
+
+In `worker/src/social-card.js`, the `handleSocialCard` function uses sequential regex matching. The PNG page route (`/og/page/{slug}.png`) must appear **before** the SVG page route (`/og/page/{slug}.svg`) to prevent the more permissive pattern from shadowing it. Same applies to any future format variants — more specific patterns go first.

@@ -492,3 +492,78 @@ describe('handleSocialCard - flavor rarity PNG card', () => {
     expect(triviaRes.headers.get('Content-Type')).toBe('image/svg+xml');
   });
 });
+
+// ---------------------------------------------------------------------------
+// Page PNG OG card endpoint: /og/page/{page-slug}.png
+// ---------------------------------------------------------------------------
+
+describe('handleSocialCard - page PNG card', () => {
+  let originalFetch;
+
+  beforeEach(() => {
+    originalFetch = globalThis.fetch;
+    globalThis.fetch = mockFetchSuccess();
+  });
+
+  afterEach(() => {
+    globalThis.fetch = originalFetch;
+  });
+
+  it('returns a PNG response for a valid page slug', async () => {
+    const res = await handleSocialCard('/og/page/forecast.png', {}, CORS);
+    expect(res.status).toBe(200);
+    expect(res.headers.get('Content-Type')).toMatch(/image\/png/);
+  });
+
+  it('returns 404 for unknown page slug', async () => {
+    const res = await handleSocialCard('/og/page/nonexistent.png', {}, CORS);
+    expect(res.status).toBe(404);
+    const body = await res.json();
+    expect(body.error).toBeTruthy();
+  });
+
+  it('sets 24h cache TTL', async () => {
+    const res = await handleSocialCard('/og/page/calendar.png', {}, CORS);
+    expect(res.headers.get('Cache-Control')).toBe('public, max-age=86400');
+  });
+
+  it('includes CORS headers in response', async () => {
+    const cors = { 'Access-Control-Allow-Origin': 'https://custard.chriskaschner.com' };
+    const res = await handleSocialCard('/og/page/map.png', {}, cors);
+    expect(res.headers.get('Access-Control-Allow-Origin')).toBe('https://custard.chriskaschner.com');
+  });
+
+  it('returns PNG for all 13 defined page slugs', async () => {
+    const slugs = [
+      'forecast', 'calendar', 'alerts', 'map', 'quiz', 'radar',
+      'siri', 'widget', 'fronts', 'scoop', 'group', 'compare', 'fun',
+    ];
+    for (const slug of slugs) {
+      const res = await handleSocialCard(`/og/page/${slug}.png`, {}, CORS);
+      expect(res.status, `slug "${slug}" should return 200`).toBe(200);
+      expect(res.headers.get('Content-Type'), `slug "${slug}" should return PNG`).toMatch(/image\/png/);
+    }
+  });
+
+  it('falls back gracefully when cone PNG fetch fails', async () => {
+    globalThis.fetch = mockFetch404();
+    const res = await handleSocialCard('/og/page/radar.png', {}, CORS);
+    expect(res.status).toBe(200);
+    expect(res.headers.get('Content-Type')).toMatch(/image\/png/);
+  });
+
+  it('does not interfere with existing SVG page route', async () => {
+    const res = await handleSocialCard('/og/page/forecast.svg', {}, CORS);
+    expect(res.status).toBe(200);
+    expect(res.headers.get('Content-Type')).toBe('image/svg+xml');
+    const body = await res.text();
+    expect(body).toContain('<svg');
+  });
+
+  it('does not interfere with existing SVG store/date routes', async () => {
+    const env = { DB: createMockD1({ snapshot: { flavor: 'Vanilla' } }) };
+    const res = await handleSocialCard('/og/mt-horeb/2026-02-22.svg', env, CORS);
+    expect(res.status).toBe(200);
+    expect(res.headers.get('Content-Type')).toBe('image/svg+xml');
+  });
+});
