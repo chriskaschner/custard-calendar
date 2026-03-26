@@ -105,7 +105,7 @@ var CustardToday = (function () {
   // Hero cache (localStorage) -- instant render for returning users
   // ---------------------------------------------------------------------------
 
-  function cacheHeroData(slug, day, fetchedAt) {
+  function cacheHeroData(slug, day, fetchedAt, displayName) {
     try {
       localStorage.setItem('custard-hero-cache', JSON.stringify({
         slug: slug,
@@ -114,6 +114,7 @@ var CustardToday = (function () {
         date: day.date,
         type: day.type,
         fetchedAt: fetchedAt,
+        displayName: displayName || '',
         ts: Date.now()
       }));
     } catch (e) {}
@@ -256,7 +257,11 @@ var CustardToday = (function () {
         renderWeekStrip(timeline.slice(1), fetchedAt);
         // Write cache for instant render on next visit (confirmed flavors only)
         if (timeline[0].type === 'confirmed') {
-          cacheHeroData(slug, timeline[0], fetchedAt);
+          var cacheStore = _allStores.find(function (s) { return s.slug === slug; });
+          var dn = (cacheStore && typeof CustardPlanner.getDisplayName === 'function')
+            ? CustardPlanner.getDisplayName(cacheStore, _allStores)
+            : slug.replace(/-/g, ' ').replace(/\b\w/g, function (c) { return c.toUpperCase(); });
+          cacheHeroData(slug, timeline[0], fetchedAt, dn);
         }
         _heroCacheRendered = false;
       } else if (!_heroCacheRendered) {
@@ -626,7 +631,7 @@ var CustardToday = (function () {
         if (todayMeta) {
           var freshness = heroCache.fetchedAt ? timeSince(heroCache.fetchedAt) : '';
           todayMeta.innerHTML =
-            '<span class="today-store">' + escapeHtml(savedSlug) + '</span>' +
+            '<span class="today-store">' + escapeHtml(heroCache.displayName || savedSlug.replace(/-/g, ' ').replace(/\b\w/g, function (c) { return c.toUpperCase(); })) + '</span>' +
             (freshness ? '<span class="freshness-ts">Updated ' + escapeHtml(freshness) + '</span>' : '');
         }
         if (todayRarity) todayRarity.hidden = true;
