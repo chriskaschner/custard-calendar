@@ -1819,7 +1819,7 @@ footer a {
 
 .rarity-badge-ultra-rare { background: var(--rarity-ultra-rare-bg); color: var(--rarity-ultra-rare-text); }
 .rarity-badge-rare { background: var(--rarity-rare-bg); color: var(--rarity-rare-text); }
-.rarity-badge-uncommon { background: var(--rarity-uncommon-bg); color: var(--rarity-uncommon-text); }
+.rarity-badge-uncommon { display: none; }
 .rarity-badge-common,
 .rarity-badge-staple { display: none; }
 
@@ -3522,6 +3522,9 @@ textarea:focus-visible {
   font-size: 0.8rem;
   color: #888;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 140px;
 }
 
 .compare-store-detail {
@@ -3660,6 +3663,10 @@ textarea:focus-visible {
 .compare-store-chip-name {
   color: var(--text);
   font-weight: 500;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .compare-store-chip-remove {

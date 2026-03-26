@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Sharpen the Core
-status: unknown
-stopped_at: Phase 33.1 UI-SPEC approved
-last_updated: "2026-03-22T14:29:26.293Z"
+status: Phase complete — ready for verification
+stopped_at: Completed 33.1-01-PLAN.md
+last_updated: "2026-03-26T17:38:25.187Z"
 progress:
   total_phases: 10
   completed_phases: 6
   total_plans: 14
-  completed_plans: 11
+  completed_plans: 12
 ---
 
 # Project State
@@ -67,6 +67,8 @@ Recent decisions affecting current work:
 - [Phase 33]: localStorage hero cache renders instantly; loadForecast runs as background refresh
 - [Phase 33]: SW API caching uses allowlist + explicit deny list for location-sensitive endpoints
 - [Phase 33]: CACHE_VERSION bumped to custard-v22 for SW update propagation
+- [Phase 33.1]: Uncommon rarity badge suppressed via CSS display:none (tokens retained in :root for backward compat)
+- [Phase 33.1]: Hero cache displayName computed at write time from getDisplayName() for instant cached render
 
 ### Roadmap Evolution
 
@@ -84,6 +86,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-22T14:29:26.290Z
-Stopped at: Phase 33.1 UI-SPEC approved
-Resume file: .planning/phases/33.1-bug-fixes-store-disambiguation-rarity-logic-art-migration-stale-signals/33.1-UI-SPEC.md
+Last session: 2026-03-26T17:38:25.184Z
+Stopped at: Completed 33.1-01-PLAN.md
+Resume file: None
