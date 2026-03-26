@@ -215,13 +215,19 @@ Plans:
 
 ### Phase 33.1: Bug Fixes: Store Disambiguation, Rarity Logic, Art Migration, Stale Signals (INSERTED)
 
-**Goal:** [Urgent work - to be planned]
-**Requirements**: TBD
+**Goal:** Remaining display bugs are fixed: store names truncate gracefully, hero cache shows human-readable names, uncommon rarity badge is suppressed, and DOW insight cards only appear for relevant flavors
+**Requirements**: BUG-01, BUG-02, BUG-03, BUG-04
 **Depends on:** Phase 33
-**Plans:** 0 plans
+**Success Criteria** (what must be TRUE):
+  1. Compare store chips and flavor row labels truncate with ellipsis instead of overflowing when store names are long
+  2. Hero card cached render shows a disambiguated store display name, not a raw slug
+  3. The "Uncommon" rarity badge is hidden via CSS, consistent with the tier's removal from the rarity system
+  4. DOW pattern insight cards only render when the signal flavor matches today's FOTD at the user's store
+**Plans:** 2 plans
 
 Plans:
-- [ ] TBD (run /gsd:plan-phase 33.1 to break down)
+- [ ] 33.1-01-PLAN.md -- CSS chip truncation, uncommon badge suppression, hero cache display name fix
+- [ ] 33.1-02-PLAN.md -- Signal card DOW pattern relevance filter in fetchSignalsShared
 
 ### Phase 34: Social Sharing
 **Goal**: Users who discover a fun result or rare flavor can share it on social platforms with a rich preview that drives clicks back to the site
@@ -240,7 +246,7 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute sequentially: 30 -> 31 -> 33 -> 34 -> 32. (Page Consolidation deferred to last -- needs real traffic data.)
+Phases execute sequentially: 30 -> 31 -> 33 -> 33.1 -> 34 -> 32. (Page Consolidation deferred to last -- needs real traffic data.)
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
@@ -255,6 +261,7 @@ Phases execute sequentially: 30 -> 31 -> 33 -> 34 -> 32. (Page Consolidation def
 | 31. Homepage Redesign | v3.0 | Complete    | 2026-03-20 | 2026-03-19 |
 | 32. Page Consolidation | v3.0 | 0/2 | Not started | - |
 | 33. Performance | 1/1 | Complete    | 2026-03-20 | - |
+| 33.1 Bug Fixes | v3.0 | 0/2 | Planned | - |
 | 34. Social Sharing | v3.0 | 0/2 | Not started | - |
 
-**Total: 34 phases, 72 plans across 8 milestones**
+**Total: 35 phases, 74 plans across 8 milestones**

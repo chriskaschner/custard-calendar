@@ -29,6 +29,13 @@ Simplify the product, fix performance, optimize for discoverability. First miles
 - [ ] **SHARE-01**: Quiz results page has optimized og:image and shareable URL for social platforms
 - [ ] **SHARE-02**: Flavor rarity stats are shareable as standalone social content (OG card per flavor)
 
+### Bug Fixes (Phase 33.1)
+
+- [ ] **BUG-01**: Store display names truncate gracefully in space-constrained surfaces (compare chips, flavor row labels)
+- [ ] **BUG-02**: Hero card cached render shows human-readable store name instead of raw slug text
+- [ ] **BUG-03**: Uncommon rarity badge is hidden (tier removed from rarity system)
+- [ ] **BUG-04**: DOW pattern insight cards only render when signal flavor matches today's actual FOTD
+
 ## Future Requirements
 
 Tracked but not in current roadmap. Promote only after 10 real users provide feedback.
@@ -62,12 +69,16 @@ Tracked but not in current roadmap. Promote only after 10 real users provide fee
 | PERF-01 | Phase 33 | Complete |
 | SHARE-01 | Phase 34 | Pending |
 | SHARE-02 | Phase 34 | Pending |
+| BUG-01 | Phase 33.1 | Pending |
+| BUG-02 | Phase 33.1 | Pending |
+| BUG-03 | Phase 33.1 | Pending |
+| BUG-04 | Phase 33.1 | Pending |
 
 **Coverage:**
-- v3.0 requirements: 10 total
-- Mapped to phases: 10
+- v3.0 requirements: 14 total
+- Mapped to phases: 14
 - Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-19*
-*Last updated: 2026-03-19 after roadmap creation*
+*Last updated: 2026-03-26 after Phase 33.1 planning*
