@@ -360,16 +360,32 @@
    * @param {HTMLElement} section - Container section (hidden/shown)
    * @param {HTMLElement} list - List container for signal cards
    * @param {number} [limit=3]
+   * @param {Object} [options] - Optional config
+   * @param {string} [options.todayFlavor] - When set, DOW pattern signals are
+   *   filtered to only show when the signal's flavor matches today's actual FOTD
    */
-  function fetchSignalsShared(workerBase, slug, section, list, limit) {
+  function fetchSignalsShared(workerBase, slug, section, list, limit, options) {
     limit = limit || 3;
     fetch(workerBase + '/api/v1/signals/' + encodeURIComponent(slug) + '?limit=' + limit)
       .then(function (resp) { return resp.ok ? resp.json() : null; })
       .then(function (data) {
         if (!data || !data.signals || data.signals.length === 0) return;
+        var todayFlavor = (options && options.todayFlavor) || null;
+        var filtered = data.signals;
+        if (todayFlavor) {
+          filtered = [];
+          for (var i = 0; i < data.signals.length; i++) {
+            var sig = data.signals[i];
+            // Keep non-DOW signals unconditionally; DOW signals only if flavor matches today's FOTD
+            if (sig.type !== 'dow_pattern' || (sig.flavor && sig.flavor.toLowerCase() === todayFlavor.toLowerCase())) {
+              filtered.push(sig);
+            }
+          }
+        }
+        if (filtered.length === 0) return;
         var html = '';
-        for (var i = 0; i < data.signals.length; i++) {
-          html += signalCardHTML(data.signals[i], slug, workerBase);
+        for (var fi = 0; fi < filtered.length; fi++) {
+          html += signalCardHTML(filtered[fi], slug, workerBase);
         }
         list.innerHTML = html;
         section.hidden = false;
