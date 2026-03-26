@@ -417,10 +417,12 @@ var SharedNav = (function () {
       var city = (item.getAttribute('data-city') || '').toLowerCase();
       var state = (item.getAttribute('data-state') || '').toLowerCase();
       var address = (item.getAttribute('data-address') || '').toLowerCase();
+      var storeSlug = (item.getAttribute('data-slug') || '').toLowerCase();
       var match = name.indexOf(lower) !== -1
         || city.indexOf(lower) !== -1
         || state.indexOf(lower) !== -1
-        || address.indexOf(lower) !== -1;
+        || address.indexOf(lower) !== -1
+        || storeSlug.indexOf(lower) !== -1;
       item.classList.toggle('hidden', !match);
     }
   }

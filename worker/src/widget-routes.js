@@ -229,15 +229,23 @@ function drawConeIcon(flavorName, size) {
     ctx.strokePath();
   }
 
-  // Waffle crosshatch — diagonal lines (left-to-right and right-to-left)
+  // Waffle crosshatch — diagonal lines clipped to cone boundary
   ctx.setLineWidth(Math.max(0.4, s * 0.012));
-  var diagStep = scoopR * 0.45;
+  var diagStep = scoopR * 0.35;
   for (var di = -2; di <= 2; di++) {
     var offset = di * diagStep;
-    // Left-leaning diagonal
+    var startY = coneTopY + coneH * 0.05;
+    var endY = coneBotY - coneH * 0.10;
+    var startX = scoopCx + offset * 0.8;
+    var endX = scoopCx + offset * 0.2;
+    // Clamp to cone edges at each y position
+    var startHalfW = scoopR * 0.90 * (coneBotY - startY) / coneH;
+    startX = Math.max(scoopCx - startHalfW, Math.min(scoopCx + startHalfW, startX));
+    var endHalfW = scoopR * 0.90 * (coneBotY - endY) / coneH;
+    endX = Math.max(scoopCx - endHalfW, Math.min(scoopCx + endHalfW, endX));
     var d1 = new Path();
-    d1.move(new Point(scoopCx + offset - scoopR * 0.3, coneTopY));
-    d1.addLine(new Point(scoopCx + offset * 0.2, coneBotY - coneH * 0.15));
+    d1.move(new Point(startX, startY));
+    d1.addLine(new Point(endX, endY));
     ctx.addPath(d1);
     ctx.strokePath();
   }
@@ -390,11 +398,17 @@ function truncateDesc(desc, maxLen) {
   return desc.substring(0, maxLen - 1).trim() + "\u2026";
 }
 
-// Extract city from store name (e.g. "Culver's of Mt. Horeb, WI" -> "Mt. Horeb")
+// Extract city from store name, preserving street suffix for disambiguation
+// "Culver's of Madison, WI - Todd Dr" -> "Madison - Todd Dr"
+// "Culver's of Verona, WI" -> "Verona"
 function cityFromStore(storeName) {
   if (!storeName) return slug;
-  var m = storeName.match(/of\s+(.+?)(?:,|\s*-)/);
-  if (m) return m[1].trim();
+  var m = storeName.match(/of\s+(.+?),\s*\w{2}\s*(?:-\s*(.+))?$/);
+  if (m) {
+    var city = m[1].trim();
+    var street = m[2] ? m[2].trim() : null;
+    return street ? city + " - " + street : city;
+  }
   var c = storeName.match(/^(.+?),/);
   if (c) return c[1].trim();
   return slug;
