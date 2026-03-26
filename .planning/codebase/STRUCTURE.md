@@ -152,7 +152,6 @@ custard/                                    # Monorepo root
 │   │   ├── backfill-wayback/               # Wayback Machine backfill
 │   │   └── forecasts/                      # Generated forecast JSONs
 │   ├── widgets/                            # iOS Scriptable widgets
-│   │   ├── custard-scriptable.js           # Scriptable widget
 │   │   └── custard-today.js                # Today widget
 │   ├── archive/                            # Archived/deprecated code
 │   │   ├── alexa/                          # Deprecated Alexa skill
@@ -226,8 +225,8 @@ custard/                                    # Monorepo root
 
 **`custard-calendar/widgets/`:**
 - Purpose: iOS Scriptable app widgets
-- Contains: 2 JavaScript widget files for Scriptable.app
-- Key files: `widgets/custard-scriptable.js`, `widgets/custard-today.js`
+- Contains: 1 JavaScript widget file for Scriptable.app
+- Key files: `widgets/custard-today.js`
 
 **`custard-calendar/archive/`:**
 - Purpose: Deprecated code kept for reference

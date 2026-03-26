@@ -325,7 +325,6 @@ Consumer habit product first, intelligence platform second. One promise everywhe
 
 **Sister repo strategy:**
 - custard-calendar: source of truth (product + API + messaging canon)
-- custard-scriptable: distribution adapter with canonical API contract
 - custard-tidbyt: community distribution adapter with shared contract tests
 - Treat as adapters, not independent products; reduce marketing confusion + breakage risk
 
