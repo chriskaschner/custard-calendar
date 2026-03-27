@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Sharpen the Core
-status: Phase complete — ready for verification
-stopped_at: Completed 33.1-02-PLAN.md
-last_updated: "2026-03-26T17:37:48.231Z"
+status: Executing Phase 33.1
+stopped_at: Phase 33.1 UI-SPEC approved
+last_updated: "2026-03-26T17:34:22.004Z"
 progress:
   total_phases: 10
-  completed_phases: 7
-  total_plans: 15
-  completed_plans: 12
+  completed_phases: 6
+  total_plans: 16
+  completed_plans: 11
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-19)
 
 **Core value:** A family can instantly see what flavors are at their nearby stores and decide where to go
-**Current focus:** Phase 33 — Performance (complete)
+**Current focus:** Phase 33.1 — bug-fixes-store-disambiguation-rarity-logic-art-migration-stale-signals
 
 ## Current Position
 
-Phase: 33 (Performance) — COMPLETE
-Plan: 1 of 1 (done)
+Phase: 33.1 (bug-fixes-store-disambiguation-rarity-logic-art-migration-stale-signals) — EXECUTING
+Plan: 1 of 2
 
 ## Performance Metrics
 
@@ -67,7 +67,6 @@ Recent decisions affecting current work:
 - [Phase 33]: localStorage hero cache renders instantly; loadForecast runs as background refresh
 - [Phase 33]: SW API caching uses allowlist + explicit deny list for location-sensitive endpoints
 - [Phase 33]: CACHE_VERSION bumped to custard-v22 for SW update propagation
-- [Phase 33.1]: Client-side DOW pattern filtering via todayFlavor parameter keeps worker unchanged
 
 ### Roadmap Evolution
 
@@ -85,6 +84,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-26T17:37:48.228Z
-Stopped at: Completed 33.1-02-PLAN.md
-Resume file: None
+Last session: 2026-03-22T14:29:26.290Z
+Stopped at: Phase 33.1 UI-SPEC approved
+Resume file: .planning/phases/33.1-bug-fixes-store-disambiguation-rarity-logic-art-migration-stale-signals/33.1-UI-SPEC.md

@@ -1,32 +1,32 @@
 {
   "version": "1.0",
-  "timestamp": "2026-03-22T14:30:25.451Z",
+  "timestamp": "2026-03-27T20:23:48.366Z",
   "phase": "33.1",
-  "phase_name": "Bug Fixes: Store Disambiguation, Rarity Logic, Art Migration, Stale Signals",
+  "phase_name": "bug-fixes-store-disambiguation-rarity-logic-art-migration-stale-signals",
   "phase_dir": ".planning/phases/33.1-bug-fixes-store-disambiguation-rarity-logic-art-migration-stale-signals",
-  "plan": 0,
-  "task": 0,
-  "total_tasks": 0,
+  "plan": 2,
+  "task": 1,
+  "total_tasks": 3,
   "status": "paused",
   "completed_tasks": [
-    {"id": 1, "name": "CONTEXT.md -- discuss-phase decisions captured", "status": "done", "commit": "743cbf4"},
-    {"id": 2, "name": "UI-SPEC.md -- design contract approved (5/6 PASS, 1 FLAG)", "status": "done", "commit": "f4d0e69"}
+    {"id": 1, "name": "CSS chip truncation and uncommon badge suppression", "status": "done", "commit": "0b1042a"},
+    {"id": 2, "name": "Hero card cached render display name", "status": "done", "commit": "1dc6fd0"},
+    {"id": 3, "name": "DOW signal relevance filter", "status": "done", "commit": "99875c9"}
   ],
-  "remaining_tasks": [
-    {"id": 3, "name": "Plan phase (/gsd:plan-phase 33.1)", "status": "not_started"},
-    {"id": 4, "name": "Execute phase (/gsd:execute-phase 33.1)", "status": "not_started"}
+  "remaining_tasks": [],
+  "blockers": [
+    {"description": "BUG-04 verification gap: DOW signal filter implemented but no page renders signal cards (removed in Phase 31 redesign). Filter is unreachable.", "type": "technical", "workaround": "Accept as-is since bug is also unobservable, or wire a caller"}
   ],
-  "blockers": [],
-  "human_actions_pending": [],
+  "human_actions_pending": [
+    {"action": "Decide BUG-04 disposition: accept as-is, wire caller, or run gap closure", "context": "Signal cards not rendered on any page since Phase 31 redesign", "blocking": true},
+    {"action": "Update Scriptable widget on iOS device", "context": "Widget fixes deployed but user must re-copy script from widget.html", "blocking": false}
+  ],
   "decisions": [
-    {"decision": "Store disambiguation uses slug-derived street name + city", "rationale": "Slug is Culver's own identifier. Format: 'Mineral Point Rd - Madison, WI'. Only disambiguate when multiple stores share a city. Apply everywhere consistently.", "phase": "33.1"},
-    {"decision": "Three-gate hybrid rarity system", "rationale": "Gate 1: min 10 appearances / 90 days (data quality). Gate 2: >100 stores in 30 days = not rare (network-wide). Gate 3: Ultra Rare >150d, Rare 90-150d (higher thresholds). Kills Turtle/Caramel Pecan false positives.", "phase": "33.1"},
-    {"decision": "Remove Compare page rarity banner", "rationale": "buildRarityNudge() is redundant with per-row badges. Keep inline badges only.", "phase": "33.1"},
-    {"decision": "Insight card only for today's flavor", "rationale": "DOW pattern signal only renders if signal flavor matches today's actual FOTD. No fallback to other flavors.", "phase": "33.1"},
-    {"decision": "Week Ahead reuses renderHeroCone()", "rationale": "Same L5 PNG + L0 SVG fallback as hero card. CSS handles sizing.", "phase": "33.1"},
-    {"decision": "Widget: fix PNG loading AND improve fallback", "rationale": "Debug getConeImage() runtime failures. Also improve DrawContext fallback to look like cone art, not map pins.", "phase": "33.1"}
+    {"decision": "Widget store names preserve street suffix from slug", "rationale": "Multiple Madison stores need disambiguation", "phase": "33.1"},
+    {"decision": "DrawContext diagonal lines clipped to cone boundary", "rationale": "Lines were extending 33% past cone edge", "phase": "33.1"},
+    {"decision": "Main site store picker searches slugs", "rationale": "Parity with widget picker", "phase": "33.1"}
   ],
-  "uncommitted_files": [],
-  "next_action": "Run /gsd:plan-phase 33.1 to create executable plans from CONTEXT.md and UI-SPEC.md",
-  "context_notes": "Phase 33.1 inserted after Phase 33 (Performance). Seven user-reported bugs triaged from screenshots. Deep rarity analysis completed by background agent -- recommended hybrid three-gate system. CONTEXT.md and UI-SPEC.md both approved. Phase 34 (Social Sharing) remains paused at plan 0/5. Ready for planning."
+  "uncommitted_files": [".planning/STATE.md", "33.1-VERIFICATION.md"],
+  "next_action": "Decide BUG-04 disposition (accept/wire/gap-close), then mark phase complete or run /gsd:plan-phase 33.1 --gaps. Push to origin (8 commits ahead).",
+  "context_notes": "Session shipped widget fixes to prod (2 Worker deploys), planned+executed Phase 33.1. All code merged to main. VERIFICATION.md and STATE.md uncommitted."
 }
