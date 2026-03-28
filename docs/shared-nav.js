@@ -150,14 +150,16 @@ var SharedNav = (function () {
 
   function buildNavLinksHTML() {
     var currentPage = getCurrentPage();
-    var html = '<nav class="nav-links">';
+    var html = '<div class="site-header-left">'
+      + '<a href="index.html" class="site-wordmark" aria-label="Custard Calendar home">🍦</a>'
+      + '<nav class="nav-links">';
     for (var i = 0; i < NAV_ITEMS.length; i++) {
       var item = NAV_ITEMS[i];
       var isActive = (item.href === currentPage);
       var cls = isActive ? ' class="nav-active"' : '';
       html += '<a href="' + item.href + '"' + cls + '>' + escapeHtml(item.label) + '</a>';
     }
-    html += '</nav>';
+    html += '</nav></div>';
     return html;
   }
 
@@ -224,16 +226,16 @@ var SharedNav = (function () {
     if (existing) {
       existing.outerHTML = html;
     } else {
-      // Insert before nav
+      // Insert after nav (right side in header flex row)
       var nav = _container.querySelector('nav.nav-links');
       if (nav) {
-        nav.insertAdjacentHTML('beforebegin', html);
+        nav.insertAdjacentHTML('afterend', html);
       }
     }
-    // Re-bind change button
-    var btn = _container.querySelector('.btn-text');
-    if (btn) {
-      btn.addEventListener('click', function () { showStorePicker(); });
+    // Make the entire chip clickable (not just the inner button)
+    var chip = _container.querySelector('.store-indicator');
+    if (chip) {
+      chip.addEventListener('click', function () { showStorePicker(); });
     }
 
     // Dispatch custom event so page-specific code can react to store changes
@@ -346,22 +348,17 @@ var SharedNav = (function () {
     var existingIndicator = _container.querySelector('.store-indicator');
     if (existingIndicator) existingIndicator.remove();
 
-    var html = '<div class="card first-visit-prompt">'
-      + '<p>Select a store to see today\'s flavor</p>'
-      + '<div class="first-visit-actions">'
-      + '<button type="button" class="btn-text">Find your store</button>'
-      + '</div>'
-      + '</div>';
+    var html = '<button type="button" class="header-find-store">Find your store</button>';
 
-    var nav = _container.querySelector('nav.nav-links');
-    if (nav) {
-      nav.insertAdjacentHTML('beforebegin', html);
+    var left = _container.querySelector('.site-header-left');
+    if (left) {
+      left.insertAdjacentHTML('afterend', html);
     } else {
-      _container.insertAdjacentHTML('afterbegin', html);
+      _container.insertAdjacentHTML('beforeend', html);
     }
 
     // Bind the find store button to open the picker
-    var btn = _container.querySelector('.first-visit-prompt .btn-text');
+    var btn = _container.querySelector('.header-find-store');
     if (btn) {
       btn.addEventListener('click', function () { showStorePicker(); });
     }
@@ -544,12 +541,14 @@ var SharedNav = (function () {
     }
 
     var navHTML = buildNavLinksHTML();
-    container.innerHTML = indicatorHTML + navHTML;
+    // Nav links on the left, store indicator on the right (flex space-between in .site-header)
+    container.innerHTML = navHTML + indicatorHTML;
+    container.classList.add('site-header');
 
-    // Bind change button if indicator was rendered
-    var changeBtn = container.querySelector('.btn-text');
-    if (changeBtn) {
-      changeBtn.addEventListener('click', function () { showStorePicker(); });
+    // Make the whole store chip clickable from the start
+    var chip = container.querySelector('.store-indicator');
+    if (chip) {
+      chip.addEventListener('click', function () { showStorePicker(); });
     }
 
     if (slug) {
