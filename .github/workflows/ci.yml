@@ -38,6 +38,15 @@ jobs:
       - name: Check repo structure against contract
         run: uv run python scripts/check_repo_structure.py
 
+  widget-sync:
+    name: Widget JS Sync Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check widget JS files are identical
+        run: diff widgets/custard-today.js docs/assets/custard-today.js
+
   python-tests:
     name: Python Tests
     runs-on: ubuntu-latest
