@@ -541,8 +541,8 @@ var SharedNav = (function () {
     }
 
     var navHTML = buildNavLinksHTML();
-    // Nav links on the left, store indicator on the right (flex space-between in .site-header)
-    container.innerHTML = navHTML + indicatorHTML;
+    // Wrap in .site-header-inner to constrain content to 800px column (matching body)
+    container.innerHTML = '<div class="site-header-inner">' + navHTML + indicatorHTML + '</div>';
     container.classList.add('site-header');
 
     // Make the whole store chip clickable from the start

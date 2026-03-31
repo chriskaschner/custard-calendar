@@ -3262,6 +3262,7 @@ textarea:focus-visible {
    Applied by shared-nav.js via container.classList.add('site-header')
    ========================================================================= */
 
+/* Outer bar: full-bleed blue background */
 .site-header {
   position: fixed;
   top: 0;
@@ -3272,10 +3273,18 @@ textarea:focus-visible {
   background: var(--brand);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.22);
   display: flex;
+  align-items: stretch;
+}
+
+/* Inner row: constrained to 800px, matching body column */
+.site-header-inner {
+  display: flex;
   align-items: center;
   justify-content: space-between;
-  /* Keeps inner content aligned with the 800px body column */
-  padding: 0 max(var(--space-4), calc((100vw - 800px) / 2 + var(--space-4)));
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 0 var(--space-4);
   gap: var(--space-3);
 }
 
@@ -3472,17 +3481,17 @@ textarea:focus-visible {
 /* .first-visit-confirm -> .btn-primary.btn--sm (Phase 21 consolidation) */
 
 /* Store picker: full-screen overlay with centered panel */
+/* ---------------------------------------------------------------------------
+ * Store picker — bottom sheet on mobile, centered modal on desktop
+ * --------------------------------------------------------------------------- */
+
 .store-picker {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  inset: 0;
   z-index: 1000;
   display: flex;
-  align-items: flex-start;
+  align-items: flex-end;    /* bottom sheet anchors to bottom on mobile */
   justify-content: center;
-  padding-top: 10vh;
 }
 
 .store-picker[hidden] {
@@ -3491,36 +3500,57 @@ textarea:focus-visible {
 
 .store-picker-backdrop {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.4);
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
 }
 
+/* ---- Bottom sheet panel (mobile-first) ---- */
 .store-picker-panel {
   position: relative;
   background: var(--bg-surface);
-  border-radius: var(--radius);
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
-  max-width: 400px;
-  width: calc(100% - 2rem);
-  max-height: 80vh;
+  /* Rounded top corners only — it's a sheet rising from the bottom */
+  border-radius: 1rem 1rem 0 0;
+  box-shadow: 0 -4px 32px rgba(0, 0, 0, 0.18);
+  width: 100%;
+  max-width: 480px;
+  /* Fill from bottom up to just below the fixed header */
+  max-height: calc(100vh - var(--header-height, 56px) - 8px);
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  /* Subtle entrance animation */
+  animation: sheet-up 0.22s cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+
+@keyframes sheet-up {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+
+/* Drag handle visual cue */
+.store-picker-panel::before {
+  content: '';
+  display: block;
+  width: 36px;
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  margin: 10px auto 0;
+  flex-shrink: 0;
 }
 
 .store-picker-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--space-3) var(--space-4);
+  padding: var(--space-2) var(--space-4) var(--space-3);
   border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
 }
 
 .store-picker-header h3 {
   font-size: 1rem;
+  font-weight: 600;
   color: var(--text);
   margin: 0;
 }
@@ -3528,7 +3558,6 @@ textarea:focus-visible {
 .store-picker-close {
   background: none;
   border: none;
-  font-size: 1.5rem;
   cursor: pointer;
   color: var(--text-muted);
   min-height: 44px;
@@ -3536,9 +3565,13 @@ textarea:focus-visible {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  border-radius: var(--radius-full);
+  font-size: 1.25rem;
+  transition: background 0.15s, color 0.15s;
 }
 
 .store-picker-close:hover {
+  background: var(--bg-muted);
   color: var(--text);
 }
 
@@ -3552,6 +3585,7 @@ textarea:focus-visible {
   font-size: 16px;
   outline: none;
   background: var(--bg-surface);
+  flex-shrink: 0;
 }
 
 .store-picker-search:focus {
@@ -3560,7 +3594,9 @@ textarea:focus-visible {
 
 /* Precise location button */
 .store-picker-precise {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
   width: 100%;
   padding: var(--space-2) var(--space-4);
   background: none;
@@ -3568,9 +3604,16 @@ textarea:focus-visible {
   border-bottom: 1px solid var(--border);
   color: var(--brand);
   font-size: 0.875rem;
+  font-weight: 500;
   cursor: pointer;
   text-align: left;
   min-height: 44px;
+  flex-shrink: 0;
+}
+
+.store-picker-precise::before {
+  content: '📍';
+  font-size: 0.875rem;
 }
 
 .store-picker-precise:hover {
@@ -3581,24 +3624,26 @@ textarea:focus-visible {
 .store-picker-list {
   list-style: none;
   margin: 0;
-  padding: 0;
+  padding: 0 0 env(safe-area-inset-bottom, 0);
   overflow-y: auto;
   flex: 1;
+  -webkit-overflow-scrolling: touch;
 }
 
 .store-picker-item {
   padding: var(--space-3) var(--space-4);
   cursor: pointer;
-  font-size: 0.9rem;
   color: var(--text);
-  min-height: 44px;
+  min-height: 52px;
   display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
+  flex-direction: column;
+  justify-content: center;
   border-bottom: 1px solid var(--border-light);
+  transition: background 0.1s;
 }
 
-.store-picker-item:hover {
+.store-picker-item:hover,
+.store-picker-item:active {
   background: var(--bg-tint);
 }
 
@@ -3610,7 +3655,6 @@ textarea:focus-visible {
 
 .store-picker-address-primary {
   display: block;
-  width: 100%;
   font-size: 0.9rem;
   font-weight: 600;
   color: var(--text);
@@ -3618,7 +3662,6 @@ textarea:focus-visible {
 
 .store-picker-city {
   display: block;
-  width: 100%;
   font-size: var(--text-sm);
   color: var(--text-muted);
   margin-top: 0.125rem;
@@ -3626,10 +3669,34 @@ textarea:focus-visible {
 
 .store-picker-address {
   display: block;
-  width: 100%;
   font-size: var(--text-sm);
   color: var(--text-muted);
   margin-top: 0.125rem;
+}
+
+/* ---- Desktop: centered modal instead of bottom sheet ---- */
+@media (min-width: 600px) {
+  .store-picker {
+    align-items: center;
+  }
+
+  .store-picker-panel {
+    border-radius: var(--radius-lg);
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.20);
+    max-height: 72vh;
+    /* Nudge down from the header so it doesn't overlap */
+    margin-top: calc(var(--header-height, 56px) + 24px);
+    animation: modal-in 0.18s cubic-bezier(0.32, 0.72, 0, 1) both;
+  }
+
+  .store-picker-panel::before {
+    display: none; /* no drag handle on desktop */
+  }
+
+  @keyframes modal-in {
+    from { opacity: 0; transform: scale(0.97) translateY(-6px); }
+    to   { opacity: 1; transform: scale(1)    translateY(0); }
+  }
 }
 
 /* ---------------------------------------------------------------------------
