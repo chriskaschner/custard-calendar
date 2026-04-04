@@ -486,13 +486,29 @@ var SharedNav = (function () {
           refinePreciseLocation();
         });
       }
+
+      // Track virtual keyboard via visualViewport so the bottom sheet
+      // shrinks above the keyboard and filtered results stay visible.
+      if (window.visualViewport) {
+        var onResize = function () {
+          var vh = window.visualViewport.height;
+          picker.style.setProperty('--picker-vh', vh + 'px');
+        };
+        window.visualViewport.addEventListener('resize', onResize);
+        picker._vpCleanup = function () {
+          window.visualViewport.removeEventListener('resize', onResize);
+        };
+      }
     });
   }
 
   function hideStorePicker() {
     if (!_container) return;
     var picker = _container.querySelector('.store-picker');
-    if (picker) picker.remove();
+    if (picker) {
+      if (picker._vpCleanup) picker._vpCleanup();
+      picker.remove();
+    }
   }
 
   // -------------------------------------------------------------------------

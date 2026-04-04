@@ -3514,7 +3514,12 @@ textarea:focus-visible {
 
 .store-picker {
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  /* --picker-vh is set by JS via visualViewport when the virtual keyboard
+     opens, shrinking the container so the bottom sheet sits above the keyboard */
+  height: var(--picker-vh, 100vh);
   z-index: 1000;
   display: flex;
   align-items: flex-end;    /* bottom sheet anchors to bottom on mobile */
@@ -3541,7 +3546,7 @@ textarea:focus-visible {
   width: 100%;
   max-width: 480px;
   /* Fill from bottom up to just below the fixed header */
-  max-height: calc(100vh - var(--header-height, 56px) - 8px);
+  max-height: calc(100% - var(--header-height, 56px) - 8px);
   display: flex;
   flex-direction: column;
   overflow: hidden;
