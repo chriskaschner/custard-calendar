@@ -51,6 +51,21 @@ describe('sanitizeFlavorPayload', () => {
     expect(result.dropped).toBe(6);
   });
 
+  it('allows pipe characters in descriptions (Kopps separator)', () => {
+    const payload = {
+      name: "Kopp's Greenfield",
+      flavors: [
+        { date: '2026-04-03', title: 'Mint Chip', description: 'Fresh mint | chocolate chips | cream base' },
+        { date: '2026-04-04', title: 'Turtle', description: 'Caramel | pecans | fudge' },
+      ],
+    };
+
+    const result = sanitizeFlavorPayload(payload);
+    expect(result.dropped).toBe(0);
+    expect(result.data.flavors).toHaveLength(2);
+    expect(result.data.flavors[0].description).toBe('Fresh mint | chocolate chips | cream base');
+  });
+
   it('drops malformed entries and preserves only trusted fields', () => {
     const payload = {
       name: 'Mt. Horeb<script>',

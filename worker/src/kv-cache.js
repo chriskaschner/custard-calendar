@@ -4,7 +4,9 @@ import { getFetcherForSlug } from './brand-registry.js';
 const KV_TTL_SECONDS = 86400; // 24 hours
 const FLAVOR_CACHE_RECORD_VERSION = 1;
 const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
-const SAFE_TEXT_RE = /^[\p{L}\p{N}\s.,'’"&()!:+\-/%®™]*$/u;
+// Block characters that could enable HTML/script injection. Everything else
+// is allowed so upstream brands can use whatever punctuation they want.
+const UNSAFE_TEXT_RE = /[<>`{}]/;
 const MAX_TITLE_LENGTH = 100;
 const MAX_DESCRIPTION_LENGTH = 500;
 const MAX_STORE_NAME_LENGTH = 120;
@@ -51,7 +53,7 @@ function sanitizeText(raw, maxLen) {
   if (typeof raw !== 'string') return null;
   const trimmed = raw.trim().slice(0, maxLen);
   if (!trimmed) return null;
-  if (!SAFE_TEXT_RE.test(trimmed)) return null;
+  if (UNSAFE_TEXT_RE.test(trimmed)) return null;
   return trimmed;
 }
 

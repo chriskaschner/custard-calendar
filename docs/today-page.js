@@ -24,6 +24,43 @@ var CustardToday = (function () {
   var certaintyStripClass = CustardPlanner.confidenceStripClass;
 
   // ---------------------------------------------------------------------------
+  // Holiday detection (Culver's closes Easter, Thanksgiving, Christmas)
+  // ---------------------------------------------------------------------------
+
+  function easterDateStr(year) {
+    var a = year % 19;
+    var b = Math.floor(year / 100);
+    var c = year % 100;
+    var d = Math.floor(b / 4);
+    var e = b % 4;
+    var f = Math.floor((b + 8) / 25);
+    var g = Math.floor((b - f + 1) / 3);
+    var h = (19 * a + b - d - g + 15) % 30;
+    var i = Math.floor(c / 4);
+    var k = c % 4;
+    var l = (32 + 2 * e + 2 * i - h - k) % 7;
+    var m = Math.floor((a + 11 * h + 22 * l) / 451);
+    var month = Math.floor((h + l - 7 * m + 114) / 31);
+    var day = ((h + l - 7 * m + 114) % 31) + 1;
+    return year + '-' + String(month).padStart(2, '0') + '-' + String(day).padStart(2, '0');
+  }
+
+  function thanksgivingDateStr(year) {
+    var dow = new Date(year, 10, 1).getDay(); // Nov 1 day-of-week
+    var firstThu = 1 + ((4 - dow + 7) % 7);
+    var fourthThu = firstThu + 21;
+    return year + '-11-' + String(fourthThu).padStart(2, '0');
+  }
+
+  function getHoliday(dateStr) {
+    var year = parseInt(dateStr.slice(0, 4), 10);
+    if (dateStr === easterDateStr(year)) return 'Easter';
+    if (dateStr === thanksgivingDateStr(year)) return 'Thanksgiving';
+    if (dateStr === year + '-12-25') return 'Christmas';
+    return null;
+  }
+
+  // ---------------------------------------------------------------------------
   // Private state
   // ---------------------------------------------------------------------------
 
@@ -449,12 +486,23 @@ var CustardToday = (function () {
           + '<div class="week-day-cone cone-sm"></div>'
           + '<div class="week-day-flavor">' + escapeHtml(day.flavor) + '</div>';
       } else {
-        card.className = 'card card--accent-sm week-day-card week-day-card-none';
-        card.innerHTML =
-          '<div class="' + certaintyStripClass(day) + '"></div>'
-          + '<div class="week-day-header"><span class="week-day-name">' + escapeHtml(dayName) + '</span>'
-          + '<span class="week-day-date">' + escapeHtml(dateLabel) + '</span></div>'
-          + '<div class="week-day-flavor text-estimated">No data</div>';
+        var holiday = getHoliday(day.date);
+        if (holiday) {
+          card.className = 'card card--accent-sm week-day-card week-day-card-holiday';
+          card.innerHTML =
+            '<div class="' + certaintyStripClass(day) + '"></div>'
+            + '<div class="week-day-header"><span class="week-day-name">' + escapeHtml(dayName) + '</span>'
+            + '<span class="week-day-date">' + escapeHtml(dateLabel) + '</span></div>'
+            + '<div class="week-day-cone cone-sm"><img class="hero-cone-img buster-cone-img" src="assets/buster-cone.png" alt="Closed"></div>'
+            + '<div class="week-day-flavor text-estimated">Closed for ' + escapeHtml(holiday) + '</div>';
+        } else {
+          card.className = 'card card--accent-sm week-day-card week-day-card-none';
+          card.innerHTML =
+            '<div class="' + certaintyStripClass(day) + '"></div>'
+            + '<div class="week-day-header"><span class="week-day-name">' + escapeHtml(dayName) + '</span>'
+            + '<span class="week-day-date">' + escapeHtml(dateLabel) + '</span></div>'
+            + '<div class="week-day-flavor text-estimated">No data</div>';
+        }
       }
 
       // Add share icon for cards with a flavor (confirmed or predicted)

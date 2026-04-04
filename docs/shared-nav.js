@@ -226,10 +226,10 @@ var SharedNav = (function () {
     if (existing) {
       existing.outerHTML = html;
     } else {
-      // Insert after nav (right side in header flex row)
-      var nav = _container.querySelector('nav.nav-links');
-      if (nav) {
-        nav.insertAdjacentHTML('afterend', html);
+      // Insert as last child of .site-header-inner (right side via space-between)
+      var inner = _container.querySelector('.site-header-inner');
+      if (inner) {
+        inner.insertAdjacentHTML('beforeend', html);
       }
     }
     // Make the entire chip clickable (not just the inner button)
@@ -443,8 +443,14 @@ var SharedNav = (function () {
         searchInput.addEventListener('input', function () {
           filterStoreList(searchInput.value);
         });
-        // Focus the search input
-        searchInput.focus();
+        // Only auto-focus the search input on non-touch (desktop) devices.
+        // On mobile/touch devices, focusing the input immediately opens the
+        // virtual keyboard which covers the store list — the user sees only
+        // the search bar and keyboard toolbar instead of the scrollable list.
+        var isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+        if (!isTouch) {
+          searchInput.focus();
+        }
       }
 
       // Store item selection

@@ -50,6 +50,8 @@ Thumbs.db
 !docs/screenshots/*.png
 # Exception: Hero cone PNG assets served by GitHub Pages
 !docs/assets/cones/*.png
+# Exception: Buster cone for holiday closure cards
+!docs/assets/buster-cone.png
 # AI candidates are working files — only docs/assets/cones/ is committed
 docs/assets/ai-candidates/
 # Exception: Golden baseline PNGs for pixelmatch visual regression tests
