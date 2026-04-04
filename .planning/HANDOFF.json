@@ -1,32 +1,52 @@
 {
   "version": "1.0",
-  "timestamp": "2026-03-27T20:23:48.366Z",
-  "phase": "33.1",
-  "phase_name": "bug-fixes-store-disambiguation-rarity-logic-art-migration-stale-signals",
-  "phase_dir": ".planning/phases/33.1-bug-fixes-store-disambiguation-rarity-logic-art-migration-stale-signals",
-  "plan": 2,
-  "task": 1,
-  "total_tasks": 3,
+  "timestamp": "2026-04-04T03:06:36.813Z",
+  "phase": "debug",
+  "phase_name": "Ad-hoc bug fixes and holiday feature",
+  "phase_dir": null,
+  "plan": null,
+  "task": null,
+  "total_tasks": null,
   "status": "paused",
   "completed_tasks": [
-    {"id": 1, "name": "CSS chip truncation and uncommon badge suppression", "status": "done", "commit": "0b1042a"},
-    {"id": 2, "name": "Hero card cached render display name", "status": "done", "commit": "1dc6fd0"},
-    {"id": 3, "name": "DOW signal relevance filter", "status": "done", "commit": "99875c9"}
+    {"id": 1, "name": "Fix mobile header overlap (nav pill vs store chip collision)", "status": "done", "commit": "02a5038"},
+    {"id": 2, "name": "Fix store picker hidden by iOS keyboard (skip auto-focus on touch)", "status": "done", "commit": "02a5038"},
+    {"id": 3, "name": "Fix Kopp's 502 (pipe char in SAFE_TEXT_RE)", "status": "done", "commit": "02a5038"},
+    {"id": 4, "name": "Flip SAFE_TEXT_RE allowlist to UNSAFE_TEXT_RE blocklist", "status": "done", "commit": "02a5038"},
+    {"id": 5, "name": "Add 7-brand sanitize integration tests", "status": "done", "commit": "02a5038"},
+    {"id": 6, "name": "Holiday closure cards (Easter/Thanksgiving/Christmas) with buster cone art", "status": "done", "commit": "02a5038"},
+    {"id": 7, "name": "Generate buster cone PNG via Azure OpenAI", "status": "done", "commit": "02a5038"},
+    {"id": 8, "name": "Store picker shrinks above virtual keyboard (visualViewport API)", "status": "done", "commit": "13b4fe1"},
+    {"id": 9, "name": "Mobile store search Playwright tests (3 tests, iPhone 14 viewport)", "status": "done", "commit": "13b4fe1"},
+    {"id": 10, "name": "Deploy Worker to Cloudflare (Kopp's fix live)", "status": "done", "commit": null}
   ],
-  "remaining_tasks": [],
+  "remaining_tasks": [
+    {"id": 11, "name": "Verify header/store picker on real iPhone (user reported still broken)", "status": "not_started"},
+    {"id": 12, "name": "Buster cone art direction not final (line orientation wrong, user accepted as-is)", "status": "not_started"},
+    {"id": 13, "name": "5 older debug sessions still open (compare-page, first-visit-geolocation, flavor-data-error, mobile-nav-overflow, store-picker-addresses)", "status": "not_started"}
+  ],
   "blockers": [
-    {"description": "BUG-04 verification gap: DOW signal filter implemented but no page renders signal cards (removed in Phase 31 redesign). Filter is unreachable.", "type": "technical", "workaround": "Accept as-is since bug is also unobservable, or wire a caller"}
+    {"description": "Header/store picker mobile issues need real-device testing -- Playwright passes but user reports issues on iPhone", "type": "human_action", "workaround": "Deploy to GitHub Pages and test on phone"}
   ],
   "human_actions_pending": [
-    {"action": "Decide BUG-04 disposition: accept as-is, wire caller, or run gap closure", "context": "Signal cards not rendered on any page since Phase 31 redesign", "blocking": true},
-    {"action": "Update Scriptable widget on iOS device", "context": "Widget fixes deployed but user must re-copy script from widget.html", "blocking": false}
+    {"action": "Test header + store picker on real iPhone after GitHub Pages deploy", "context": "Playwright tests pass at 390x844 with simulated touch/keyboard but real iOS may differ", "blocking": true}
   ],
   "decisions": [
-    {"decision": "Widget store names preserve street suffix from slug", "rationale": "Multiple Madison stores need disambiguation", "phase": "33.1"},
-    {"decision": "DrawContext diagonal lines clipped to cone boundary", "rationale": "Lines were extending 33% past cone edge", "phase": "33.1"},
-    {"decision": "Main site store picker searches slugs", "rationale": "Parity with widget picker", "phase": "33.1"}
+    {"decision": "Flipped SAFE_TEXT_RE allowlist to UNSAFE_TEXT_RE blocklist (blocks < > ` { } only)", "rationale": "Allowlist breaks every time upstream brands use new punctuation (Kopp's pipe char caused 502)", "phase": "debug"},
+    {"decision": "Easter Sunday 'No data' is not a bug -- Culver's is closed", "rationale": "API correctly returns no data for Easter; added holiday detection instead", "phase": "debug"},
+    {"decision": "Used Azure OpenAI gpt-image-1.5 for buster cone art with L5 pixel art prompt", "rationale": "Matches existing cone art pipeline; user accepted result despite wrong line orientation", "phase": "debug"},
+    {"decision": "visualViewport API for keyboard-aware bottom sheet", "rationale": "CSS vh/dvh don't respond to iOS virtual keyboard; visualViewport.height is the only reliable signal", "phase": "debug"}
   ],
-  "uncommitted_files": [".planning/STATE.md", "33.1-VERIFICATION.md"],
-  "next_action": "Decide BUG-04 disposition (accept/wire/gap-close), then mark phase complete or run /gsd:plan-phase 33.1 --gaps. Push to origin (8 commits ahead).",
-  "context_notes": "Session shipped widget fixes to prod (2 Worker deploys), planned+executed Phase 33.1. All code merged to main. VERIFICATION.md and STATE.md uncommitted."
+  "uncommitted_files": [
+    ".planning/ROADMAP.md",
+    ".planning/STATE.md",
+    ".planning/phases/33.1-bug-fixes-store-disambiguation-rarity-logic-art-migration-stale-signals/33.1-VERIFICATION.md",
+    ".planning/debug/flavor-scraping-gaps.md",
+    ".planning/debug/mobile-header-overlap.md",
+    ".planning/debug/mobile-store-picker-broken.md",
+    "tools/buster-preview.html",
+    "worker/test/browser/store-picker-mobile.spec.mjs"
+  ],
+  "next_action": "Test on real iPhone. If still broken, inspect iOS Safari DevTools for what's different from Playwright. Focus on header layout and store picker keyboard behavior.",
+  "context_notes": "User reported 3 bugs: header overlap, store picker keyboard, Kopp's 502. All fixed and deployed. Holiday closure cards added as enhancement. User noted buster cone line orientation is wrong but accepted it. The header/store picker may still have issues on real iOS -- Playwright can't fully replicate iOS Safari keyboard behavior."
 }
