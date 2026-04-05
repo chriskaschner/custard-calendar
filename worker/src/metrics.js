@@ -480,6 +480,8 @@ async function computeStoreSpecialtyFromD1(slug, db) {
         SELECT normalized_flavor, MAX(flavor) AS display_flavor, COUNT(*) AS cnt
         FROM snapshots
         WHERE slug = ? AND date >= date('now', '-365 days')
+          AND normalized_flavor NOT LIKE '%closed%'
+          AND flavor NOT LIKE 'z %'
         GROUP BY normalized_flavor
         HAVING cnt >= 3
       ),
@@ -487,10 +489,12 @@ async function computeStoreSpecialtyFromD1(slug, db) {
         SELECT normalized_flavor, COUNT(*) AS cnt
         FROM snapshots
         WHERE date >= date('now', '-365 days')
+          AND normalized_flavor NOT LIKE '%closed%'
+          AND flavor NOT LIKE 'z %'
         GROUP BY normalized_flavor
       ),
-      store_total AS (SELECT COUNT(*) AS n FROM snapshots WHERE slug = ? AND date >= date('now', '-365 days')),
-      national_total AS (SELECT COUNT(*) AS n FROM snapshots WHERE date >= date('now', '-365 days'))
+      store_total AS (SELECT COUNT(*) AS n FROM snapshots WHERE slug = ? AND date >= date('now', '-365 days') AND normalized_flavor NOT LIKE '%closed%' AND flavor NOT LIKE 'z %'),
+      national_total AS (SELECT COUNT(*) AS n FROM snapshots WHERE date >= date('now', '-365 days') AND normalized_flavor NOT LIKE '%closed%' AND flavor NOT LIKE 'z %')
       SELECT
         s.normalized_flavor, s.display_flavor, s.cnt AS store_count,
         n.cnt AS national_count, st.n AS store_total, nt.n AS national_total,

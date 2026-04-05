@@ -7,6 +7,7 @@
  */
 
 import { normalize } from './flavor-matcher.js';
+import { CLOSED_TITLE_RE } from './kv-cache.js';
 
 /**
  * Record a single flavor observation to D1.
@@ -21,6 +22,7 @@ import { normalize } from './flavor-matcher.js';
  */
 export async function recordSnapshot(kv, slug, date, flavor, description, options = {}) {
   if (!slug || !date || !flavor) return;
+  if (CLOSED_TITLE_RE.test(flavor)) return;
 
   const db = options.db;
   if (!db) return;

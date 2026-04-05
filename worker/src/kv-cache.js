@@ -13,7 +13,7 @@ const MAX_STORE_NAME_LENGTH = 120;
 
 // Upstream brands sometimes use sentinel titles to indicate a store is closed.
 // These are not real flavors and must be dropped before caching or serving.
-const CLOSED_TITLE_RE = /\bclosed\b|^z[_ ]*(store|restaurant)?closed/i;
+export const CLOSED_TITLE_RE = /\bclosed\b|^z[_ ]*(store|restaurant)?closed/i;
 
 export function brandCounterKey(brand) {
   return String(brand || 'unknown')
