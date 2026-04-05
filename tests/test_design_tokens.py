@@ -88,6 +88,10 @@ ALLOWED_SELECTOR_PATTERNS = [
     r"\.calendar-cta-",
     # Share button (domain-specific brand border)
     r"\.share-btn",
+    r"\.week-day-share-btn",
+    # Site header (white-on-brand branded component)
+    r"\.site-header\b",
+    r"\.header-find-store",
     # Multi-store active state
     r"\.multi-store-cell\.active\b",
     # Hotspot section (fronts sidebar -- domain-specific)

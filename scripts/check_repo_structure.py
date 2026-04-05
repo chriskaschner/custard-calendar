@@ -30,6 +30,8 @@ ALLOWED_DIRS = {
     '.claude',    # Claude Code project settings (.claude/settings.json)
     '.github',
     '.planning',  # GSD planning documents (phases, research, plans)
+    '.bg-shell',  # Background shell manifest
+    '.gsd',       # GSD v2 milestone artifacts
 }
 
 
