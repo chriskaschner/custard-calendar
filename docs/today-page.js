@@ -380,13 +380,24 @@ var CustardToday = (function () {
       todayDesc.hidden = true;
       renderRarity(null, null);
     } else {
-      todayCard.classList.add('day-card-none');
-      todayCone.innerHTML = '';
-      todayCone.hidden = true;
-      todayFlavor.textContent = 'No data yet';
-      todayFlavor.classList.add('text-estimated');
-      todayDesc.textContent = 'Check back later \u2014 flavor data updates throughout the day.';
-      todayDesc.hidden = false;
+      var holiday = getHoliday(day.date);
+      if (holiday) {
+        todayCard.classList.add('day-card-none');
+        todayCone.innerHTML = '<img class="hero-cone-img buster-cone-img" src="assets/buster-cone.png" alt="Closed">';
+        todayCone.hidden = false;
+        todayFlavor.textContent = 'Closed for ' + holiday;
+        todayFlavor.classList.add('text-estimated');
+        todayDesc.textContent = '';
+        todayDesc.hidden = true;
+      } else {
+        todayCard.classList.add('day-card-none');
+        todayCone.innerHTML = '';
+        todayCone.hidden = true;
+        todayFlavor.textContent = 'No data yet';
+        todayFlavor.classList.add('text-estimated');
+        todayDesc.textContent = 'Check back later \u2014 flavor data updates throughout the day.';
+        todayDesc.hidden = false;
+      }
       renderRarity(null, null);
       if (todayCtas) todayCtas.innerHTML = '';
     }
