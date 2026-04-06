@@ -257,15 +257,20 @@ Plans:
 **Plans**: Complete
 
 ### Phase 36: Data Quality
-**Goal**: Flavor data for the 15 Madison-area launch stores is verified clean and trustworthy, with automated gates preventing bad data from reaching users
+**Goal**: Flavor data for the 17 Madison-area launch stores is verified clean and trustworthy, with automated gates preventing bad data from reaching users
 **Depends on**: Phase 35
 **Requirements**: DATA-01, DATA-02, DATA-03, DATA-04
 **Success Criteria** (what must be TRUE):
-  1. A human-reviewed audit of 15 Madison-area stores confirms zero closure sentinels, garbled text, or missing flavors in current data
-  2. Rarity labels, gap-day counts, "last seen" dates, and overdue calculations for those 15 stores match independently computed values from raw D1 snapshots
+  1. A human-reviewed audit of 17 Madison-area stores confirms zero closure sentinels, garbled text, or missing flavors in current data
+  2. Rarity labels, gap-day counts, "last seen" dates, and overdue calculations for those 17 stores match independently computed values from raw D1 snapshots
   3. An automated quality gate runs on ingest and rejects known bad patterns (closure sentinels, corrupted text) with logged alerts for anomalies
-  4. Historical bad records (closure sentinels, corrupted entries) are purged from D1 for the 15 launch stores
-**Plans**: TBD
+  4. Historical bad records (closure sentinels, corrupted entries) are purged from D1 for the 17 launch stores
+**Plans:** 3 plans
+
+Plans:
+- [ ] 36-01-PLAN.md -- Quality gate tests and stats reconciliation test suite (TDD RED phase)
+- [ ] 36-02-PLAN.md -- Quality gate implementation: 3 detection patterns in kv-cache.js + operator alert wiring
+- [ ] 36-03-PLAN.md -- Audit and purge scripts for 17 stores, execute cleanup, human verify clean state
 
 ### Phase 37: SEO Landing Pages
 **Goal**: Each Madison-area Culver's store has a public landing page that Google can index, showing today's flavor, the week-ahead schedule, and store context
@@ -314,7 +319,7 @@ Phase 35 (complete) -> 36 -> 37 -> 38 -> 39. Phase 39 is independent and can exe
 | 26-29 | v2.0 | 8/8 | Complete | 2026-03-19 |
 | 30-34 | v3.0 | 6/6 | Complete | 2026-03-27 |
 | 35. Security + MCP | v4.0 | Complete | Complete | 2026-04-05 |
-| 36. Data Quality | v4.0 | 0/TBD | Not started | - |
+| 36. Data Quality | v4.0 | 0/3 | Not started | - |
 | 37. SEO Landing Pages | v4.0 | 0/TBD | Not started | - |
 | 38. OG Share Cards | v4.0 | 0/TBD | Not started | - |
 | 39. Social Research | v4.0 | 0/TBD | Not started | - |
