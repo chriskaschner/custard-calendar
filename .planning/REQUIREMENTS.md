@@ -78,22 +78,22 @@ Deferred beyond v4.0.
 | SEC-04 | Phase 35 | Complete |
 | SEC-05 | Phase 35 | Complete |
 | AI-01 | Phase 35 | Complete |
-| DATA-01 | TBD | Pending |
-| DATA-02 | TBD | Pending |
-| DATA-03 | TBD | Pending |
-| DATA-04 | TBD | Pending |
-| SEO-01 | TBD | Pending |
-| SEO-02 | TBD | Pending |
-| SEO-03 | TBD | Pending |
-| SEO-04 | TBD | Pending |
-| SOCL-01 | TBD | Pending |
+| DATA-01 | Phase 36 | Pending |
+| DATA-02 | Phase 36 | Pending |
+| DATA-03 | Phase 36 | Pending |
+| DATA-04 | Phase 36 | Pending |
+| SEO-01 | Phase 37 | Pending |
+| SEO-02 | Phase 37 | Pending |
+| SEO-03 | Phase 37 | Pending |
+| SEO-04 | Phase 38 | Pending |
+| SOCL-01 | Phase 39 | Pending |
 
 **Coverage:**
 - v4.0 requirements: 15 total
-- Complete: 6 (SEC + AI)
-- Mapped to phases: 6
-- Unmapped: 9
+- Complete: 6 (SEC-01-05, AI-01 in Phase 35)
+- Mapped to phases: 15/15
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-05*
-*Last updated: 2026-04-05 after initial definition*
+*Last updated: 2026-04-05 after roadmap creation*

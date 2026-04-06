@@ -9,7 +9,8 @@
 - Shipped **v1.4 Bug Fixes** -- Phases 18-19 (shipped 2026-03-13)
 - Shipped **v1.5 Visual Polish** -- Phases 20-25 (shipped 2026-03-18)
 - Shipped **v2.0 Art Quality** -- Phases 26-29 (shipped 2026-03-19)
-- Active **v3.0 Sharpen the Core** -- Phases 30-34 (in progress)
+- Shipped **v3.0 Sharpen the Core** -- Phases 30-34 (shipped 2026-03-27)
+- Active **v4.0 Find Real Users** -- Phases 35-39 (in progress)
 
 ## Phases
 
@@ -84,15 +85,27 @@
 
 </details>
 
-### v3.0 Sharpen the Core (In Progress)
+<details>
+<summary>Shipped v3.0 Sharpen the Core (Phases 30-34) -- SHIPPED 2026-03-27</summary>
 
-**Milestone Goal:** Simplify the product to its essential experience, fix performance, and optimize for discoverability -- the first milestone focused on finding users rather than adding features.
+- [x] Phase 30: Housekeeping & Closure (1/1 plan) -- ML closure, TODO triage
+- [x] Phase 31: Homepage Redesign (2/2 plans) -- hero card, CLS skeleton
+- [x] Phase 32: Page Consolidation (0/0 plans) -- deferred (needs real traffic data)
+- [x] Phase 33: Performance (1/1 plan) -- localStorage hero cache, SW API caching
+- [x] Phase 33.1: Bug Fixes (2/2 plans) -- store disambiguation, rarity logic, stale signals
+- [x] Phase 34: Social Sharing (0/0 plans) -- deferred (no users to share from)
 
-- [x] **Phase 30: Housekeeping & Closure** - Formally close ML prediction roadmap items and clean up deferred tech debt
-- [x] **Phase 31: Homepage Redesign** - Rebuild the homepage around a single hero card showing today's flavor at the user's store
-- [ ] **Phase 33: Performance** - Fix cold-start LCP to under 3 seconds
-- [ ] **Phase 34: Social Sharing** - Optimize quiz results and flavor stats for social platform sharing
-- [ ] **Phase 32: Page Consolidation** - Consolidate zero-traffic pages and simplify navigation to reflect actual usage (deferred -- needs real traffic data)
+</details>
+
+### v4.0 Find Real Users (In Progress)
+
+**Milestone Goal:** Get Custard Calendar in front of people who actually check Culver's Flavor of the Day -- through SEO, AI-native interfaces, and social content. Distribution before features.
+
+- [x] **Phase 35: Security + MCP** - Worker hardened for public exposure; MCP server ships AI-native flavor queries
+- [ ] **Phase 36: Data Quality** - Audit and clean flavor data so public-facing pages show trustworthy information
+- [ ] **Phase 37: SEO Landing Pages** - Per-store pages with structured data and sitemap for Google indexing
+- [ ] **Phase 38: OG Share Cards** - Per-store social preview images for link sharing (design TBD with user)
+- [ ] **Phase 39: Social Research** - Instagram feasibility investigation for automated flavor posting
 
 ## Phase Details
 
@@ -160,6 +173,9 @@ Plans:
 
 </details>
 
+<details>
+<summary>v3.0 Phase Details (shipped)</summary>
+
 ### Phase 30: Housekeeping & Closure
 **Goal**: Deferred roadmap items are formally resolved so the project backlog reflects reality
 **Depends on**: Nothing (first phase of v3.0)
@@ -167,7 +183,7 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. ML prediction pipeline items (ensemble, XGBoost, confidence intervals) are moved to "Won't Do" in TODO.md with documented rationale
   2. Any other stale TODO items from prior milestones are triaged: either closed with rationale, promoted to v3.0 scope, or explicitly deferred
-**Plans**: 1 plan
+**Plans**: 1/1 plans complete
 
 Plans:
 - [x] 30-01: Triage TODO.md -- move ML items to Won't Do, review and resolve all stale entries
@@ -181,72 +197,111 @@ Plans:
   2. A week-ahead forecast section exists below the hero card, collapsed by default, and expands on tap to show upcoming flavors
   3. The page loads with no visible layout shift -- skeleton or placeholder occupies the hero card space until data arrives (CLS < 0.1)
   4. All homepage sections (hero card, week-ahead, any CTAs) use the existing card system with consistent design token spacing and borders -- no one-off styles
-**Plans**: 2 plans
+**Plans**: 2/2 plans complete
 
 Plans:
 - [x] 31-01-PLAN.md -- Hero card with CTAs/meta footer, simplified empty state, CLS-preventing skeleton
 - [x] 31-02-PLAN.md -- CTA text line replacement, dead CSS cleanup, Playwright tests, visual verification
 
-### Phase 32: Page Consolidation
+### Phase 32: Page Consolidation (Deferred)
 **Goal**: The site contains only pages that serve real users, and navigation reflects the reduced footprint
-**Depends on**: Phase 34 (deferred until real traffic data available)
+**Depends on**: Deferred until real traffic data available
 **Requirements**: SIMP-01, SIMP-02
-**Success Criteria** (what must be TRUE):
-  1. Zero-traffic pages (compare, forecast-map, fun) are either consolidated into remaining pages or replaced with redirect stubs pointing to the best alternative
-  2. Navigation contains no more than 4 items and every nav item links to a page that serves an active use case
-  3. All existing external links and bookmarks to removed pages land on a functioning redirect (no 404s)
-**Plans**: TBD
-
-Plans:
-- [ ] 32-01: Audit page traffic, decide keep/consolidate/redirect for each page
-- [ ] 32-02: Execute consolidation -- redirects, nav update, dead page removal
+**Plans**: 0/0 (deferred)
 
 ### Phase 33: Performance
 **Goal**: The site loads fast enough that a user checking their phone in the car gets an answer before losing patience
-**Depends on**: Phase 31 (homepage redesign complete)
+**Depends on**: Phase 31
 **Requirements**: PERF-01
 **Success Criteria** (what must be TRUE):
-  1. Homepage LCP P90 is under 3 seconds as measured by a Lighthouse audit on mobile throttling (currently ~10s due to Worker cold starts)
+  1. Homepage LCP P90 is under 3 seconds as measured by a Lighthouse audit on mobile throttling
   2. The critical rendering path for the hero card does not depend on the Worker API -- a skeleton or cached response renders first, then hydrates when data arrives
-**Plans**: 1 plan
+**Plans**: 1/1 plans complete
 
 Plans:
-- [ ] 33-01-PLAN.md -- localStorage hero cache + service worker API caching for instant return-visit render
+- [x] 33-01-PLAN.md -- localStorage hero cache + service worker API caching for instant return-visit render
 
-### Phase 33.1: Bug Fixes: Store Disambiguation, Rarity Logic, Art Migration, Stale Signals (INSERTED)
-
+### Phase 33.1: Bug Fixes (INSERTED)
 **Goal:** Remaining display bugs are fixed: store names truncate gracefully, hero cache shows human-readable names, uncommon rarity badge is suppressed, and DOW insight cards only appear for relevant flavors
-**Requirements**: BUG-01, BUG-02, BUG-03, BUG-04
 **Depends on:** Phase 33
+**Requirements**: BUG-01, BUG-02, BUG-03, BUG-04
 **Success Criteria** (what must be TRUE):
   1. Compare store chips and flavor row labels truncate with ellipsis instead of overflowing when store names are long
   2. Hero card cached render shows a disambiguated store display name, not a raw slug
   3. The "Uncommon" rarity badge is hidden via CSS, consistent with the tier's removal from the rarity system
   4. DOW pattern insight cards only render when the signal flavor matches today's FOTD at the user's store
-**Plans:** 2 plans
+**Plans:** 2/2 plans complete
 
 Plans:
-- [ ] 33.1-01-PLAN.md -- CSS chip truncation, uncommon badge suppression, hero cache display name fix
-- [ ] 33.1-02-PLAN.md -- Signal card DOW pattern relevance filter in fetchSignalsShared
+- [x] 33.1-01-PLAN.md -- CSS chip truncation, uncommon badge suppression, hero cache display name fix
+- [x] 33.1-02-PLAN.md -- Signal card DOW pattern relevance filter (accepted as dead letter -- signal UI removed in Phase 31)
 
-### Phase 34: Social Sharing
+### Phase 34: Social Sharing (Deferred)
 **Goal**: Users who discover a fun result or rare flavor can share it on social platforms with a rich preview that drives clicks back to the site
-**Depends on**: Phase 33 (performance fixes complete)
+**Depends on**: Deferred until there are users to share from
 **Requirements**: SHARE-01, SHARE-02
-**Success Criteria** (what must be TRUE):
-  1. Quiz results page generates a unique shareable URL per result that, when pasted into Twitter/Facebook/iMessage, renders an og:image card showing the result with cone art
-  2. Individual flavor rarity stats have a shareable URL that renders an OG card showing the flavor name, cone art, and rarity classification (e.g., "Served 3 times this year")
-  3. Shared URLs load a standalone page (not the full quiz flow) so recipients see the content without completing the quiz themselves
-**Plans**: 2 plans
+**Plans**: 0/0 (deferred)
 
-Plans:
-- [ ] 34-01-PLAN.md -- Worker OG card PNG generation (quiz + flavor rarity) and crawler interception
-- [ ] 34-02-PLAN.md -- Quiz skip-to-result mode, flavor-themed share text, per-flavor share icons
+</details>
+
+### Phase 35: Security + MCP
+**Goal**: The Worker is hardened for public exposure and AI assistants can query flavor data natively
+**Depends on**: Nothing (first phase of v4.0)
+**Requirements**: SEC-01, SEC-02, SEC-03, SEC-04, SEC-05, AI-01
+**Success Criteria** (what must be TRUE):
+  1. All public endpoints enforce per-IP rate limiting at 300 requests/hour with in-memory tracking (no KV burn)
+  2. The /health endpoint requires admin authentication and returns 401 for unauthenticated requests
+  3. D1-querying routes reject invalid slugs before hitting the database
+  4. Daily upstream proxy requests are capped at 500/day to prevent abuse
+  5. An MCP server exposes 6 tools for flavor queries that any MCP-compatible AI client can invoke
+**Plans**: Complete
+
+### Phase 36: Data Quality
+**Goal**: Flavor data for the 15 Madison-area launch stores is verified clean and trustworthy, with automated gates preventing bad data from reaching users
+**Depends on**: Phase 35
+**Requirements**: DATA-01, DATA-02, DATA-03, DATA-04
+**Success Criteria** (what must be TRUE):
+  1. A human-reviewed audit of 15 Madison-area stores confirms zero closure sentinels, garbled text, or missing flavors in current data
+  2. Rarity labels, gap-day counts, "last seen" dates, and overdue calculations for those 15 stores match independently computed values from raw D1 snapshots
+  3. An automated quality gate runs on ingest and rejects known bad patterns (closure sentinels, corrupted text) with logged alerts for anomalies
+  4. Historical bad records (closure sentinels, corrupted entries) are purged from D1 for the 15 launch stores
+**Plans**: TBD
+
+### Phase 37: SEO Landing Pages
+**Goal**: Each Madison-area Culver's store has a public landing page that Google can index, showing today's flavor, the week-ahead schedule, and store context
+**Depends on**: Phase 36 (clean data is prerequisite for public pages)
+**Requirements**: SEO-01, SEO-02, SEO-03
+**Success Criteria** (what must be TRUE):
+  1. Visiting /store/wi/{city}/{slug}/ returns a fully rendered HTML page with today's flavor name, cone art, week-ahead schedule, and store address for any of the 15 launch stores
+  2. Each store page includes a valid FastFoodRestaurant JSON-LD block with name, address, geo coordinates, and today's flavor as a menu item
+  3. /sitemap.xml lists all 15 store page URLs with lastmod dates and /robots.txt allows crawling of /store/ paths
+  4. Pages render correctly on mobile (375px) with no horizontal overflow or missing content
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 38: OG Share Cards
+**Goal**: When someone shares a store page link on social media or messaging apps, a rich preview image renders with the store name, today's flavor, and cone art
+**Depends on**: Phase 37 (store pages must exist before OG cards make sense)
+**Requirements**: SEO-04
+**Success Criteria** (what must be TRUE):
+  1. Pasting a store page URL into Twitter/Facebook/iMessage/Slack renders an og:image card showing the store name, today's flavor, and cone art
+  2. OG card design has been reviewed and approved by the user before going live
+**Plans**: TBD
+
+### Phase 39: Social Research
+**Goal**: A documented recommendation on whether and how to use Instagram for automated flavor posting, so the decision to proceed (or not) is informed rather than speculative
+**Depends on**: Nothing (independent of other phases)
+**Requirements**: SOCL-01
+**Success Criteria** (what must be TRUE):
+  1. Instagram API access requirements (business account, permissions, review process) are documented
+  2. Content format options (image post, story, reel, carousel) are evaluated with pros/cons for automated flavor updates
+  3. A written recommendation states whether to pursue Instagram automation, defer it, or abandon it -- with rationale
+**Plans**: TBD
 
 ## Progress
 
 **Execution Order:**
-Phases execute sequentially: 30 -> 31 -> 33 -> 33.1 -> 34 -> 32. (Page Consolidation deferred to last -- needs real traffic data.)
+Phase 35 (complete) -> 36 -> 37 -> 38 -> 39. Phase 39 is independent and can execute in parallel with any phase.
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
@@ -257,11 +312,11 @@ Phases execute sequentially: 30 -> 31 -> 33 -> 33.1 -> 34 -> 32. (Page Consolida
 | 18-19 | v1.4 | 4/4 | Complete | 2026-03-13 |
 | 20-25 | v1.5 | 10/10 | Complete | 2026-03-18 |
 | 26-29 | v2.0 | 8/8 | Complete | 2026-03-19 |
-| 30. Housekeeping & Closure | v3.0 | Complete    | 2026-03-19 | 2026-03-19 |
-| 31. Homepage Redesign | v3.0 | Complete    | 2026-03-20 | 2026-03-19 |
-| 32. Page Consolidation | v3.0 | 0/2 | Not started | - |
-| 33. Performance | 1/1 | Complete    | 2026-03-20 | - |
-| 33.1 Bug Fixes | v3.0 | 0/2 | Planned | - |
-| 34. Social Sharing | v3.0 | 0/2 | Not started | - |
+| 30-34 | v3.0 | 6/6 | Complete | 2026-03-27 |
+| 35. Security + MCP | v4.0 | Complete | Complete | 2026-04-05 |
+| 36. Data Quality | v4.0 | 0/TBD | Not started | - |
+| 37. SEO Landing Pages | v4.0 | 0/TBD | Not started | - |
+| 38. OG Share Cards | v4.0 | 0/TBD | Not started | - |
+| 39. Social Research | v4.0 | 0/TBD | Not started | - |
 
-**Total: 35 phases, 74 plans across 8 milestones**
+**Total: 39 phases across 9 milestones**

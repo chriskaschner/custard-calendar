@@ -1,17 +1,3 @@
----
-gsd_state_version: 1.0
-milestone: v4.0
-milestone_name: Find Real Users
-status: Defining requirements
-stopped_at: Milestone v4.0 started -- MCP server and security hardening shipped
-last_updated: "2026-04-05T21:30:00.000Z"
-progress:
-  total_phases: 0
-  completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
----
-
 # Project State
 
 ## Project Reference
@@ -19,14 +5,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-05)
 
 **Core value:** A family can instantly see what flavors are at their nearby stores and decide where to go
-**Current focus:** v4.0 Find Real Users — defining requirements
+**Current focus:** v4.0 Find Real Users -- Phase 36 (Data Quality) next
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: 36 of 39 (Data Quality) -- next to plan
 Plan: --
-Status: Defining requirements
-Last activity: 2026-04-05 — Milestone v4.0 started
+Status: Ready to plan
+Last activity: 2026-04-05 -- v4.0 roadmap created; Phase 35 (Security + MCP) already complete
+
+Progress: [##________] 20% (1/5 v4.0 phases complete)
 
 ## Performance Metrics
 
@@ -39,13 +27,13 @@ Last activity: 2026-04-05 — Milestone v4.0 started
 - v1.4: 4 plans in ~34 min (~8.5 min/plan)
 - v1.5: 10 plans in ~69 min (~6.9 min/plan)
 - v2.0: 8 plans across 4 phases
-- v3.0: Phase 33 — 1 plan in 16 min
-- Total: 62 plans across 7 milestones
+- v3.0: 6 plans across 5 phases
+- Total: 67 plans across 8 milestones
 
 **Recent Trend:**
 
 - Last 5 plans: 6 min, 7 min, 3 min, 6 min, 16 min
-- Trend: Variable (TDD + debugging cycle extended this plan)
+- Trend: Variable
 
 ## Accumulated Context
 
@@ -55,24 +43,12 @@ Full decision log in PROJECT.md Key Decisions table.
 
 Recent decisions affecting current work:
 
-- v3.0: Simplification before features -- find 10 real users before adding anything new
-- v3.0: Homepage redesign is highest-impact code work; do it before consolidation
-- v3.0: Page consolidation depends on homepage (need to know which pages survive)
-- v3.0: Performance after consolidation (fewer pages to optimize)
-- v3.0: Sharing last (optimize what remains after simplification)
-- Phase 30: ML prediction pipeline permanently closed -- confirmed schedule IS the product (100% vs 3.2% ML)
-- Phase 30: Homepage audit items superseded by Phase 31 redesign
-- Phase 30: Sync architecture deferred indefinitely -- find users first
-- [Phase 31]: Hero card is sole above-fold content with action CTAs and meta footer wired in
-- [Phase 31]: CTA simplified to single text line -- simplicity over engagement
-- [Phase 31]: Dead CSS from all removed sections cleaned in one pass
-- [Phase 33]: localStorage hero cache renders instantly; loadForecast runs as background refresh
-- [Phase 33]: SW API caching uses allowlist + explicit deny list for location-sensitive endpoints
-- [Phase 33]: CACHE_VERSION bumped to custard-v22 for SW update propagation
-
-### Roadmap Evolution
-
-- Phase 33.1 inserted after Phase 33: Bug Fixes -- completed 2026-03-27 (3/4 verified, BUG-04 accepted as dead letter)
+- v4.0: Distribution before features -- find real users before adding anything new
+- v4.0: Data validation must precede SEO pages (bad data on public pages = bad first impression)
+- v4.0: SEO-04 (OG cards) split into own phase -- design requires user input
+- v4.0: SOCL-01 independent -- can execute in parallel with any phase
+- v4.0: Start with 15 Madison-area stores, prove indexing, then scale
+- Phase 35: Security + MCP shipped -- Worker hardened, MCP server live
 
 ### Pending Todos
 
@@ -80,12 +56,11 @@ None.
 
 ### Blockers/Concerns
 
-- Worker cold-start LCP mitigated by localStorage hero cache + SW API caching (Phase 33); Lighthouse LCP phase gate pending post-deploy
-- Zero-traffic page determination needs actual analytics data or reasonable proxy
+- SEO-04 (Phase 38) requires design discussion with user before execution
 - Pre-existing map-pan-stability.spec.mjs test failure (carried from v1.5)
 
 ## Session Continuity
 
-Last session: 2026-03-27
-Stopped at: Phase 33.1 closed, routing to Phase 34 execution
-Resume file: .planning/phases/34-social-sharing/.continue-here.md
+Last session: 2026-04-05
+Stopped at: v4.0 roadmap created, Phase 35 complete, ready to plan Phase 36
+Resume file: None
