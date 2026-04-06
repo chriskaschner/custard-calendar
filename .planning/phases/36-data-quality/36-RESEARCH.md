@@ -301,22 +301,13 @@ describe('rarity reconciliation', () => {
 | A2 | 7 days is a safe stale threshold for Culver's stores | Common Pitfalls | Too low = alert storms; too high = miss actual staleness |
 | A3 | FLAVOR_PROFILES + FLAVOR_ALIASES covers ~80-90% of actual upstream flavors | Common Pitfalls | Higher unknown rate = more noise in alerts |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Rarity label source of truth**
-   - What we know: route-today.js (lines 124-152) has the 3-gate rarity logic; flavor-stats.js computes raw stats without labels
-   - What's unclear: Should reconciliation tests verify the label logic from route-today.js, or just the raw stat computation?
-   - Recommendation: Test both -- raw stats must match, AND the label derivation from those stats must match. Extract the label-computation logic into a shared function so both route-today.js and the reconciliation test use the same code.
+1. **Rarity label source of truth** — RESOLVED: Test both raw stats AND label derivation. Plan 36-01 Task 2 extracts `deriveRarityLabel` from route-today.js as the authoritative function and reconciliation tests verify both raw stat computation and label output match independently computed values from D1 snapshots.
 
-2. **Count of historical bad records**
-   - What we know: Closure sentinels were added to the filter before D1 existed, but some may have been backfilled from before the filter. We cannot query D1 remotely in research.
-   - What's unclear: How many bad records exist? Could be zero, could be hundreds.
-   - Recommendation: The audit script (DATA-01) will answer this. Dry-run of purge script reports count before deleting.
+2. **Count of historical bad records** — RESOLVED: Unknown until audit runs. Plan 36-03 Task 1 (audit script) will report the count. The dry-run of the purge script reports count before deleting. This is by design -- the audit itself answers the question.
 
-3. **Store coverage completeness for 17 stores**
-   - What we know: All 17 slugs exist in stores.json (verified). All 17 are Culver's brand.
-   - What's unclear: Whether all 17 stores have D1 snapshot data (some may be newer stores with no history).
-   - Recommendation: Audit script should report stores with zero snapshots as a finding, not an error.
+3. **Store coverage completeness for 17 stores** — RESOLVED: Audit script reports stores with zero snapshots as a finding, not an error. Plan 36-03 Task 1 handles missing-data stores gracefully in the audit report output.
 
 ## Environment Availability
 
