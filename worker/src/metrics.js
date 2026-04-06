@@ -1,3 +1,5 @@
+import { SLUG_PATTERN } from './slug-validation.js';
+
 /**
  * Metrics endpoints — queryable flavor intelligence from D1 snapshots.
  *
@@ -353,7 +355,11 @@ export async function handleMetricsRoute(path, env, corsHeaders, url = null) {
   // /api/metrics/store/{slug}
   const storeMatch = path.match(/^\/api\/metrics\/store\/(.+)$/);
   if (storeMatch) {
-    return handleStoreMetrics(db, decodeURIComponent(storeMatch[1]), corsHeaders);
+    const slug = decodeURIComponent(storeMatch[1]);
+    if (!SLUG_PATTERN.test(slug)) {
+      return Response.json({ error: 'Invalid slug format' }, { status: 400, headers: corsHeaders });
+    }
+    return handleStoreMetrics(db, slug, corsHeaders);
   }
 
   // /api/metrics/trending
@@ -364,7 +370,11 @@ export async function handleMetricsRoute(path, env, corsHeaders, url = null) {
   // /api/metrics/accuracy/{slug}
   const accuracyStoreMatch = path.match(/^\/api\/metrics\/accuracy\/(.+)$/);
   if (accuracyStoreMatch) {
-    return handleAccuracyByStore(db, decodeURIComponent(accuracyStoreMatch[1]), corsHeaders);
+    const slug = decodeURIComponent(accuracyStoreMatch[1]);
+    if (!SLUG_PATTERN.test(slug)) {
+      return Response.json({ error: 'Invalid slug format' }, { status: 400, headers: corsHeaders });
+    }
+    return handleAccuracyByStore(db, slug, corsHeaders);
   }
 
   // /api/metrics/accuracy
@@ -380,7 +390,11 @@ export async function handleMetricsRoute(path, env, corsHeaders, url = null) {
   // /api/metrics/health/{slug}
   const healthMatch = path.match(/^\/api\/metrics\/health\/(.+)$/);
   if (healthMatch) {
-    return handleHealthMetrics(db, decodeURIComponent(healthMatch[1]), corsHeaders);
+    const slug = decodeURIComponent(healthMatch[1]);
+    if (!SLUG_PATTERN.test(slug)) {
+      return Response.json({ error: 'Invalid slug format' }, { status: 400, headers: corsHeaders });
+    }
+    return handleHealthMetrics(db, slug, corsHeaders);
   }
 
   return null;

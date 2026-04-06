@@ -1,4 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { _resetRateLimitState } from '../src/rate-limit.js';
+import { _resetDailyProxyCounter } from '../src/route-nearby.js';
 import { normalize, matchesFlavor, findSimilarFlavors } from '../src/flavor-matcher.js';
 import { handleRequest } from '../src/index.js';
 
@@ -169,6 +171,8 @@ describe('/api/nearby-flavors endpoint', () => {
   let env;
 
   beforeEach(() => {
+    _resetRateLimitState();
+    _resetDailyProxyCounter();
     mockKV = createMockKV();
     env = {
       FLAVOR_CACHE: mockKV,

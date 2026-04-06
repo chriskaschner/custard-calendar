@@ -5,6 +5,11 @@ import { applyIpRateLimit } from './rate-limit.js';
 const LOCATOR_CACHE_TTL = 3600; // 1 hour
 const NEARBY_CACHE_MAX_AGE = 3600; // 1 hour
 const NEARBY_RATE_LIMIT_PER_HOUR = 20;
+const DAILY_UPSTREAM_PROXY_LIMIT = 500;
+
+// In-memory daily counter for upstream proxy calls (protects Culver's servers)
+let _dailyProxyCount = 0;
+let _dailyProxyDate = '';
 
 /**
  * Transform Culver's locator API response into our store format.
@@ -70,6 +75,20 @@ export async function handleApiNearbyFlavors(request, url, env, corsHeaders) {
   if (cached) {
     locatorData = JSON.parse(cached);
   } else {
+    // Daily cap on upstream proxy calls (protects Culver's servers from distributed abuse)
+    const today = new Date().toISOString().slice(0, 10);
+    if (_dailyProxyDate !== today) {
+      _dailyProxyCount = 0;
+      _dailyProxyDate = today;
+    }
+    if (_dailyProxyCount >= DAILY_UPSTREAM_PROXY_LIMIT) {
+      return Response.json(
+        { error: 'Daily upstream request limit reached. Please try again tomorrow.' },
+        { status: 429, headers: corsHeaders },
+      );
+    }
+    _dailyProxyCount++;
+
     // Fetch from Culver's locator API
     const locatorUrl = `https://www.culvers.com/api/locator/getLocations?location=${encodeURIComponent(location.trim())}&limit=${limit}`;
     let resp;
@@ -159,4 +178,10 @@ export async function handleApiNearbyFlavors(request, url, env, corsHeaders) {
       'Cache-Control': `public, max-age=${NEARBY_CACHE_MAX_AGE}`,
     },
   });
+}
+
+/** Reset daily proxy counter (test helper). */
+export function _resetDailyProxyCounter() {
+  _dailyProxyCount = 0;
+  _dailyProxyDate = '';
 }

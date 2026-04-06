@@ -37,7 +37,7 @@ import { maybeSendOperatorAlert } from './operator-alerts.js';
 import { handleCalendar } from './route-calendar.js';
 import { handleApiToday } from './route-today.js';
 import { handleApiNearbyFlavors } from './route-nearby.js';
-import { applyIpRateLimit } from './rate-limit.js';
+import { applyIpRateLimit, _resetRateLimitState } from './rate-limit.js';
 import { handleGroupRoute } from './group-routes.js';
 import { handleWidgetScript, handleWidgetVersion } from './widget-routes.js';
 
@@ -453,8 +453,25 @@ export async function handleRequest(request, env, fetchFlavorsFn = defaultFetchF
   // Normalize versioned paths: /api/v1/X → /api/X, /v1/X → /X
   const { canonical, isVersioned } = normalizePath(url.pathname);
 
-  // Health check (unversioned — always public)
+  // Reset in-memory rate limit state for tests
+  if (env._testResetRateLimits) _resetRateLimitState();
+
+  // Global per-IP rate limit: 300 requests/hour catch-all for all endpoints.
+  const globalLimited = await applyIpRateLimit({
+    request,
+    corsHeaders,
+    prefix: 'rl:global',
+    limit: 300,
+    error: 'Rate limit exceeded. Max 300 requests per hour.',
+  });
+  if (globalLimited) return globalLimited;
+
+  // Health check (unversioned)
   if (canonical === '/health') {
+    const admin = checkAdminAccess(request, env);
+    if (!admin.ok) {
+      return Response.json({ status: 'ok' }, { headers: corsHeaders });
+    }
     const checks = {};
     let degraded = false;
 
@@ -631,7 +648,17 @@ export async function handleRequest(request, env, fetchFlavorsFn = defaultFetchF
     response = await handleForecast(forecastSlug, env, corsHeaders);
   } else if (canonical.match(/^\/api\/flavor-stats\/([^/]+)$/)) {
     const statsSlug = canonical.match(/^\/api\/flavor-stats\/([^/]+)$/)[1];
-    response = await handleFlavorStats(request, env, decodeURIComponent(statsSlug));
+    const decodedStatsSlug = decodeURIComponent(statsSlug);
+    const validSlugs = env._validSlugsOverride || DEFAULT_VALID_SLUGS;
+    const slugCheck = isValidSlug(decodedStatsSlug, validSlugs);
+    if (!slugCheck.valid) {
+      response = Response.json(
+        { error: `Invalid store: ${slugCheck.reason}` },
+        { status: 400, headers: corsHeaders },
+      );
+    } else {
+      response = await handleFlavorStats(request, env, decodedStatsSlug);
+    }
   } else if (canonical.startsWith('/api/metrics/')) {
     const metricsResponse = await handleMetricsRoute(canonical, env, corsHeaders, url);
     if (metricsResponse) {

@@ -117,14 +117,15 @@ describe('Worker request handling', () => {
     expect(mockFetchFlavors).not.toHaveBeenCalled();
   });
 
-  it('6: /health returns 200 with status ok', async () => {
+  it('6: /health returns 200 with status ok (minimal without auth)', async () => {
     const req = makeRequest('/health');
     const res = await handleRequest(req, env, mockFetchFlavors);
 
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.status).toBe('ok');
-    expect(body.timestamp).toBeDefined();
+    // Full diagnostics (timestamp, checks, etc.) require admin auth
+    expect(body.timestamp).toBeUndefined();
   });
 
   it('7: includes CORS headers', async () => {

@@ -863,8 +863,11 @@ describe('metrics route protection (index-level)', () => {
   });
 
   it('applies read rate limiting for /api/v1/metrics/*', async () => {
+    const { _resetRateLimitState, _seedRateLimitCounter } = await import('../src/rate-limit.js');
+    _resetRateLimitState();
     const hour = new Date().toISOString().slice(0, 13);
-    const kv = createMockKV({ [`rl:metrics:read:1.2.3.4:${hour}`]: '120' });
+    _seedRateLimitCounter(`rl:metrics:read:1.2.3.4:${hour}`, 120);
+    const kv = createMockKV();
     const env = { FLAVOR_CACHE: kv };
 
     const req = new Request('https://example.com/api/v1/metrics/intelligence', {
