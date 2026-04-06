@@ -21,7 +21,6 @@ import json
 import re
 import subprocess
 import sys
-import tempfile
 from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
@@ -76,23 +75,19 @@ def execute_query_via_wrangler(sql: str) -> list[dict] | None:
     """Execute a SELECT query via wrangler d1 execute --remote --json.
 
     Returns parsed result rows or None on error.
+    Uses --command instead of --file to avoid wrangler's batch upload API.
     """
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".sql", delete=False) as tmp:
-        tmp.write(sql)
-        tmp_path = Path(tmp.name)
-
     result = subprocess.run(
         [
             "npx", "wrangler", "d1", "execute", D1_DATABASE_NAME,
             "--remote",
-            "--file", str(tmp_path),
+            "--command", sql,
             "--json",
         ],
         capture_output=True,
         text=True,
         cwd=WORKER_DIR,
     )
-    tmp_path.unlink(missing_ok=True)
 
     if result.returncode != 0:
         print(f"  wrangler error: {result.stderr.strip()}", file=sys.stderr)
@@ -114,22 +109,18 @@ def execute_sql_via_wrangler(sql: str) -> bool:
     """Execute a write SQL statement via wrangler d1 execute --remote.
 
     Returns True on success, False on error.
+    Uses --command instead of --file to avoid wrangler's batch upload API.
     """
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".sql", delete=False) as tmp:
-        tmp.write(sql)
-        tmp_path = Path(tmp.name)
-
     result = subprocess.run(
         [
             "npx", "wrangler", "d1", "execute", D1_DATABASE_NAME,
             "--remote",
-            "--file", str(tmp_path),
+            "--command", sql,
         ],
         capture_output=True,
         text=True,
         cwd=WORKER_DIR,
     )
-    tmp_path.unlink(missing_ok=True)
 
     if result.returncode != 0:
         print(f"  wrangler error: {result.stderr.strip()}", file=sys.stderr)

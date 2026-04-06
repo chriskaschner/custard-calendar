@@ -1,0 +1,750 @@
+{
+  "purge_date": "2026-04-06",
+  "mode": "execute",
+  "stores_scanned": 17,
+  "records": [
+    {
+      "id": 181152,
+      "slug": "cottage-grove-wi-landmark-dr",
+      "date": "2016-11-24",
+      "flavor": "Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 181399,
+      "slug": "cottage-grove-wi-landmark-dr",
+      "date": "2022-12-25",
+      "flavor": "Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 135271,
+      "slug": "cottage-grove-wi-landmark-dr",
+      "date": "2024-11-28",
+      "flavor": "z *Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 135335,
+      "slug": "cottage-grove-wi-landmark-dr",
+      "date": "2025-01-01",
+      "flavor": "z *Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 135293,
+      "slug": "cottage-grove-wi-landmark-dr",
+      "date": "2025-04-20",
+      "flavor": "z *Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 135389,
+      "slug": "cottage-grove-wi-landmark-dr",
+      "date": "2025-12-25",
+      "flavor": "z *Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 181798,
+      "slug": "cross-plains",
+      "date": "2017-01-01",
+      "flavor": "Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 181948,
+      "slug": "cross-plains",
+      "date": "2019-11-28",
+      "flavor": "Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 182186,
+      "slug": "cross-plains",
+      "date": "2021-12-25",
+      "flavor": "Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 182193,
+      "slug": "cross-plains",
+      "date": "2022-01-01",
+      "flavor": "Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 184551,
+      "slug": "deforest",
+      "date": "2015-11-26",
+      "flavor": "Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 184579,
+      "slug": "deforest",
+      "date": "2015-12-25",
+      "flavor": "Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 185367,
+      "slug": "deforest",
+      "date": "2022-11-24",
+      "flavor": "Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 185550,
+      "slug": "deforest",
+      "date": "2023-12-25",
+      "flavor": "z *Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 136175,
+      "slug": "deforest",
+      "date": "2024-11-28",
+      "flavor": "z *Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 210702,
+      "slug": "madison-cottage-grove",
+      "date": "2019-12-25",
+      "flavor": "Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 210709,
+      "slug": "madison-cottage-grove",
+      "date": "2020-01-01",
+      "flavor": "Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 210979,
+      "slug": "madison-cottage-grove",
+      "date": "2021-11-25",
+      "flavor": "Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 211040,
+      "slug": "madison-cottage-grove",
+      "date": "2022-12-25",
+      "flavor": "Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 211047,
+      "slug": "madison-cottage-grove",
+      "date": "2023-01-01",
+      "flavor": "Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 144980,
+      "slug": "madison-cottage-grove",
+      "date": "2024-01-01",
+      "flavor": "z *Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 145125,
+      "slug": "madison-cottage-grove",
+      "date": "2024-12-24",
+      "flavor": "z *Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 145126,
+      "slug": "madison-cottage-grove",
+      "date": "2024-12-25",
+      "flavor": "z *Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 145249,
+      "slug": "madison-cottage-grove",
+      "date": "2025-11-27",
+      "flavor": "z *Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 211222,
+      "slug": "madison-east-towne",
+      "date": "2015-11-26",
+      "flavor": "Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 211342,
+      "slug": "madison-east-towne",
+      "date": "2016-03-27",
+      "flavor": "Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 211673,
+      "slug": "madison-east-towne",
+      "date": "2019-12-25",
+      "flavor": "Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 145342,
+      "slug": "madison-east-towne",
+      "date": "2024-03-31",
+      "flavor": "z *Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 145431,
+      "slug": "madison-east-towne",
+      "date": "2024-11-28",
+      "flavor": "z *Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 145521,
+      "slug": "madison-east-towne",
+      "date": "2025-11-27",
+      "flavor": "z *Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 145549,
+      "slug": "madison-east-towne",
+      "date": "2025-12-25",
+      "flavor": "z *Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 212004,
+      "slug": "madison-northport",
+      "date": "2016-03-27",
+      "flavor": "Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 145734,
+      "slug": "madison-northport",
+      "date": "2024-11-28",
+      "flavor": "z *Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 145824,
+      "slug": "madison-northport",
+      "date": "2025-11-27",
+      "flavor": "z *Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 145852,
+      "slug": "madison-northport",
+      "date": "2025-12-25",
+      "flavor": "z *Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 129017,
+      "slug": "madison-todd-drive",
+      "date": "2016-03-27",
+      "flavor": "Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 129443,
+      "slug": "madison-todd-drive",
+      "date": "2019-12-25",
+      "flavor": "Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 129810,
+      "slug": "madison-todd-drive",
+      "date": "2022-11-24",
+      "flavor": "Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 129840,
+      "slug": "madison-todd-drive",
+      "date": "2022-12-24",
+      "flavor": "Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 129841,
+      "slug": "madison-todd-drive",
+      "date": "2022-12-25",
+      "flavor": "Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 127996,
+      "slug": "madison-todd-drive",
+      "date": "2024-03-31",
+      "flavor": "z *Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 128147,
+      "slug": "madison-todd-drive",
+      "date": "2024-11-28",
+      "flavor": "z *Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 128174,
+      "slug": "madison-todd-drive",
+      "date": "2024-12-25",
+      "flavor": "z *Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 128357,
+      "slug": "madison-todd-drive",
+      "date": "2025-11-27",
+      "flavor": "z *Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 128385,
+      "slug": "madison-todd-drive",
+      "date": "2025-12-25",
+      "flavor": "z *Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 213447,
+      "slug": "madison-wi-mineral-point-rd",
+      "date": "2016-03-27",
+      "flavor": "Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 213689,
+      "slug": "madison-wi-mineral-point-rd",
+      "date": "2016-11-24",
+      "flavor": "Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 213874,
+      "slug": "madison-wi-mineral-point-rd",
+      "date": "2019-12-25",
+      "flavor": "Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 214207,
+      "slug": "madison-wi-mineral-point-rd",
+      "date": "2022-12-25",
+      "flavor": "Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 214253,
+      "slug": "madison-wi-mineral-point-rd",
+      "date": "2023-04-09",
+      "flavor": "Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 214326,
+      "slug": "madison-wi-mineral-point-rd",
+      "date": "2023-11-23",
+      "flavor": "Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 146672,
+      "slug": "madison-wi-mineral-point-rd",
+      "date": "2024-11-28",
+      "flavor": "z *Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 216608,
+      "slug": "mcfarland",
+      "date": "2015-11-26",
+      "flavor": "Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 216725,
+      "slug": "mcfarland",
+      "date": "2016-03-27",
+      "flavor": "Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 216967,
+      "slug": "mcfarland",
+      "date": "2016-11-24",
+      "flavor": "Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 217303,
+      "slug": "mcfarland",
+      "date": "2022-12-25",
+      "flavor": "Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 217347,
+      "slug": "mcfarland",
+      "date": "2023-04-09",
+      "flavor": "Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 147637,
+      "slug": "mcfarland",
+      "date": "2024-01-01",
+      "flavor": "z *Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 147514,
+      "slug": "mcfarland",
+      "date": "2024-03-31",
+      "flavor": "z *Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 147692,
+      "slug": "mcfarland",
+      "date": "2024-12-25",
+      "flavor": "z *Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 147749,
+      "slug": "mcfarland",
+      "date": "2025-04-20",
+      "flavor": "z *Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 147847,
+      "slug": "mcfarland",
+      "date": "2025-11-27",
+      "flavor": "z *Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 147426,
+      "slug": "mcfarland",
+      "date": "2026-02-02",
+      "flavor": "z *Closed Today for Remodel!",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 220624,
+      "slug": "middleton",
+      "date": "2016-03-27",
+      "flavor": "Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 220866,
+      "slug": "middleton",
+      "date": "2016-11-24",
+      "flavor": "Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 221109,
+      "slug": "middleton",
+      "date": "2023-12-25",
+      "flavor": "z *Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 149315,
+      "slug": "middleton",
+      "date": "2025-04-20",
+      "flavor": "z *Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 149383,
+      "slug": "middleton",
+      "date": "2025-11-27",
+      "flavor": "z *Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 149411,
+      "slug": "middleton",
+      "date": "2025-12-25",
+      "flavor": "z *Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 11497,
+      "slug": "mt-horeb",
+      "date": "2024-01-01",
+      "flavor": "z *Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 11645,
+      "slug": "mt-horeb",
+      "date": "2024-11-28",
+      "flavor": "z *Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 11672,
+      "slug": "mt-horeb",
+      "date": "2024-12-25",
+      "flavor": "z *Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 11760,
+      "slug": "mt-horeb",
+      "date": "2025-04-20",
+      "flavor": "z *Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 11859,
+      "slug": "mt-horeb",
+      "date": "2025-11-27",
+      "flavor": "z *Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 11887,
+      "slug": "mt-horeb",
+      "date": "2025-12-25",
+      "flavor": "z *Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 246595,
+      "slug": "sauk-city",
+      "date": "2015-11-26",
+      "flavor": "Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 246683,
+      "slug": "sauk-city",
+      "date": "2016-03-27",
+      "flavor": "Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 246925,
+      "slug": "sauk-city",
+      "date": "2016-11-24",
+      "flavor": "Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 247045,
+      "slug": "sauk-city",
+      "date": "2019-12-25",
+      "flavor": "Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 247259,
+      "slug": "sauk-city",
+      "date": "2021-12-25",
+      "flavor": "Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 247378,
+      "slug": "sauk-city",
+      "date": "2022-11-24",
+      "flavor": "Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 247409,
+      "slug": "sauk-city",
+      "date": "2022-12-25",
+      "flavor": "Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 247529,
+      "slug": "sauk-city",
+      "date": "2023-11-23",
+      "flavor": "Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 159275,
+      "slug": "sauk-city",
+      "date": "2024-03-31",
+      "flavor": "z *Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 159444,
+      "slug": "sauk-city",
+      "date": "2024-12-25",
+      "flavor": "z *Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 159531,
+      "slug": "sauk-city",
+      "date": "2025-04-20",
+      "flavor": "z *Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 159630,
+      "slug": "sauk-city",
+      "date": "2025-11-27",
+      "flavor": "z *Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 159658,
+      "slug": "sauk-city",
+      "date": "2025-12-25",
+      "flavor": "z *Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 257555,
+      "slug": "sun-prairie",
+      "date": "2015-11-26",
+      "flavor": "Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 257672,
+      "slug": "sun-prairie",
+      "date": "2016-03-27",
+      "flavor": "Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 258100,
+      "slug": "sun-prairie",
+      "date": "2019-11-28",
+      "flavor": "Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 258127,
+      "slug": "sun-prairie",
+      "date": "2019-12-25",
+      "flavor": "Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 258381,
+      "slug": "sun-prairie",
+      "date": "2021-11-25",
+      "flavor": "Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 162863,
+      "slug": "sun-prairie",
+      "date": "2024-11-28",
+      "flavor": "z *Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 162944,
+      "slug": "sun-prairie",
+      "date": "2025-04-20",
+      "flavor": "z *Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 163074,
+      "slug": "sun-prairie",
+      "date": "2025-11-27",
+      "flavor": "z *Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 163102,
+      "slug": "sun-prairie",
+      "date": "2025-12-25",
+      "flavor": "z *Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 163406,
+      "slug": "sun-prairie-oxford-place",
+      "date": "2025-11-27",
+      "flavor": "z *Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 130597,
+      "slug": "verona",
+      "date": "2019-11-28",
+      "flavor": "Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 130624,
+      "slug": "verona",
+      "date": "2019-12-25",
+      "flavor": "Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 128657,
+      "slug": "verona",
+      "date": "2024-12-25",
+      "flavor": "z *Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 128745,
+      "slug": "verona",
+      "date": "2025-04-20",
+      "flavor": "z *Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 266904,
+      "slug": "waunakee",
+      "date": "2016-03-27",
+      "flavor": "Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 267236,
+      "slug": "waunakee",
+      "date": "2019-12-25",
+      "flavor": "Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 267449,
+      "slug": "waunakee",
+      "date": "2021-11-25",
+      "flavor": "Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    },
+    {
+      "id": 166774,
+      "slug": "waunakee",
+      "date": "2025-11-27",
+      "flavor": "z *Restaurant Closed Today",
+      "reason": "closure_sentinel"
+    }
+  ],
+  "total_deleted": 106
+}
