@@ -4,6 +4,9 @@ const DEFAULT_PARSE_FAILURE_THRESHOLD = 3;
 const DEFAULT_PAYLOAD_ANOMALY_THRESHOLD = 10;
 const DEFAULT_CONSECUTIVE_ERROR_DAYS = 2;
 const DEFAULT_MONTH_END_LOOKAHEAD_DAYS = 5;
+const DEFAULT_UNKNOWN_FLAVOR_THRESHOLD = 5;
+const DEFAULT_DUPLICATE_DAY_THRESHOLD = 1;
+const DEFAULT_STALE_STORE_THRESHOLD_DAYS = 7;
 const DEFAULT_PRIORITY_SLUGS = ['mt-horeb', 'verona', 'madison-todd-drive'];
 
 function readIntEnv(raw, fallback) {
@@ -85,6 +88,38 @@ async function findCoverageGaps(db, slugs, coversThroughDate) {
   return gaps;
 }
 
+async function findStaleStores(db, slugs, now, thresholdDays) {
+  if (!db || !Array.isArray(slugs) || slugs.length === 0) return [];
+  const placeholders = slugs.map(() => '?').join(',');
+  const result = await db.prepare(
+    `SELECT slug, MAX(date) AS max_date
+     FROM snapshots
+     WHERE slug IN (${placeholders})
+     GROUP BY slug`
+  ).bind(...slugs).all();
+
+  const maxBySlug = new Map();
+  for (const row of result?.results || []) {
+    if (row?.slug) maxBySlug.set(row.slug, row.max_date || null);
+  }
+
+  const stale = [];
+  const today = now.toISOString().slice(0, 10);
+  for (const slug of slugs) {
+    const maxDate = maxBySlug.get(slug) || null;
+    if (!maxDate) {
+      stale.push({ slug, max_date: null, days_stale: null });
+      continue;
+    }
+    const diffMs = new Date(today + 'T00:00:00Z') - new Date(maxDate + 'T00:00:00Z');
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    if (diffDays > thresholdDays) {
+      stale.push({ slug, max_date: maxDate, days_stale: diffDays });
+    }
+  }
+  return stale;
+}
+
 function buildOperatorAlertHtml({ baseUrl, issues, context }) {
   const issueItems = issues.map((issue) => `<li><strong>${issue.title}:</strong> ${issue.detail}</li>`).join('\n');
   const checked = context.checked ?? 0;
@@ -160,6 +195,24 @@ export async function maybeSendOperatorAlert({ env, handler, result, now = new D
         detail: `${payloadAnomalies} anomalies today (threshold: ${anomalyThreshold})`,
       });
     }
+
+    const unknownFlavors = await readDailyCounter(env.FLAVOR_CACHE, 'meta:unknown-flavor-count', today);
+    const unknownThreshold = readIntEnv(env.OPERATOR_UNKNOWN_FLAVOR_THRESHOLD, DEFAULT_UNKNOWN_FLAVOR_THRESHOLD);
+    if (unknownFlavors > unknownThreshold) {
+      issues.push({
+        title: 'Unknown flavors detected',
+        detail: `${unknownFlavors} unknown flavor names today (threshold: ${unknownThreshold}). Review catalog and consider adding to FLAVOR_PROFILES or FLAVOR_ALIASES.`,
+      });
+    }
+
+    const duplicateDays = await readDailyCounter(env.FLAVOR_CACHE, 'meta:duplicate-day-count', today);
+    const dupeThreshold = readIntEnv(env.OPERATOR_DUPLICATE_DAY_THRESHOLD, DEFAULT_DUPLICATE_DAY_THRESHOLD);
+    if (duplicateDays > dupeThreshold) {
+      issues.push({
+        title: 'Duplicate same-day entries',
+        detail: `${duplicateDays} stores had duplicate dates in upstream payloads today (threshold: ${dupeThreshold}).`,
+      });
+    }
   } catch (err) {
     issues.push({
       title: 'Counter read error',
@@ -200,6 +253,25 @@ export async function maybeSendOperatorAlert({ env, handler, result, now = new D
     issues.push({
       title: 'Coverage query error',
       detail: err.message || 'failed to evaluate forward coverage',
+    });
+  }
+
+  try {
+    const staleThreshold = readIntEnv(env.OPERATOR_STALE_STORE_THRESHOLD_DAYS, DEFAULT_STALE_STORE_THRESHOLD_DAYS);
+    const staleStores = await findStaleStores(env.DB, prioritySlugs, now, staleThreshold);
+    if (staleStores.length > 0) {
+      const detail = staleStores
+        .map(s => `${s.slug} (last: ${s.max_date || 'never'}, ${s.days_stale ?? '?'} days)`)
+        .join(', ');
+      issues.push({
+        title: 'Stale stores detected',
+        detail: `${staleStores.length} priority store(s) have no new flavor data in ${staleThreshold}+ days: ${detail}`,
+      });
+    }
+  } catch (err) {
+    issues.push({
+      title: 'Stale store check error',
+      detail: err.message || 'failed to evaluate stale stores',
     });
   }
 

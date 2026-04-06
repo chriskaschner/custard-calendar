@@ -143,8 +143,17 @@ describe('maybeSendOperatorAlert', () => {
       FLAVOR_CACHE: createMockKV({
         [`meta:parse-fail-count:${today}`]: '0',
         [`meta:payload-anomaly-count:${today}`]: '0',
+        [`meta:unknown-flavor-count:${today}`]: '0',
+        [`meta:duplicate-day-count:${today}`]: '0',
       }),
-      DB: createMockDb({ cronErrors: [0, 0] }),
+      DB: createMockDb({
+        cronErrors: [0, 0],
+        coverageRows: [
+          { slug: 'mt-horeb', max_date: '2026-03-03' },
+          { slug: 'verona', max_date: '2026-03-03' },
+          { slug: 'madison-todd-drive', max_date: '2026-03-03' },
+        ],
+      }),
       RESEND_API_KEY: 'test-key',
       OPERATOR_EMAIL: 'ops@example.com',
     };
@@ -159,6 +168,211 @@ describe('maybeSendOperatorAlert', () => {
     expect(res.sent).toBe(false);
     expect(res.reason).toBe('no_threshold_crossed');
     expect(emailMocks.sendEmail).not.toHaveBeenCalled();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Quality gate alert integration tests (D-04)
+// ---------------------------------------------------------------------------
+
+describe('quality gate alerts in operator email', () => {
+  beforeEach(() => {
+    emailMocks.sendEmail.mockClear();
+  });
+
+  it('sends alert when unknown flavor count exceeds threshold', async () => {
+    const today = '2026-04-01';
+    const env = {
+      FLAVOR_CACHE: createMockKV({
+        [`meta:parse-fail-count:${today}`]: '0',
+        [`meta:payload-anomaly-count:${today}`]: '0',
+        [`meta:unknown-flavor-count:${today}`]: '8',
+        [`meta:duplicate-day-count:${today}`]: '0',
+      }),
+      DB: createMockDb({ cronErrors: [0, 0] }),
+      RESEND_API_KEY: 'test-key',
+      OPERATOR_EMAIL: 'ops@example.com',
+    };
+
+    const res = await maybeSendOperatorAlert({
+      env,
+      handler: 'daily_alerts',
+      result: { checked: 1, sent: 0, errors: [] },
+      now: new Date('2026-04-01T12:00:00Z'),
+    });
+
+    expect(res.sent).toBe(true);
+    expect(res.issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ title: 'Unknown flavors detected' }),
+      ])
+    );
+  });
+
+  it('does NOT alert when unknown flavor count is at or below threshold', async () => {
+    const today = '2026-04-02';
+    const env = {
+      FLAVOR_CACHE: createMockKV({
+        [`meta:parse-fail-count:${today}`]: '0',
+        [`meta:payload-anomaly-count:${today}`]: '0',
+        [`meta:unknown-flavor-count:${today}`]: '5',
+        [`meta:duplicate-day-count:${today}`]: '0',
+      }),
+      DB: createMockDb({
+        cronErrors: [0, 0],
+        coverageRows: [
+          { slug: 'mt-horeb', max_date: '2026-04-02' },
+          { slug: 'verona', max_date: '2026-04-02' },
+          { slug: 'madison-todd-drive', max_date: '2026-04-02' },
+        ],
+      }),
+      RESEND_API_KEY: 'test-key',
+      OPERATOR_EMAIL: 'ops@example.com',
+    };
+
+    const res = await maybeSendOperatorAlert({
+      env,
+      handler: 'daily_alerts',
+      result: { checked: 1, sent: 0, errors: [] },
+      now: new Date('2026-04-02T12:00:00Z'),
+    });
+
+    expect(res.sent).toBe(false);
+    expect(res.reason).toBe('no_threshold_crossed');
+  });
+
+  it('sends alert when duplicate day count exceeds threshold', async () => {
+    const today = '2026-04-03';
+    const env = {
+      FLAVOR_CACHE: createMockKV({
+        [`meta:parse-fail-count:${today}`]: '0',
+        [`meta:payload-anomaly-count:${today}`]: '0',
+        [`meta:unknown-flavor-count:${today}`]: '0',
+        [`meta:duplicate-day-count:${today}`]: '3',
+      }),
+      DB: createMockDb({ cronErrors: [0, 0] }),
+      RESEND_API_KEY: 'test-key',
+      OPERATOR_EMAIL: 'ops@example.com',
+    };
+
+    const res = await maybeSendOperatorAlert({
+      env,
+      handler: 'daily_alerts',
+      result: { checked: 1, sent: 0, errors: [] },
+      now: new Date('2026-04-03T12:00:00Z'),
+    });
+
+    expect(res.sent).toBe(true);
+    expect(res.issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ title: 'Duplicate same-day entries' }),
+      ])
+    );
+  });
+
+  it('sends alert for stale store with max_date 10 days ago', async () => {
+    const today = '2026-04-06';
+    const env = {
+      FLAVOR_CACHE: createMockKV({
+        [`meta:parse-fail-count:${today}`]: '0',
+        [`meta:payload-anomaly-count:${today}`]: '0',
+        [`meta:unknown-flavor-count:${today}`]: '0',
+        [`meta:duplicate-day-count:${today}`]: '0',
+      }),
+      DB: createMockDb({
+        cronErrors: [0, 0],
+        coverageRows: [
+          { slug: 'mt-horeb', max_date: '2026-03-27' },
+          { slug: 'verona', max_date: '2026-04-05' },
+          { slug: 'madison-todd-drive', max_date: '2026-04-05' },
+        ],
+      }),
+      RESEND_API_KEY: 'test-key',
+      OPERATOR_EMAIL: 'ops@example.com',
+    };
+
+    const res = await maybeSendOperatorAlert({
+      env,
+      handler: 'daily_alerts',
+      result: { checked: 1, sent: 0, errors: [] },
+      now: new Date('2026-04-06T12:00:00Z'),
+    });
+
+    expect(res.sent).toBe(true);
+    expect(res.issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ title: 'Stale stores detected' }),
+      ])
+    );
+    const staleIssue = res.issues.find(i => i.title === 'Stale stores detected');
+    expect(staleIssue.detail).toContain('mt-horeb');
+    expect(staleIssue.detail).not.toContain('verona');
+  });
+
+  it('does NOT alert for stale store when max_date is 3 days ago (within threshold)', async () => {
+    const today = '2026-04-06';
+    const env = {
+      FLAVOR_CACHE: createMockKV({
+        [`meta:parse-fail-count:${today}`]: '0',
+        [`meta:payload-anomaly-count:${today}`]: '0',
+        [`meta:unknown-flavor-count:${today}`]: '0',
+        [`meta:duplicate-day-count:${today}`]: '0',
+      }),
+      DB: createMockDb({
+        cronErrors: [0, 0],
+        coverageRows: [
+          { slug: 'mt-horeb', max_date: '2026-04-03' },
+          { slug: 'verona', max_date: '2026-04-04' },
+          { slug: 'madison-todd-drive', max_date: '2026-04-05' },
+        ],
+      }),
+      RESEND_API_KEY: 'test-key',
+      OPERATOR_EMAIL: 'ops@example.com',
+    };
+
+    const res = await maybeSendOperatorAlert({
+      env,
+      handler: 'daily_alerts',
+      result: { checked: 1, sent: 0, errors: [] },
+      now: new Date('2026-04-06T12:00:00Z'),
+    });
+
+    expect(res.sent).toBe(false);
+    expect(res.reason).toBe('no_threshold_crossed');
+  });
+
+  it('alerts for store with no snapshot rows (never seen)', async () => {
+    const today = '2026-04-06';
+    const env = {
+      FLAVOR_CACHE: createMockKV({
+        [`meta:parse-fail-count:${today}`]: '0',
+        [`meta:payload-anomaly-count:${today}`]: '0',
+        [`meta:unknown-flavor-count:${today}`]: '0',
+        [`meta:duplicate-day-count:${today}`]: '0',
+      }),
+      DB: createMockDb({
+        cronErrors: [0, 0],
+        coverageRows: [],
+      }),
+      RESEND_API_KEY: 'test-key',
+      OPERATOR_EMAIL: 'ops@example.com',
+    };
+
+    const res = await maybeSendOperatorAlert({
+      env,
+      handler: 'daily_alerts',
+      result: { checked: 1, sent: 0, errors: [] },
+      now: new Date('2026-04-06T12:00:00Z'),
+    });
+
+    expect(res.sent).toBe(true);
+    expect(res.issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ title: 'Stale stores detected' }),
+      ])
+    );
+    const staleIssue = res.issues.find(i => i.title === 'Stale stores detected');
+    expect(staleIssue.detail).toContain('never');
   });
 });
 
