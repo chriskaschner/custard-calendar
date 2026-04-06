@@ -1,30 +1,32 @@
 ---
 gsd_state_version: 1.0
-milestone: v3.0
-milestone_name: Sharpen the Core
-status: Executing Phase 33.1
-stopped_at: Phase 33.1 UI-SPEC approved
-last_updated: "2026-03-26T17:34:22.004Z"
+milestone: v4.0
+milestone_name: Find Real Users
+status: Defining requirements
+stopped_at: Milestone v4.0 started -- MCP server and security hardening shipped
+last_updated: "2026-04-05T21:30:00.000Z"
 progress:
-  total_phases: 10
-  completed_phases: 6
-  total_plans: 16
-  completed_plans: 11
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-19)
+See: .planning/PROJECT.md (updated 2026-04-05)
 
 **Core value:** A family can instantly see what flavors are at their nearby stores and decide where to go
-**Current focus:** Phase 33.1 — bug-fixes-store-disambiguation-rarity-logic-art-migration-stale-signals
+**Current focus:** v4.0 Find Real Users — defining requirements
 
 ## Current Position
 
-Phase: 33.1 (bug-fixes-store-disambiguation-rarity-logic-art-migration-stale-signals) — EXECUTING
-Plan: 1 of 2
+Phase: Not started (defining requirements)
+Plan: --
+Status: Defining requirements
+Last activity: 2026-04-05 — Milestone v4.0 started
 
 ## Performance Metrics
 
@@ -70,7 +72,7 @@ Recent decisions affecting current work:
 
 ### Roadmap Evolution
 
-- Phase 33.1 inserted after Phase 33: Bug Fixes -- Store Disambiguation, Rarity Logic, Art Migration, Stale Signals (URGENT)
+- Phase 33.1 inserted after Phase 33: Bug Fixes -- completed 2026-03-27 (3/4 verified, BUG-04 accepted as dead letter)
 
 ### Pending Todos
 
@@ -84,6 +86,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-22T14:29:26.290Z
-Stopped at: Phase 33.1 UI-SPEC approved
-Resume file: .planning/phases/33.1-bug-fixes-store-disambiguation-rarity-logic-art-migration-stale-signals/33.1-UI-SPEC.md
+Last session: 2026-03-27
+Stopped at: Phase 33.1 closed, routing to Phase 34 execution
+Resume file: .planning/phases/34-social-sharing/.continue-here.md

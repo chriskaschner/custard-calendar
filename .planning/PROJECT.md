@@ -65,20 +65,24 @@ A family in the car (or on the couch) can instantly see what flavors are at thei
 
 ### Active
 
-## Current Milestone: v3.0 Sharpen the Core
+## Current Milestone: v4.0 Find Real Users
 
-**Goal:** Simplify the product to its essential experience, fix performance, and optimize for discoverability -- the first milestone focused on finding users rather than adding features.
+**Goal:** Get Custard Calendar in front of people who actually check Culver's Flavor of the Day -- through SEO, AI-native interfaces, and social content. The first milestone focused on distribution rather than features.
 
 **Target features:**
-- Redesign homepage with clear information hierarchy (one card: your store's flavor today)
-- Consolidate zero-traffic pages and simplify navigation
-- Fix LCP cold-start performance (P90 from 10s to <3s)
-- Eliminate layout shift during page load (CLS <0.1)
-- Optimize quiz/flavor content for social sharing
+- Per-store SEO landing pages served via Cloudflare Worker (HTMLRewriter, JSON-LD, sitemap) starting with Madison WI area Culver's stores
+- Data validation pipeline to catch upstream flavor oddities before they reach public-facing pages
+- MCP server for AI-native flavor queries (shipped v4.0 Phase 35)
+- Worker security hardening for public exposure (shipped v4.0 Phase 35)
+- Instagram investigation for automated rarity/novelty social posting
 
 ### Out of Scope
 
-- Worker/API layer changes -- feature-complete for all four use cases
+- Non-Culver's brands for SEO pages -- Kopp's/Gille's/Hefner's have different audiences; Culver's-only for now
+- All 1,012 stores at launch -- start with 15 Madison-area stores, prove indexing, then scale
+- Phase 34 Social Sharing (share buttons) -- deferred until there are users to share from
+- Phase 32 Page Consolidation -- deferred until real traffic data exists
+- Worker/API layer changes -- feature-complete for all four use cases (security hardening is the exception)
 - User accounts/authentication -- localStorage sufficient, accounts add friction
 - Mobile native app -- web-first, PWA works well
 - Push notifications -- email alerts and calendar subs already serve this
