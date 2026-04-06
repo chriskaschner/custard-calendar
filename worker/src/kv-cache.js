@@ -1,5 +1,6 @@
 import { recordSnapshots } from './snapshot-writer.js';
 import { getFetcherForSlug } from './brand-registry.js';
+import { FLAVOR_PROFILES, FLAVOR_ALIASES } from './flavor-colors.js';
 
 const KV_TTL_SECONDS = 86400; // 24 hours
 const FLAVOR_CACHE_RECORD_VERSION = 1;
@@ -14,6 +15,69 @@ const MAX_STORE_NAME_LENGTH = 120;
 // Upstream brands sometimes use sentinel titles to indicate a store is closed.
 // These are not real flavors and must be dropped before caching or serving.
 export const CLOSED_TITLE_RE = /\bclosed\b|^z[_ ]*(store|restaurant)?closed/i;
+
+/**
+ * Normalize a flavor name for FLAVOR_PROFILES / FLAVOR_ALIASES lookup.
+ * Strips TM/R symbols, normalizes curly quotes, lowercases, collapses whitespace.
+ */
+function normalizeFlavorKey(name) {
+  return String(name || '')
+    .toLowerCase()
+    .replace(/[\u00ae\u2122]/g, '')
+    .replace(/[\u2018\u2019]/g, "'")
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
+ * Check whether a flavor title is recognized in the canonical catalog.
+ * Looks up both FLAVOR_PROFILES (direct entries) and FLAVOR_ALIASES (variant names).
+ * Unknown flavors are counted but NOT dropped -- they still get served to users.
+ * @param {string} title - Flavor name from upstream data
+ * @returns {boolean}
+ */
+export function isKnownFlavor(title) {
+  if (!title) return false;
+  const key = normalizeFlavorKey(title);
+  if (!key) return false;
+  return Boolean(FLAVOR_PROFILES[key] || FLAVOR_ALIASES[key]);
+}
+
+/**
+ * Detect duplicate same-day entries in an upstream flavor payload.
+ * D1 UNIQUE(slug,date) prevents DB-level dupes; this catches them in the
+ * upstream payload BEFORE the D1 write so they can be counted and alerted on.
+ * @param {Array<{date: string}>} flavors
+ * @returns {string[]} Sorted array of duplicate date strings
+ */
+export function detectDuplicateDays(flavors) {
+  if (!Array.isArray(flavors) || flavors.length === 0) return [];
+  const seen = new Set();
+  const dupes = new Set();
+  for (const row of flavors) {
+    const d = row?.date;
+    if (d && seen.has(d)) dupes.add(d);
+    if (d) seen.add(d);
+  }
+  return [...dupes].sort();
+}
+
+/**
+ * Check whether a store's last flavor date exceeds a staleness threshold.
+ * A store with no data at all is considered stale.
+ * @param {string|null} lastFlavorDate - ISO date string (YYYY-MM-DD) or null
+ * @param {Date|string} now - Current date
+ * @param {number} [thresholdDays=7] - Days after which data is considered stale
+ * @returns {boolean}
+ */
+export function isStaleStore(lastFlavorDate, now, thresholdDays = 7) {
+  if (!lastFlavorDate) return true;
+  const last = new Date(lastFlavorDate + 'T00:00:00Z');
+  const current = now instanceof Date ? now : new Date(now);
+  if (isNaN(last.getTime()) || isNaN(current.getTime())) return true;
+  const diffDays = (current.getTime() - last.getTime()) / (1000 * 60 * 60 * 24);
+  return diffDays > thresholdDays;
+}
 
 export function brandCounterKey(brand) {
   return String(brand || 'unknown')
@@ -226,6 +290,21 @@ export async function getFlavorsCached(slug, kv, fetchFlavorsFn, isOverride = fa
 
   if (sanitized.dropped > 0) {
     await incrementDailyCounter(kv, 'meta:payload-anomaly-count', today);
+  }
+
+  // D-05a: Count unknown flavors (warning only -- do not drop from serving)
+  let unknownCount = 0;
+  for (const f of data.flavors) {
+    if (!isKnownFlavor(f.title)) unknownCount++;
+  }
+  if (unknownCount > 0) {
+    await incrementDailyCounter(kv, 'meta:unknown-flavor-count', today);
+  }
+
+  // D-05b: Count duplicate same-day entries in upstream payload
+  const dupeDays = detectDuplicateDays(data.flavors);
+  if (dupeDays.length > 0) {
+    await incrementDailyCounter(kv, 'meta:duplicate-day-count', today);
   }
 
   // O2: Track parse failures — empty flavors array after a fresh fetch indicates
