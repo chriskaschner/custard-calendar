@@ -160,7 +160,18 @@ var FALLBACK_FLAVOR_ALIASES = {
   'imperial torte': 'dark chocolate decadence',
   'double truffel': 'dark chocolate decadence',
   'lemon meringue pie': 'creamy lemon crumble',
-  'lemon raspberry shortbread': 'lemon berry layer cake'
+  'lemon raspberry shortbread': 'lemon berry layer cake',
+  'twix-tac-dough': 'twix mix',
+  'spumoni': 'pistachio',
+  'conehead': 'vanilla',
+  'bunny hop': 'vanilla',
+  'take five': 'dark chocolate pb crunch',
+  "pralines 'n caramel 'n cream": 'caramel cashew',
+  'kahlua colada': 'coconut cream pie',
+  'german apple streusel': 'nutty caramel apple',
+  'bienenstichkuchen': 'vanilla',
+  "edna lewis' peach cobbler": 'georgia peach',
+  'joe dirt': 'brownie thunder'
 };
 
 // ---------------------------------------------------------------------------
