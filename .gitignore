@@ -86,6 +86,7 @@ data/*.sqlite
 
 # Cloudflare Wrangler local state (root level)
 .wrangler/
+wrangler.jsonc
 
 # Temporary working directories
 tmp/
@@ -112,3 +113,6 @@ target/
 vendor/
 coverage/
 .cache/
+
+.dev.vars*
+!.dev.vars.example
