@@ -10,7 +10,7 @@ import { fetchOscarsFlavors } from './oscars-fetcher.js';
  * MKE custard brands get explicit entries; Culver's is the default.
  */
 const BRAND_REGISTRY = [
-  { pattern: /^kopps-/, fetcher: fetchKoppsFlavors, url: 'https://www.kopps.com/flavor-forecast', brand: "Kopp's", kvPrefix: 'flavors:kopps-shared' },
+  { pattern: /^kopps-/, fetcher: fetchKoppsFlavors, url: 'https://kopps.com/flavor-preview', brand: "Kopp's", kvPrefix: 'flavors:kopps-shared' },
   { pattern: /^gilles$/, fetcher: fetchGillesFlavors, url: 'https://gillesfrozencustard.com/flavor-of-the-day', brand: "Gille's" },
   { pattern: /^hefners$/, fetcher: fetchHefnersFlavors, url: 'https://www.hefnerscustard.com', brand: "Hefner's" },
   { pattern: /^kraverz$/, fetcher: fetchKraverzFlavors, url: 'https://kraverzcustard.com/FlavorSchedule', brand: 'Kraverz' },

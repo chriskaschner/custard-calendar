@@ -144,7 +144,7 @@ export function parseKoppsHtml(html) {
  * @returns {Promise<{name: string, address: string, flavors: Array}>}
  */
 export async function fetchKoppsFlavors(slug, fetchFn = globalThis.fetch) {
-  const url = 'https://www.kopps.com/flavor-forecast';
+  const url = 'https://kopps.com/flavor-preview';
   const response = await fetchFn(url);
 
   if (!response.ok) {
