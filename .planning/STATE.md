@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v4.0
 milestone_name: Find Real Users
 status: executing
-stopped_at: Phase 36 context gathered
-last_updated: "2026-04-06T11:52:12.321Z"
+stopped_at: Phase 36.1 context gathered (assumptions mode)
+last_updated: "2026-04-08T03:25:00.171Z"
 last_activity: 2026-04-06 -- Phase 36 execution started
 progress:
-  total_phases: 15
-  completed_phases: 7
+  total_phases: 16
+  completed_phases: 8
   total_plans: 19
-  completed_plans: 13
-  percent: 68
+  completed_plans: 16
+  percent: 84
 ---
 
 # Project State
@@ -66,6 +66,10 @@ Recent decisions affecting current work:
 - v4.0: Start with 15 Madison-area stores, prove indexing, then scale
 - Phase 35: Security + MCP shipped -- Worker hardened, MCP server live
 
+### Roadmap Evolution
+
+- Phase 36.1 inserted after Phase 36: Hierarchical Rarity Fallback (URGENT)
+
 ### Pending Todos
 
 None.
@@ -77,6 +81,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-04-06T03:31:42.629Z
-Stopped at: Phase 36 context gathered
-Resume file: .planning/phases/36-data-quality/36-CONTEXT.md
+Last session: 2026-04-08T03:25:00.156Z
+Stopped at: Phase 36.1 context gathered (assumptions mode)
+Resume file: .planning/phases/36.1-hierarchical-rarity-fallback/36.1-CONTEXT.md
