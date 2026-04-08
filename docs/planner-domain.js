@@ -224,6 +224,9 @@
     var suffix = '';
     if (scope === 'store') suffix = ' at this store';
     if (scope === 'primary') suffix = ' at your store';
+    if (scope === 'metro') suffix = ' in your area';
+    if (scope === 'state') suffix = ' statewide';
+    if (scope === 'national') suffix = ' nationwide';
     return 'Shows up roughly every ' + days + ' days' + suffix;
   }
 

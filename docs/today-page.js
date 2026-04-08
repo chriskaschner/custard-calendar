@@ -335,7 +335,8 @@ var CustardToday = (function () {
       var cssClass = 'rarity-badge rarity-badge-' + rarity.label.toLowerCase().replace(/\s+/g, '-');
       html += '<span class="' + cssClass + '">' + escapeHtml(rarity.label) + '</span>';
       if (rarity.avg_gap_days && !isSeasonal) {
-        html += 'Shows up roughly every ' + rarity.avg_gap_days + ' days at your store';
+        var scopeForDisplay = rarity.scope || 'primary';
+        html += CustardPlanner.formatCadenceText(rarity.avg_gap_days, { scope: scopeForDisplay });
       }
     }
     if (html) {
