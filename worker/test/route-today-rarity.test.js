@@ -107,28 +107,28 @@ async function callToday(envOverrides = {}, today = '2026-03-22') {
 // ---------------------------------------------------------------------------
 
 describe('route-today rarity gate 1: data quality', () => {
-  it('suppresses rarity when fewer than 10 appearances', async () => {
-    // 5 appearances, large gap days -- should NOT get rarity label
+  it('does not use store scope when fewer than 10 appearances (falls back to wider scope)', async () => {
+    // 5 appearances, large gap days -- store scope insufficient, falls back
     const result = await callToday({ appearances: 5, gapDays: 200 });
     expect(result.rarity).not.toBeNull();
-    expect(result.rarity.appearances).toBe(5);
-    expect(result.rarity.label).toBeNull();
+    // With hierarchical fallback, scope should NOT be 'store' for sparse data
+    expect(result.rarity.scope).not.toBe('store');
   });
 
-  it('suppresses rarity when span < 90 days (many closely-spaced appearances)', async () => {
+  it('does not use store scope when span < 90 days (falls back to wider scope)', async () => {
     // 15 appearances each 3 days apart = 42-day span < 90 days
     const result = await callToday({ appearances: 15, gapDays: 3 });
     expect(result.rarity).not.toBeNull();
-    expect(result.rarity.label).toBeNull();
+    // Store scope insufficient (span < 90), falls back to wider scope
+    expect(result.rarity.scope).not.toBe('store');
   });
 
-  it('allows rarity when ≥10 appearances and ≥90-day span', async () => {
-    // 12 appearances, 15-day gap = 165-day span; avg gap 15d -- below thresholds though
-    // Use 200-day gap for ultra-rare result
-    const result = await callToday({ appearances: 12, gapDays: 160 });
-    // span = 11 * 160 = 1760 days >= 90, appearances = 12 >= 10
+  it('uses store scope when ≥10 appearances and ≥90-day span', async () => {
+    // 12 appearances, 160-day gap = 1760-day span >= 90
     // avg_gap = 160 > 150 => Ultra Rare
+    const result = await callToday({ appearances: 12, gapDays: 160 });
     expect(result.rarity?.label).toBe('Ultra Rare');
+    expect(result.rarity?.scope).toBe('store');
   });
 });
 
@@ -191,10 +191,11 @@ describe('route-today rarity gate 3: thresholds', () => {
 // ---------------------------------------------------------------------------
 
 describe('route-today rarity response shape', () => {
-  it('always returns appearances and avg_gap_days when D1 data exists', async () => {
+  it('always returns appearances, avg_gap_days, and scope when D1 data exists', async () => {
     const result = await callToday({ appearances: 15, gapDays: 50 });
     expect(result.rarity).not.toBeNull();
     expect(typeof result.rarity.appearances).toBe('number');
     expect(typeof result.rarity.avg_gap_days).toBe('number');
+    expect(result.rarity).toHaveProperty('scope');
   });
 });

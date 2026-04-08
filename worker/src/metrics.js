@@ -14,19 +14,13 @@ import { SLUG_PATTERN } from './slug-validation.js';
 import { TRIVIA_METRICS_SEED } from './trivia-metrics-seed.js';
 import { STORE_INDEX } from './store-index.js';
 import { WI_METRO_MAP } from './leaderboard.js';
+import { normalize } from './flavor-matcher.js';
 
 const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July',
   'August', 'September', 'October', 'November', 'December'];
 let cachedFlavorRank = null;
 
-function normalizeFlavorKey(value) {
-  return String(value || '')
-    .toLowerCase()
-    .replace(/[\u00ae\u2122\u00a9]/g, '')
-    .replace(/[\u2018\u2019']/g, '')
-    .replace(/[^a-z0-9]+/g, ' ')
-    .trim();
-}
+// Internal normalization removed -- unified on normalize() from flavor-matcher.js (D-06)
 
 function getSourceWindow(seed) {
   return {
@@ -145,7 +139,7 @@ function computeGapStatsPerSlug(rows) {
 async function handleFlavorHierarchyMetrics(rawFlavor, rawSlug, env, corsHeaders) {
   const flavor = String(rawFlavor || '').trim();
   const slug = String(rawSlug || '').trim().toLowerCase();
-  const normalizedFlavor = normalizeFlavorKey(flavor);
+  const normalizedFlavor = normalize(flavor);
 
   if (!flavor || !slug || !normalizedFlavor) {
     return Response.json(
@@ -452,7 +446,7 @@ function handleIntelligenceMetrics(corsHeaders) {
 
 function handleFlavorContextMetrics(inputFlavor, corsHeaders) {
   const seed = TRIVIA_METRICS_SEED || {};
-  const normalized = normalizeFlavorKey(inputFlavor);
+  const normalized = normalize(inputFlavor);
   const lookup = seed?.planner_features?.flavor_lookup && typeof seed.planner_features.flavor_lookup === 'object'
     ? seed.planner_features.flavor_lookup
     : {};
@@ -542,7 +536,7 @@ async function handleStoreContextMetrics(inputSlug, corsHeaders, db) {
     : {};
   const row = slug ? lookup[slug] : null;
   const rank = getFlavorRank(seed);
-  const topFlavorKey = row?.top_flavor ? normalizeFlavorKey(row.top_flavor) : '';
+  const topFlavorKey = row?.top_flavor ? normalize(row.top_flavor) : '';
 
   const specialty_flavor = db ? await computeStoreSpecialtyFromD1(slug, db) : null;
 
@@ -571,7 +565,7 @@ async function handleStoreContextMetrics(inputSlug, corsHeaders, db) {
  * Flavor metrics: how often does this flavor appear, at how many stores, when was it last seen?
  */
 async function handleFlavorMetrics(db, normalized, corsHeaders) {
-  const normalizedFlavor = normalizeFlavorKey(normalized);
+  const normalizedFlavor = normalize(normalized);
   const rank = getFlavorRank(TRIVIA_METRICS_SEED || {});
   const globalRank = rank.byNormalized[normalizedFlavor] || null;
   const globalPercentile = (globalRank && rank.total > 1)
@@ -1177,4 +1171,4 @@ async function computeOutlierStores(db, scopeSlugs, storeIndex) {
   return outliers.slice(0, 20);
 }
 
-export { detectStreaks };
+export { detectStreaks, computeGapStats, queryDatesForSlugs, computeGapStatsPerSlug };

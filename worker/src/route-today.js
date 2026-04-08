@@ -5,6 +5,9 @@ import { normalize } from './flavor-matcher.js';
 import { isValidSlug } from './slug-validation.js';
 import { getBrandForSlug } from './brand-registry.js';
 import { getFlavorsCached } from './kv-cache.js';
+import { computeGapStats, queryDatesForSlugs, computeGapStatsPerSlug } from './metrics.js';
+import { WI_METRO_MAP } from './leaderboard.js';
+import { TRIVIA_METRICS_SEED } from './trivia-metrics-seed.js';
 
 const CACHE_MAX_AGE = 3600; // 1 hour (browser + edge cache)
 
@@ -108,71 +111,147 @@ export async function handleApiToday(url, env, corsHeaders, fetchFlavorsFn = def
       spokenVerbose += ` Next listed flavor is ${nextFlavor.title} on ${formatSpeechDate(nextFlavor.date)}.`;
     }
 
-    // Compute rarity from D1 snapshots (best-effort, never breaks response)
+    // Compute rarity from D1 snapshots with hierarchical scope fallback.
+    // When a store has insufficient data (<10 appearances or <90-day span),
+    // fall back through metro -> state -> national scopes (D-01, D-02).
     let rarity = null;
     try {
       if (env.DB) {
         const normalizedFlavor = normalize(flavorName);
+        const STORE_INDEX = env._storeIndexOverride || DEFAULT_STORE_INDEX;
 
-        // Query 1: this flavor's appearance dates at this store
+        // --- Store scope queries (existing pattern, unchanged) ---
         const flavorDates = await env.DB.prepare(
           'SELECT date FROM snapshots WHERE slug = ? AND normalized_flavor = ? ORDER BY date ASC'
         ).bind(slug, normalizedFlavor).all();
 
-        // Query 2: all flavor counts at this store (for percentile ranking)
         const allCounts = await env.DB.prepare(
           'SELECT normalized_flavor, COUNT(*) as cnt FROM snapshots WHERE slug = ? GROUP BY normalized_flavor'
         ).bind(slug).all();
 
-        // Query 3: network-wide store count for this flavor in last 30 days
         const networkCount = await env.DB.prepare(
           'SELECT COUNT(DISTINCT slug) as cnt FROM snapshots WHERE normalized_flavor = ? AND date >= date(\'now\', \'-30 days\')'
         ).bind(normalizedFlavor).first();
 
         if (flavorDates.results && flavorDates.results.length > 0 && allCounts.results && allCounts.results.length > 0) {
-          const appearances = flavorDates.results.length;
-          const dates = flavorDates.results.map(r => new Date(r.date + 'T00:00:00Z'));
+          const storeAppearances = flavorDates.results.length;
+          const dates = flavorDates.results.map(r => r.date);
+          const parsedDates = dates.map(d => new Date(d + 'T00:00:00Z'));
 
-          // Gate 1: data quality -- need at least 10 appearances AND 90+ day span
-          const spanDays = appearances >= 2
-            ? (dates[dates.length - 1] - dates[0]) / (1000 * 60 * 60 * 24)
+          // Gate 1 (store): 10 appearances AND 90+ day span (per D-03)
+          const spanDays = storeAppearances >= 2
+            ? (parsedDates[parsedDates.length - 1] - parsedDates[0]) / 86400000
             : 0;
-          const meetsDataQuality = appearances >= 10 && spanDays >= 90;
+          const storeHasSufficientData = storeAppearances >= 10 && spanDays >= 90;
 
-          // Gate 2: network-wide -- suppress if served at >100 stores in last 30 days
+          // Gate 2: network-wide suppression (per D-05, unchanged)
           const networkStoreCount = networkCount?.cnt || 0;
           const meetsNetworkGate = networkStoreCount <= 100;
 
-          // Compute average gap between consecutive appearances
-          let avgGapDays = null;
-          if (appearances >= 2) {
-            let totalGap = 0;
-            for (let i = 1; i < dates.length; i++) {
-              totalGap += (dates[i] - dates[i - 1]) / (1000 * 60 * 60 * 24);
+          // Compute store-scope gap stats
+          const storeGapStats = computeGapStats(dates);
+
+          let effectiveScope = null;
+          let effectiveAppearances = storeGapStats.appearances;
+          let effectiveAvgGap = storeGapStats.avg_gap_days;
+
+          if (storeHasSufficientData) {
+            // Per D-10: store has enough data, use it directly
+            effectiveScope = 'store';
+          } else {
+            // Per D-02: early-exit fallback through wider scopes
+            // Per D-03: 30-appearance minimum for wider scopes
+            const MIN_WIDER_APPEARANCES = 30;
+            const hierStoreEntry = STORE_INDEX.find(s => s.slug === slug);
+            const storeCity = (hierStoreEntry?.city || '').toLowerCase().trim();
+            const storeState = hierStoreEntry?.state || null;
+
+            // Metro scope
+            const metro = storeCity ? (WI_METRO_MAP[storeCity] || null) : null;
+            if (!effectiveScope && metro && metro !== 'other') {
+              try {
+                const metroSlugs = STORE_INDEX
+                  .filter(s => WI_METRO_MAP[(s.city || '').toLowerCase().trim()] === metro)
+                  .map(s => s.slug);
+                const rows = await queryDatesForSlugs(env.DB, metroSlugs, normalizedFlavor);
+                const stats = computeGapStatsPerSlug(rows);
+                if (stats.appearances >= MIN_WIDER_APPEARANCES) {
+                  effectiveScope = 'metro';
+                  effectiveAppearances = stats.appearances;
+                  effectiveAvgGap = stats.avg_gap_days;
+                }
+              } catch (_) { /* per D-09: non-fatal */ }
             }
-            avgGapDays = Math.round(totalGap / (dates.length - 1));
+
+            // State scope
+            if (!effectiveScope && storeState) {
+              try {
+                const stateSlugs = STORE_INDEX
+                  .filter(s => s.state === storeState)
+                  .map(s => s.slug);
+                const rows = await queryDatesForSlugs(env.DB, stateSlugs, normalizedFlavor);
+                const stats = computeGapStatsPerSlug(rows);
+                if (stats.appearances >= MIN_WIDER_APPEARANCES) {
+                  effectiveScope = 'state';
+                  effectiveAppearances = stats.appearances;
+                  effectiveAvgGap = stats.avg_gap_days;
+                }
+              } catch (_) { /* per D-09: non-fatal */ }
+            }
+
+            // National scope (from seed, no D1 query)
+            if (!effectiveScope) {
+              const seed = TRIVIA_METRICS_SEED || {};
+              const lookup = seed?.planner_features?.flavor_lookup || {};
+              const seedRow = lookup[normalizedFlavor] || null;
+              if (seedRow) {
+                const seedAppearances = Number(seedRow.appearances || 0);
+                if (seedAppearances >= MIN_WIDER_APPEARANCES) {
+                  const storeCount = Number(seedRow.store_count || 1);
+                  const summary = seed.dataset_summary || {};
+                  let seedAvgGap = null;
+                  if (seedAppearances > 0 && storeCount > 0 && summary.min_date && summary.max_date) {
+                    const seedSpan = (new Date(summary.max_date) - new Date(summary.min_date)) / 86400000;
+                    const appsPerStore = seedAppearances / storeCount;
+                    if (appsPerStore > 0) seedAvgGap = Math.round(seedSpan / appsPerStore);
+                  }
+                  effectiveScope = 'national';
+                  effectiveAppearances = seedAppearances;
+                  effectiveAvgGap = seedAvgGap;
+                }
+              }
+            }
           }
 
-          // Gate 3: derive rarity label from avg_gap_days with tightened thresholds
-          // Ultra Rare: >150 days (was 120); Rare: 90-150 days (was 60-120)
+          // Gate 3: derive label from avg_gap_days (per D-04: same thresholds all scopes)
           let label = null;
-          if (meetsDataQuality && meetsNetworkGate && avgGapDays !== null) {
-            if (avgGapDays > 150) label = 'Ultra Rare';
-            else if (avgGapDays > 90) label = 'Rare';
+          if (effectiveScope && meetsNetworkGate && effectiveAvgGap !== null) {
+            if (effectiveAvgGap > 150) label = 'Ultra Rare';
+            else if (effectiveAvgGap > 90) label = 'Rare';
           }
 
-          rarity = { appearances, avg_gap_days: avgGapDays, label };
+          // Per D-07: include scope in rarity object
+          rarity = {
+            appearances: effectiveAppearances,
+            avg_gap_days: effectiveAvgGap,
+            label,
+            scope: effectiveScope,
+          };
         }
       }
     } catch (_) {
       // D1 failure is non-fatal; rarity stays null
     }
 
-    // Append rarity info to spoken text for rare flavors
+    // Append rarity info to spoken text for rare flavors (scope-aware phrasing)
     if (rarity && rarity.avg_gap_days && (rarity.label === 'Ultra Rare' || rarity.label === 'Rare')) {
       spoken = spoken.replace(/\.$/, '');
-      spoken += `. This flavor averages ${rarity.avg_gap_days} days between appearances at your store.`;
-      spokenVerbose += ` This flavor averages ${rarity.avg_gap_days} days between appearances at your store.`;
+      const scopePhrase = rarity.scope === 'store' ? 'at your store'
+        : rarity.scope === 'metro' ? 'in your area'
+        : rarity.scope === 'state' ? 'statewide'
+        : 'nationwide';
+      spoken += `. This flavor averages ${rarity.avg_gap_days} days between appearances ${scopePhrase}.`;
+      spokenVerbose += ` This flavor averages ${rarity.avg_gap_days} days between appearances ${scopePhrase}.`;
     }
 
     // Build flavors array for multi-flavor stores (Kopp's serves 2 per day)
