@@ -272,6 +272,22 @@ Plans:
 - [x] 36-02-PLAN.md -- Quality gate implementation: 3 detection patterns in kv-cache.js + operator alert wiring
 - [x] 36-03-PLAN.md -- Audit and purge scripts for 17 stores, execute cleanup, human verify clean state
 
+### Phase 36.1: Hierarchical Rarity Fallback (INSERTED)
+
+**Goal:** Wire hierarchical scope resolution into the 3-gate rarity system so sparse stores fall back through metro -> state -> national scopes, and display consumers show scope context
+**Requirements**: N/A (inserted phase, no mapped requirements)
+**Depends on:** Phase 36
+**Success Criteria** (what must be TRUE):
+  1. A store with insufficient rarity data falls back through metro -> state -> national scopes to derive a rarity label
+  2. The /api/today response includes a `scope` field in the rarity object indicating which geographic level provided the data
+  3. Display consumers (homepage, social cards) show scope context ("in your area", "statewide", "nationwide")
+  4. metrics.js uses normalize() from flavor-matcher.js (normalizeFlavorKey removed)
+**Plans:** 2 plans
+
+Plans:
+- [ ] 36.1-01-PLAN.md -- Export scope helpers from metrics.js, unify normalization, wire hierarchical fallback into route-today.js
+- [ ] 36.1-02-PLAN.md -- Update display consumers (today-page.js, planner-domain.js, social-card.js) with scope-aware rarity rendering
+
 ### Phase 37: SEO Landing Pages
 **Goal**: Each Madison-area Culver's store has a public landing page that Google can index, showing today's flavor, the week-ahead schedule, and store context
 **Depends on**: Phase 36 (clean data is prerequisite for public pages)
