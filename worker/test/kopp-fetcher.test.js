@@ -6,9 +6,10 @@ import { parseKoppsHtml } from '../src/kopp-fetcher.js';
 const fixture = readFileSync(join(__dirname, 'fixtures/kopps-flavor-preview.html'), 'utf-8');
 
 describe('Kopp\'s fetcher', () => {
-  it('parses multiple days from fixture HTML', () => {
+  it('parses multiple flavors from fixture HTML', () => {
     const result = parseKoppsHtml(fixture);
-    expect(result.flavors.length).toBeGreaterThanOrEqual(3);
+    // 2 flavors per day, at least 3 days = at least 6 entries
+    expect(result.flavors.length).toBeGreaterThanOrEqual(6);
   });
 
   it('extracts correct dates', () => {
@@ -20,13 +21,12 @@ describe('Kopp\'s fetcher', () => {
     expect(dates).toContain('2026-02-23');
   });
 
-  it('combines two flavors per day with &', () => {
+  it('returns separate entries for each flavor per day', () => {
     const result = parseKoppsHtml(fixture);
-    const feb21 = result.flavors.find(f => f.date === '2026-02-21');
-    expect(feb21).toBeDefined();
-    expect(feb21.title).toContain('&');
-    expect(feb21.title).toContain("Reese's Peanut Butter Kupps");
-    expect(feb21.title).toContain('Heath Bar');
+    const feb21 = result.flavors.filter(f => f.date === '2026-02-21');
+    expect(feb21.length).toBe(2);
+    expect(feb21[0].title).toContain("Reese's Peanut Butter Kupps");
+    expect(feb21[1].title).toContain('Heath Bar');
   });
 
   it('cleans HTML entities from flavor names', () => {

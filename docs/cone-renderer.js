@@ -130,7 +130,37 @@ var FALLBACK_FLAVOR_ALIASES = {
   'key lime pie': 'key lime custard pie',
   'key lime': 'key lime custard pie',
   'coconut pie': 'coconut cream pie',
-  'banana pie': 'banana cream pie'
+  'banana pie': 'banana cream pie',
+  // Kopp's flavor aliases
+  "reese's peanut butter kupps": "really reese's",
+  'heath bar': 'chocolate heath crunch',
+  'twisted turtle': 'caramel turtle',
+  "cookies 'n cream": "cookies & cream",
+  'black raspberry': 'blackberry cobbler',
+  'mocha chip': 'cappuccino cookie crumble',
+  'blueberry cheesecake': 'raspberry cheesecake',
+  'cherry amaretto cheesecake': 'raspberry cheesecake',
+  'snickers chunky cheesecake': 'snickers swirl',
+  'chocolate chip cookie dough': 'crazy for cookie dough',
+  'ultimate cookie dough': 'crazy for cookie dough',
+  'chocolate salted caramel': 'chocolate caramel twist',
+  'never enough chocolate': 'dark chocolate decadence',
+  'chocolate peanut butter chocolate': 'dark chocolate pb crunch',
+  'strawberry': 'double strawberry',
+  'peach melba': 'georgia peach',
+  'birthday cake': 'just drummy',
+  'caramel pecan silk': 'caramel pecan',
+  'heavenly hash': 'rocky road',
+  'banana walnut chocolate chunk': 'banana cream pie',
+  'red velvet oreo': 'oreo cookie cheesecake',
+  'malted peanut butter pleasure': "really reese's",
+  'wedding cake': 'vanilla',
+  'french toast': 'maple pecan',
+  'mr fudgie': 'brownie thunder',
+  'imperial torte': 'dark chocolate decadence',
+  'double truffel': 'dark chocolate decadence',
+  'lemon meringue pie': 'creamy lemon crumble',
+  'lemon raspberry shortbread': 'lemon berry layer cake'
 };
 
 // ---------------------------------------------------------------------------

@@ -364,13 +364,42 @@ var CustardToday = (function () {
     if (day.type === 'confirmed') {
       todayCard.classList.add('day-card-confirmed');
       todayCard.style.borderLeftColor = color;
-      // Use hero cone PNG with L0 SVG fallback
-      renderHeroCone(day.flavor, todayCone, 6);
-      todayCone.hidden = false;
-      todayFlavor.textContent = day.flavor;
-      todayDesc.textContent = day.description || '';
-      todayDesc.hidden = !day.description;
-      renderRarity(todayData && todayData.rarity, day.flavor);
+      if (day.flavors && day.flavors.length > 1) {
+        // Multi-flavor display (Kopp's): side-by-side cones
+        todayCone.innerHTML = '';
+        todayCone.style.display = 'flex';
+        todayCone.style.gap = '1rem';
+        todayCone.style.justifyContent = 'center';
+        day.flavors.forEach(function (f) {
+          var wrapper = document.createElement('div');
+          wrapper.style.textAlign = 'center';
+          var coneEl = document.createElement('div');
+          renderHeroCone(f.name, coneEl, 5);
+          wrapper.appendChild(coneEl);
+          var label = document.createElement('div');
+          label.textContent = f.name;
+          label.style.fontSize = '0.85rem';
+          label.style.marginTop = '0.25rem';
+          label.style.maxWidth = '120px';
+          wrapper.appendChild(label);
+          todayCone.appendChild(wrapper);
+        });
+        todayCone.hidden = false;
+        todayFlavor.textContent = day.flavors.map(function (f) { return f.name; }).join(' & ');
+        var descs = day.flavors.map(function (f) { return f.description; }).filter(Boolean);
+        todayDesc.textContent = descs.join(' | ');
+        todayDesc.hidden = descs.length === 0;
+        renderRarity(null, null);
+      } else {
+        // Single flavor (standard)
+        todayCone.style.display = '';
+        renderHeroCone(day.flavor, todayCone, 6);
+        todayCone.hidden = false;
+        todayFlavor.textContent = day.flavor;
+        todayDesc.textContent = day.description || '';
+        todayDesc.hidden = !day.description;
+        renderRarity(todayData && todayData.rarity, day.flavor);
+      }
     } else if (day.type === 'predicted') {
       todayCard.classList.add('day-card-estimated');
       renderHeroCone(day.flavor, todayCone, 6);
@@ -481,12 +510,20 @@ var CustardToday = (function () {
       if (day.type === 'confirmed') {
         hasAnyData = true;
         card.className = 'card card--accent-sm week-day-card';
+        var flavorLabel = day.flavors
+          ? day.flavors.map(function (f) { return escapeHtml(f.name); }).join(' <span class="flavor-sep">&amp;</span> ')
+          : escapeHtml(day.flavor);
+        var coneCount = day.flavors ? day.flavors.length : 1;
+        var conesHtml = '';
+        for (var ci = 0; ci < coneCount; ci++) {
+          conesHtml += '<div class="week-day-cone cone-sm"></div>';
+        }
         card.innerHTML =
           '<div class="' + certaintyStripClass(day) + '"></div>'
           + '<div class="week-day-header"><span class="week-day-name">' + escapeHtml(dayName) + '</span>'
           + '<span class="week-day-date">' + escapeHtml(dateLabel) + '</span></div>'
-          + '<div class="week-day-cone cone-sm"></div>'
-          + '<div class="week-day-flavor">' + escapeHtml(day.flavor) + '</div>';
+          + '<div class="week-day-cones"' + (coneCount > 1 ? ' style="display:flex;gap:0.25rem;justify-content:center"' : '') + '>' + conesHtml + '</div>'
+          + '<div class="week-day-flavor">' + flavorLabel + '</div>';
       } else if (day.type === 'predicted') {
         hasAnyData = true;
         card.className = 'card card--accent-sm week-day-card week-day-card-estimated';
@@ -567,11 +604,17 @@ var CustardToday = (function () {
 
       weekStrip.appendChild(card);
 
-      // Render hero cone PNG (L5) into the .week-day-cone placeholder; falls back
+      // Render hero cone PNG (L5) into the .week-day-cone placeholder(s); falls back
       // to L0 SVG via renderHeroCone's onerror handler when PNG is unavailable.
-      if (day.flavor && typeof renderHeroCone === 'function') {
-        var coneEl = card.querySelector('.week-day-cone');
-        if (coneEl) renderHeroCone(day.flavor, coneEl, 3);
+      if (typeof renderHeroCone === 'function') {
+        var coneEls = card.querySelectorAll('.week-day-cone');
+        if (day.flavors && day.flavors.length > 1) {
+          for (var fi = 0; fi < Math.min(day.flavors.length, coneEls.length); fi++) {
+            renderHeroCone(day.flavors[fi].name, coneEls[fi], 3);
+          }
+        } else if (day.flavor && coneEls.length > 0) {
+          renderHeroCone(day.flavor, coneEls[0], 3);
+        }
       }
     }
 

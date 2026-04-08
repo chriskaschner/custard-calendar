@@ -1025,6 +1025,12 @@ details ol {
   margin-top: var(--space-1);
 }
 
+.flavor-sep {
+  color: var(--text-muted);
+  font-weight: 400;
+  margin: 0 0.25em;
+}
+
 .store-card-description {
   font-size: var(--text-sm);
   color: var(--text-muted);

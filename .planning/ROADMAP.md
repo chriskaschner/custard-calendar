@@ -265,12 +265,12 @@ Plans:
   2. Rarity labels, gap-day counts, "last seen" dates, and overdue calculations for those 17 stores match independently computed values from raw D1 snapshots
   3. An automated quality gate runs on ingest and rejects known bad patterns (closure sentinels, corrupted text) with logged alerts for anomalies
   4. Historical bad records (closure sentinels, corrupted entries) are purged from D1 for the 17 launch stores
-**Plans:** 3 plans
+**Plans:** 3/3 plans complete
 
 Plans:
-- [ ] 36-01-PLAN.md -- Quality gate tests and stats reconciliation test suite (TDD RED phase)
-- [ ] 36-02-PLAN.md -- Quality gate implementation: 3 detection patterns in kv-cache.js + operator alert wiring
-- [ ] 36-03-PLAN.md -- Audit and purge scripts for 17 stores, execute cleanup, human verify clean state
+- [x] 36-01-PLAN.md -- Quality gate tests and stats reconciliation test suite (TDD RED phase)
+- [x] 36-02-PLAN.md -- Quality gate implementation: 3 detection patterns in kv-cache.js + operator alert wiring
+- [x] 36-03-PLAN.md -- Audit and purge scripts for 17 stores, execute cleanup, human verify clean state
 
 ### Phase 37: SEO Landing Pages
 **Goal**: Each Madison-area Culver's store has a public landing page that Google can index, showing today's flavor, the week-ahead schedule, and store context
@@ -319,7 +319,7 @@ Phase 35 (complete) -> 36 -> 37 -> 38 -> 39. Phase 39 is independent and can exe
 | 26-29 | v2.0 | 8/8 | Complete | 2026-03-19 |
 | 30-34 | v3.0 | 6/6 | Complete | 2026-03-27 |
 | 35. Security + MCP | v4.0 | Complete | Complete | 2026-04-05 |
-| 36. Data Quality | v4.0 | 0/3 | Not started | - |
+| 36. Data Quality | v4.0 | 3/3 | Complete   | 2026-04-06 |
 | 37. SEO Landing Pages | v4.0 | 0/TBD | Not started | - |
 | 38. OG Share Cards | v4.0 | 0/TBD | Not started | - |
 | 39. Social Research | v4.0 | 0/TBD | Not started | - |

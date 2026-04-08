@@ -46,8 +46,14 @@ export async function handleApiToday(url, env, corsHeaders, fetchFlavorsFn = def
       });
     };
 
-    // Find today's flavor (or fall back to the first available)
-    const todayFlavor = data.flavors.find(f => f.date === today) || data.flavors[0] || null;
+    // Find today's flavors -- some brands (Kopp's) serve multiple per day
+    const todayFlavors = data.flavors.filter(f => f.date === today);
+    if (todayFlavors.length === 0) {
+      // Fall back to the first available date's flavors
+      const firstDate = data.flavors[0]?.date;
+      if (firstDate) todayFlavors.push(...data.flavors.filter(f => f.date === firstDate));
+    }
+    const todayFlavor = todayFlavors[0] || null;
 
     if (!todayFlavor) {
       const spokenMissing = `I couldn't find today's flavor of the day at ${data.name}. Check back later.`;
@@ -71,12 +77,18 @@ export async function handleApiToday(url, env, corsHeaders, fetchFlavorsFn = def
     const storeIndex = env._storeIndexOverride || DEFAULT_STORE_INDEX;
     const storeEntry = storeIndex.find(s => s.slug === slug);
     const spokenStore = storeEntry ? `${brand} of ${storeEntry.city}` : data.name;
-    let spoken = `Today the flavor of the day at ${spokenStore} is ${flavorName}`;
-    if (todayFlavor.description) {
-      const desc = todayFlavor.description.replace(/\.+$/, '');
-      spoken += ' - ' + desc;
+    let spoken;
+    if (todayFlavors.length > 1) {
+      const names = todayFlavors.map(f => f.title);
+      spoken = `Today the flavors at ${spokenStore} are ${names.join(' and ')}.`;
+    } else {
+      spoken = `Today the flavor of the day at ${spokenStore} is ${flavorName}`;
+      if (todayFlavor.description) {
+        const desc = todayFlavor.description.replace(/\.+$/, '');
+        spoken += ' - ' + desc;
+      }
+      spoken += '.';
     }
-    spoken += '.';
 
     const spokenDate = formatSpeechDate(todayFlavor.date);
     const spokenLocation = storeEntry
@@ -163,12 +175,19 @@ export async function handleApiToday(url, env, corsHeaders, fetchFlavorsFn = def
       spokenVerbose += ` This flavor averages ${rarity.avg_gap_days} days between appearances at your store.`;
     }
 
+    // Build flavors array for multi-flavor stores (Kopp's serves 2 per day)
+    const allFlavors = todayFlavors.map(f => ({
+      name: f.title,
+      description: f.description || null,
+    }));
+
     return Response.json({
       store: data.name,
       slug,
       brand,
       date: todayFlavor.date,
       flavor: flavorName,
+      flavors: allFlavors.length > 1 ? allFlavors : undefined,
       description: todayFlavor.description || null,
       rarity,
       spoken,

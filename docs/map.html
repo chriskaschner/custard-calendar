@@ -648,9 +648,14 @@
           if (!resp.ok) return { ...store, flavor: 'Unavailable' };
           const data = await resp.json();
           const today = new Date().toISOString().slice(0, 10);
-          const todayFlavor = (data.flavors || []).find(f => f.date === today);
-          const fl = todayFlavor || (data.flavors && data.flavors[0]);
-          return { ...store, flavor: fl ? (fl.title || fl.flavor || 'Unavailable') : 'Unavailable', description: fl ? (fl.description || '') : '' };
+          const todayFlavors = (data.flavors || []).filter(f => f.date === today);
+          if (todayFlavors.length === 0) {
+            const first = data.flavors && data.flavors[0];
+            if (first) todayFlavors.push(first);
+          }
+          const fl = todayFlavors[0];
+          const allNames = todayFlavors.map(f => f.title || f.flavor).filter(Boolean);
+          return { ...store, flavor: allNames.length > 0 ? allNames[0] : 'Unavailable', flavors: allNames.length > 1 ? allNames : undefined, description: fl ? (fl.description || '') : '' };
         } catch {
           return { ...store, flavor: 'Unavailable' };
         }
@@ -1037,7 +1042,7 @@
           ${distHtml}${nearestBadge}
         </div>
         <div class="store-card-address">${escapeHtml(store.address || '')}</div>
-        <div class="store-card-flavor">${escapeHtml(store.flavor || 'Loading...')}</div>
+        <div class="store-card-flavor">${store.flavors ? store.flavors.map(f => escapeHtml(f)).join(' <span class="flavor-sep">&amp;</span> ') : escapeHtml(store.flavor || 'Loading...')}</div>
         ${desc}
         ${ctas}
       </div>`;

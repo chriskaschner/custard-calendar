@@ -120,13 +120,11 @@ export function parseKoppsHtml(html) {
       if (name) flavorEntries.push({ name, desc });
     }
 
-    if (flavorEntries.length > 0) {
-      const names = flavorEntries.map(e => e.name);
-      const descs = flavorEntries.map(e => e.desc).filter(Boolean);
+    for (const entry of flavorEntries) {
       flavors.push({
         date,
-        title: names.join(' & '),
-        description: descs.length > 0 ? descs.join(' | ') : (names.length > 1 ? `Flavors: ${names.join(', ')}` : ''),
+        title: entry.name,
+        description: entry.desc || '',
       });
     }
   }

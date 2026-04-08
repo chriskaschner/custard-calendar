@@ -115,12 +115,21 @@ export function generateIcs({ calendarName, stores, flavorsBySlug }) {
   const secondaryStores = stores.filter(s => s.role === 'secondary');
 
   // Build a date→flavor lookup for each secondary store
-  const secondaryLookups = secondaryStores.map(store => ({
-    store,
-    byDate: Object.fromEntries(
-      (flavorsBySlug[store.slug] || []).map(f => [f.date, f])
-    ),
-  }));
+  const secondaryLookups = secondaryStores.map(store => {
+    const byDate = {};
+    for (const f of (flavorsBySlug[store.slug] || [])) {
+      if (byDate[f.date]) {
+        // Combine multiple flavors per date (e.g. Kopp's serves 2 per day)
+        byDate[f.date] = {
+          ...byDate[f.date],
+          title: byDate[f.date].title + ' & ' + f.title,
+        };
+      } else {
+        byDate[f.date] = f;
+      }
+    }
+    return { store, byDate };
+  });
 
   for (const flavor of primaryFlavors) {
     // DTSTAMP derived from event date for deterministic output.

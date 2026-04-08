@@ -694,21 +694,26 @@
       var date = _addDays(today, i);
       var dateStr = _toISODate(date);
 
-      var confirmed = null;
+      var confirmedAll = [];
       for (var ci = 0; ci < confirmedFlavors.length; ci++) {
         if (confirmedFlavors[ci].date === dateStr) {
-          confirmed = confirmedFlavors[ci];
-          break;
+          confirmedAll.push(confirmedFlavors[ci]);
         }
       }
 
-      if (confirmed) {
-        timeline.push({
+      if (confirmedAll.length > 0) {
+        var entry = {
           date: dateStr,
           type: 'confirmed',
-          flavor: confirmed.title,
-          description: confirmed.description || '',
-        });
+          flavor: confirmedAll[0].title,
+          description: confirmedAll[0].description || '',
+        };
+        if (confirmedAll.length > 1) {
+          entry.flavors = confirmedAll.map(function (f) {
+            return { name: f.title, description: f.description || '' };
+          });
+        }
+        timeline.push(entry);
         continue;
       }
 
