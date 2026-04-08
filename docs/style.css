@@ -1031,14 +1031,10 @@ details ol {
   margin: 0 0.25em;
 }
 
-.today-flavor-cone--multi img {
+.today-flavor-cone--multi img,
+.today-flavor-cone--multi svg {
   width: 100px !important;
   height: auto !important;
-}
-
-.today-flavor-cone--multi svg {
-  width: 100px;
-  height: auto;
 }
 
 .store-card-description {
