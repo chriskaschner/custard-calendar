@@ -129,10 +129,6 @@ export async function handleApiToday(url, env, corsHeaders, fetchFlavorsFn = def
           'SELECT normalized_flavor, COUNT(*) as cnt FROM snapshots WHERE slug = ? GROUP BY normalized_flavor'
         ).bind(slug).all();
 
-        const networkCount = await env.DB.prepare(
-          'SELECT COUNT(DISTINCT slug) as cnt FROM snapshots WHERE normalized_flavor = ? AND date >= date(\'now\', \'-30 days\')'
-        ).bind(normalizedFlavor).first();
-
         if (flavorDates.results && flavorDates.results.length > 0 && allCounts.results && allCounts.results.length > 0) {
           const storeAppearances = flavorDates.results.length;
           const dates = flavorDates.results.map(r => r.date);
@@ -144,9 +140,11 @@ export async function handleApiToday(url, env, corsHeaders, fetchFlavorsFn = def
             : 0;
           const storeHasSufficientData = storeAppearances >= 10 && spanDays >= 90;
 
-          // Gate 2: network-wide suppression (per D-05, unchanged)
-          const networkStoreCount = networkCount?.cnt || 0;
-          const meetsNetworkGate = networkStoreCount <= 100;
+          // Gate 2: network-wide suppression
+          // Disabled: with ~800+ Culver's locations, even rare flavors appear
+          // at 600+ stores in any 30-day window. The avg_gap_days thresholds
+          // already handle frequency -- this gate added no signal.
+          const meetsNetworkGate = true;
 
           // Compute store-scope gap stats
           const storeGapStats = computeGapStats(dates);

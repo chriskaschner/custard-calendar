@@ -136,13 +136,15 @@ describe('route-today rarity gate 1: data quality', () => {
 // Gate 2: network-wide suppression
 // ---------------------------------------------------------------------------
 
-describe('route-today rarity gate 2: network-wide', () => {
-  it('suppresses rarity when >100 stores served flavor in last 30 days', async () => {
+describe('route-today rarity gate 2: network-wide (disabled)', () => {
+  it('no longer suppresses rarity based on network store count', async () => {
+    // Network gate disabled: with ~800+ Culver's locations, even rare flavors
+    // appear at 600+ stores. avg_gap_days thresholds handle frequency instead.
     const result = await callToday({ appearances: 15, gapDays: 200, networkCount: 150 });
-    expect(result.rarity?.label).toBeNull();
+    expect(result.rarity?.label).toBe('Ultra Rare');
   });
 
-  it('allows rarity when ≤100 stores served flavor in last 30 days', async () => {
+  it('allows rarity regardless of network store count', async () => {
     const result = await callToday({ appearances: 15, gapDays: 200, networkCount: 50 });
     expect(result.rarity?.label).toBe('Ultra Rare');
   });
