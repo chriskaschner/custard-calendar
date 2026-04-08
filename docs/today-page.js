@@ -367,20 +367,18 @@ var CustardToday = (function () {
       if (day.flavors && day.flavors.length > 1) {
         // Multi-flavor display (Kopp's): side-by-side cones
         todayCone.innerHTML = '';
-        todayCone.style.display = 'flex';
-        todayCone.style.gap = '1rem';
-        todayCone.style.justifyContent = 'center';
+        todayCone.className = 'today-flavor-cone today-flavor-cone--multi';
+        todayCone.style.cssText = 'display:flex;gap:1.5rem;justify-content:center;align-items:flex-end;width:auto;';
         day.flavors.forEach(function (f) {
           var wrapper = document.createElement('div');
-          wrapper.style.textAlign = 'center';
+          wrapper.style.cssText = 'text-align:center;flex:0 0 auto;';
           var coneEl = document.createElement('div');
+          coneEl.className = 'today-flavor-cone cone-lg';
           renderHeroCone(f.name, coneEl, 5);
           wrapper.appendChild(coneEl);
           var label = document.createElement('div');
           label.textContent = f.name;
-          label.style.fontSize = '0.85rem';
-          label.style.marginTop = '0.25rem';
-          label.style.maxWidth = '120px';
+          label.style.cssText = 'font-size:0.8rem;margin-top:0.25rem;max-width:110px;line-height:1.2;';
           wrapper.appendChild(label);
           todayCone.appendChild(wrapper);
         });
@@ -392,7 +390,8 @@ var CustardToday = (function () {
         renderRarity(null, null);
       } else {
         // Single flavor (standard)
-        todayCone.style.display = '';
+        todayCone.className = 'today-flavor-cone cone-lg';
+        todayCone.style.cssText = '';
         renderHeroCone(day.flavor, todayCone, 6);
         todayCone.hidden = false;
         todayFlavor.textContent = day.flavor;
