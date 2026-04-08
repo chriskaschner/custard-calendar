@@ -365,20 +365,22 @@ var CustardToday = (function () {
       todayCard.classList.add('day-card-confirmed');
       todayCard.style.borderLeftColor = color;
       if (day.flavors && day.flavors.length > 1) {
-        // Multi-flavor display (Kopp's): side-by-side cones
+        // Multi-flavor display (Kopp's): stack cones above text
+        // Switch parent layout to column so cones sit above flavor name
+        var body = todayCone.parentElement;
+        body.style.cssText = 'display:flex;flex-direction:column;align-items:center;text-align:center;';
         todayCone.innerHTML = '';
-        todayCone.className = 'today-flavor-cone today-flavor-cone--multi';
-        todayCone.style.cssText = 'display:flex;gap:1.5rem;justify-content:center;align-items:flex-end;width:auto;';
+        todayCone.className = 'today-flavor-cone--multi';
+        todayCone.style.cssText = 'display:flex;gap:2rem;justify-content:center;align-items:flex-end;width:100%;margin-bottom:var(--space-2);';
         day.flavors.forEach(function (f) {
           var wrapper = document.createElement('div');
-          wrapper.style.cssText = 'text-align:center;flex:0 0 auto;';
+          wrapper.style.cssText = 'text-align:center;';
           var coneEl = document.createElement('div');
-          coneEl.className = 'today-flavor-cone cone-lg';
           renderHeroCone(f.name, coneEl, 5);
           wrapper.appendChild(coneEl);
           var label = document.createElement('div');
           label.textContent = f.name;
-          label.style.cssText = 'font-size:0.8rem;margin-top:0.25rem;max-width:110px;line-height:1.2;';
+          label.style.cssText = 'font-size:0.85rem;margin-top:0.25rem;font-weight:500;';
           wrapper.appendChild(label);
           todayCone.appendChild(wrapper);
         });
@@ -389,7 +391,9 @@ var CustardToday = (function () {
         todayDesc.hidden = descs.length === 0;
         renderRarity(null, null);
       } else {
-        // Single flavor (standard)
+        // Single flavor (standard) -- restore parent layout
+        var body = todayCone.parentElement;
+        body.style.cssText = '';
         todayCone.className = 'today-flavor-cone cone-lg';
         todayCone.style.cssText = '';
         renderHeroCone(day.flavor, todayCone, 6);
