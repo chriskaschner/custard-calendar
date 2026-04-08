@@ -501,9 +501,10 @@ async function handleQuizCard(archetypeSlug, flavorSlug, corsHeaders) {
  * @param {number} params.avgGapDays        Average gap between appearances
  * @param {string|null} params.conePngBase64 Pre-fetched cone PNG as base64
  * @param {string} params.accentColor       Hex color for accent bar
+ * @param {string|null} params.scopeLabel   Geographic scope label (e.g. "nationwide")
  * @returns {Promise<Response>} PNG image response
  */
-async function renderFlavorRarityCardPng({ flavorName, rarityTag, appearances, avgGapDays, conePngBase64, accentColor }) {
+async function renderFlavorRarityCardPng({ flavorName, rarityTag, appearances, avgGapDays, conePngBase64, accentColor, scopeLabel }) {
   const esc = (s) => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   const coneImg = conePngBase64
     ? `<img src="data:image/png;base64,${conePngBase64}" width="150" height="175" style="object-fit:contain;" />`
@@ -516,6 +517,9 @@ async function renderFlavorRarityCardPng({ flavorName, rarityTag, appearances, a
          ${esc(rarityTag)}
        </div>`
     : '';
+
+  // Build scope context subtitle
+  const scopeText = scopeLabel ? `<div style="font-size: 18px; color: #777; margin-top: 4px;">${esc(scopeLabel)}</div>` : '';
 
   // Build stats line
   let statsLine = '';
@@ -545,6 +549,7 @@ async function renderFlavorRarityCardPng({ flavorName, rarityTag, appearances, a
             ${esc(flavorName)}
           </div>
           ${rarityBadge}
+          ${scopeText}
           ${statsLine}
           <div style="font-size:20px; color:#4a4a5a; font-family:sans-serif; margin-top:16px;">
             custard.chriskaschner.com
@@ -601,6 +606,7 @@ async function handleFlavorCard(flavorSlug, env, corsHeaders) {
     avgGapDays,
     conePngBase64,
     accentColor,
+    scopeLabel: 'nationwide',
   });
 
   const headers = new Headers(response.headers);
