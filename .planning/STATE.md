@@ -4,14 +4,14 @@ milestone: v4.0
 milestone_name: Find Real Users
 status: executing
 stopped_at: Phase 36.1 context gathered (assumptions mode)
-last_updated: "2026-04-08T03:25:00.171Z"
-last_activity: 2026-04-06 -- Phase 36 execution started
+last_updated: "2026-04-08T11:33:17.369Z"
+last_activity: 2026-04-08
 progress:
   total_phases: 16
-  completed_phases: 8
-  total_plans: 19
-  completed_plans: 16
-  percent: 84
+  completed_phases: 9
+  total_plans: 21
+  completed_plans: 18
+  percent: 86
 ---
 
 # Project State
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-05)
 
 **Core value:** A family can instantly see what flavors are at their nearby stores and decide where to go
-**Current focus:** Phase 36 — data-quality
+**Current focus:** Phase 36.1 — hierarchical-rarity-fallback
 
 ## Current Position
 
-Phase: 36 (data-quality) — EXECUTING
-Plan: 1 of 3
-Status: Executing Phase 36
-Last activity: 2026-04-06 -- Phase 36 execution started
+Phase: 37
+Plan: Not started
+Status: Executing Phase 36.1
+Last activity: 2026-04-08
 
 Progress: [##________] 20% (1/5 v4.0 phases complete)
 

@@ -282,11 +282,11 @@ Plans:
   2. The /api/today response includes a `scope` field in the rarity object indicating which geographic level provided the data
   3. Display consumers (homepage, social cards) show scope context ("in your area", "statewide", "nationwide")
   4. metrics.js uses normalize() from flavor-matcher.js (normalizeFlavorKey removed)
-**Plans:** 2 plans
+**Plans:** 2/2 plans complete
 
 Plans:
-- [ ] 36.1-01-PLAN.md -- Export scope helpers from metrics.js, unify normalization, wire hierarchical fallback into route-today.js
-- [ ] 36.1-02-PLAN.md -- Update display consumers (today-page.js, planner-domain.js, social-card.js) with scope-aware rarity rendering
+- [x] 36.1-01-PLAN.md -- Export scope helpers from metrics.js, unify normalization, wire hierarchical fallback into route-today.js
+- [x] 36.1-02-PLAN.md -- Update display consumers (today-page.js, planner-domain.js, social-card.js) with scope-aware rarity rendering
 
 ### Phase 37: SEO Landing Pages
 **Goal**: Each Madison-area Culver's store has a public landing page that Google can index, showing today's flavor, the week-ahead schedule, and store context
