@@ -207,6 +207,7 @@ dependencies = [
     { name = "google-auth" },
     { name = "google-auth-httplib2" },
     { name = "google-auth-oauthlib" },
+    { name = "pandas" },
     { name = "pyyaml" },
     { name = "requests" },
 ]
@@ -236,6 +237,7 @@ requires-dist = [
     { name = "google-auth-oauthlib", specifier = ">=1.2.4" },
     { name = "icalendar", marker = "extra == 'dev'", specifier = ">=6.0.0" },
     { name = "numpy", marker = "extra == 'analytics'", specifier = ">=1.24" },
+    { name = "pandas", specifier = ">=3.0.1" },
     { name = "pandas", marker = "extra == 'analytics'", specifier = ">=2.0" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0.0" },
     { name = "pyyaml", specifier = ">=6.0.3" },

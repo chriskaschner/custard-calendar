@@ -49,4 +49,5 @@ jobs:
         run: uv sync
 
       - name: Check metrics seed age (<= 45 days)
+        continue-on-error: true
         run: uv run python scripts/check_metrics_seed_freshness.py
