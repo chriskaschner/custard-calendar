@@ -311,7 +311,11 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. Pasting a store page URL into Twitter/Facebook/iMessage/Slack renders an og:image card showing the store name, today's flavor, and cone art
   2. OG card design has been reviewed and approved by the user before going live
-**Plans**: TBD
+**Plans:** 2 plans
+
+Plans:
+- [ ] 38-01-PLAN.md -- Store OG card PNG endpoint (/og/store/{slug}.png) with test suite
+- [ ] 38-02-PLAN.md -- Wire og:image/twitter meta tags into store pages, design review checkpoint
 
 ### Phase 39: Social Research
 **Goal**: A documented recommendation on whether and how to use Instagram for automated flavor posting, so the decision to proceed (or not) is informed rather than speculative
@@ -341,7 +345,7 @@ Phase 35 (complete) -> 36 -> 37 -> 38 -> 39. Phase 39 is independent and can exe
 | 35. Security + MCP | v4.0 | Complete | Complete | 2026-04-05 |
 | 36. Data Quality | v4.0 | 3/3 | Complete   | 2026-04-06 |
 | 37. SEO Landing Pages | v4.0 | 2/2 | Complete | 2026-04-20 |
-| 38. OG Share Cards | v4.0 | 0/TBD | Not started | - |
+| 38. OG Share Cards | v4.0 | 0/2 | Planning complete | - |
 | 39. Social Research | v4.0 | 0/TBD | Not started | - |
 
 **Total: 39 phases across 9 milestones**
