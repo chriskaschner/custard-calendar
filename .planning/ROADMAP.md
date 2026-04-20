@@ -300,7 +300,7 @@ Plans:
 **Plans:** 2 plans
 
 Plans:
-- [ ] 37-01-PLAN.md -- Store page handler with JSON-LD structured data, HTML rendering, and test suite
+- [x] 37-01-PLAN.md -- Store page handler with JSON-LD structured data, HTML rendering, and test suite
 - [ ] 37-02-PLAN.md -- Sitemap/robots.txt handlers, route wiring in index.js, mobile verification checkpoint
 **UI hint**: yes
 
@@ -340,7 +340,7 @@ Phase 35 (complete) -> 36 -> 37 -> 38 -> 39. Phase 39 is independent and can exe
 | 30-34 | v3.0 | 6/6 | Complete | 2026-03-27 |
 | 35. Security + MCP | v4.0 | Complete | Complete | 2026-04-05 |
 | 36. Data Quality | v4.0 | 3/3 | Complete   | 2026-04-06 |
-| 37. SEO Landing Pages | v4.0 | 0/2 | Planned | - |
+| 37. SEO Landing Pages | v4.0 | 1/2 | In Progress | - |
 | 38. OG Share Cards | v4.0 | 0/TBD | Not started | - |
 | 39. Social Research | v4.0 | 0/TBD | Not started | - |
 

@@ -4,14 +4,14 @@ milestone: v4.0
 milestone_name: Find Real Users
 status: executing
 stopped_at: Phase 36.1 context gathered (assumptions mode)
-last_updated: "2026-04-08T11:33:17.369Z"
-last_activity: 2026-04-08
+last_updated: "2026-04-20T02:28:01Z"
+last_activity: 2026-04-20
 progress:
   total_phases: 16
   completed_phases: 9
   total_plans: 21
-  completed_plans: 18
-  percent: 86
+  completed_plans: 19
+  percent: 90
 ---
 
 # Project State
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-05)
 
 **Core value:** A family can instantly see what flavors are at their nearby stores and decide where to go
-**Current focus:** Phase 36.1 — hierarchical-rarity-fallback
+**Current focus:** Phase 37 — SEO Landing Pages
 
 ## Current Position
 
 Phase: 37
-Plan: Not started
-Status: Executing Phase 36.1
-Last activity: 2026-04-08
+Plan: 01 complete, 02 pending
+Status: Executing Phase 37
+Last activity: 2026-04-20
 
 Progress: [##________] 20% (1/5 v4.0 phases complete)
 
@@ -65,6 +65,9 @@ Recent decisions affecting current work:
 - v4.0: SOCL-01 independent -- can execute in parallel with any phase
 - v4.0: Start with 15 Madison-area stores, prove indexing, then scale
 - Phase 35: Security + MCP shipped -- Worker hardened, MCP server live
+- Phase 37-01: URL pattern /store/{state}/{city}/{slug}/ with triple validation for defense-in-depth
+- Phase 37-01: JSON-LD uses FastFoodRestaurant with hasMenu for today's flavor as MenuItem
+- Phase 37-01: Handler exported but not wired into router -- plan 02 handles dispatch
 
 ### Roadmap Evolution
 
@@ -81,6 +84,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-04-08T03:25:00.156Z
-Stopped at: Phase 36.1 context gathered (assumptions mode)
-Resume file: .planning/phases/36.1-hierarchical-rarity-fallback/36.1-CONTEXT.md
+Last session: 2026-04-20T02:28:01Z
+Stopped at: Completed 37-01-PLAN.md
+Resume file: .planning/phases/37-seo-landing-pages/37-02-PLAN.md
