@@ -40,6 +40,8 @@ import { handleApiNearbyFlavors } from './route-nearby.js';
 import { applyIpRateLimit, _resetRateLimitState } from './rate-limit.js';
 import { handleGroupRoute } from './group-routes.js';
 import { handleWidgetScript, handleWidgetVersion } from './widget-routes.js';
+import { handleStorePage } from './route-store-page.js';
+import { handleSitemap, handleRobotsTxt } from './sitemap.js';
 
 const CACHE_MAX_AGE = 3600; // 1 hour (browser + edge cache)
 const API_CSP = "default-src 'none'; base-uri 'none'; frame-ancestors 'none'";
@@ -703,6 +705,12 @@ export async function handleRequest(request, env, fetchFlavorsFn = defaultFetchF
     if (alertResponse) {
       response = alertResponse;
     }
+  } else if (canonical === '/sitemap.xml') {
+    response = handleSitemap(corsHeaders);
+  } else if (canonical === '/robots.txt') {
+    response = handleRobotsTxt(corsHeaders);
+  } else if (canonical.match(/^\/store\/[a-z]{2}\/[a-z0-9-]+\/[a-z0-9-]+\/?$/)) {
+    response = await handleStorePage(url, env, corsHeaders, fetchFlavorsFn);
   }
 
   if (response) {
@@ -712,7 +720,7 @@ export async function handleRequest(request, env, fetchFlavorsFn = defaultFetchF
 
   return Response.json(
     {
-      error: 'Not found. Use /api/v1/today, /api/v1/flavors, /api/v1/stores, /api/v1/geolocate, /api/v1/nearby-flavors, /api/v1/flavors/catalog, /api/v1/flavor-config, /api/v1/flavor-colors, /api/v1/flavor-stats/{slug}, /api/v1/forecast/{slug}, /api/v1/reliability, /api/v1/reliability/{slug}, /api/v1/plan, /api/v1/drive, /api/v1/signals/{slug}, /api/v1/events, /api/v1/events/summary, /api/v1/trivia, /api/v1/metrics/intelligence, /api/v1/metrics/context/flavor/{name}, /api/v1/metrics/context/store/{slug}, /api/v1/metrics/flavor/{name}, /api/v1/metrics/store/{slug}, /api/v1/metrics/trending, /api/v1/metrics/accuracy, /api/v1/metrics/accuracy/{slug}, /api/v1/metrics/coverage, /api/v1/metrics/flavor-hierarchy, /api/v1/metrics/health/{slug}, /api/v1/analytics/geo-eda, /api/v1/quiz/events, /api/v1/quiz/personality-index, /api/v1/alerts/*, /v1/calendar.ics, /v1/og/{slug}/{date}.svg, or /health',
+      error: 'Not found. Use /api/v1/today, /api/v1/flavors, /api/v1/stores, /api/v1/geolocate, /api/v1/nearby-flavors, /api/v1/flavors/catalog, /api/v1/flavor-config, /api/v1/flavor-colors, /api/v1/flavor-stats/{slug}, /api/v1/forecast/{slug}, /api/v1/reliability, /api/v1/reliability/{slug}, /api/v1/plan, /api/v1/drive, /api/v1/signals/{slug}, /api/v1/events, /api/v1/events/summary, /api/v1/trivia, /api/v1/metrics/intelligence, /api/v1/metrics/context/flavor/{name}, /api/v1/metrics/context/store/{slug}, /api/v1/metrics/flavor/{name}, /api/v1/metrics/store/{slug}, /api/v1/metrics/trending, /api/v1/metrics/accuracy, /api/v1/metrics/accuracy/{slug}, /api/v1/metrics/coverage, /api/v1/metrics/flavor-hierarchy, /api/v1/metrics/health/{slug}, /api/v1/analytics/geo-eda, /api/v1/quiz/events, /api/v1/quiz/personality-index, /api/v1/alerts/*, /v1/calendar.ics, /v1/og/{slug}/{date}.svg, /store/wi/{city}/{slug}/, /sitemap.xml, /robots.txt, or /health',
       request_id: requestId,
     },
     { status: 404, headers: corsHeaders }
