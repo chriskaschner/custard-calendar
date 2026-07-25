@@ -1,8 +1,9 @@
 """Tests for scripts/check_metrics_seed_freshness.py.
 
-The gate asserts on `data_max_date` (age of the newest row in the corpus), not
-`generated_at` (when the generator last ran). See the module docstring in
-check_metrics_seed_freshness.py for why.
+The gate asserts on `data_max_fetched_at` (when rows were last collected), not
+`generated_at` (when the generator last ran) and not `data_max_date` (how far
+the published schedule runs, routinely a future date). See the module docstring
+in check_metrics_seed_freshness.py for why.
 """
 
 from __future__ import annotations
@@ -25,9 +26,9 @@ from scripts.check_metrics_seed_freshness import extract_field, main, SEED_FILE
 # Unit tests for extract_field
 # ---------------------------------------------------------------------------
 
-def test_extract_field_data_max_date():
-    text = 'export const SEED = {\n  "data_max_date": "2026-07-20",\n};'
-    assert extract_field(text, "data_max_date") == "2026-07-20"
+def test_extract_field_data_max_fetched_at():
+    text = 'export const SEED = {\n  "data_max_fetched_at": "2026-07-20",\n};'
+    assert extract_field(text, "data_max_fetched_at") == "2026-07-20"
 
 
 def test_extract_field_generated_at():
@@ -44,18 +45,26 @@ def test_extract_field_missing():
 # Integration tests for main() using a temp seed file
 # ---------------------------------------------------------------------------
 
-def _make_seed_text(data_date: datetime, generated: datetime | None = None) -> str:
+def _make_seed_text(
+    fetched: datetime,
+    generated: datetime | None = None,
+    max_date: datetime | None = None,
+) -> str:
+    """Build a seed stub. `max_date` defaults to the schedule horizon Culver's
+    actually publishes -- roughly two months out from collection."""
     gen = (generated or datetime.now(timezone.utc)).isoformat()
+    horizon = max_date or (fetched + timedelta(days=60))
     return (
         "export const TRIVIA_METRICS_SEED = {\n"
         f'  "generated_at": "{gen}",\n'
-        f'  "data_max_date": "{data_date.strftime("%Y-%m-%d")}",\n'
+        f'  "data_max_fetched_at": "{fetched.strftime("%Y-%m-%d")}",\n'
+        f'  "data_max_date": "{horizon.strftime("%Y-%m-%d")}",\n'
         '  "version": 1\n};\n'
     )
 
 
-def test_fresh_data_passes(tmp_path):
-    """Data from 1 day ago should exit 0."""
+def test_fresh_collection_passes(tmp_path):
+    """Collection 1 day ago should exit 0."""
     now = datetime.now(timezone.utc)
     seed_file = tmp_path / "trivia-metrics-seed.js"
     seed_file.write_text(_make_seed_text(now - timedelta(days=1)))
@@ -64,8 +73,8 @@ def test_fresh_data_passes(tmp_path):
         assert main(argv=[]) == 0
 
 
-def test_stale_data_fails(tmp_path):
-    """Data from 50 days ago should exit 1."""
+def test_stale_collection_fails(tmp_path):
+    """Nothing collected for 50 days should exit 1."""
     now = datetime.now(timezone.utc)
     seed_file = tmp_path / "trivia-metrics-seed.js"
     seed_file.write_text(_make_seed_text(now - timedelta(days=50)))
@@ -90,7 +99,27 @@ def test_fresh_generated_at_cannot_mask_stale_data(tmp_path):
         assert main(argv=[]) == 1
 
 
-def test_missing_data_max_date_fails(tmp_path):
+def test_future_schedule_horizon_cannot_mask_dead_ingestion(tmp_path):
+    """The trap the first D1-backed run walked into.
+
+    Culver's publishes calendars ~2 months ahead, so data_max_date is routinely
+    a future date -- the first real run produced one 37 days out. If collection
+    stops, that value sits unchanged and would keep a data_max_date-based gate
+    green for months. Gating on collection time must still fail here.
+    """
+    now = datetime.now(timezone.utc)
+    seed_file = tmp_path / "trivia-metrics-seed.js"
+    seed_file.write_text(_make_seed_text(
+        fetched=now - timedelta(days=90),      # ingestion dead for 3 months
+        generated=now,                          # but regenerated today
+        max_date=now + timedelta(days=37),      # and the schedule runs into the future
+    ))
+
+    with patch("scripts.check_metrics_seed_freshness.SEED_FILE", seed_file):
+        assert main(argv=[]) == 1
+
+
+def test_missing_data_max_fetched_at_fails(tmp_path):
     """A pre-D1 seed with only generated_at cannot be verified, so it fails."""
     seed_file = tmp_path / "trivia-metrics-seed.js"
     seed_file.write_text(
@@ -110,11 +139,11 @@ def test_missing_seed_file_fails(tmp_path):
         assert main(argv=[]) == 1
 
 
-def test_unparseable_data_max_date_fails(tmp_path):
+def test_unparseable_data_max_fetched_at_fails(tmp_path):
     seed_file = tmp_path / "trivia-metrics-seed.js"
     seed_file.write_text(
         'export const TRIVIA_METRICS_SEED = {\n'
-        '  "data_max_date": "not-a-date",\n'
+        '  "data_max_fetched_at": "not-a-date",\n'
         '  "version": 1\n};\n'
     )
 

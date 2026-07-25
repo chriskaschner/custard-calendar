@@ -1,21 +1,26 @@
 #!/usr/bin/env python3
-"""Check that trivia-metrics-seed.js is built from recent DATA.
+"""Check that trivia-metrics-seed.js is built from recently COLLECTED data.
 
-The gate asserts on `data_max_date` -- the newest flavor date in the corpus the
-seed was built from -- not on `generated_at`.
+The gate asserts on `data_max_fetched_at` -- when a row in the corpus was last
+actually fetched.
 
-Why: `generated_at` measures when someone last ran the generator, which is not
-the same thing as whether the data is current. The generator originally read
-only the frozen `data/backfill*/` sqlite files, so re-running it stamped a fresh
-`generated_at` over byte-identical February aggregates and reset the clock
-without adding a single row. That is exactly what happened in Apr 2026: the gate
-was "fixed" by regenerating, then failed again 97 days later with the same data.
+Why not `generated_at`: it measures when someone last ran the generator, not
+whether the data is current. The generator originally read only the frozen
+`data/backfill*/` sqlite files, so re-running it stamped a fresh `generated_at`
+over byte-identical February aggregates and reset the clock without adding a
+single row. That is what happened in Apr 2026: the gate was "fixed" by
+regenerating, then failed again 97 days later on the same data.
 
-`data_max_date` cannot be gamed that way -- it only advances when the underlying
-corpus does, which now means pulling live rows from D1.
+Why not `data_max_date`: that is the newest *flavor* date, which is a schedule
+horizon, not a freshness signal. Culver's publishes calendars roughly two months
+ahead, so it is routinely a future date -- the first D1-backed run produced
+2026-08-31, 37 days out. If collection stopped dead, that value would sit
+unchanged and keep this gate green for months.
 
-Seeds generated before this field existed have no `data_max_date`; those fail
-with an explicit regenerate instruction rather than silently passing.
+`data_max_fetched_at` only advances when something is actually collected.
+
+Seeds predating this field fail with an explicit regenerate instruction rather
+than silently passing.
 
 Usage:
     uv run python scripts/check_metrics_seed_freshness.py
@@ -53,35 +58,35 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     text = SEED_FILE.read_text()
-    data_max_date = extract_field(text, "data_max_date")
+    fetched_at = extract_field(text, "data_max_fetched_at")
 
-    if not data_max_date:
-        print("FAIL: seed has no 'data_max_date' field.")
+    if not fetched_at:
+        print("FAIL: seed has no 'data_max_fetched_at' field.")
         print("It predates the D1-backed generator and its age cannot be verified.")
         print(REGENERATE_HINT)
         return 1
 
     try:
-        data_dt = datetime.fromisoformat(data_max_date).replace(tzinfo=timezone.utc)
+        fetched_dt = datetime.fromisoformat(fetched_at).replace(tzinfo=timezone.utc)
     except ValueError:
-        print(f"ERROR: could not parse data_max_date: {data_max_date!r}")
+        print(f"ERROR: could not parse data_max_fetched_at: {fetched_at!r}")
         return 1
 
     now = datetime.now(timezone.utc)
-    age_days = (now - data_dt).days
+    age_days = (now - fetched_dt).days
 
-    generated_at = extract_field(text, "generated_at")
-    print(f"Seed generated_at:  {generated_at}")
-    print(f"Seed data_max_date: {data_max_date}")
-    print(f"Data age: {age_days} days (max allowed: {args.max_days})")
+    print(f"Seed generated_at:        {extract_field(text, 'generated_at')}")
+    print(f"Seed data_max_fetched_at: {fetched_at}")
+    print(f"Seed data_max_date:       {extract_field(text, 'data_max_date')} (schedule horizon, not checked)")
+    print(f"Collection age: {age_days} days (max allowed: {args.max_days})")
 
     if age_days > args.max_days:
-        print(f"FAIL: newest data row is {age_days} days old, exceeds {args.max_days}-day threshold.")
-        print("Regenerating alone will NOT fix this -- the corpus itself must advance.")
+        print(f"FAIL: nothing has been collected for {age_days} days, exceeds {args.max_days}-day threshold.")
+        print("Regenerating alone will NOT fix this -- ingestion itself must be running.")
         print(REGENERATE_HINT)
         return 1
 
-    print(f"OK: data is within the {args.max_days}-day freshness window.")
+    print(f"OK: collection is within the {args.max_days}-day freshness window.")
     return 0
 
 

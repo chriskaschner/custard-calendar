@@ -506,10 +506,12 @@ def build_trivia_metrics_seed(
         "version": 1,
         "generated_at": summary["generated_at"],
         "as_of": summary["as_of"],
-        # Newest flavor date in the corpus. The CI freshness gate asserts on
-        # this rather than generated_at, so regenerating over stale inputs
-        # cannot reset the clock.
+        # Coverage horizon: how far the published schedule runs. Routinely a
+        # future date -- informational only, NOT the freshness signal.
         "data_max_date": summary["data_max_date"],
+        # When a row was last actually collected. The CI freshness gate asserts
+        # on this, so regenerating over stale inputs cannot reset the clock.
+        "data_max_fetched_at": summary["data_max_fetched_at"],
         "dataset_summary": summary["dataset_summary"]["combined_clean_dedup"],
         "coverage": {
             "manifest_total": int(coverage["manifest_total"]),
@@ -725,16 +727,32 @@ def main() -> int:
     if not probe_df.empty:
         probe_df.to_csv(probe_csv, index=False)
 
-    # Freshness of the DATA, not of the run. The gate asserts on this so that
-    # re-running the generator over unchanged inputs cannot reset the clock.
+    # Two different questions, two different fields.
+    #
+    # data_max_date = newest flavor_date = how far the published schedule runs.
+    # Culver's posts calendars ~2 months ahead, so this is routinely in the
+    # FUTURE and says nothing about whether ingestion is alive: if collection
+    # died today this value would sit unchanged for months.
+    #
+    # data_max_fetched_at = newest fetched_at = when a row was last actually
+    # collected. That is the freshness signal, and it is what the CI gate
+    # asserts on.
     data_max_date = (
         clean_df["flavor_date"].max().strftime("%Y-%m-%d") if not clean_df.empty else None
     )
+
+    data_max_fetched_at = None
+    if not clean_df.empty and "fetched_at" in clean_df.columns:
+        fetched = pd.to_datetime(clean_df["fetched_at"], errors="coerce", utc=True)
+        fetched = fetched.dropna()
+        if not fetched.empty:
+            data_max_fetched_at = fetched.max().strftime("%Y-%m-%d")
 
     summary = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "as_of": stamp,
         "data_max_date": data_max_date,
+        "data_max_fetched_at": data_max_fetched_at,
         "inputs": {
             "backfill_db": str(args.backfill_db),
             "national_db": str(args.national_db),
