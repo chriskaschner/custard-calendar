@@ -33,7 +33,7 @@ import { handleSignals } from './signals.js';
 import { isValidSlug } from './slug-validation.js';
 import { getFetcherForSlug, getBrandForSlug } from './brand-registry.js';
 import { getFlavorsCached } from './kv-cache.js';
-import { maybeSendOperatorAlert } from './operator-alerts.js';
+import { maybeSendOperatorAlert, heartbeatKey } from './operator-alerts.js';
 import { handleCalendar } from './route-calendar.js';
 import { handleApiToday } from './route-today.js';
 import { handleApiNearbyFlavors } from './route-nearby.js';
@@ -75,8 +75,13 @@ function originAllowed(origin, allowlist) {
   return allowlist.some(allowed => origin.startsWith(allowed));
 }
 
+// POST /api/heartbeat/{job} -- external scheduled jobs (GitHub Actions) check
+// in here so operator-alerts.js can notice when one goes silent.
+const HEARTBEAT_ROUTE_RE = /^\/api\/heartbeat\/([a-z0-9_-]{1,64})$/;
+
 function isAdminRoute(canonical) {
   if (ADMIN_EXACT_ROUTES.has(canonical)) return true;
+  if (HEARTBEAT_ROUTE_RE.test(canonical)) return true;
   return /^\/api\/metrics\/accuracy\/[^/]+$/.test(canonical);
 }
 
@@ -711,6 +716,22 @@ export async function handleRequest(request, env, fetchFlavorsFn = defaultFetchF
     response = handleRobotsTxt(corsHeaders);
   } else if (canonical.match(/^\/store\/[a-z]{2}\/[a-z0-9-]+\/[a-z0-9-]+\/?$/)) {
     response = await handleStorePage(url, env, corsHeaders, fetchFlavorsFn);
+  } else if (request.method === 'POST' && HEARTBEAT_ROUTE_RE.test(canonical)) {
+    // Admin-gated above by isAdminRoute(). Records "this job ran successfully".
+    const job = canonical.match(HEARTBEAT_ROUTE_RE)[1];
+    const seenAt = new Date().toISOString();
+    try {
+      // No TTL: an expired key and a never-run job must look the same to the
+      // alert, and both mean "overdue". Letting it expire would silently clear
+      // the very evidence the check depends on.
+      await env.FLAVOR_CACHE.put(heartbeatKey(job), seenAt);
+      response = Response.json({ ok: true, job, seen_at: seenAt }, { headers: corsHeaders });
+    } catch (err) {
+      response = Response.json(
+        { error: 'Failed to record heartbeat', detail: err.message, request_id: requestId },
+        { status: 500, headers: corsHeaders },
+      );
+    }
   }
 
   if (response) {

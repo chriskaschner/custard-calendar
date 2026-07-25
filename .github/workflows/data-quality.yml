@@ -48,6 +48,24 @@ jobs:
       - name: Install Python dependencies
         run: uv sync
 
-      - name: Check metrics seed age (<= 45 days)
+      - name: Check metrics seed data age (<= 45 days)
         continue-on-error: true
         run: uv run python scripts/check_metrics_seed_freshness.py
+
+  heartbeat:
+    name: Heartbeat
+    runs-on: ubuntu-latest
+    needs: [backfill-coverage, metrics-seed-freshness]
+    # always(): the heartbeat means "this workflow still fires", NOT "its gates
+    # passed". A failing gate already surfaces via GitHub's failure email;
+    # silence does not, which is the gap this closes. Gating the ping on gate
+    # success would report a red gate as a dead workflow.
+    if: always()
+    steps:
+      - name: Ping Worker
+        env:
+          WORKER_API_TOKEN: ${{ secrets.WORKER_API_TOKEN }}
+        run: |
+          curl -fsS -X POST \
+            -H "Authorization: Bearer $WORKER_API_TOKEN" \
+            https://custard.chriskaschner.com/api/heartbeat/data_quality

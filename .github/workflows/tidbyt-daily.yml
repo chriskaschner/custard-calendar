@@ -56,3 +56,19 @@ jobs:
         env:
           TIDBYT_API_TOKEN: ${{ secrets.TIDBYT_API_TOKEN }}
         run: uv run python main.py --tidbyt-only
+
+      # Tells the Worker this job is alive. operator-alerts.js emails when a
+      # heartbeat goes overdue -- this workflow was auto-disabled for repo
+      # inactivity in Jun 2026 and nothing noticed for five weeks.
+      #
+      # always(): the heartbeat means "this workflow still fires", not "the push
+      # succeeded". A failed push already sends a GitHub failure email; silence
+      # does not, which is the gap this closes.
+      - name: Heartbeat
+        if: always()
+        env:
+          WORKER_API_TOKEN: ${{ secrets.WORKER_API_TOKEN }}
+        run: |
+          curl -fsS -X POST \
+            -H "Authorization: Bearer $WORKER_API_TOKEN" \
+            https://custard.chriskaschner.com/api/heartbeat/tidbyt_daily
