@@ -20,6 +20,27 @@ Analytics data has two strong non-prediction uses: **(1) flavor rarity as sharea
 
 Focus order for the next cycle: tighten production quality and measurement before expanding scope.
 
+### P0 -- Dormancy recovery (opened 2026-07-25 repo audit; see WORKLOG 2026-07-25)
+
+- [ ] **Push the 9 unpushed commits on `main`** -- all of Phase 37 (SEO landing pages, sitemap, robots) plus the Phase 38 plan. `origin/main` is at `3bc4eb9` (2026-04-08); local `main` is at `863a4b0`. Nothing in v4.0's SEO work has ever reached GitHub.
+- [ ] **Deploy the Worker** -- production 404s on `/sitemap.xml` and `/store/{state}/{city}/{slug}/`. Phase 37 is committed but undeployed, so the "Find Real Users" milestone has no SEO surface live. Blocked on the push above.
+- [ ] **Verify robots.txt after deploy** -- custard.chriskaschner.com currently serves Cloudflare's *managed* robots.txt. Phase 37's Worker handler may be shadowed by it. If so, disable the managed robots.txt in the Cloudflare dashboard or the sitemap will not be discoverable.
+- [ ] **Re-enable the two auto-disabled workflows** -- `Tidbyt Daily Push` and `Data Quality Gate` are `disabled_inactivity`. GitHub kills `schedule:` workflows after 60 days of repo inactivity. Tidbyt has had no push since 2026-06-18. `gh workflow enable "Tidbyt Daily Push"` / `gh workflow enable "Data Quality Gate"`.
+- [ ] **Add a heartbeat for scheduled runs** -- nothing alerted when the crons went dark for 5 weeks. `worker/src/operator-alerts.js` already sends operator email; add an overdue-cron check so this fails loudly next time. (ARCHITECTURE.md risk 7)
+- [ ] **Decide the trivia metrics seed freshness policy** -- last CI failure standing. The generator reads only `data/backfill*/` sqlite, frozen since 2026-02-25, so regenerating just resets the 45-day clock over identical data. Pick one: refresh the backfill for real, repoint the generator at D1 live snapshots, or downgrade the gate to a warning and track data age separately.
+- [ ] **Push `custard-tidbyt`** -- 3 unpushed commits from March carrying the Phase 14/15 canonical color sync. The deployed Starlark renderer still has the pre-sync palette. No CI gate covers this sync path. (ARCHITECTURE.md risk 1 claims "Mitigated" -- it is not, for colors)
+- [ ] **Close the deploy-drift gap** -- `wrangler deploy` is manual, so green CI does not imply deployed code. Add a deploy job to `ci.yml`, or expose a deployed-version endpoint that a test can assert against. (ARCHITECTURE.md risk 6)
+- [x] **Wire Playwright into `ci.yml`** -- done 2026-07-25. Added a `browser-tests` job. Landed **non-blocking** (`continue-on-error: true`) because the suite is 22/178 red; promoting it to a blocking gate is the item below.
+- [ ] **Repair the 22 stale browser specs, then make `browser-tests` blocking** -- Playwright was never actually gating, so specs rotted against shipped refactors. Root causes, in descending size:
+    - **Today's Drive specs test a removed feature (11 failures)** -- `drive-preferences.spec.mjs`, `index-drive-minimap-sync.spec.mjs`, `index-todays-drive.spec.mjs`. The Phase 31 homepage redesign dropped Today's Drive from `index.html`; `docs/todays-drive.js` is now **orphaned dead code still being served by GitHub Pages**. Decide: delete the feature and its specs, or restore it.
+    - **`.store-change-btn` no longer exists (5 failures)** -- `shared-nav-store.spec.mjs`, `index-keyboard-nav.spec.mjs`. Phase 21 consolidated it into `.btn-text` (see the comment at `docs/style.css:3538`). Selector update.
+    - **Remaining 6** -- `today-week-ahead` (2), `today-multistore` (1), `map-pan-stability` (1), `quiz-personality` (1), `quiz-trivia-dynamic` (1). Not yet diagnosed individually.
+  Note: `.planning/STATE.md` records only *one* known browser failure (map-pan-stability). It is 22.
+- [ ] **Delete or re-mount `docs/todays-drive.js`** -- orphaned since the Phase 31 redesign; nothing in `docs/*.html` references it, but it still ships to GitHub Pages.
+- [ ] **Refresh the backfill corpus** -- newest record is 116 days old; every analytics test emits a staleness warning and ML forecast inputs are stale.
+- [ ] **Prune stale branches** -- 3 `worktree-agent-*` and 2 `codex/*` branches left over from parallel-agent sessions.
+
+
 1. ~~**P0: CI gate stability + rapid triage discipline**~~ -- closed 2026-03-03. CI fully green: Worker tests (810), Python tests, browser tests (32) all passing. Security Scan (TruffleHog) fixed (event-aware base SHA). Repo-structure CI gate added. SRI enforcement catches unhashed CDN scripts.
 
 2. ~~**P0: Complete post-deploy UX verification in production (Phase 0 blocker)**~~ -- closed 2026-03-03. Chip rerank/no-refetch confirmed by code review. Mini-map pin/card sync bug fixed + 4 browser specs. URL/localStorage state confirmed. Drive retry + SW cache smoke check passed.

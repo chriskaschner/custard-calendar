@@ -26,6 +26,56 @@ jobs:
         run: npm test
         working-directory: worker
 
+  browser-tests:
+    name: Worker Browser Tests
+    runs-on: ubuntu-latest
+    # NON-BLOCKING until the stale-spec backlog is cleared.
+    #
+    # Playwright was never actually wired into CI despite REPO_CONTRACT.md
+    # listing it as a gate, so 22 of 178 specs rotted against shipped refactors:
+    #   - shared-nav-store, index-keyboard-nav  -> assert .store-change-btn,
+    #     which Phase 21 consolidated into .btn-text
+    #   - drive-preferences, index-drive-minimap-sync, index-todays-drive
+    #     -> exercise Today's Drive, which the Phase 31 homepage redesign
+    #        dropped from index.html (docs/todays-drive.js is now orphaned)
+    #   - today-week-ahead, today-multistore, map-pan-stability,
+    #     quiz-personality, quiz-trivia-dynamic -> assorted
+    #
+    # Reporting now, blocking once those are repaired. See TODO.md
+    # "P0 -- Dormancy recovery". Do not promote to blocking while red.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Worker dependencies
+        run: npm install
+        working-directory: worker
+
+      # playwright.config.mjs defaults CHROME_BIN to the macOS Chrome path.
+      # On CI we install Playwright's own Chromium and point CHROME_BIN at it.
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+        working-directory: worker
+
+      - name: Run browser tests
+        run: |
+          CHROME_BIN="$(node -e 'console.log(require("playwright").chromium.executablePath())')" \
+            npm run test:browser -- --workers=1
+        working-directory: worker
+
+      - name: Upload failure artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-results
+          path: worker/test-results/
+          retention-days: 7
+
   repo-structure:
     name: Repo Structure Check
     runs-on: ubuntu-latest

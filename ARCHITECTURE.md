@@ -139,6 +139,21 @@ Key endpoints and their shapes:
 }
 ```
 
+### `POST /api/heartbeat/{job}`
+
+Admin-authenticated (`ADMIN_ACCESS_TOKEN` bearer). Records that an external
+scheduled job ran. Consumed by the daily operator alert, which reports any job
+whose last ping is older than its `OPERATOR_EXPECTED_JOBS` threshold.
+
+```json
+{ "ok": true, "job": "tidbyt_daily", "seen_at": "2026-07-25T12:00:00.000Z" }
+```
+
+Callers are GitHub Actions workflows, which run outside the Worker and are
+therefore invisible to it except through this ping. The KV key is written
+without a TTL on purpose: an expired key and a never-run job must look identical
+to the alert, and both mean "overdue".
+
 **Contract update rule:** Cross-layer interfaces (`/api/v1/*` response shapes, `planner-shared.js` public API) must be updated in this file before merging any PR that changes them.
 
 ---
@@ -155,9 +170,11 @@ Visual asset catalog (formats, resolutions, color profiles) lives at `docs/ASSET
 |---|---|---|---|
 | 1 | **Contract drift** — sibling repo (custard-tidbyt) implements its own API response mapping; a Worker shape change silently breaks it | Machine-readable schema at `GET /api/v1/schema` (see `worker/src/api-schema.json`); `schema_version` field bumped on breaking changes; sibling repo has smoke tests hitting live API | Mitigated |
 | 2 | **Duplicate client logic** — haversine, flavorMatchScore, and store-lookup exist in multiple repos | `haversine` and `escapeHtml` consolidated into `planner-shared.js`; WORKER_BASE single source in same file. Remaining gap: flavor families in planner-shared.js fallback — monitor, no action needed now | Partial |
-| 3 | **CI asymmetry** — Worker has 595+ tests; Python pipeline has pytest but no live-API integration gate | `ci.yml` runs both `cd worker && npm test` and `uv run pytest` on every push/PR to main | Mitigated |
+| 3 | **CI asymmetry** — Worker has 1226 tests; Python pipeline has pytest but no live-API integration gate | `ci.yml` runs both `cd worker && npm test` and `uv run pytest` on every push/PR to main. Playwright browser tests are still not wired into CI | Partial |
 | 4 | **Doc drift** — CLAUDE.md and inline comments are sole architecture truth | This file (`ARCHITECTURE.md`) is now the canonical layer contract; required update before any cross-layer interface change | Mitigated |
 | 5 | **Monolithic Worker** — index.js is one deploy unit; a bad handler can silently kill the platform | Decomposed into route-today.js, route-calendar.js, route-nearby.js, kv-cache.js, brand-registry.js; per-file coverage thresholds enforced in vitest.config.js; Worker Services would require paid plan, not pursued now | Partial |
+| 6 | **Deploy drift** — `wrangler deploy` is manual, so a green `main` does not imply the Worker is running that code. Phase 37 (store pages, sitemap) sat committed and undeployed; production 404'd on every SEO route the milestone existed to ship | None yet. Needs either a deploy job in `ci.yml` or a deployed-version endpoint the tests can assert against | **Open** |
+| 7 | **Scheduled workflow auto-disable** — GitHub disables `schedule:` workflows after 60 days of repo inactivity. `Tidbyt Daily Push` and `Data Quality Gate` were silently disabled; the Tidbyt device and the data-quality gate went dark with no alert | Heartbeat protocol: each scheduled workflow POSTs `/api/heartbeat/{job}` on every run (`if: always()`, so it signals liveness not success). `operator-alerts.js` raises a "Scheduled job silent" issue in the daily operator email when a ping is overdue per `OPERATOR_EXPECTED_JOBS` | Mitigated |
 
 ---
 

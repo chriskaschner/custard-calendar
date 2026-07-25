@@ -24,8 +24,14 @@ Multi-brand frozen custard observability platform with five layers:
 ## Commands
 
 ```bash
-# Install dependencies
+# Install dependencies (runtime only)
 uv sync
+
+# Install everything needed to run the test suite (pytest, scikit-learn, scipy,
+# icalendar live in optional extras -- plain `uv sync` does NOT install them).
+# Without this, `uv run pytest` silently falls back to a system pytest and every
+# analytics test dies on a numpy/pandas ABI mismatch.
+uv sync --all-extras
 
 # Full pipeline: fetch → cache → calendar sync → tidbyt render + push
 uv run python main.py
@@ -54,13 +60,13 @@ uv run python tools/test_tidbyt.py
 # Test the flavor service directly
 uv run python -m src.flavor_service
 
-# Worker tests (574 tests, 32 suites)
+# Worker tests (1226 tests, 58 suites)
 cd worker && npm test
 
 # Browser smoke tests (Playwright: nav + Radar Phase 2)
 cd worker && npm run test:browser -- --workers=1
 
-# All Python tests (~179 tests across tests/ + scripts/tests/ + analytics/tests/)
+# All Python tests (322 tests across tests/ + scripts/tests/ + analytics/tests/)
 uv run pytest tests/ scripts/tests/ analytics/tests/ -v
 
 # Frontend browser nav click-through is included in:
@@ -68,7 +74,7 @@ uv run pytest tests/ scripts/tests/ analytics/tests/ -v
 # (requires `cd worker && npm install` and local Chrome/Chromium;
 # set CHROME_BIN if needed)
 
-# Analytics tests only (117 tests)
+# Analytics tests only (125 tests)
 uv run pytest analytics/tests/ -v
 
 # Batch forecast generation
@@ -97,7 +103,33 @@ uv run python scripts/analytics_report.py --baseline  # write to WORKLOG.md
 
 # Local Worker development
 cd worker && npx wrangler dev
+
+# Regenerate the trivia metrics seed (pulls live rows from D1 + frozen backfill).
+# Requires wrangler auth: `npx wrangler login` from worker/, or CLOUDFLARE_API_TOKEN.
+uv run python scripts/generate_intelligence_metrics.py
+uv run python scripts/generate_intelligence_metrics.py --no-d1  # frozen corpus only
+
+# Check that the committed seed was built from recent DATA (not just re-run)
+uv run python scripts/check_metrics_seed_freshness.py
 ```
+
+## Scheduled Job Heartbeats
+
+`Tidbyt Daily Push` and `Data Quality Gate` run in GitHub Actions, which
+auto-disables `schedule:` workflows after 60 days of repo inactivity. That
+happened in June 2026 and went unnoticed for five weeks, because nothing inside
+the Worker can observe a GitHub workflow that simply stops firing.
+
+Each scheduled workflow now POSTs `/api/heartbeat/{job}` on every run (`if:
+always()` — the ping means "still firing", not "passed"). The daily operator
+alert reports any job whose last ping is older than its threshold in
+`OPERATOR_EXPECTED_JOBS` (default `tidbyt_daily:2,data_quality:9`).
+
+**If you add a scheduled workflow, add a heartbeat step and register it in
+`OPERATOR_EXPECTED_JOBS`** — otherwise its silence is invisible.
+
+After a long dormancy, check `gh workflow list --all` for `disabled_inactivity`
+and re-enable with `gh workflow enable "<name>"`.
 
 ## Architecture
 
