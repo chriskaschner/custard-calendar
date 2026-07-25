@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import subprocess
 import re
 import sqlite3
 import time
@@ -83,6 +84,95 @@ def load_flavors(db_path: Path, dataset_label: str) -> pd.DataFrame:
         return df
 
     df["dataset"] = dataset_label
+    df["flavor_date"] = pd.to_datetime(df["flavor_date"], errors="coerce")
+    df = df.dropna(subset=["store_slug", "flavor_date", "title"]).copy()
+    return df.reset_index(drop=True)
+
+
+def _d1_query(database: str, sql: str, timeout_s: int = 180) -> list[dict]:
+    """Run one read-only SQL statement against remote D1 via wrangler.
+
+    Uses the operator's existing wrangler auth -- no new secret and no new
+    Worker surface. Requires `npx wrangler login` (or CLOUDFLARE_API_TOKEN).
+    """
+    proc = subprocess.run(
+        [
+            "npx", "wrangler", "d1", "execute", database,
+            "--remote", "--json", "--command", sql,
+        ],
+        cwd=str(SHARED_ROOT / "worker"),
+        capture_output=True,
+        text=True,
+        timeout=timeout_s,
+    )
+    if proc.returncode != 0:
+        raise RuntimeError(
+            f"wrangler d1 execute failed ({proc.returncode}).\n"
+            f"Run `npx wrangler login` from worker/ if this is an auth error.\n"
+            f"{proc.stderr.strip()[:2000]}"
+        )
+
+    # wrangler prints human-readable banners around the JSON payload.
+    text = proc.stdout
+    start = text.find("[")
+    if start == -1:
+        raise RuntimeError(f"No JSON array in wrangler output: {text[:500]}")
+    payload = json.loads(text[start:])
+
+    rows: list[dict] = []
+    for block in payload:
+        rows.extend(block.get("results", []) or [])
+    return rows
+
+
+def empty_flavor_frame(dataset_label: str) -> pd.DataFrame:
+    """Empty frame with the same dtypes a populated one would have.
+
+    Dtypes matter: a plain `pd.DataFrame(columns=[...])` gives `flavor_date`
+    object dtype, and concatenating that with real frames downgrades the whole
+    column, breaking the `.dt` accessor in build_clean_dedup().
+    """
+    return pd.DataFrame(
+        {
+            "store_slug": pd.Series(dtype="object"),
+            "flavor_date": pd.Series(dtype="datetime64[ns]"),
+            "title": pd.Series(dtype="object"),
+            "description": pd.Series(dtype="object"),
+            "source": pd.Series(dtype="object"),
+            "fetched_at": pd.Series(dtype="object"),
+            "dataset": pd.Series(dtype="object"),
+        }
+    )
+
+
+def load_flavors_d1(database: str, batch_size: int = 10000) -> pd.DataFrame:
+    """Load live snapshot rows from D1, paginated.
+
+    D1's `snapshots` table is the dual-write target the Worker fills on every
+    cron run, so it carries current data the frozen backfill sqlite cannot.
+    Column names differ from the backfill schema and are aliased to match.
+    """
+    frames: list[pd.DataFrame] = []
+    offset = 0
+    while True:
+        sql = (
+            "SELECT slug AS store_slug, date AS flavor_date, flavor AS title, "
+            "COALESCE(description, '') AS description, 'd1' AS source, fetched_at "
+            f"FROM snapshots ORDER BY id LIMIT {int(batch_size)} OFFSET {int(offset)}"
+        )
+        rows = _d1_query(database, sql)
+        if not rows:
+            break
+        frames.append(pd.DataFrame(rows))
+        if len(rows) < batch_size:
+            break
+        offset += batch_size
+
+    if not frames:
+        return empty_flavor_frame("d1")
+
+    df = pd.concat(frames, ignore_index=True)
+    df["dataset"] = "d1"
     df["flavor_date"] = pd.to_datetime(df["flavor_date"], errors="coerce")
     df = df.dropna(subset=["store_slug", "flavor_date", "title"]).copy()
     return df.reset_index(drop=True)
@@ -416,6 +506,10 @@ def build_trivia_metrics_seed(
         "version": 1,
         "generated_at": summary["generated_at"],
         "as_of": summary["as_of"],
+        # Newest flavor date in the corpus. The CI freshness gate asserts on
+        # this rather than generated_at, so regenerating over stale inputs
+        # cannot reset the clock.
+        "data_max_date": summary["data_max_date"],
         "dataset_summary": summary["dataset_summary"]["combined_clean_dedup"],
         "coverage": {
             "manifest_total": int(coverage["manifest_total"]),
@@ -458,6 +552,26 @@ def main() -> int:
     parser.add_argument("--wayback-db", type=Path, default=DEFAULT_WAYBACK_DB)
     parser.add_argument("--manifest", type=Path, default=DEFAULT_MANIFEST)
     parser.add_argument("--checkpoint", type=Path, default=DEFAULT_CHECKPOINT)
+    parser.add_argument(
+        "--d1-database",
+        type=str,
+        default="custard-snapshots",
+        help="Remote D1 database queried for live snapshots (via wrangler).",
+    )
+    parser.add_argument(
+        "--d1-batch",
+        type=int,
+        default=10000,
+        help="Rows per paginated D1 query.",
+    )
+    parser.add_argument(
+        "--no-d1",
+        action="store_true",
+        help=(
+            "Skip the live D1 pull and build from frozen backfill sqlite only. "
+            "Produces a seed whose data_max_date will fail the freshness gate."
+        ),
+    )
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR)
     parser.add_argument(
         "--trivia-seed-js",
@@ -500,10 +614,26 @@ def main() -> int:
     national_df = load_flavors(args.national_db, "backfill-national")
     wayback_df = load_flavors(args.wayback_db, "backfill-wayback")
 
-    raw_df = pd.concat([backfill_df, national_df, wayback_df], ignore_index=True)
+    # The backfill sqlite files are a frozen historical corpus -- they give the
+    # metrics their depth but never advance. D1 carries the Worker's live
+    # dual-written snapshots. Union both: depth from backfill, freshness from
+    # D1. build_clean_dedup() collapses the overlap on (store_slug, flavor_date).
+    if args.no_d1:
+        d1_df = empty_flavor_frame("d1")
+        print("Skipping D1 pull (--no-d1); seed will be built from frozen backfill only.")
+    else:
+        print(f"Pulling live snapshots from D1 ({args.d1_database})...")
+        d1_df = load_flavors_d1(args.d1_database, batch_size=args.d1_batch)
+        print(f"  D1 rows: {len(d1_df)}")
+
+    raw_df = pd.concat([backfill_df, national_df, wayback_df, d1_df], ignore_index=True)
     clean_df, closed_removed = build_clean_dedup(raw_df)
 
-    current_slugs = set(backfill_df["store_slug"].unique()) | set(national_df["store_slug"].unique())
+    current_slugs = (
+        set(backfill_df["store_slug"].unique())
+        | set(national_df["store_slug"].unique())
+        | set(d1_df["store_slug"].unique())
+    )
     wayback_slugs = set(wayback_df["store_slug"].unique())
     overall_slugs = current_slugs | wayback_slugs
 
@@ -595,20 +725,29 @@ def main() -> int:
     if not probe_df.empty:
         probe_df.to_csv(probe_csv, index=False)
 
+    # Freshness of the DATA, not of the run. The gate asserts on this so that
+    # re-running the generator over unchanged inputs cannot reset the clock.
+    data_max_date = (
+        clean_df["flavor_date"].max().strftime("%Y-%m-%d") if not clean_df.empty else None
+    )
+
     summary = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "as_of": stamp,
+        "data_max_date": data_max_date,
         "inputs": {
             "backfill_db": str(args.backfill_db),
             "national_db": str(args.national_db),
             "wayback_db": str(args.wayback_db),
             "manifest": str(args.manifest),
             "checkpoint": str(args.checkpoint),
+            "d1_database": None if args.no_d1 else args.d1_database,
         },
         "dataset_summary": {
             "backfill": summarize_dataset(backfill_df),
             "backfill_national": summarize_dataset(national_df),
             "backfill_wayback": summarize_dataset(wayback_df),
+            "d1": summarize_dataset(d1_df),
             "combined_raw": summarize_dataset(raw_df),
             "combined_clean_dedup": summarize_dataset(clean_df),
             "closed_rows_removed": closed_removed,

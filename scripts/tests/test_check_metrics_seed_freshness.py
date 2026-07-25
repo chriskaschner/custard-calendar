@@ -1,4 +1,9 @@
-"""Tests for scripts/check_metrics_seed_freshness.py."""
+"""Tests for scripts/check_metrics_seed_freshness.py.
+
+The gate asserts on `data_max_date` (age of the newest row in the corpus), not
+`generated_at` (when the generator last ran). See the module docstring in
+check_metrics_seed_freshness.py for why.
+"""
 
 from __future__ import annotations
 
@@ -13,113 +18,137 @@ _project_root = str(Path(__file__).resolve().parents[2])
 if _project_root not in sys.path:
     sys.path.insert(0, _project_root)
 
-from scripts.check_metrics_seed_freshness import extract_generated_at, main, SEED_FILE
+from scripts.check_metrics_seed_freshness import extract_field, main, SEED_FILE
 
 
 # ---------------------------------------------------------------------------
-# Unit tests for extract_generated_at
+# Unit tests for extract_field
 # ---------------------------------------------------------------------------
 
-def test_extract_generated_at_standard():
+def test_extract_field_data_max_date():
+    text = 'export const SEED = {\n  "data_max_date": "2026-07-20",\n};'
+    assert extract_field(text, "data_max_date") == "2026-07-20"
+
+
+def test_extract_field_generated_at():
     text = 'export const SEED = {\n  "generated_at": "2026-02-25T21:50:51.871824+00:00",\n};'
-    assert extract_generated_at(text) == "2026-02-25T21:50:51.871824+00:00"
+    assert extract_field(text, "generated_at") == "2026-02-25T21:50:51.871824+00:00"
 
 
-def test_extract_generated_at_missing():
+def test_extract_field_missing():
     text = 'export const SEED = { "version": 1 };'
-    assert extract_generated_at(text) is None
-
-
-def test_extract_generated_at_z_suffix():
-    text = '"generated_at": "2026-01-01T00:00:00Z"'
-    assert extract_generated_at(text) == "2026-01-01T00:00:00Z"
+    assert extract_field(text, "data_max_date") is None
 
 
 # ---------------------------------------------------------------------------
 # Integration tests for main() using a temp seed file
 # ---------------------------------------------------------------------------
 
-def _make_seed_text(dt: datetime) -> str:
-    ts = dt.isoformat()
-    return f'export const TRIVIA_METRICS_SEED = {{\n  "generated_at": "{ts}",\n  "version": 1\n}};\n'
+def _make_seed_text(data_date: datetime, generated: datetime | None = None) -> str:
+    gen = (generated or datetime.now(timezone.utc)).isoformat()
+    return (
+        "export const TRIVIA_METRICS_SEED = {\n"
+        f'  "generated_at": "{gen}",\n'
+        f'  "data_max_date": "{data_date.strftime("%Y-%m-%d")}",\n'
+        '  "version": 1\n};\n'
+    )
 
 
-def test_fresh_seed_passes(tmp_path):
-    """A seed generated 1 day ago should exit 0."""
+def test_fresh_data_passes(tmp_path):
+    """Data from 1 day ago should exit 0."""
     now = datetime.now(timezone.utc)
-    fresh_dt = now - timedelta(days=1)
     seed_file = tmp_path / "trivia-metrics-seed.js"
-    seed_file.write_text(_make_seed_text(fresh_dt))
+    seed_file.write_text(_make_seed_text(now - timedelta(days=1)))
 
     with patch("scripts.check_metrics_seed_freshness.SEED_FILE", seed_file):
-        exit_code = main(argv=[])
-
-    assert exit_code == 0
+        assert main(argv=[]) == 0
 
 
-def test_stale_seed_fails(tmp_path):
-    """A seed generated 50 days ago should exit 1."""
+def test_stale_data_fails(tmp_path):
+    """Data from 50 days ago should exit 1."""
     now = datetime.now(timezone.utc)
-    stale_dt = now - timedelta(days=50)
     seed_file = tmp_path / "trivia-metrics-seed.js"
-    seed_file.write_text(_make_seed_text(stale_dt))
+    seed_file.write_text(_make_seed_text(now - timedelta(days=50)))
 
     with patch("scripts.check_metrics_seed_freshness.SEED_FILE", seed_file):
-        exit_code = main(argv=[])
-
-    assert exit_code == 1
+        assert main(argv=[]) == 1
 
 
-def test_missing_generated_at_fails(tmp_path):
-    """A seed file with no generated_at field should exit 1."""
+def test_fresh_generated_at_cannot_mask_stale_data(tmp_path):
+    """The regression this gate exists to catch.
+
+    A seed regenerated *today* over a corpus whose newest row is 97 days old
+    must still fail. Under the old generated_at-based gate this passed.
+    """
+    now = datetime.now(timezone.utc)
     seed_file = tmp_path / "trivia-metrics-seed.js"
-    seed_file.write_text('export const TRIVIA_METRICS_SEED = { "version": 1 };\n')
+    seed_file.write_text(
+        _make_seed_text(now - timedelta(days=97), generated=now)
+    )
 
     with patch("scripts.check_metrics_seed_freshness.SEED_FILE", seed_file):
-        exit_code = main(argv=[])
+        assert main(argv=[]) == 1
 
-    assert exit_code == 1
+
+def test_missing_data_max_date_fails(tmp_path):
+    """A pre-D1 seed with only generated_at cannot be verified, so it fails."""
+    seed_file = tmp_path / "trivia-metrics-seed.js"
+    seed_file.write_text(
+        'export const TRIVIA_METRICS_SEED = {\n'
+        f'  "generated_at": "{datetime.now(timezone.utc).isoformat()}",\n'
+        '  "version": 1\n};\n'
+    )
+
+    with patch("scripts.check_metrics_seed_freshness.SEED_FILE", seed_file):
+        assert main(argv=[]) == 1
 
 
 def test_missing_seed_file_fails(tmp_path):
-    """A non-existent seed file should exit 1."""
     missing = tmp_path / "does-not-exist.js"
 
     with patch("scripts.check_metrics_seed_freshness.SEED_FILE", missing):
-        exit_code = main(argv=[])
+        assert main(argv=[]) == 1
 
-    assert exit_code == 1
+
+def test_unparseable_data_max_date_fails(tmp_path):
+    seed_file = tmp_path / "trivia-metrics-seed.js"
+    seed_file.write_text(
+        'export const TRIVIA_METRICS_SEED = {\n'
+        '  "data_max_date": "not-a-date",\n'
+        '  "version": 1\n};\n'
+    )
+
+    with patch("scripts.check_metrics_seed_freshness.SEED_FILE", seed_file):
+        assert main(argv=[]) == 1
 
 
 def test_custom_max_days_passes(tmp_path):
-    """--max-days 30: a 20-day-old seed should pass."""
+    """--max-days 30: 20-day-old data should pass."""
     now = datetime.now(timezone.utc)
     seed_file = tmp_path / "trivia-metrics-seed.js"
     seed_file.write_text(_make_seed_text(now - timedelta(days=20)))
 
     with patch("scripts.check_metrics_seed_freshness.SEED_FILE", seed_file):
-        exit_code = main(argv=["--max-days", "30"])
-
-    assert exit_code == 0
+        assert main(argv=["--max-days", "30"]) == 0
 
 
 def test_custom_max_days_fails(tmp_path):
-    """--max-days 30: a 35-day-old seed should fail."""
+    """--max-days 30: 35-day-old data should fail."""
     now = datetime.now(timezone.utc)
     seed_file = tmp_path / "trivia-metrics-seed.js"
     seed_file.write_text(_make_seed_text(now - timedelta(days=35)))
 
     with patch("scripts.check_metrics_seed_freshness.SEED_FILE", seed_file):
-        exit_code = main(argv=["--max-days", "30"])
-
-    assert exit_code == 1
+        assert main(argv=["--max-days", "30"]) == 1
 
 
 def test_real_seed_file_passes():
-    """The real trivia-metrics-seed.js in the repo should be fresh enough for CI."""
+    """The committed trivia-metrics-seed.js should be built from recent data."""
     if not SEED_FILE.exists():
         pytest.skip("trivia-metrics-seed.js not present in this environment")
     exit_code = main(argv=[])
     assert exit_code == 0, (
-        "Real seed file is stale. Run: uv run python scripts/generate_intelligence_metrics.py"
+        "Real seed is stale. Regenerate with a live D1 pull:\n"
+        "  uv run python scripts/generate_intelligence_metrics.py\n"
+        "(requires `npx wrangler login` from worker/)"
     )
