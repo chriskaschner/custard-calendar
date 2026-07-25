@@ -22,13 +22,22 @@ Focus order for the next cycle: tighten production quality and measurement befor
 
 ### P0 -- Dormancy recovery (opened 2026-07-25 repo audit; see WORKLOG 2026-07-25)
 
-- [ ] **Push the 9 unpushed commits on `main`** -- all of Phase 37 (SEO landing pages, sitemap, robots) plus the Phase 38 plan. `origin/main` is at `3bc4eb9` (2026-04-08); local `main` is at `863a4b0`. Nothing in v4.0's SEO work has ever reached GitHub.
+> **Blocked on Cloudflare auth (2026-07-25):** `npx wrangler deploy` and the seed
+> regeneration both fail with `Failed to fetch auth token: 400 Bad Request` --
+> the stored wrangler OAuth token expired and cannot refresh non-interactively.
+> Run `npx wrangler login` from `worker/`, then:
+> ```
+> cd worker && npx wrangler deploy
+> uv run python scripts/generate_intelligence_metrics.py   # then commit the seed
+> ```
+
+- [x] **Push the 9 unpushed commits on `main`** -- done 2026-07-25 (13 commits total, incl. audit fixes). `origin/main` now at `a9e623f`. Original text: -- all of Phase 37 (SEO landing pages, sitemap, robots) plus the Phase 38 plan. `origin/main` is at `3bc4eb9` (2026-04-08); local `main` is at `863a4b0`. Nothing in v4.0's SEO work has ever reached GitHub.
 - [ ] **Deploy the Worker** -- production 404s on `/sitemap.xml` and `/store/{state}/{city}/{slug}/`. Phase 37 is committed but undeployed, so the "Find Real Users" milestone has no SEO surface live. Blocked on the push above.
 - [ ] **Verify robots.txt after deploy** -- custard.chriskaschner.com currently serves Cloudflare's *managed* robots.txt. Phase 37's Worker handler may be shadowed by it. If so, disable the managed robots.txt in the Cloudflare dashboard or the sitemap will not be discoverable.
-- [ ] **Re-enable the two auto-disabled workflows** -- `Tidbyt Daily Push` and `Data Quality Gate` are `disabled_inactivity`. GitHub kills `schedule:` workflows after 60 days of repo inactivity. Tidbyt has had no push since 2026-06-18. `gh workflow enable "Tidbyt Daily Push"` / `gh workflow enable "Data Quality Gate"`.
-- [ ] **Add a heartbeat for scheduled runs** -- nothing alerted when the crons went dark for 5 weeks. `worker/src/operator-alerts.js` already sends operator email; add an overdue-cron check so this fails loudly next time. (ARCHITECTURE.md risk 7)
-- [ ] **Decide the trivia metrics seed freshness policy** -- last CI failure standing. The generator reads only `data/backfill*/` sqlite, frozen since 2026-02-25, so regenerating just resets the 45-day clock over identical data. Pick one: refresh the backfill for real, repoint the generator at D1 live snapshots, or downgrade the gate to a warning and track data age separately.
-- [ ] **Push `custard-tidbyt`** -- 3 unpushed commits from March carrying the Phase 14/15 canonical color sync. The deployed Starlark renderer still has the pre-sync palette. No CI gate covers this sync path. (ARCHITECTURE.md risk 1 claims "Mitigated" -- it is not, for colors)
+- [x] **Re-enable the two auto-disabled workflows** -- done 2026-07-25. Both report `active`; the push itself reactivated them. Original text: -- `Tidbyt Daily Push` and `Data Quality Gate` are `disabled_inactivity`. GitHub kills `schedule:` workflows after 60 days of repo inactivity. Tidbyt has had no push since 2026-06-18. `gh workflow enable "Tidbyt Daily Push"` / `gh workflow enable "Data Quality Gate"`.
+- [x] **Add a heartbeat for scheduled runs** -- done 2026-07-25. `POST /api/heartbeat/{job}` + `OPERATOR_EXPECTED_JOBS`. **Needs a `WORKER_API_TOKEN` GitHub secret (equal to `ADMIN_ACCESS_TOKEN`) or the ping 401s.** Original text: -- nothing alerted when the crons went dark for 5 weeks. `worker/src/operator-alerts.js` already sends operator email; add an overdue-cron check so this fails loudly next time. (ARCHITECTURE.md risk 7)
+- [~] **Decide the trivia metrics seed freshness policy** -- generator + gates reworked 2026-07-25 (D1 union, gate on `data_max_date`). **Remaining: regenerate the seed**, which needs wrangler auth. Original text: -- last CI failure standing. The generator reads only `data/backfill*/` sqlite, frozen since 2026-02-25, so regenerating just resets the 45-day clock over identical data. Pick one: refresh the backfill for real, repoint the generator at D1 live snapshots, or downgrade the gate to a warning and track data age separately.
+- [x] **Push `custard-tidbyt`** -- done 2026-07-25, now at `ff77558`. Original text: -- 3 unpushed commits from March carrying the Phase 14/15 canonical color sync. The deployed Starlark renderer still has the pre-sync palette. No CI gate covers this sync path. (ARCHITECTURE.md risk 1 claims "Mitigated" -- it is not, for colors)
 - [ ] **Close the deploy-drift gap** -- `wrangler deploy` is manual, so green CI does not imply deployed code. Add a deploy job to `ci.yml`, or expose a deployed-version endpoint that a test can assert against. (ARCHITECTURE.md risk 6)
 - [x] **Wire Playwright into `ci.yml`** -- done 2026-07-25. Added a `browser-tests` job. Landed **non-blocking** (`continue-on-error: true`) because the suite is 22/178 red; promoting it to a blocking gate is the item below.
 - [ ] **Repair the 22 stale browser specs, then make `browser-tests` blocking** -- Playwright was never actually gating, so specs rotted against shipped refactors. Root causes, in descending size:
