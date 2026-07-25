@@ -20,6 +20,7 @@ ALLOWED_DIRS = {
     'archive',
     'docs',
     'logs',       # empty dir kept via logs/.gitkeep; cron log target
+    'mcp',        # MCP server (AI-native flavor queries, shipped Phase 35)
     'scripts',
     'src',
     'tests',

@@ -11,6 +11,7 @@ This file is authoritative. New top-level directories require an update here bef
 | `docs/` | GitHub Pages static web app (9 public pages) | @chriskaschner | Yes -- GitHub Pages |
 | `src/` | Python pipeline library (calendar sync, flavor service) | @chriskaschner | Yes -- pytest |
 | `analytics/` | ML prediction pipeline (batch forecasts, accuracy eval) | @chriskaschner | Yes -- pytest |
+| `mcp/` | MCP server exposing flavor queries to AI clients (TypeScript) | @chriskaschner | No (manual deploy) |
 | `scripts/` | Operational scripts (backfill, forecast refresh, metrics) | @chriskaschner | Partial -- scheduled |
 | `tests/` | Python integration tests | @chriskaschner | Yes -- pytest |
 | `tidbyt/` | Canonical Tidbyt Starlark renderer | @chriskaschner | No (manual deploy) |
@@ -84,9 +85,9 @@ Current archive contents:
 
 | Gate | Tool | Trigger |
 |---|---|---|
-| Worker tests | Vitest (810 tests) | Push to main, PR |
-| Worker browser tests | Playwright (32 tests) | Push to main, PR |
-| Python tests | pytest (~179 tests) | Push to main, PR |
+| Worker tests | Vitest (1226 tests, 58 suites) | Push to main, PR |
+| Worker browser tests | Playwright | Local only -- NOT wired into `ci.yml` |
+| Python tests | pytest (322 tests) | Push to main, PR |
 | Metrics seed freshness | Vitest | Push to main |
 | Repo structure policy | `scripts/check_repo_structure.py` in `ci.yml` | Push to main, PR |
 | Secret scanning | TruffleHog (`.github/workflows/security.yml`) | Push to main, PR |

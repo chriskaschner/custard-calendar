@@ -1031,10 +1031,29 @@ details ol {
   margin: 0 0.25em;
 }
 
+.today-flavor-cone--multi {
+  display: flex;
+  gap: var(--space-6);
+  justify-content: center;
+  align-items: flex-end;
+  width: 100%;
+  margin-bottom: var(--space-2);
+}
+
 .today-flavor-cone--multi img,
 .today-flavor-cone--multi svg {
   width: 100px !important;
   height: auto !important;
+}
+
+.multi-flavor-item {
+  text-align: center;
+}
+
+.multi-flavor-label {
+  font-size: 0.85rem;
+  margin-top: var(--space-1);
+  font-weight: 500;
 }
 
 .store-card-description {
@@ -1758,6 +1777,13 @@ footer a {
   align-items: flex-start;
 }
 
+/* Multi-flavor stores (Kopp's) stack cones above the flavor text */
+.today-flavor-body--multi {
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
 .today-flavor-cone {
   flex-shrink: 0;
 }
@@ -1789,6 +1815,13 @@ footer a {
   justify-content: center;
   min-height: 50px;
   align-items: center;
+}
+
+/* Multi-flavor day cells lay their cones out side by side */
+.week-day-cones--multi {
+  display: flex;
+  gap: var(--space-1);
+  justify-content: center;
 }
 
 .drive-card-cone {

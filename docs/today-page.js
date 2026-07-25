@@ -361,6 +361,9 @@ var CustardToday = (function () {
     todayCard.style.borderLeftColor = '';
     todayFlavor.classList.remove('text-estimated');
     todayFlavor.style.color = '';
+    // Clear multi-flavor layout so switching stores/day types cannot leak it
+    todayCone.parentElement.classList.remove('today-flavor-body--multi');
+    todayCone.className = 'today-flavor-cone cone-lg';
 
     if (day.type === 'confirmed') {
       todayCard.classList.add('day-card-confirmed');
@@ -369,19 +372,18 @@ var CustardToday = (function () {
         // Multi-flavor display (Kopp's): stack cones above text
         // Switch parent layout to column so cones sit above flavor name
         var body = todayCone.parentElement;
-        body.style.cssText = 'display:flex;flex-direction:column;align-items:center;text-align:center;';
+        body.classList.add('today-flavor-body--multi');
         todayCone.innerHTML = '';
         todayCone.className = 'today-flavor-cone--multi';
-        todayCone.style.cssText = 'display:flex;gap:2rem;justify-content:center;align-items:flex-end;width:100%;margin-bottom:var(--space-2);';
         day.flavors.forEach(function (f) {
           var wrapper = document.createElement('div');
-          wrapper.style.cssText = 'text-align:center;';
+          wrapper.className = 'multi-flavor-item';
           var coneEl = document.createElement('div');
           renderHeroCone(f.name, coneEl, 5);
           wrapper.appendChild(coneEl);
           var label = document.createElement('div');
+          label.className = 'multi-flavor-label';
           label.textContent = f.name;
-          label.style.cssText = 'font-size:0.85rem;margin-top:0.25rem;font-weight:500;';
           wrapper.appendChild(label);
           todayCone.appendChild(wrapper);
         });
@@ -392,11 +394,7 @@ var CustardToday = (function () {
         todayDesc.hidden = descs.length === 0;
         renderRarity(null, null);
       } else {
-        // Single flavor (standard) -- restore parent layout
-        var body = todayCone.parentElement;
-        body.style.cssText = '';
-        todayCone.className = 'today-flavor-cone cone-lg';
-        todayCone.style.cssText = '';
+        // Single flavor (standard) -- layout already reset above
         renderHeroCone(day.flavor, todayCone, 6);
         todayCone.hidden = false;
         todayFlavor.textContent = day.flavor;
@@ -526,7 +524,7 @@ var CustardToday = (function () {
           '<div class="' + certaintyStripClass(day) + '"></div>'
           + '<div class="week-day-header"><span class="week-day-name">' + escapeHtml(dayName) + '</span>'
           + '<span class="week-day-date">' + escapeHtml(dateLabel) + '</span></div>'
-          + '<div class="week-day-cones"' + (coneCount > 1 ? ' style="display:flex;gap:0.25rem;justify-content:center"' : '') + '>' + conesHtml + '</div>'
+          + '<div class="week-day-cones' + (coneCount > 1 ? ' week-day-cones--multi' : '') + '">' + conesHtml + '</div>'
           + '<div class="week-day-flavor">' + flavorLabel + '</div>';
       } else if (day.type === 'predicted') {
         hasAnyData = true;
