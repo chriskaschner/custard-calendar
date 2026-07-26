@@ -26,7 +26,12 @@ Focus order for the next cycle: tighten production quality and measurement befor
     - Black-box probing shows the Worker currently serves `/health`, `/api/*`, `/v1/*`, `/og/*`, `/calendar.ics` on the custom domain. Add routes for `custard.chriskaschner.com/sitemap.xml`, `/robots.txt`, and `/store/*`.
     - Do this additively in the Cloudflare dashboard. Do **not** declare `routes` in `wrangler.toml` without first enumerating the existing set -- wrangler syncs routes to match the config, and the current set lives only in the dashboard (that config drift is itself worth fixing, but needs the authoritative list first).
     - `/robots.txt` also has Cloudflare's *managed* robots.txt in front of it (content-signals block). A Worker route should take precedence; verify, and disable the managed one if not.
-- [ ] **Set `ADMIN_ACCESS_TOKEN` on the Worker.** `POST /api/heartbeat/{job}` currently returns 503 `Admin endpoint unavailable: ADMIN_ACCESS_TOKEN not configured`. Until set, heartbeats cannot be recorded. `cd worker && npx wrangler secret put ADMIN_ACCESS_TOKEN`, then add the same value as a `WORKER_API_TOKEN` GitHub Actions secret.
+- [ ] **Create the two UptimeRobot heartbeat monitors and add their URLs as GitHub secrets.** Until then both workflows log a warning and skip the ping, so nothing is monitoring them.
+    - `UPTIMEROBOT_HEARTBEAT_TIDBYT` -- suggested threshold ~2 days (daily cron; absorbs one transient failure)
+    - `UPTIMEROBOT_HEARTBEAT_DATA_QUALITY` -- suggested threshold ~9 days (weekly cron)
+    - Confirm the plan allows two heartbeat monitors.
+    - Chosen over an in-Worker check because a watcher inside the Worker cannot detect the Worker's own cron dying, a Cloudflare outage, or KV being unavailable. See CLAUDE.md "Scheduled Job Heartbeats".
+- [ ] **Optional: still worth setting `ADMIN_ACCESS_TOKEN` on the Worker.** Not needed for heartbeats any more, but the existing admin analytics routes (`/api/v1/metrics/*`, `/api/v1/analytics/*`) return 503 without it.
 
 > **Cloudflare auth resolved 2026-07-25.** Worker deployed (version
 > `3e06bb19`), seed regenerated from 208,789 live D1 rows. CI is green overall
