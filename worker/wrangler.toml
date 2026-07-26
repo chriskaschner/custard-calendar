@@ -27,11 +27,6 @@ OPERATOR_PARSE_FAILURE_THRESHOLD = "3"
 OPERATOR_PAYLOAD_ANOMALY_THRESHOLD = "10"
 OPERATOR_CONSECUTIVE_ERROR_DAYS = "2"
 OPERATOR_MONTH_END_LOOKAHEAD_DAYS = "5"
-# External scheduled jobs that must check in at POST /api/heartbeat/{job},
-# as "job:max_age_days". The daily operator alert fires when one goes silent.
-# These run in GitHub Actions, which auto-disables `schedule:` workflows after
-# 60 days of repo inactivity -- that outage is invisible from inside the Worker.
-OPERATOR_EXPECTED_JOBS = "tidbyt_daily:2,data_quality:9"
 
 # Secrets (set via: npx wrangler secret put <NAME>):
 #   RESEND_API_KEY — API key from resend.com for sending alert emails
@@ -40,8 +35,10 @@ OPERATOR_EXPECTED_JOBS = "tidbyt_daily:2,data_quality:9"
 #   OPERATOR_EMAIL — recipient for cron operator alerts
 #
 # GitHub Actions secrets (repo settings, not wrangler):
-#   WORKER_API_TOKEN — must equal ADMIN_ACCESS_TOKEN; used by the scheduled
-#                      workflows to POST /api/heartbeat/{job}
+#   UPTIMEROBOT_HEARTBEAT_TIDBYT       — heartbeat URL for Tidbyt Daily Push
+#   UPTIMEROBOT_HEARTBEAT_DATA_QUALITY — heartbeat URL for Data Quality Gate
+# Scheduled-job liveness is monitored by UptimeRobot, not by this Worker.
+# See CLAUDE.md "Scheduled Job Heartbeats".
 
 # KV namespace for caching flavor data + alert subscriptions (24h TTL)
 [[kv_namespaces]]

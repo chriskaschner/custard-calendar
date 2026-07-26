@@ -55,17 +55,25 @@ jobs:
   heartbeat:
     name: Heartbeat
     runs-on: ubuntu-latest
+    # Dead man's switch, monitored by UptimeRobot. This workflow was
+    # auto-disabled for repo inactivity in Jun 2026 and ran for five weeks
+    # without anyone noticing.
+    #
+    # Depends on both gates and does NOT use if: always(), so the ping means
+    # "the gates passed". On a weekly job with a ~9 day threshold that means a
+    # single failing run alerts -- which is wanted here, since a data-quality
+    # gate that stays red for a week is a real problem, not noise.
+    #
+    # Monitored externally on purpose: an in-Worker check could not detect a
+    # Cloudflare outage or the Worker's own cron dying.
     needs: [backfill-coverage, metrics-seed-freshness]
-    # always(): the heartbeat means "this workflow still fires", NOT "its gates
-    # passed". A failing gate already surfaces via GitHub's failure email;
-    # silence does not, which is the gap this closes. Gating the ping on gate
-    # success would report a red gate as a dead workflow.
-    if: always()
     steps:
-      - name: Ping Worker
+      - name: Ping UptimeRobot
         env:
-          WORKER_API_TOKEN: ${{ secrets.WORKER_API_TOKEN }}
+          HEARTBEAT_URL: ${{ secrets.UPTIMEROBOT_HEARTBEAT_DATA_QUALITY }}
         run: |
-          curl -fsS -X POST \
-            -H "Authorization: Bearer $WORKER_API_TOKEN" \
-            https://custard.chriskaschner.com/api/heartbeat/data_quality
+          if [ -z "$HEARTBEAT_URL" ]; then
+            echo "::warning::UPTIMEROBOT_HEARTBEAT_DATA_QUALITY is not set; skipping heartbeat."
+            exit 0
+          fi
+          curl -fsS --retry 3 --retry-delay 5 "$HEARTBEAT_URL"

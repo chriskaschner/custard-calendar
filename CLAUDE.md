@@ -117,16 +117,29 @@ uv run python scripts/check_metrics_seed_freshness.py
 
 `Tidbyt Daily Push` and `Data Quality Gate` run in GitHub Actions, which
 auto-disables `schedule:` workflows after 60 days of repo inactivity. That
-happened in June 2026 and went unnoticed for five weeks, because nothing inside
-the Worker can observe a GitHub workflow that simply stops firing.
+happened in June 2026 and went unnoticed for five weeks.
 
-Each scheduled workflow now POSTs `/api/heartbeat/{job}` on every run (`if:
-always()` — the ping means "still firing", not "passed"). The daily operator
-alert reports any job whose last ping is older than its threshold in
-`OPERATOR_EXPECTED_JOBS` (default `tidbyt_daily:2,data_quality:9`).
+Liveness is monitored by **UptimeRobot heartbeat monitors**, not by this repo
+and not by the Worker. Each workflow ends with a `curl` to its heartbeat URL;
+UptimeRobot alerts when a ping stops arriving.
 
-**If you add a scheduled workflow, add a heartbeat step and register it in
-`OPERATOR_EXPECTED_JOBS`** — otherwise its silence is invisible.
+**Why external:** a dead man's switch only works if the watcher sits outside the
+system it watches. A check inside the Worker could never detect the Worker's own
+cron dying, a Cloudflare outage, or an unavailable KV — precisely the cases you
+most need to hear about. UptimeRobot is outside both GitHub Actions and
+Cloudflare, so it covers all of them.
+
+| Job | GitHub secret | Suggested threshold |
+|---|---|---|
+| Tidbyt Daily Push | `UPTIMEROBOT_HEARTBEAT_TIDBYT` | ~2 days (daily cron; absorbs one transient failure) |
+| Data Quality Gate | `UPTIMEROBOT_HEARTBEAT_DATA_QUALITY` | ~9 days (weekly cron) |
+
+The ping fires only on success, so what is monitored is "no *successful* run in
+N days" — strictly more informative than bare liveness. If a secret is unset the
+step warns and passes rather than failing the workflow.
+
+**If you add a scheduled workflow, add a heartbeat step and create a matching
+UptimeRobot monitor** — otherwise its silence is invisible.
 
 After a long dormancy, check `gh workflow list --all` for `disabled_inactivity`
 and re-enable with `gh workflow enable "<name>"`.

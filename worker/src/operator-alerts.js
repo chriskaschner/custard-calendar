@@ -9,77 +9,16 @@ const DEFAULT_DUPLICATE_DAY_THRESHOLD = 1;
 const DEFAULT_STALE_STORE_THRESHOLD_DAYS = 7;
 const DEFAULT_PRIORITY_SLUGS = ['mt-horeb', 'verona', 'madison-todd-drive'];
 
-// External scheduled jobs that must check in, as "job:max_age_days".
+// Liveness of the external scheduled jobs (Tidbyt Daily Push, Data Quality
+// Gate) is NOT checked here. It is an UptimeRobot heartbeat monitor.
 //
-// These run in GitHub Actions, not in this Worker, so nothing here can observe
-// them failing -- only their silence. In Jun 2026 GitHub auto-disabled both for
-// repo inactivity (it kills `schedule:` workflows after 60 days without a
-// commit) and they were dead five weeks before anyone noticed. Each job pings
-// POST /api/v1/heartbeat/{job} on success; this alert fires when a ping is
-// overdue. Slack in the thresholds covers a missed run plus retry.
-const DEFAULT_EXPECTED_JOBS = 'tidbyt_daily:2,data_quality:9';
-const HEARTBEAT_KEY_PREFIX = 'meta:heartbeat';
-
-export function heartbeatKey(job) {
-  return `${HEARTBEAT_KEY_PREFIX}:${job}`;
-}
-
-/**
- * Parse OPERATOR_EXPECTED_JOBS into [{ job, maxAgeDays }].
- * Malformed entries are skipped rather than throwing -- a bad env var must not
- * take down the whole operator alert.
- */
-export function parseExpectedJobs(env) {
-  const raw = (env?.OPERATOR_EXPECTED_JOBS ?? DEFAULT_EXPECTED_JOBS).trim();
-  if (!raw) return [];
-  const out = [];
-  for (const part of raw.split(',')) {
-    const [job, days] = part.split(':').map(s => (s || '').trim());
-    if (!job) continue;
-    const maxAgeDays = parseInt(days, 10);
-    if (!Number.isFinite(maxAgeDays) || maxAgeDays <= 0) continue;
-    out.push({ job, maxAgeDays });
-  }
-  return out;
-}
-
-/**
- * Find external jobs whose last heartbeat is missing or older than allowed.
- * A job that has never checked in is reported as never-seen, not skipped --
- * silence is the exact failure mode being guarded against.
- */
-export async function findOverdueHeartbeats(kv, env, now) {
-  if (!kv) return [];
-  const expected = parseExpectedJobs(env);
-  const overdue = [];
-
-  for (const { job, maxAgeDays } of expected) {
-    let raw = null;
-    try {
-      raw = await kv.get(heartbeatKey(job));
-    } catch {
-      continue; // KV read failure is reported by the caller's catch, not here
-    }
-
-    if (!raw) {
-      overdue.push({ job, maxAgeDays, lastSeen: null, ageDays: null });
-      continue;
-    }
-
-    const seenMs = Date.parse(raw);
-    if (!Number.isFinite(seenMs)) {
-      overdue.push({ job, maxAgeDays, lastSeen: raw, ageDays: null });
-      continue;
-    }
-
-    const ageDays = Math.floor((now.getTime() - seenMs) / (24 * 60 * 60 * 1000));
-    if (ageDays > maxAgeDays) {
-      overdue.push({ job, maxAgeDays, lastSeen: raw, ageDays });
-    }
-  }
-
-  return overdue;
-}
+// A dead man's switch only works if the watcher sits outside the system it
+// watches. This module runs inside the Worker's own daily cron, so a check here
+// could never detect that cron dying, a Cloudflare outage, or an unavailable
+// KV -- the exact cases where you most need to hear about it. UptimeRobot is
+// external to both GitHub Actions and Cloudflare, so it covers all of them.
+//
+// The workflows ping their heartbeat URLs directly. See CLAUDE.md.
 
 function readIntEnv(raw, fallback) {
   const n = parseInt(raw ?? '', 10);
@@ -289,27 +228,6 @@ export async function maybeSendOperatorAlert({ env, handler, result, now = new D
     issues.push({
       title: 'Counter read error',
       detail: err.message || 'failed to read health counters',
-    });
-  }
-
-  try {
-    const overdue = await findOverdueHeartbeats(env.FLAVOR_CACHE, env, now);
-    for (const { job, maxAgeDays, lastSeen, ageDays } of overdue) {
-      issues.push({
-        title: `Scheduled job silent: ${job}`,
-        detail: lastSeen === null
-          ? `${job} has never checked in (expected at least every ${maxAgeDays}d). `
-            + 'If this is not a first deploy, its GitHub Actions workflow may be '
-            + 'disabled -- check `gh workflow list --all` for disabled_inactivity.'
-          : `${job} last checked in ${ageDays === null ? `at ${lastSeen}` : `${ageDays}d ago`} `
-            + `(expected at least every ${maxAgeDays}d). Check `
-            + '`gh workflow list --all` for disabled_inactivity.',
-      });
-    }
-  } catch (err) {
-    issues.push({
-      title: 'Heartbeat check error',
-      detail: err.message || 'failed to evaluate scheduled job heartbeats',
     });
   }
 

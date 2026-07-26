@@ -145,11 +145,6 @@ describe('maybeSendOperatorAlert', () => {
         [`meta:payload-anomaly-count:${today}`]: '0',
         [`meta:unknown-flavor-count:${today}`]: '0',
         [`meta:duplicate-day-count:${today}`]: '0',
-        // Fresh heartbeats: these fixtures model a live system, so the
-        // overdue-scheduled-job check must not fire on top of the trigger
-        // each test is actually asserting.
-        [`meta:heartbeat:tidbyt_daily`]: `${today}T12:00:00Z`,
-        [`meta:heartbeat:data_quality`]: `${today}T12:00:00Z`,
       }),
       DB: createMockDb({
         cronErrors: [0, 0],
@@ -193,11 +188,6 @@ describe('quality gate alerts in operator email', () => {
         [`meta:payload-anomaly-count:${today}`]: '0',
         [`meta:unknown-flavor-count:${today}`]: '8',
         [`meta:duplicate-day-count:${today}`]: '0',
-        // Fresh heartbeats: these fixtures model a live system, so the
-        // overdue-scheduled-job check must not fire on top of the trigger
-        // each test is actually asserting.
-        [`meta:heartbeat:tidbyt_daily`]: `${today}T12:00:00Z`,
-        [`meta:heartbeat:data_quality`]: `${today}T12:00:00Z`,
       }),
       DB: createMockDb({ cronErrors: [0, 0] }),
       RESEND_API_KEY: 'test-key',
@@ -227,11 +217,6 @@ describe('quality gate alerts in operator email', () => {
         [`meta:payload-anomaly-count:${today}`]: '0',
         [`meta:unknown-flavor-count:${today}`]: '5',
         [`meta:duplicate-day-count:${today}`]: '0',
-        // Fresh heartbeats: these fixtures model a live system, so the
-        // overdue-scheduled-job check must not fire on top of the trigger
-        // each test is actually asserting.
-        [`meta:heartbeat:tidbyt_daily`]: `${today}T12:00:00Z`,
-        [`meta:heartbeat:data_quality`]: `${today}T12:00:00Z`,
       }),
       DB: createMockDb({
         cronErrors: [0, 0],
@@ -264,8 +249,6 @@ describe('quality gate alerts in operator email', () => {
         [`meta:payload-anomaly-count:${today}`]: '0',
         [`meta:unknown-flavor-count:${today}`]: '0',
         [`meta:duplicate-day-count:${today}`]: '3',
-        [`meta:heartbeat:tidbyt_daily`]: `${today}T12:00:00Z`,
-        [`meta:heartbeat:data_quality`]: `${today}T12:00:00Z`,
       }),
       DB: createMockDb({ cronErrors: [0, 0] }),
       RESEND_API_KEY: 'test-key',
@@ -295,11 +278,6 @@ describe('quality gate alerts in operator email', () => {
         [`meta:payload-anomaly-count:${today}`]: '0',
         [`meta:unknown-flavor-count:${today}`]: '0',
         [`meta:duplicate-day-count:${today}`]: '0',
-        // Fresh heartbeats: these fixtures model a live system, so the
-        // overdue-scheduled-job check must not fire on top of the trigger
-        // each test is actually asserting.
-        [`meta:heartbeat:tidbyt_daily`]: `${today}T12:00:00Z`,
-        [`meta:heartbeat:data_quality`]: `${today}T12:00:00Z`,
       }),
       DB: createMockDb({
         cronErrors: [0, 0],
@@ -339,11 +317,6 @@ describe('quality gate alerts in operator email', () => {
         [`meta:payload-anomaly-count:${today}`]: '0',
         [`meta:unknown-flavor-count:${today}`]: '0',
         [`meta:duplicate-day-count:${today}`]: '0',
-        // Fresh heartbeats: these fixtures model a live system, so the
-        // overdue-scheduled-job check must not fire on top of the trigger
-        // each test is actually asserting.
-        [`meta:heartbeat:tidbyt_daily`]: `${today}T12:00:00Z`,
-        [`meta:heartbeat:data_quality`]: `${today}T12:00:00Z`,
       }),
       DB: createMockDb({
         cronErrors: [0, 0],
@@ -376,11 +349,6 @@ describe('quality gate alerts in operator email', () => {
         [`meta:payload-anomaly-count:${today}`]: '0',
         [`meta:unknown-flavor-count:${today}`]: '0',
         [`meta:duplicate-day-count:${today}`]: '0',
-        // Fresh heartbeats: these fixtures model a live system, so the
-        // overdue-scheduled-job check must not fire on top of the trigger
-        // each test is actually asserting.
-        [`meta:heartbeat:tidbyt_daily`]: `${today}T12:00:00Z`,
-        [`meta:heartbeat:data_quality`]: `${today}T12:00:00Z`,
       }),
       DB: createMockDb({
         cronErrors: [0, 0],

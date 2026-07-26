@@ -57,18 +57,24 @@ jobs:
           TIDBYT_API_TOKEN: ${{ secrets.TIDBYT_API_TOKEN }}
         run: uv run python main.py --tidbyt-only
 
-      # Tells the Worker this job is alive. operator-alerts.js emails when a
-      # heartbeat goes overdue -- this workflow was auto-disabled for repo
-      # inactivity in Jun 2026 and nothing noticed for five weeks.
+      # Dead man's switch. This workflow was auto-disabled for repo inactivity
+      # in Jun 2026 and nothing noticed for five weeks. UptimeRobot alerts when
+      # this ping stops arriving.
       #
-      # always(): the heartbeat means "this workflow still fires", not "the push
-      # succeeded". A failed push already sends a GitHub failure email; silence
-      # does not, which is the gap this closes.
+      # Deliberately NOT if: always() -- the ping only fires on a successful
+      # push, so "no successful push in N days" is what gets monitored. With a
+      # ~2 day threshold on a daily job, one transient failure is absorbed but a
+      # persistently broken push still alerts. That is strictly more than
+      # liveness, and it costs nothing.
+      #
+      # Monitored externally on purpose: an in-Worker check could not detect a
+      # Cloudflare outage or the Worker's own cron dying.
       - name: Heartbeat
-        if: always()
         env:
-          WORKER_API_TOKEN: ${{ secrets.WORKER_API_TOKEN }}
+          HEARTBEAT_URL: ${{ secrets.UPTIMEROBOT_HEARTBEAT_TIDBYT }}
         run: |
-          curl -fsS -X POST \
-            -H "Authorization: Bearer $WORKER_API_TOKEN" \
-            https://custard.chriskaschner.com/api/heartbeat/tidbyt_daily
+          if [ -z "$HEARTBEAT_URL" ]; then
+            echo "::warning::UPTIMEROBOT_HEARTBEAT_TIDBYT is not set; skipping heartbeat."
+            exit 0
+          fi
+          curl -fsS --retry 3 --retry-delay 5 "$HEARTBEAT_URL"

@@ -139,21 +139,6 @@ Key endpoints and their shapes:
 }
 ```
 
-### `POST /api/heartbeat/{job}`
-
-Admin-authenticated (`ADMIN_ACCESS_TOKEN` bearer). Records that an external
-scheduled job ran. Consumed by the daily operator alert, which reports any job
-whose last ping is older than its `OPERATOR_EXPECTED_JOBS` threshold.
-
-```json
-{ "ok": true, "job": "tidbyt_daily", "seen_at": "2026-07-25T12:00:00.000Z" }
-```
-
-Callers are GitHub Actions workflows, which run outside the Worker and are
-therefore invisible to it except through this ping. The KV key is written
-without a TTL on purpose: an expired key and a never-run job must look identical
-to the alert, and both mean "overdue".
-
 **Contract update rule:** Cross-layer interfaces (`/api/v1/*` response shapes, `planner-shared.js` public API) must be updated in this file before merging any PR that changes them.
 
 ---
@@ -174,7 +159,7 @@ Visual asset catalog (formats, resolutions, color profiles) lives at `docs/ASSET
 | 4 | **Doc drift** — CLAUDE.md and inline comments are sole architecture truth | This file (`ARCHITECTURE.md`) is now the canonical layer contract; required update before any cross-layer interface change | Mitigated |
 | 5 | **Monolithic Worker** — index.js is one deploy unit; a bad handler can silently kill the platform | Decomposed into route-today.js, route-calendar.js, route-nearby.js, kv-cache.js, brand-registry.js; per-file coverage thresholds enforced in vitest.config.js; Worker Services would require paid plan, not pursued now | Partial |
 | 6 | **Deploy drift** — `wrangler deploy` is manual, so a green `main` does not imply the Worker is running that code. Phase 37 (store pages, sitemap) sat committed and undeployed; production 404'd on every SEO route the milestone existed to ship | None yet. Needs either a deploy job in `ci.yml` or a deployed-version endpoint the tests can assert against | **Open** |
-| 7 | **Scheduled workflow auto-disable** — GitHub disables `schedule:` workflows after 60 days of repo inactivity. `Tidbyt Daily Push` and `Data Quality Gate` were silently disabled; the Tidbyt device and the data-quality gate went dark with no alert | Heartbeat protocol: each scheduled workflow POSTs `/api/heartbeat/{job}` on every run (`if: always()`, so it signals liveness not success). `operator-alerts.js` raises a "Scheduled job silent" issue in the daily operator email when a ping is overdue per `OPERATOR_EXPECTED_JOBS` | Mitigated |
+| 7 | **Scheduled workflow auto-disable** — GitHub disables `schedule:` workflows after 60 days of repo inactivity. `Tidbyt Daily Push` and `Data Quality Gate` were silently disabled; the Tidbyt device and the data-quality gate went dark with no alert | UptimeRobot heartbeat monitors. Each workflow pings its heartbeat URL on success; UptimeRobot alerts when a ping stops arriving. Deliberately **external** — a watcher inside the Worker could not detect the Worker's own cron dying, a Cloudflare outage, or KV being unavailable. See CLAUDE.md "Scheduled Job Heartbeats" | Mitigated |
 
 ---
 
