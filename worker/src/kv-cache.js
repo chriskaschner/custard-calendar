@@ -1,6 +1,7 @@
 import { recordSnapshots } from './snapshot-writer.js';
 import { getFetcherForSlug } from './brand-registry.js';
 import { FLAVOR_PROFILES, FLAVOR_ALIASES } from './flavor-colors.js';
+import { applyFlavorOverrides, getPremiereDates } from './flavor-overrides.js';
 
 const KV_TTL_SECONDS = 86400; // 24 hours
 const FLAVOR_CACHE_RECORD_VERSION = 1;
@@ -263,6 +264,14 @@ export async function getFlavorsCached(slug, kv, fetchFlavorsFn, isOverride = fa
   // When isOverride is true, use the provided fetcher for all brands (testing)
   const fetcher = isOverride ? fetchFlavorsFn : brandInfo.fetcher;
 
+  // Overrides and premiere placeholders are applied to a COPY on the way out,
+  // after every KV/D1 write, so synthetic entries can never enter the historical
+  // record. Callers below must return serve(...), never the raw payload.
+  const serve = async (payload) => applyFlavorOverrides(payload, slug, {
+    premiereDates: await getPremiereDates(kv),
+    brand: brandInfo.brand,
+  });
+
   // Check KV cache
   const cached = kv ? await kv.get(cacheKey) : null;
   if (cached) {
@@ -271,7 +280,7 @@ export async function getFlavorsCached(slug, kv, fetchFlavorsFn, isOverride = fa
       if (recordOnHit && env.DB) {
         await recordSnapshots(null, slug, parsed, { db: env.DB, brand: brandInfo.brand });
       }
-      return parsed;
+      return serve(parsed);
     }
   }
 
@@ -327,5 +336,5 @@ export async function getFlavorsCached(slug, kv, fetchFlavorsFn, isOverride = fa
   // Persist flavor observations to D1 (durable historical source of truth)
   await recordSnapshots(null, slug, data, { db: env.DB || null, brand: brandInfo.brand, kv });
 
-  return data;
+  return serve(data);
 }

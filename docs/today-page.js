@@ -402,6 +402,20 @@ var CustardToday = (function () {
         todayDesc.hidden = !day.description;
         renderRarity(todayData && todayData.rarity, day.flavor);
       }
+    } else if (day.type === 'premiere') {
+      // Upstream withholds premiere days on purpose, so there is no name and no
+      // cone art to look up. Render the neutral SVG cone directly rather than
+      // going through renderHeroCone, which would 404 on a nonexistent PNG first.
+      todayCard.classList.add('day-card-estimated');
+      todayCone.innerHTML = (typeof renderMiniConeSVG === 'function')
+        ? renderMiniConeSVG(day.flavor, 6)
+        : '';
+      todayCone.hidden = false;
+      todayFlavor.textContent = day.flavor;
+      todayFlavor.classList.add('text-estimated');
+      todayDesc.textContent = day.description || '';
+      todayDesc.hidden = !day.description;
+      renderRarity(null, null);
     } else if (day.type === 'predicted') {
       todayCard.classList.add('day-card-estimated');
       renderHeroCone(day.flavor, todayCone, 6);
@@ -526,6 +540,17 @@ var CustardToday = (function () {
           + '<span class="week-day-date">' + escapeHtml(dateLabel) + '</span></div>'
           + '<div class="week-day-cones' + (coneCount > 1 ? ' week-day-cones--multi' : '') + '">' + conesHtml + '</div>'
           + '<div class="week-day-flavor">' + flavorLabel + '</div>';
+      } else if (day.type === 'premiere') {
+        hasAnyData = true;
+        card.className = 'card card--accent-sm week-day-card week-day-card-estimated';
+        card.innerHTML =
+          '<div class="' + certaintyStripClass(day) + '"></div>'
+          + '<div class="week-day-header"><span class="week-day-name">' + escapeHtml(dayName) + '</span>'
+          + '<span class="week-day-date">' + escapeHtml(dateLabel) + '</span></div>'
+          + '<div class="week-day-cone cone-sm">'
+          + ((typeof renderMiniConeSVG === 'function') ? renderMiniConeSVG(day.flavor, 3) : '')
+          + '</div>'
+          + '<div class="week-day-flavor text-estimated">' + escapeHtml(day.flavor) + '</div>';
       } else if (day.type === 'predicted') {
         hasAnyData = true;
         card.className = 'card card--accent-sm week-day-card week-day-card-estimated';
@@ -608,7 +633,9 @@ var CustardToday = (function () {
 
       // Render hero cone PNG (L5) into the .week-day-cone placeholder(s); falls back
       // to L0 SVG via renderHeroCone's onerror handler when PNG is unavailable.
-      if (typeof renderHeroCone === 'function') {
+      // Premiere cards already hold their SVG cone -- there is no PNG to look up,
+      // so skip them rather than spending a 404 to reach the same fallback.
+      if (typeof renderHeroCone === 'function' && day.type !== 'premiere') {
         var coneEls = card.querySelectorAll('.week-day-cone');
         if (day.flavors && day.flavors.length > 1) {
           for (var fi = 0; fi < Math.min(day.flavors.length, coneEls.length); fi++) {

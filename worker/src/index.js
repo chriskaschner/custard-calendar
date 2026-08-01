@@ -33,6 +33,7 @@ import { handleSignals } from './signals.js';
 import { isValidSlug } from './slug-validation.js';
 import { getFetcherForSlug, getBrandForSlug } from './brand-registry.js';
 import { getFlavorsCached } from './kv-cache.js';
+import { detectBlackoutDates, writePremiereDates, isoPlusDays } from './flavor-overrides.js';
 import { maybeSendOperatorAlert } from './operator-alerts.js';
 import { handleCalendar } from './route-calendar.js';
 import { handleApiToday } from './route-today.js';
@@ -1004,6 +1005,29 @@ export default {
         await setCronCursor(env.DB, 'reliability_refresh', relNext);
       } catch (err) {
         console.error(`Reliability refresh phase failed: ${err.message}`);
+      }
+
+      // Phase 3b: Premiere-day detection. Culver's blacks out new-flavor days
+      // chain-wide, so they leave no snapshot rows at all while neighbouring
+      // dates stay fully covered. Detecting that here keeps the placeholder
+      // dates current without a code change per premiere.
+      try {
+        if (env.DB) {
+          const detectStart = new Date().toISOString().slice(0, 10);
+          const detectEnd = isoPlusDays(detectStart, 45);
+          // Query wider than the detection window so edge dates get real baselines.
+          const { results } = await env.DB.prepare(
+            `SELECT date, COUNT(DISTINCT slug) AS stores
+               FROM snapshots
+              WHERE brand = ? AND date BETWEEN ? AND ?
+              GROUP BY date`
+          ).bind("Culver's", isoPlusDays(detectStart, -3), isoPlusDays(detectEnd, 3)).all();
+
+          const blackouts = detectBlackoutDates(results || [], { start: detectStart, end: detectEnd });
+          await writePremiereDates(env.FLAVOR_CACHE, blackouts);
+        }
+      } catch (err) {
+        console.error(`Premiere detection phase failed: ${err.message}`);
       }
 
       // Persist cron results to D1 for observability (O1)

@@ -705,9 +705,12 @@
       }
 
       if (confirmedAll.length > 0) {
+        // A premiere placeholder occupies a day upstream withheld on purpose.
+        // It is not a confirmed flavor and must not be styled as one.
+        var isPremiere = confirmedAll[0].source === 'premiere';
         var entry = {
           date: dateStr,
-          type: 'confirmed',
+          type: isPremiere ? 'premiere' : 'confirmed',
           flavor: confirmedAll[0].title,
           description: confirmedAll[0].description || '',
         };

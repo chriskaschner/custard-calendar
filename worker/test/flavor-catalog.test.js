@@ -20,3 +20,31 @@ describe('accumulateFlavors KV resilience', () => {
     ).resolves.toBeUndefined();
   });
 });
+
+describe('accumulateFlavors synthetic-entry guard', () => {
+  it('never adds our own placeholders to the autocomplete catalog', async () => {
+    const kv = createMockKV();
+
+    await accumulateFlavors(kv, [
+      { title: 'Genuinely New Flavor', description: 'From upstream.' },
+      { title: 'New flavor premiere', description: 'Placeholder.', source: 'premiere' },
+      { title: 'Hand Pinned', description: 'Manual.', source: 'override' },
+    ]);
+
+    const written = JSON.parse(kv.put.mock.calls[0][1]);
+    const titles = written.flavors.map(f => f.title);
+    expect(titles).toContain('Genuinely New Flavor');
+    expect(titles).not.toContain('New flavor premiere');
+    expect(titles).not.toContain('Hand Pinned');
+  });
+
+  it('writes nothing when every entry is synthetic', async () => {
+    const kv = createMockKV();
+
+    await accumulateFlavors(kv, [
+      { title: 'New flavor premiere', description: '', source: 'premiere' },
+    ]);
+
+    expect(kv.put).not.toHaveBeenCalled();
+  });
+});
