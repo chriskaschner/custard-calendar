@@ -22,6 +22,11 @@ Focus order for the next cycle: tighten production quality and measurement befor
 
 ### Follow-ups from premiere-day work (opened 2026-08-01; see WORKLOG 2026-08-01)
 
+- [ ] **P0: make a root-level `wrangler deploy` impossible.** Running `wrangler deploy` from the repo root (instead of `worker/`) silently scaffolds `/wrangler.jsonc` with `name = "custard-calendar"` -- the *same name as production* -- plus `assets: { directory: "public" }` and **no `main`**. With no `main`, wrangler builds a no-op asset server and the next deploy replaces the real Worker with 4 stale Hugo XML files. This took production down on both domains (404 on everything, including `/v1/calendar.ics`) on 2026-08-01.
+    - The trap is invisible twice over: `wrangler.jsonc` is gitignored (`.gitignore:89`, so it never shows in `git status`), and the bad deploy prints a normal success message. The only tell is `Read N files from the assets directory` plus a missing `schedule:` list in the output.
+    - Fix options: add a `predeploy` guard script that refuses to run outside `worker/`, or make `npm run deploy` pass `--config worker/wrangler.toml` explicitly, or commit a root `wrangler.jsonc` that is deliberately inert. The `.gitignore` entry existing at all suggests this has happened before.
+    - Recovery for next time: `cd worker && npx wrangler deploy --config <abs path>/worker/wrangler.toml`. A correct deploy prints the three `schedule:` cron lines; a broken one does not.
+
 - [x] **Premiere days no longer render as a silent hole.** Culver's withholds first-Wednesday premiere days chain-wide (verified 11 stores / 8 states). `worker/src/flavor-overrides.js` fills them at the serving boundary and `scheduled()` detects future ones from D1 coverage. Placeholders never reach KV, D1, or the flavor catalog.
 - [ ] **Refresh the forecast pipeline.** `/api/v1/forecast/{slug}` serves predictions generated 2026-02-23 covering only through 2026-03-02, and the backfill corpus ends 2026-03-31. `buildTimeline()`'s `predicted` gap-fill therefore contributes nothing today, and nothing warns that a 5-month-old forecast is being served. Add a staleness guard so an expired forecast is never served silently.
 - [ ] **New-flavor onboarding.** When a debut flavor's real name lands it is unknown to `FLAVOR_PROFILES` and renders as a generic vanilla cone. Three parts:
