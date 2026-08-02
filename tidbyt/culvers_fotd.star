@@ -641,6 +641,12 @@ def format_flavor_for_display(name, max_chars = 5):
     Max 5 chars per line for optimal 3-cone display.
     """
 
+    # Placeholder for a date upstream has not posted yet (see worker/src/flavor-overrides.js).
+    # Must be checked before anything else: the generic base-noun path below drops
+    # the first word and truncates the rest, rendering this as "FLAVO PREMI".
+    if "Not yet announced" in name:
+        return ["NOT", "YET"]
+
     # Special case patterns for common flavors
     if "Dark Chocolate PB Crunch" in name or "Dk Choc PB Crunch" in name:
         return ["DK PB", "Crunc"]

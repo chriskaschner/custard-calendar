@@ -22,9 +22,13 @@ const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 /** Premiere placeholders only make sense for the brand that withholds them. */
 export const PREMIERE_BRAND = "Culver's";
 
-export const PREMIERE_TITLE = 'New flavor premiere';
+// Deliberately states only what is observed. That a premiere is coming is an
+// inference from the chain-wide first-Wednesday pattern, not something upstream
+// tells us -- so it belongs in the description as a hedge, never in the title.
+// A wrong title would be wrong on roughly a thousand stores at once.
+export const PREMIERE_TITLE = 'Not yet announced';
 export const PREMIERE_DESCRIPTION =
-  "Culver's hasn't announced this one yet - the name lands the day it premieres.";
+  "Culver's hasn't posted this date yet. First Wednesdays have recently been new-flavor premieres.";
 
 /**
  * Seed list of known premiere dates. Detection (see detectBlackoutDates) keeps

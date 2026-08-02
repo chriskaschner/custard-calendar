@@ -162,4 +162,77 @@ describe('/health endpoint', () => {
     expect(body.email_errors_today).toBe(3);
     expect(body.payload_anomalies_today).toBe(7);
   });
+
+  describe('premiere detection visibility', () => {
+    // The detection phase writes nothing user-visible, so without this its
+    // silence is indistinguishable from success.
+    it('reports detected dates and their freshness', async () => {
+      const mockKV = createMockKV({
+        'meta:premiere-dates': JSON.stringify({
+          dates: ['2026-08-05', '2026-09-02'],
+          updatedAt: new Date(Date.now() - 3 * 3600 * 1000).toISOString(),
+        }),
+      });
+      const env = { FLAVOR_CACHE: mockKV, ADMIN_ACCESS_TOKEN: ADMIN_TOKEN };
+
+      const body = await (await handleRequest(authedHealthRequest(), env)).json();
+
+      expect(body.premiere_detection.detected_dates).toEqual(['2026-08-05', '2026-09-02']);
+      expect(body.premiere_detection.age_hours).toBe(3);
+      expect(body.premiere_detection.stale).toBe(false);
+      expect(body.status).toBe('ok');
+    });
+
+    it('degrades when detection has not run in over a day', async () => {
+      const mockKV = createMockKV({
+        'meta:premiere-dates': JSON.stringify({
+          dates: ['2026-08-05'],
+          updatedAt: new Date(Date.now() - 40 * 3600 * 1000).toISOString(),
+        }),
+      });
+      const env = { FLAVOR_CACHE: mockKV, ADMIN_ACCESS_TOKEN: ADMIN_TOKEN };
+
+      const body = await (await handleRequest(authedHealthRequest(), env)).json();
+
+      expect(body.premiere_detection.stale).toBe(true);
+      expect(body.status).toBe('degraded');
+    });
+
+    it('distinguishes never-run from empty results', async () => {
+      const env = { FLAVOR_CACHE: createMockKV(), ADMIN_ACCESS_TOKEN: ADMIN_TOKEN };
+
+      const body = await (await handleRequest(authedHealthRequest(), env)).json();
+
+      expect(body.premiere_detection.never_run).toBe(true);
+      expect(body.premiere_detection.detected_dates).toEqual([]);
+    });
+
+    it('survives a corrupt value without failing the whole check', async () => {
+      const env = {
+        FLAVOR_CACHE: createMockKV({ 'meta:premiere-dates': 'not json' }),
+        ADMIN_ACCESS_TOKEN: ADMIN_TOKEN,
+      };
+
+      const res = await handleRequest(authedHealthRequest(), env);
+      expect(res.status).toBe(200);
+      expect((await res.json()).premiere_detection).toEqual({ error: 'unreadable' });
+    });
+
+    it('lists unknown flavors seen today', async () => {
+      const today = new Date().toISOString().slice(0, 10);
+      const env = {
+        FLAVOR_CACHE: createMockKV({
+          [`meta:unknown-flavor-names:${today}`]: JSON.stringify([
+            { title: 'Peanut Butter Fudge Brownie', slug: 'mt-horeb', date: today },
+          ]),
+        }),
+        ADMIN_ACCESS_TOKEN: ADMIN_TOKEN,
+      };
+
+      const body = await (await handleRequest(authedHealthRequest(), env)).json();
+
+      expect(body.unknown_flavors_today).toHaveLength(1);
+      expect(body.unknown_flavors_today[0].title).toBe('Peanut Butter Fudge Brownie');
+    });
+  });
 });

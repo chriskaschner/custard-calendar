@@ -18,7 +18,17 @@
  */
 
 import { normalize } from './flavor-matcher.js';
-import { getFlavorProfile, renderConeSVG, BASE_COLORS, CONE_COLORS, TOPPING_COLORS, RIBBON_COLORS } from './flavor-colors.js';
+import {
+  getFlavorProfile,
+  renderConeSVG,
+  normalizeFlavorKey,
+  FLAVOR_ALIASES,
+  BASE_COLORS,
+  CONE_COLORS,
+  TOPPING_COLORS,
+  RIBBON_COLORS,
+} from './flavor-colors.js';
+import { PREMIERE_TITLE } from './flavor-overrides.js';
 import { TRIVIA_METRICS_SEED } from './trivia-metrics-seed.js';
 import { ImageResponse } from 'workers-og';
 
@@ -36,9 +46,16 @@ const CONE_PNG_BASE = 'https://custard.chriskaschner.com/assets/cones';
 /**
  * Convert a flavor name to a URL-safe slug matching the PNG filename convention.
  * E.g. "Really Reese's" -> "really-reese-s", "Mint Explosion" -> "mint-explosion"
+ *
+ * Alias-resolves first. Cone PNGs are named after canonical FLAVOR_PROFILES keys,
+ * so an aliased upstream name (e.g. "Reeses Peanut Butter Cup") slugs to a file
+ * that does not exist unless it is resolved to its canonical name first. Mirrors
+ * heroConeSrc() in docs/cone-renderer.js and flavorToSlug() in widget-routes.js.
  */
 function flavorToSlug(name) {
-  return String(name || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  const key = normalizeFlavorKey(name);
+  const nameForSlug = FLAVOR_ALIASES[key] || key;
+  return nameForSlug.replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 }
 
 /**
@@ -46,6 +63,10 @@ function flavorToSlug(name) {
  * Returns null on any failure (404, network error, etc.) so callers can fall back.
  */
 async function fetchConePngBase64(flavorName) {
+  // Placeholder days have no artwork by definition; the fetch would be a
+  // guaranteed 404 on the way to the SVG fallback callers already handle.
+  if (normalizeFlavorKey(flavorName) === normalizeFlavorKey(PREMIERE_TITLE)) return null;
+
   const slug = flavorToSlug(flavorName);
   if (!slug) return null;
   try {

@@ -32,8 +32,8 @@ import { handleDrive } from './drive.js';
 import { handleSignals } from './signals.js';
 import { isValidSlug } from './slug-validation.js';
 import { getFetcherForSlug, getBrandForSlug } from './brand-registry.js';
-import { getFlavorsCached } from './kv-cache.js';
-import { detectBlackoutDates, writePremiereDates, isoPlusDays } from './flavor-overrides.js';
+import { getFlavorsCached, UNKNOWN_FLAVOR_NAMES_KEY } from './kv-cache.js';
+import { detectBlackoutDates, writePremiereDates, isoPlusDays, PREMIERE_DATES_KV_KEY } from './flavor-overrides.js';
 import { maybeSendOperatorAlert } from './operator-alerts.js';
 import { handleCalendar } from './route-calendar.js';
 import { handleApiToday } from './route-today.js';
@@ -529,6 +529,44 @@ export async function handleRequest(request, env, fetchFlavorsFn = defaultFetchF
       } catch { /* counter reads are best-effort */ }
     }
 
+    // Premiere detection runs in the daily cron and writes nothing user-visible,
+    // so without this its silence is indistinguishable from success.
+    let premiereDetection = null;
+    if (env.FLAVOR_CACHE) {
+      try {
+        const raw = await env.FLAVOR_CACHE.get(PREMIERE_DATES_KV_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          const ageHours = parsed.updatedAt
+            ? Math.round((Date.now() - new Date(parsed.updatedAt).getTime()) / 36e5)
+            : null;
+          premiereDetection = {
+            detected_dates: parsed.dates || [],
+            updated_at: parsed.updatedAt || null,
+            age_hours: ageHours,
+            // Detection runs daily; older than that means the cron phase is failing.
+            stale: typeof ageHours === 'number' && ageHours > 25,
+          };
+          if (premiereDetection.stale) degraded = true;
+        } else {
+          premiereDetection = { detected_dates: [], updated_at: null, never_run: true };
+        }
+      } catch { premiereDetection = { error: 'unreadable' }; }
+    }
+
+    // Unknown flavors seen today, so a debut is actionable without waiting for
+    // the alert threshold to trip.
+    let unknownFlavorsToday = [];
+    if (env.FLAVOR_CACHE) {
+      try {
+        const raw = await env.FLAVOR_CACHE.get(`${UNKNOWN_FLAVOR_NAMES_KEY}:${today}`);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed)) unknownFlavorsToday = parsed;
+        }
+      } catch { /* best-effort */ }
+    }
+
     return Response.json(
       {
         status: degraded ? 'degraded' : 'ok',
@@ -539,6 +577,8 @@ export async function handleRequest(request, env, fetchFlavorsFn = defaultFetchF
         snapshot_errors_today: snapshotErrorsToday,
         email_errors_today: emailErrorsToday,
         payload_anomalies_today: payloadAnomaliesToday,
+        premiere_detection: premiereDetection,
+        unknown_flavors_today: unknownFlavorsToday,
       },
       { headers: corsHeaders }
     );

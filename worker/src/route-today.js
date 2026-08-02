@@ -80,10 +80,16 @@ export async function handleApiToday(url, env, corsHeaders, fetchFlavorsFn = def
     const storeIndex = env._storeIndexOverride || DEFAULT_STORE_INDEX;
     const storeEntry = storeIndex.find(s => s.slug === slug);
     const spokenStore = storeEntry ? `${brand} of ${storeEntry.city}` : data.name;
+    // Placeholder days have no flavor name. Slotting the placeholder title into
+    // the usual sentence produces "the flavor of the day is Not yet announced",
+    // which a listener hears as a flavor called "Not yet announced".
+    const isPremiere = todayFlavor.source === 'premiere';
     let spoken;
     if (todayFlavors.length > 1) {
       const names = todayFlavors.map(f => f.title);
       spoken = `Today the flavors at ${spokenStore} are ${names.join(' and ')}.`;
+    } else if (isPremiere) {
+      spoken = `${spokenStore} hasn't announced today's flavor yet.`;
     } else {
       spoken = `Today the flavor of the day at ${spokenStore} is ${flavorName}`;
       if (todayFlavor.description) {
@@ -97,15 +103,23 @@ export async function handleApiToday(url, env, corsHeaders, fetchFlavorsFn = def
     const spokenLocation = storeEntry
       ? `${storeEntry.city}, ${storeEntry.state}`
       : data.name;
-    let spokenVerbose = `For ${spokenDate}, ${spokenStore} is serving ${flavorName}.`;
-    if (todayFlavor.description) {
-      const desc = todayFlavor.description.replace(/\.+$/, '');
-      spokenVerbose += ` ${desc}.`;
+    let spokenVerbose;
+    if (isPremiere) {
+      // The placeholder description repeats this in prose, so skip appending it.
+      spokenVerbose = `For ${spokenDate}, ${spokenStore} hasn't announced a flavor yet.`;
+    } else {
+      spokenVerbose = `For ${spokenDate}, ${spokenStore} is serving ${flavorName}.`;
+      if (todayFlavor.description) {
+        const desc = todayFlavor.description.replace(/\.+$/, '');
+        spokenVerbose += ` ${desc}.`;
+      }
     }
     spokenVerbose += ` Location: ${spokenLocation}.`;
 
+    // Placeholders are not a "next listed flavor" -- naming one would say
+    // "Next listed flavor is Not yet announced on Wednesday".
     const nextFlavor = (data.flavors || [])
-      .filter((f) => f && f.date && f.date > todayFlavor.date && f.title)
+      .filter((f) => f && f.date && f.date > todayFlavor.date && f.title && f.source !== 'premiere')
       .sort((a, b) => a.date.localeCompare(b.date))[0];
     if (nextFlavor) {
       spokenVerbose += ` Next listed flavor is ${nextFlavor.title} on ${formatSpeechDate(nextFlavor.date)}.`;

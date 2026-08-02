@@ -5,7 +5,12 @@
  * gitignored wrangler config sits at the repo root.
  */
 import { describe, it, expect } from 'vitest';
-import { collectDeployBlockers, STRAY_ROOT_CONFIGS } from '../scripts/predeploy-check.mjs';
+import {
+  collectDeployBlockers,
+  collectDeployWarnings,
+  STRAY_ROOT_CONFIGS,
+  FRAMEWORK_DETECTION_ARTIFACTS,
+} from '../scripts/predeploy-check.mjs';
 
 const REPO_ROOT = '/repo';
 const WORKER_DIR = '/repo/worker';
@@ -105,5 +110,36 @@ describe('collectDeployBlockers', () => {
   it('reports every independent problem at once', () => {
     const blockers = check({ cwd: REPO_ROOT, files: {} });
     expect(blockers.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('does not treat framework-detection leftovers as blockers', () => {
+    // These make wrangler run a site build, which is how public/ appeared -- but
+    // on their own they do not misdirect a deploy, so they must not block one.
+    const files = { '/repo/worker/wrangler.toml': GOOD_CONFIG };
+    for (const name of FRAMEWORK_DETECTION_ARTIFACTS) files[`/repo/${name}`] = '';
+    expect(check({ files })).toEqual([]);
+  });
+});
+
+describe('collectDeployWarnings', () => {
+  it('is silent on a clean repo root', () => {
+    expect(collectDeployWarnings({ repoRoot: REPO_ROOT, ...fs({}) })).toEqual([]);
+  });
+
+  it.each(FRAMEWORK_DETECTION_ARTIFACTS)('warns about a leftover %s', (name) => {
+    const warnings = collectDeployWarnings({
+      repoRoot: REPO_ROOT,
+      ...fs({ [`/repo/${name}`]: '' }),
+    });
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0]).toMatch(new RegExp(name.replace('.', '\\.')));
+    expect(warnings[0]).toMatch(/rm -rf \/repo\//);
+  });
+
+  it('warns once per artifact when several are present', () => {
+    const files = {};
+    for (const name of FRAMEWORK_DETECTION_ARTIFACTS) files[`/repo/${name}`] = '';
+    const warnings = collectDeployWarnings({ repoRoot: REPO_ROOT, ...fs(files) });
+    expect(warnings).toHaveLength(FRAMEWORK_DETECTION_ARTIFACTS.length);
   });
 });

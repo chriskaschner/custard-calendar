@@ -209,6 +209,66 @@ describe('quality gate alerts in operator email', () => {
     );
   });
 
+  it('names the unknown flavors, with store and date, in the alert body', async () => {
+    // A bare count tells the operator something new appeared but not what, so
+    // they cannot act on it. This is the whole point of the alert.
+    const today = '2026-08-05';
+    const env = {
+      FLAVOR_CACHE: createMockKV({
+        [`meta:parse-fail-count:${today}`]: '0',
+        [`meta:payload-anomaly-count:${today}`]: '0',
+        [`meta:unknown-flavor-count:${today}`]: '400',
+        [`meta:duplicate-day-count:${today}`]: '0',
+        [`meta:unknown-flavor-names:${today}`]: JSON.stringify([
+          { title: 'Peanut Butter Fudge Brownie', slug: 'mt-horeb', date: '2026-08-05' },
+        ]),
+      }),
+      DB: createMockDb({ cronErrors: [0, 0] }),
+      RESEND_API_KEY: 'test-key',
+      OPERATOR_EMAIL: 'ops@example.com',
+    };
+
+    const res = await maybeSendOperatorAlert({
+      env,
+      handler: 'daily_alerts',
+      result: { checked: 1, sent: 0, errors: [] },
+      now: new Date(`${today}T12:00:00Z`),
+    });
+
+    const issue = res.issues.find(i => i.title === 'Unknown flavors detected');
+    expect(issue.detail).toContain('"Peanut Butter Fudge Brownie"');
+    expect(issue.detail).toContain('mt-horeb');
+    expect(issue.detail).toContain('2026-08-05');
+    expect(issue.detail).toContain('flavor-colors.js');
+  });
+
+  it('still alerts when the names are missing or unreadable', async () => {
+    const today = '2026-08-06';
+    const env = {
+      FLAVOR_CACHE: createMockKV({
+        [`meta:parse-fail-count:${today}`]: '0',
+        [`meta:payload-anomaly-count:${today}`]: '0',
+        [`meta:unknown-flavor-count:${today}`]: '9',
+        [`meta:duplicate-day-count:${today}`]: '0',
+        [`meta:unknown-flavor-names:${today}`]: 'not json',
+      }),
+      DB: createMockDb({ cronErrors: [0, 0] }),
+      RESEND_API_KEY: 'test-key',
+      OPERATOR_EMAIL: 'ops@example.com',
+    };
+
+    const res = await maybeSendOperatorAlert({
+      env,
+      handler: 'daily_alerts',
+      result: { checked: 1, sent: 0, errors: [] },
+      now: new Date(`${today}T12:00:00Z`),
+    });
+
+    const issue = res.issues.find(i => i.title === 'Unknown flavors detected');
+    expect(issue).toBeTruthy();
+    expect(issue.detail).toContain('9 stores');
+  });
+
   it('does NOT alert when unknown flavor count is at or below threshold', async () => {
     const today = '2026-04-02';
     const env = {

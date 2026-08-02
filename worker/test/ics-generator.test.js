@@ -205,28 +205,31 @@ describe('generateIcs', () => {
     expect(ics1).toContain('DTSTAMP:20260222T120000Z');
   });
 
-  it('15: premiere placeholder emits an event flagged as name TBA', () => {
+  it('15: premiere placeholder emits an event using its title verbatim', () => {
+    // The title is neutral and self-explanatory, so no summary decoration is
+    // added -- a subscriber reads "Not yet announced" and understands it is not
+    // a flavor name.
     const flavors = [
       ...FLAVORS_BY_SLUG['mt-horeb'],
       {
         date: '2026-02-23',
-        title: 'New flavor premiere',
-        description: "Culver's hasn't announced this one yet.",
+        title: 'Not yet announced',
+        description: "Culver's hasn't posted this date yet.",
         source: 'premiere',
       },
     ];
     const ics = generateIcs(makeOpts({ flavorsBySlug: { 'mt-horeb': flavors } }));
 
     expect(ics).toContain('DTSTART;VALUE=DATE:20260223');
-    expect(ics).toContain('New flavor premiere - name TBA');
-    // Regular events keep their exact title
-    expect(ics).toContain('Mint Explosion');
-    expect(ics).not.toContain('Mint Explosion - name TBA');
+    expect(ics).toContain('SUMMARY:🍦 Not yet announced');
+    expect(ics).toContain("Culver's hasn't posted this date yet.");
+    // No leftover decoration from the earlier "- name TBA" treatment
+    expect(ics).not.toContain('name TBA');
   });
 
   it('16: premiere output is still byte-stable across calls', () => {
     const flavors = [
-      { date: '2026-02-23', title: 'New flavor premiere', description: 'TBA.', source: 'premiere' },
+      { date: '2026-02-23', title: 'Not yet announced', description: 'Not posted.', source: 'premiere' },
     ];
     const opts = makeOpts({ flavorsBySlug: { 'mt-horeb': flavors } });
     expect(generateIcs(opts)).toBe(generateIcs(opts));

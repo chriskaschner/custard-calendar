@@ -566,4 +566,47 @@ describe('handleSocialCard - page PNG card', () => {
     expect(res.status).toBe(200);
     expect(res.headers.get('Content-Type')).toBe('image/svg+xml');
   });
+
+  describe('cone PNG lookup', () => {
+    /** URLs the card generator asked the CDN for. */
+    function coneUrlsFrom(fetchMock) {
+      return fetchMock.mock.calls
+        .map((c) => String(c[0]))
+        .filter((u) => u.includes('/assets/cones/'));
+    }
+
+    it('resolves an aliased flavor to its canonical cone filename', async () => {
+      // Cone PNGs are named after canonical FLAVOR_PROFILES keys. Without alias
+      // resolution this requested reeses-peanut-butter-cup.png, 404'd, and
+      // silently degraded to the SVG cone.
+      const env = {
+        DB: createMockD1({ snapshot: { flavor: "Reese's Peanut Butter Cup", description: '' } }),
+      };
+      await handleSocialCard('/og/mt-horeb/2026-02-22.svg', env, CORS);
+
+      const urls = coneUrlsFrom(globalThis.fetch);
+      expect(urls).toHaveLength(1);
+      expect(urls[0]).toContain('really-reese-s.png');
+      expect(urls[0]).not.toContain('reese-s-peanut-butter-cup');
+    });
+
+    it('leaves an unaliased flavor slug alone', async () => {
+      const env = { DB: createMockD1({ snapshot: { flavor: 'Mint Explosion', description: '' } }) };
+      await handleSocialCard('/og/mt-horeb/2026-02-22.svg', env, CORS);
+
+      expect(coneUrlsFrom(globalThis.fetch)[0]).toContain('mint-explosion.png');
+    });
+
+    it('never requests artwork for a premiere placeholder', async () => {
+      // There is no cone for a day upstream has not posted; the request would be
+      // a guaranteed 404 on the way to the SVG fallback.
+      const env = {
+        DB: createMockD1({ snapshot: { flavor: 'Not yet announced', description: '' } }),
+      };
+      const res = await handleSocialCard('/og/mt-horeb/2026-02-22.svg', env, CORS);
+
+      expect(res.status).toBe(200);
+      expect(coneUrlsFrom(globalThis.fetch)).toEqual([]);
+    });
+  });
 });
