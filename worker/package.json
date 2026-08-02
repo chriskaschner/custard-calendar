@@ -10,7 +10,8 @@
     "test:watch": "vitest",
     "bless:cones": "UPDATE_GOLDENS=1 vitest run --reporter=verbose 2>&1 | grep '^GOLDEN:'",
     "dev": "wrangler dev",
-    "deploy": "wrangler deploy",
+    "predeploy:check": "node scripts/predeploy-check.mjs",
+    "deploy": "node scripts/predeploy-check.mjs && wrangler deploy --config wrangler.toml",
     "sprites": "node ../tools/generate_sprites.mjs",
     "sprites:ai": "node ../tools/generate_ai_sprites.mjs"
   },
