@@ -204,4 +204,31 @@ describe('generateIcs', () => {
     expect(ics1).toContain('DTSTAMP:20260221T120000Z');
     expect(ics1).toContain('DTSTAMP:20260222T120000Z');
   });
+
+  it('15: premiere placeholder emits an event flagged as name TBA', () => {
+    const flavors = [
+      ...FLAVORS_BY_SLUG['mt-horeb'],
+      {
+        date: '2026-02-23',
+        title: 'New flavor premiere',
+        description: "Culver's hasn't announced this one yet.",
+        source: 'premiere',
+      },
+    ];
+    const ics = generateIcs(makeOpts({ flavorsBySlug: { 'mt-horeb': flavors } }));
+
+    expect(ics).toContain('DTSTART;VALUE=DATE:20260223');
+    expect(ics).toContain('New flavor premiere - name TBA');
+    // Regular events keep their exact title
+    expect(ics).toContain('Mint Explosion');
+    expect(ics).not.toContain('Mint Explosion - name TBA');
+  });
+
+  it('16: premiere output is still byte-stable across calls', () => {
+    const flavors = [
+      { date: '2026-02-23', title: 'New flavor premiere', description: 'TBA.', source: 'premiere' },
+    ];
+    const opts = makeOpts({ flavorsBySlug: { 'mt-horeb': flavors } });
+    expect(generateIcs(opts)).toBe(generateIcs(opts));
+  });
 });

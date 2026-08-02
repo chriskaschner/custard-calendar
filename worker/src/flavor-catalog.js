@@ -121,6 +121,9 @@ export async function accumulateFlavors(kv, newFlavors) {
 
   let added = false;
   for (const f of newFlavors) {
+    // Placeholders and hand-pinned entries are ours, not upstream observations.
+    // Letting them in would surface "New flavor premiere" in flavor autocomplete.
+    if (f.source === 'premiere' || f.source === 'override') continue;
     const key = f.title.toLowerCase();
     if (!seen.has(key)) {
       accumulated.push({ title: f.title, description: f.description || '' });

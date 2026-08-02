@@ -20,6 +20,21 @@ Analytics data has two strong non-prediction uses: **(1) flavor rarity as sharea
 
 Focus order for the next cycle: tighten production quality and measurement before expanding scope.
 
+### Follow-ups from premiere-day work (opened 2026-08-01; see WORKLOG 2026-08-01)
+
+- [ ] **P0: make a root-level `wrangler deploy` impossible.** Running `wrangler deploy` from the repo root (instead of `worker/`) silently scaffolds `/wrangler.jsonc` with `name = "custard-calendar"` -- the *same name as production* -- plus `assets: { directory: "public" }` and **no `main`**. With no `main`, wrangler builds a no-op asset server and the next deploy replaces the real Worker with 4 stale Hugo XML files. This took production down on both domains (404 on everything, including `/v1/calendar.ics`) on 2026-08-01.
+    - The trap is invisible twice over: `wrangler.jsonc` is gitignored (`.gitignore:89`, so it never shows in `git status`), and the bad deploy prints a normal success message. The only tell is `Read N files from the assets directory` plus a missing `schedule:` list in the output.
+    - Fix options: add a `predeploy` guard script that refuses to run outside `worker/`, or make `npm run deploy` pass `--config worker/wrangler.toml` explicitly, or commit a root `wrangler.jsonc` that is deliberately inert. The `.gitignore` entry existing at all suggests this has happened before.
+    - Recovery for next time: `cd worker && npx wrangler deploy --config <abs path>/worker/wrangler.toml`. A correct deploy prints the three `schedule:` cron lines; a broken one does not.
+
+- [x] **Premiere days no longer render as a silent hole.** Culver's withholds first-Wednesday premiere days chain-wide (verified 11 stores / 8 states). `worker/src/flavor-overrides.js` fills them at the serving boundary and `scheduled()` detects future ones from D1 coverage. Placeholders never reach KV, D1, or the flavor catalog.
+- [ ] **Refresh the forecast pipeline.** `/api/v1/forecast/{slug}` serves predictions generated 2026-02-23 covering only through 2026-03-02, and the backfill corpus ends 2026-03-31. `buildTimeline()`'s `predicted` gap-fill therefore contributes nothing today, and nothing warns that a 5-month-old forecast is being served. Add a staleness guard so an expired forecast is never served silently.
+- [ ] **New-flavor onboarding.** When a debut flavor's real name lands it is unknown to `FLAVOR_PROFILES` and renders as a generic vanilla cone. Three parts:
+    - The operator alert (`operator-alerts.js:210`) reports only a *count* of unknown flavors, never which flavor, store, or date. Make it name them.
+    - The alias table exists in 4 copies; `worker/src/widget-routes.js` and `widgets/custard-today.js` have 37 entries vs 77 in `flavor-colors.js`/`docs/cone-renderer.js`. No test guards this pair (unlike `palette-sync.test.js`).
+    - Cone-art regeneration is broken: `scripts/generate-hero-cones.mjs:25`, `tools/generate_sprites.mjs:28`, and `tools/generate_blackberry_assets.mjs:14` all import `renderConeHeroSVG`, deleted in `d7662d2`.
+- [ ] **Prune `KNOWN_PREMIERE_DATES` once detection has a track record.** The seed list in `flavor-overrides.js` exists because detection had never run in production. Stale entries are harmless (upstream always wins) but the list should not grow unbounded.
+
 ### P0 -- Dormancy recovery (opened 2026-07-25 repo audit; see WORKLOG 2026-07-25)
 
 - [ ] **P0 BLOCKER: route `/sitemap.xml`, `/robots.txt`, and `/store/*` to the Worker.** Phase 37 is deployed and correct on `custard-calendar.chris-kaschner.workers.dev`, but on `custard.chriskaschner.com` all three fall through to GitHub Pages and 404. The sitemap the Worker generates points at `https://custard.chriskaschner.com/store/...` URLs that do not resolve, so Google would index nothing. **Phase 37 is functionally unshipped until this is fixed.**
