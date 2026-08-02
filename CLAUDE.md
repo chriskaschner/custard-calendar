@@ -104,6 +104,9 @@ uv run python scripts/analytics_report.py --baseline  # write to WORKLOG.md
 # Local Worker development
 cd worker && npx wrangler dev
 
+# Deploy the Worker -- ALWAYS via npm, ALWAYS from worker/
+cd worker && npm run deploy
+
 # Regenerate the trivia metrics seed (pulls live rows from D1 + frozen backfill).
 # Requires wrangler auth: `npx wrangler login` from worker/, or CLOUDFLARE_API_TOKEN.
 uv run python scripts/generate_intelligence_metrics.py
@@ -112,6 +115,31 @@ uv run python scripts/generate_intelligence_metrics.py --no-d1  # frozen corpus 
 # Check that the committed seed was built from recent DATA (not just re-run)
 uv run python scripts/check_metrics_seed_freshness.py
 ```
+
+## Deploying the Worker
+
+**Always `cd worker && npm run deploy`. Never a bare `npx wrangler deploy`.**
+
+`npm run deploy` runs `scripts/predeploy-check.mjs` first and pins
+`--config wrangler.toml`, so the working directory cannot decide which config
+wins. A bare `wrangler deploy` from the repo root took production down on
+2026-08-01: wrangler scaffolded `/wrangler.jsonc` with `name = "custard-calendar"`
+(the production Worker name), `assets: { directory: "public" }`, and **no `main`**.
+With no `main` wrangler builds a no-op asset server, so the deploy replaced the
+real Worker with a static server for four stale Hugo files. Every route 404'd on
+both domains, including `/v1/calendar.ics`.
+
+Two things make this hard to spot:
+
+- `wrangler.jsonc` is gitignored (`.gitignore:89`), so it never appears in `git status`.
+- The bad deploy prints an ordinary success message.
+
+**The tell:** a correct deploy lists the three `schedule:` cron triggers in its
+output. A no-op asset deploy omits them and instead logs
+`Read N files from the assets directory`. Check for the `schedule:` lines every time.
+
+If you find a stray `wrangler.jsonc`, `wrangler.json`, or `wrangler.toml` at the
+repo root, delete it — the predeploy check will refuse to run until you do.
 
 ## Scheduled Job Heartbeats
 
