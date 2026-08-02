@@ -55,7 +55,7 @@ def test_d1_query_strips_wrangler_banner():
     rows = [_row("mt-horeb", "2026-07-25", "Turtle")]
     proc = SimpleNamespace(returncode=0, stdout=_wrangler_output(rows), stderr="")
 
-    with patch("scripts.generate_intelligence_metrics.subprocess.run", return_value=proc):
+    with patch("analytics.d1_source.subprocess.run", return_value=proc):
         out = _d1_query("custard-snapshots", "SELECT 1")
 
     assert out == rows
@@ -64,7 +64,7 @@ def test_d1_query_strips_wrangler_banner():
 def test_d1_query_raises_with_auth_hint_on_failure():
     proc = SimpleNamespace(returncode=1, stdout="", stderr="Failed to fetch auth token: 400")
 
-    with patch("scripts.generate_intelligence_metrics.subprocess.run", return_value=proc):
+    with patch("analytics.d1_source.subprocess.run", return_value=proc):
         with pytest.raises(RuntimeError) as exc:
             _d1_query("custard-snapshots", "SELECT 1")
 
@@ -74,7 +74,7 @@ def test_d1_query_raises_with_auth_hint_on_failure():
 def test_d1_query_raises_when_no_json_array():
     proc = SimpleNamespace(returncode=0, stdout="totally not json", stderr="")
 
-    with patch("scripts.generate_intelligence_metrics.subprocess.run", return_value=proc):
+    with patch("analytics.d1_source.subprocess.run", return_value=proc):
         with pytest.raises(RuntimeError, match="No JSON array"):
             _d1_query("custard-snapshots", "SELECT 1")
 
@@ -86,7 +86,7 @@ def test_d1_query_raises_when_no_json_array():
 def test_load_flavors_d1_maps_columns_and_labels_dataset():
     rows = [_row("mt-horeb", "2026-07-25", "Turtle")]
 
-    with patch("scripts.generate_intelligence_metrics._d1_query", return_value=rows):
+    with patch("analytics.d1_source._d1_query", return_value=rows):
         df = load_flavors_d1("custard-snapshots", batch_size=10000)
 
     assert list(df["store_slug"]) == ["mt-horeb"]
@@ -101,7 +101,7 @@ def test_load_flavors_d1_paginates_until_short_batch():
     second = [_row("s2", "2026-07-02", "B")]  # short -> terminates
 
     with patch(
-        "scripts.generate_intelligence_metrics._d1_query",
+        "analytics.d1_source._d1_query",
         side_effect=[first, second],
     ) as q:
         df = load_flavors_d1("custard-snapshots", batch_size=2)
@@ -113,7 +113,7 @@ def test_load_flavors_d1_paginates_until_short_batch():
 
 
 def test_load_flavors_d1_stops_on_empty_first_page():
-    with patch("scripts.generate_intelligence_metrics._d1_query", return_value=[]) as q:
+    with patch("analytics.d1_source._d1_query", return_value=[]) as q:
         df = load_flavors_d1("custard-snapshots", batch_size=100)
 
     assert df.empty
@@ -127,7 +127,7 @@ def test_load_flavors_d1_drops_rows_with_unusable_dates():
         _row("verona", "not-a-date", "Ghost"),
     ]
 
-    with patch("scripts.generate_intelligence_metrics._d1_query", return_value=rows):
+    with patch("analytics.d1_source._d1_query", return_value=rows):
         df = load_flavors_d1("custard-snapshots", batch_size=10000)
 
     assert list(df["store_slug"]) == ["mt-horeb"]

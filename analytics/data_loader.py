@@ -33,26 +33,24 @@ def load_raw(db_path: Path | str = DEFAULT_DB) -> pd.DataFrame:
     return df
 
 
-def load_clean(db_path: Path | str = DEFAULT_DB) -> pd.DataFrame:
-    """Load flavors, drop closed-day rows, add convenience columns.
+def clean_frame(df: pd.DataFrame, label: str = "Backfill DB") -> pd.DataFrame:
+    """Validate, drop closed-day rows, and add convenience columns.
 
-    Returns DataFrame with columns:
-        store_slug, flavor_date, title, description, source, fetched_at,
-        dow (0=Mon..6=Sun), month, year
+    Shared by every source so a D1-backed load and a sqlite-backed load are
+    cleaned identically -- the models must not see different filtering
+    depending on where the rows came from.
 
     Raises ValueError if required columns are missing.
     Emits UserWarning if the dataset is empty or stale (newest record > 7 days old).
     """
-    df = load_raw(db_path)
-
     # O11: Column validation — fail fast on schema drift
     missing = REQUIRED_COLUMNS - set(df.columns)
     if missing:
-        raise ValueError(f"Backfill DB missing required columns: {missing}")
+        raise ValueError(f"{label} missing required columns: {missing}")
 
     # O11: Empty dataset warning
     if len(df) == 0:
-        warnings.warn("Backfill DB is empty", UserWarning, stacklevel=2)
+        warnings.warn(f"{label} is empty", UserWarning, stacklevel=2)
 
     df = df[~df["title"].isin(CLOSED_MARKERS)].copy()
 
@@ -62,7 +60,7 @@ def load_clean(db_path: Path | str = DEFAULT_DB) -> pd.DataFrame:
         age_days = (pd.Timestamp.now() - newest).days
         if age_days > 7:
             warnings.warn(
-                f"Backfill DB may be stale: newest record is {age_days} days old",
+                f"{label} may be stale: newest record is {age_days} days old",
                 UserWarning,
                 stacklevel=2,
             )
@@ -71,6 +69,40 @@ def load_clean(db_path: Path | str = DEFAULT_DB) -> pd.DataFrame:
     df["month"] = df["flavor_date"].dt.month
     df["year"] = df["flavor_date"].dt.year
     return df.reset_index(drop=True)
+
+
+def load_clean(db_path: Path | str = DEFAULT_DB) -> pd.DataFrame:
+    """Load flavors from the backfill sqlite, cleaned.
+
+    Returns DataFrame with columns:
+        store_slug, flavor_date, title, description, source, fetched_at,
+        dow (0=Mon..6=Sun), month, year
+    """
+    return clean_frame(load_raw(db_path), label="Backfill DB")
+
+
+def load_clean_d1(database: str | None = None, batch_size: int | None = None) -> pd.DataFrame:
+    """Load flavors from the live D1 snapshots table, cleaned.
+
+    Preferred over load_clean(): the backfill sqlite froze at 2026-03-31 with
+    ~60k rows across 522 stores, while D1 carries ~210k rows across ~1,000
+    stores and is refreshed by the daily cron. Same columns either way.
+
+    Requires wrangler auth (`npx wrangler login` from worker/).
+    """
+    # Imported lazily so the sqlite path keeps working without pandas-on-D1
+    # dependencies or wrangler present.
+    from analytics.d1_source import (
+        DEFAULT_BATCH_SIZE,
+        DEFAULT_D1_DATABASE,
+        load_flavors_d1,
+    )
+
+    df = load_flavors_d1(
+        database or DEFAULT_D1_DATABASE,
+        batch_size=batch_size or DEFAULT_BATCH_SIZE,
+    )
+    return clean_frame(df, label="D1 snapshots")
 
 
 def flavor_list(df: pd.DataFrame) -> list[str]:

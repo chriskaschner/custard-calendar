@@ -28,6 +28,15 @@ from pathlib import Path
 
 import pandas as pd
 
+# Shared with analytics/data_loader.py -- the forecast pipeline reads the same
+# D1 snapshots table, and a second copy of this would drift the way the alias
+# tables did. Re-exported here so existing callers and tests keep working.
+from analytics.d1_source import (  # noqa: E402
+    _d1_query,
+    empty_flavor_frame,
+    load_flavors_d1,
+)
+
 SCRIPT_PATH = Path(__file__).resolve()
 WORKTREE_MARKER = Path(".claude") / "worktrees"
 
@@ -84,95 +93,6 @@ def load_flavors(db_path: Path, dataset_label: str) -> pd.DataFrame:
         return df
 
     df["dataset"] = dataset_label
-    df["flavor_date"] = pd.to_datetime(df["flavor_date"], errors="coerce")
-    df = df.dropna(subset=["store_slug", "flavor_date", "title"]).copy()
-    return df.reset_index(drop=True)
-
-
-def _d1_query(database: str, sql: str, timeout_s: int = 180) -> list[dict]:
-    """Run one read-only SQL statement against remote D1 via wrangler.
-
-    Uses the operator's existing wrangler auth -- no new secret and no new
-    Worker surface. Requires `npx wrangler login` (or CLOUDFLARE_API_TOKEN).
-    """
-    proc = subprocess.run(
-        [
-            "npx", "wrangler", "d1", "execute", database,
-            "--remote", "--json", "--command", sql,
-        ],
-        cwd=str(SHARED_ROOT / "worker"),
-        capture_output=True,
-        text=True,
-        timeout=timeout_s,
-    )
-    if proc.returncode != 0:
-        raise RuntimeError(
-            f"wrangler d1 execute failed ({proc.returncode}).\n"
-            f"Run `npx wrangler login` from worker/ if this is an auth error.\n"
-            f"{proc.stderr.strip()[:2000]}"
-        )
-
-    # wrangler prints human-readable banners around the JSON payload.
-    text = proc.stdout
-    start = text.find("[")
-    if start == -1:
-        raise RuntimeError(f"No JSON array in wrangler output: {text[:500]}")
-    payload = json.loads(text[start:])
-
-    rows: list[dict] = []
-    for block in payload:
-        rows.extend(block.get("results", []) or [])
-    return rows
-
-
-def empty_flavor_frame(dataset_label: str) -> pd.DataFrame:
-    """Empty frame with the same dtypes a populated one would have.
-
-    Dtypes matter: a plain `pd.DataFrame(columns=[...])` gives `flavor_date`
-    object dtype, and concatenating that with real frames downgrades the whole
-    column, breaking the `.dt` accessor in build_clean_dedup().
-    """
-    return pd.DataFrame(
-        {
-            "store_slug": pd.Series(dtype="object"),
-            "flavor_date": pd.Series(dtype="datetime64[ns]"),
-            "title": pd.Series(dtype="object"),
-            "description": pd.Series(dtype="object"),
-            "source": pd.Series(dtype="object"),
-            "fetched_at": pd.Series(dtype="object"),
-            "dataset": pd.Series(dtype="object"),
-        }
-    )
-
-
-def load_flavors_d1(database: str, batch_size: int = 10000) -> pd.DataFrame:
-    """Load live snapshot rows from D1, paginated.
-
-    D1's `snapshots` table is the dual-write target the Worker fills on every
-    cron run, so it carries current data the frozen backfill sqlite cannot.
-    Column names differ from the backfill schema and are aliased to match.
-    """
-    frames: list[pd.DataFrame] = []
-    offset = 0
-    while True:
-        sql = (
-            "SELECT slug AS store_slug, date AS flavor_date, flavor AS title, "
-            "COALESCE(description, '') AS description, 'd1' AS source, fetched_at "
-            f"FROM snapshots ORDER BY id LIMIT {int(batch_size)} OFFSET {int(offset)}"
-        )
-        rows = _d1_query(database, sql)
-        if not rows:
-            break
-        frames.append(pd.DataFrame(rows))
-        if len(rows) < batch_size:
-            break
-        offset += batch_size
-
-    if not frames:
-        return empty_flavor_frame("d1")
-
-    df = pd.concat(frames, ignore_index=True)
-    df["dataset"] = "d1"
     df["flavor_date"] = pd.to_datetime(df["flavor_date"], errors="coerce")
     df = df.dropna(subset=["store_slug", "flavor_date", "title"]).copy()
     return df.reset_index(drop=True)
@@ -625,7 +545,13 @@ def main() -> int:
         print("Skipping D1 pull (--no-d1); seed will be built from frozen backfill only.")
     else:
         print(f"Pulling live snapshots from D1 ({args.d1_database})...")
-        d1_df = load_flavors_d1(args.d1_database, batch_size=args.d1_batch)
+        # Pass the worktree-aware root explicitly; the shared module's default
+        # assumes a normal checkout.
+        d1_df = load_flavors_d1(
+            args.d1_database,
+            batch_size=args.d1_batch,
+            worker_dir=SHARED_ROOT / "worker",
+        )
         print(f"  D1 rows: {len(d1_df)}")
 
     raw_df = pd.concat([backfill_df, national_df, wayback_df, d1_df], ignore_index=True)

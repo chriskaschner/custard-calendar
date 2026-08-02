@@ -14,7 +14,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from analytics.data_loader import load_clean, store_list
+from analytics.data_loader import load_clean, load_clean_d1, store_list
 from analytics.forecast_writer import generate_forecast_json, generate_multiday_forecast_json
 from analytics.predict import FrequencyRecencyModel
 
@@ -80,10 +80,30 @@ def main():
     parser.add_argument("--pretty", action="store_true", help="Pretty-print JSON")
     parser.add_argument("--days", type=int, default=7,
                         help="Number of days to forecast (default=7)")
+    parser.add_argument(
+        "--source", choices=["d1", "backfill"], default="d1",
+        help=(
+            "Training corpus. 'd1' (default) reads the live snapshots table and "
+            "needs wrangler auth. 'backfill' reads data/backfill/flavors.sqlite, "
+            "which froze at 2026-03-31 -- use it only for offline work."
+        ),
+    )
     args = parser.parse_args()
 
-    print("Loading data...", file=sys.stderr)
-    df = load_clean()
+    print(f"Loading data from {args.source}...", file=sys.stderr)
+    if args.source == "d1":
+        try:
+            df = load_clean_d1()
+        except Exception as exc:  # noqa: BLE001 - surface the remedy, not a stack trace
+            print(
+                f"D1 load failed: {exc}\n"
+                "Run `npx wrangler login` from worker/, or pass --source backfill "
+                "to train on the frozen local corpus instead.",
+                file=sys.stderr,
+            )
+            sys.exit(1)
+    else:
+        df = load_clean()
     print(f"Loaded {len(df)} observations across {df['store_slug'].nunique()} stores",
           file=sys.stderr)
 
