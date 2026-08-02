@@ -1,5 +1,11 @@
 import { describe, it, expect, vi } from 'vitest';
-import { handleForecast, getForecastData } from '../src/forecast.js';
+import {
+  handleForecast,
+  getForecastData,
+  annotateForecastAge,
+  FORECAST_STALE_HOURS,
+  FORECAST_HARD_LIMIT_HOURS,
+} from '../src/forecast.js';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -135,7 +141,10 @@ describe('handleForecast', () => {
   it('passes through multi-day forecast shape', async () => {
     const forecast = {
       store_slug: 'mt-horeb',
-      generated_at: '2026-02-22T14:00:00',
+      // Relative, not a fixed date: this test is about shape passthrough, and a
+      // hardcoded timestamp silently becomes "expired" once enough wall-clock
+      // time passes, which is what the staleness guard then strips.
+      generated_at: new Date().toISOString(),
       history_depth: 485,
       days: [
         {
@@ -165,5 +174,93 @@ describe('handleForecast', () => {
     const body = await resp.json();
     expect(body.days).toHaveLength(2);
     expect(body.days[0].predictions[0].certainty_tier).toBe('estimated');
+  });
+});
+
+describe('forecast staleness', () => {
+  const HOUR = 36e5;
+  const NOW = Date.parse('2026-08-02T12:00:00Z');
+
+  function forecastAgedHours(hours, days = 2) {
+    return {
+      store_slug: 'mt-horeb',
+      generated_at: new Date(NOW - hours * HOUR).toISOString(),
+      history_depth: 400,
+      days: Array.from({ length: days }, (_, i) => ({
+        date: `2026-08-0${i + 3}`,
+        predictions: [{ flavor: 'Butter Pecan', probability: 0.09 }],
+        overdue_flavors: [],
+      })),
+    };
+  }
+
+  it('reports age and leaves a fresh forecast intact', () => {
+    const out = annotateForecastAge(forecastAgedHours(6), NOW);
+    expect(out.age_hours).toBe(6);
+    expect(out.stale).toBe(false);
+    expect(out.days[0].predictions).toHaveLength(1);
+    expect(out.stale_reason).toBeUndefined();
+  });
+
+  it('flags stale past the threshold but still serves predictions', () => {
+    // Between the soft and hard limits the forecast is degraded, not useless.
+    const out = annotateForecastAge(forecastAgedHours(FORECAST_STALE_HOURS + 24), NOW);
+    expect(out.stale).toBe(true);
+    expect(out.days[0].predictions).toHaveLength(1);
+  });
+
+  it('withholds predictions once past the hard limit', () => {
+    // This is the real guard: a months-old forecast rendered as "Estimated" is
+    // worse than showing nothing, because it looks authoritative.
+    const out = annotateForecastAge(forecastAgedHours(FORECAST_HARD_LIMIT_HOURS + 1), NOW);
+    expect(out.stale).toBe(true);
+    expect(out.stale_reason).toBe('expired');
+    expect(out.days.every(d => d.predictions.length === 0)).toBe(true);
+    expect(out.days).toHaveLength(2); // shape preserved, not a bare 404
+  });
+
+  it('covers the real production case -- Feb 23 data served in August', () => {
+    const out = annotateForecastAge(
+      { store_slug: 'mt-horeb', generated_at: '2026-02-23T11:21:46.864972', days: [
+        { date: '2026-02-24', predictions: [{ flavor: 'Lemon Berry Layer Cake', probability: 0.081 }] },
+      ] },
+      NOW,
+    );
+    expect(out.age_hours).toBeGreaterThan(3800);
+    expect(out.stale_reason).toBe('expired');
+    expect(out.days[0].predictions).toEqual([]);
+  });
+
+  it('treats a missing or unparseable generated_at as stale, not fresh', () => {
+    expect(annotateForecastAge({ days: [] }, NOW).stale).toBe(true);
+    expect(annotateForecastAge({ days: [] }, NOW).stale_reason).toBe('unknown_generated_at');
+    expect(annotateForecastAge({ generated_at: 'nonsense', days: [] }, NOW).stale).toBe(true);
+  });
+
+  it('does not mutate the input', () => {
+    const input = forecastAgedHours(FORECAST_HARD_LIMIT_HOURS + 1);
+    const before = JSON.stringify(input);
+    annotateForecastAge(input, NOW);
+    expect(JSON.stringify(input)).toBe(before);
+  });
+
+  it('clamps a future generated_at to zero rather than reporting negative age', () => {
+    expect(annotateForecastAge(forecastAgedHours(-50), NOW).age_hours).toBe(0);
+  });
+
+  it('annotates the served response end to end', async () => {
+    const forecast = forecastAgedHours(FORECAST_HARD_LIMIT_HOURS + 100);
+    const env = {
+      DB: createMockD1({ 'mt-horeb': { data: JSON.stringify(forecast) } }),
+      FLAVOR_CACHE: createMockKV(),
+    };
+    const body = await (await handleForecast('mt-horeb', env, corsHeaders)).json();
+    expect(body.stale).toBe(true);
+    expect(body.stale_reason).toBe('expired');
+    expect(body.days[0].predictions).toEqual([]);
+  });
+
+  it('tolerates a non-object payload', () => {
+    expect(annotateForecastAge(null, NOW)).toBeNull();
   });
 });
