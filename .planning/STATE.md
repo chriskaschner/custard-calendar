@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-05)
 
 **Core value:** A family can instantly see what flavors are at their nearby stores and decide where to go
-**Current focus:** Phase 37 — SEO Landing Pages
+**Current focus:** Phase 38 — OG Share Cards
 
 ## Current Position
 
-Phase: 37
-Plan: 02 complete (phase complete)
-Status: Phase 37 complete
+Phase: 38
+Plan: Not started
+Status: Planning Phase 38
 Last activity: 2026-04-20
 
 Progress: [####______] 40% (2/5 v4.0 phases complete)
@@ -82,8 +82,18 @@ None.
 
 ### Blockers/Concerns
 
+- **P0: Phase 37 is functionally unshipped.** `/sitemap.xml` and `/store/*` 404 on
+  `custard.chriskaschner.com` (verified 2026-08-02); they resolve only on
+  `*.workers.dev`. `/robots.txt` returns Cloudflare's *managed* file, not the
+  Worker's. Needs three Cloudflare routes added additively in the dashboard.
+  See TODO.md "P0 -- Dormancy recovery".
 - SEO-04 (Phase 38) requires design discussion with user before execution
-- Pre-existing map-pan-stability.spec.mjs test failure (carried from v1.5)
+- Browser suite is **21 specs red**, not one. The `browser-tests` CI job is
+  deliberately `continue-on-error: true` until the backlog is repaired. Most
+  failures are specs rotted against shipped refactors (Today's Drive removed in
+  Phase 31; `.store-change-btn` consolidated in Phase 21), not live regressions.
+  Earlier revisions of this file listed only `map-pan-stability` — that
+  undercounted. See TODO.md for the per-cause breakdown.
 
 ## Session Continuity
 
