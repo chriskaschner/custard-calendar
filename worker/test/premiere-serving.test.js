@@ -12,7 +12,13 @@ vi.mock('../src/snapshot-writer.js', () => ({
 }));
 
 import { recordSnapshots } from '../src/snapshot-writer.js';
-import { getFlavorsCached, makeFlavorCacheRecord } from '../src/kv-cache.js';
+import {
+  getFlavorsCached,
+  makeFlavorCacheRecord,
+  recordUnknownFlavorNames,
+  MAX_UNKNOWN_FLAVOR_NAMES,
+  UNKNOWN_FLAVOR_NAMES_KEY,
+} from '../src/kv-cache.js';
 import { resetPremiereDateCache, PREMIERE_TITLE } from '../src/flavor-overrides.js';
 
 function createMockKV(initial = {}) {
@@ -126,5 +132,71 @@ describe('premiere placeholders never reach persistence', () => {
     const result = await getFlavorsCached('kopps-greenfield', kv, fetcher, true, {});
 
     expect(result.flavors.map(f => f.date)).toEqual(['2026-08-04', '2026-08-06']);
+  });
+});
+
+describe('recordUnknownFlavorNames', () => {
+  const DAY = '2026-08-05';
+  const KEY = `${UNKNOWN_FLAVOR_NAMES_KEY}:${DAY}`;
+  const read = (kv) => JSON.parse(kv._store.get(KEY));
+
+  beforeEach(() => vi.clearAllMocks());
+
+  it('records the name, store, and date the operator needs to act', async () => {
+    const kv = createMockKV();
+    await recordUnknownFlavorNames(
+      kv,
+      [{ title: 'Peanut Butter Fudge Brownie', slug: 'mt-horeb', date: DAY }],
+      DAY
+    );
+
+    expect(read(kv)).toEqual([
+      { title: 'Peanut Butter Fudge Brownie', slug: 'mt-horeb', date: DAY },
+    ]);
+  });
+
+  it('records a chain-wide debut once, not once per store', async () => {
+    const kv = createMockKV();
+    for (const slug of ['mt-horeb', 'verona', 'madison-todd-drive']) {
+      await recordUnknownFlavorNames(kv, [{ title: 'Brand New Flavor', slug, date: DAY }], DAY);
+    }
+
+    const stored = read(kv);
+    expect(stored).toHaveLength(1);
+    expect(stored[0].slug).toBe('mt-horeb');
+  });
+
+  it('dedupes across trademark and curly-quote variants', async () => {
+    const kv = createMockKV();
+    await recordUnknownFlavorNames(kv, [{ title: "Really Reese's", slug: 'a', date: DAY }], DAY);
+    await recordUnknownFlavorNames(kv, [{ title: 'Really Reese’s®', slug: 'b', date: DAY }], DAY);
+
+    expect(read(kv)).toHaveLength(1);
+  });
+
+  it('caps the list so one bad upstream day cannot grow it unbounded', async () => {
+    const kv = createMockKV();
+    const many = Array.from({ length: MAX_UNKNOWN_FLAVOR_NAMES + 15 }, (_, i) => ({
+      title: `Flavor ${i}`, slug: 'mt-horeb', date: DAY,
+    }));
+    await recordUnknownFlavorNames(kv, many, DAY);
+
+    expect(read(kv)).toHaveLength(MAX_UNKNOWN_FLAVOR_NAMES);
+  });
+
+  it('starts fresh rather than throwing on a corrupt value', async () => {
+    const kv = createMockKV({ [KEY]: 'not json' });
+    await expect(
+      recordUnknownFlavorNames(kv, [{ title: 'New One', slug: 'mt-horeb', date: DAY }], DAY)
+    ).resolves.toBeUndefined();
+
+    expect(read(kv)).toEqual([{ title: 'New One', slug: 'mt-horeb', date: DAY }]);
+  });
+
+  it('is a no-op without KV or sightings', async () => {
+    await expect(recordUnknownFlavorNames(null, [{ title: 'x' }], DAY)).resolves.toBeUndefined();
+    const kv = createMockKV();
+    await recordUnknownFlavorNames(kv, [], DAY);
+    expect(kv.put).not.toHaveBeenCalled();
   });
 });

@@ -135,17 +135,12 @@ export function generateIcs({ calendarName, stores, flavorsBySlug }) {
     // DTSTAMP derived from event date for deterministic output.
     // Same event data → same .ics bytes → no calendar client churn.
     const dtstamp = formatDateValue(flavor.date) + 'T120000Z';
-    // Premiere placeholders stand in for a day upstream withheld; say so in the
-    // summary so a subscriber does not read it as the actual flavor name.
-    const summaryText = flavor.source === 'premiere'
-      ? `${flavor.title} - name TBA`
-      : flavor.title;
     addLine('BEGIN:VEVENT');
     addLine(`UID:${flavor.date}-${primary.slug}@custard-calendar`);
     addLine(`DTSTAMP:${dtstamp}`);
     addLine(`DTSTART;VALUE=DATE:${formatDateValue(flavor.date)}`);
     addLine(`DTEND;VALUE=DATE:${nextDay(flavor.date)}`);
-    addLine(`SUMMARY:🍦 ${escapeText(summaryText)}`);
+    addLine(`SUMMARY:🍦 ${escapeText(flavor.title)}`);
     if (primary.address) {
       addLine(`LOCATION:${escapeText(primary.address)}`);
     }

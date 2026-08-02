@@ -1,4 +1,5 @@
 import { sendEmail } from './email-sender.js';
+import { UNKNOWN_FLAVOR_NAMES_KEY } from './kv-cache.js';
 
 const DEFAULT_PARSE_FAILURE_THRESHOLD = 3;
 const DEFAULT_PAYLOAD_ANOMALY_THRESHOLD = 10;
@@ -53,6 +54,24 @@ async function readDailyCounter(kv, keyPrefix, dateStr) {
   const raw = await kv.get(`${keyPrefix}:${dateStr}`);
   const parsed = raw ? parseInt(raw, 10) : 0;
   return Number.isFinite(parsed) ? parsed : 0;
+}
+
+/**
+ * Read today's unknown flavor sightings, written by kv-cache.js.
+ * Degrades to an empty list so a malformed value never suppresses the alert.
+ * @returns {Promise<Array<{title: string, slug: string, date: string}>>}
+ */
+async function readUnknownFlavorNames(kv, dateStr) {
+  if (!kv) return [];
+  try {
+    const raw = await kv.get(`${UNKNOWN_FLAVOR_NAMES_KEY}:${dateStr}`);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed.filter(e => e && e.title) : [];
+  } catch (err) {
+    console.error(`Unknown-flavor name read failed: ${err.message}`);
+    return [];
+  }
 }
 
 async function readConsecutiveErrorDays(db, handler, days) {
@@ -210,9 +229,15 @@ export async function maybeSendOperatorAlert({ env, handler, result, now = new D
     const unknownFlavors = await readDailyCounter(env.FLAVOR_CACHE, 'meta:unknown-flavor-count', today);
     const unknownThreshold = readIntEnv(env.OPERATOR_UNKNOWN_FLAVOR_THRESHOLD, DEFAULT_UNKNOWN_FLAVOR_THRESHOLD);
     if (unknownFlavors > unknownThreshold) {
+      // The counter tallies stores, not names. Without the names the operator
+      // knows something new appeared but not what, so they cannot act on it.
+      const names = await readUnknownFlavorNames(env.FLAVOR_CACHE, today);
+      const named = names.length > 0
+        ? ` Seen: ${names.map(n => `"${n.title}" (${n.slug} on ${n.date})`).join(', ')}.`
+        : '';
       issues.push({
         title: 'Unknown flavors detected',
-        detail: `${unknownFlavors} unknown flavor names today (threshold: ${unknownThreshold}). Review catalog and consider adding to FLAVOR_PROFILES or FLAVOR_ALIASES.`,
+        detail: `${unknownFlavors} stores served an unrecognized flavor today (threshold: ${unknownThreshold}).${named} Add to FLAVOR_PROFILES or FLAVOR_ALIASES in worker/src/flavor-colors.js.`,
       });
     }
 

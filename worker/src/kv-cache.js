@@ -1,6 +1,6 @@
 import { recordSnapshots } from './snapshot-writer.js';
 import { getFetcherForSlug } from './brand-registry.js';
-import { FLAVOR_PROFILES, FLAVOR_ALIASES } from './flavor-colors.js';
+import { FLAVOR_PROFILES, FLAVOR_ALIASES, normalizeFlavorKey } from './flavor-colors.js';
 import { applyFlavorOverrides, getPremiereDates } from './flavor-overrides.js';
 
 const KV_TTL_SECONDS = 86400; // 24 hours
@@ -16,19 +16,6 @@ const MAX_STORE_NAME_LENGTH = 120;
 // Upstream brands sometimes use sentinel titles to indicate a store is closed.
 // These are not real flavors and must be dropped before caching or serving.
 export const CLOSED_TITLE_RE = /\bclosed\b|^z[_ ]*(store|restaurant)?closed/i;
-
-/**
- * Normalize a flavor name for FLAVOR_PROFILES / FLAVOR_ALIASES lookup.
- * Strips TM/R symbols, normalizes curly quotes, lowercases, collapses whitespace.
- */
-function normalizeFlavorKey(name) {
-  return String(name || '')
-    .toLowerCase()
-    .replace(/[\u00ae\u2122]/g, '')
-    .replace(/[\u2018\u2019]/g, "'")
-    .replace(/\s+/g, ' ')
-    .trim();
-}
 
 /**
  * Check whether a flavor title is recognized in the canonical catalog.
@@ -169,6 +156,55 @@ async function incrementDailyCounter(kv, keyPrefix, dateStr) {
   await safeKvPut(kv, key, String(count + 1), { expirationTtl: 86400 });
 }
 
+/** KV key holding today's unknown flavor sightings. */
+export const UNKNOWN_FLAVOR_NAMES_KEY = 'meta:unknown-flavor-names';
+
+/** Cap so one bad upstream day cannot grow an unbounded KV value. */
+export const MAX_UNKNOWN_FLAVOR_NAMES = 25;
+
+/**
+ * Record which flavors were unrecognized, so the operator alert can name them.
+ *
+ * The daily counter alone says "3 unknown flavors today" without saying which,
+ * where, or when -- leaving the operator to go hunting. Deduped by normalized
+ * title so a chain-wide debut appears once rather than a thousand times.
+ * Best-effort: never throws, never blocks serving.
+ *
+ * @param {Object} kv - KV namespace binding
+ * @param {Array<{title: string, slug: string, date: string}>} sightings
+ * @param {string} dateStr - Today, for the daily key suffix
+ */
+export async function recordUnknownFlavorNames(kv, sightings, dateStr) {
+  if (!kv || !sightings || sightings.length === 0) return;
+  const key = `${UNKNOWN_FLAVOR_NAMES_KEY}:${dateStr}`;
+
+  let existing = [];
+  try {
+    const raw = await kv.get(key);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) existing = parsed;
+    }
+  } catch (err) {
+    console.error(`Unknown-flavor name read failed: ${err.message}`);
+  }
+
+  const seen = new Set(existing.map(e => normalizeFlavorKey(e?.title)));
+  let added = false;
+  for (const sighting of sightings) {
+    if (existing.length >= MAX_UNKNOWN_FLAVOR_NAMES) break;
+    const normalized = normalizeFlavorKey(sighting.title);
+    if (!normalized || seen.has(normalized)) continue;
+    seen.add(normalized);
+    existing.push({ title: sighting.title, slug: sighting.slug, date: sighting.date });
+    added = true;
+  }
+
+  if (added) {
+    await safeKvPut(kv, key, JSON.stringify(existing), { expirationTtl: 86400 });
+  }
+}
+
 /**
  * Serialize a flavor-cache record with metadata for integrity checking.
  * Shared cache keys (e.g., Kopp's) do not embed a slug because one key serves many slugs.
@@ -303,10 +339,15 @@ export async function getFlavorsCached(slug, kv, fetchFlavorsFn, isOverride = fa
 
   // D-05a: Count unknown flavors (warning only -- do not drop from serving)
   let unknownCount = 0;
+  const unknownSightings = [];
   for (const f of data.flavors) {
-    if (!isKnownFlavor(f.title)) unknownCount++;
+    if (!isKnownFlavor(f.title)) {
+      unknownCount++;
+      unknownSightings.push({ title: f.title, slug, date: f.date });
+    }
   }
   if (unknownCount > 0) {
+    await recordUnknownFlavorNames(kv, unknownSightings, today);
     await incrementDailyCounter(kv, 'meta:unknown-flavor-count', today);
   }
 

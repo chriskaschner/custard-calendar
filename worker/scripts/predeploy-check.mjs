@@ -27,6 +27,30 @@ import { fileURLToPath } from 'node:url';
 export const STRAY_ROOT_CONFIGS = ['wrangler.jsonc', 'wrangler.json', 'wrangler.toml'];
 
 /**
+ * Artifacts that make wrangler's framework auto-detection run a site build and
+ * produce the asset directory it then wants to deploy. There is no Hugo site in
+ * this repo -- no config, no content/, no layouts/ -- so a `.hugo_build.lock`
+ * left lying around is pure trigger with no upside. Warn rather than block:
+ * their presence alone is not dangerous, only their combination with a stray
+ * root config, which IS a blocker above.
+ */
+export const FRAMEWORK_DETECTION_ARTIFACTS = ['.hugo_build.lock', 'public'];
+
+/**
+ * Collect non-fatal warnings worth printing before a deploy.
+ * @returns {string[]}
+ */
+export function collectDeployWarnings({ repoRoot, exists }) {
+  return FRAMEWORK_DETECTION_ARTIFACTS
+    .filter((name) => exists(join(repoRoot, name)))
+    .map((name) =>
+      `${name} at the repo root can make wrangler auto-detect a site build.\n` +
+      '     There is no Hugo site here; this is a leftover. Consider removing it:\n' +
+      `         rm -rf ${join(repoRoot, name)}`
+    );
+}
+
+/**
  * Collect reasons this deploy must not proceed.
  * Pure: all filesystem access is injected so this is unit-testable.
  *
@@ -85,13 +109,20 @@ export function collectDeployBlockers({ cwd, workerDir, repoRoot, exists, readTe
 
 function main() {
   const workerDir = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+  const repoRoot = resolve(workerDir, '..');
   const blockers = collectDeployBlockers({
     cwd: process.cwd(),
     workerDir,
-    repoRoot: resolve(workerDir, '..'),
+    repoRoot,
     exists: existsSync,
     readText: (p) => readFileSync(p, 'utf8'),
   });
+
+  const warnings = collectDeployWarnings({ repoRoot, exists: existsSync });
+  if (warnings.length > 0) {
+    console.warn('\nWarnings:\n');
+    warnings.forEach((w, i) => console.warn(`  ${i + 1}. ${w}\n`));
+  }
 
   if (blockers.length > 0) {
     console.error('\nDeploy blocked -- these would risk replacing the live Worker:\n');

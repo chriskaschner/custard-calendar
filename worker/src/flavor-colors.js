@@ -204,8 +204,12 @@ export const CONE_TIP_COLOR = '#8B5A2B';
  * Normalize a flavor name for alias/profile lookup.
  * Strips TM/R symbols, normalizes curly quotes, lowercases, collapses whitespace.
  * Matches the normalizeFlavorKey() in docs/cone-renderer.js exactly.
+ *
+ * Canonical for the Worker -- import this rather than re-deriving it. Alias
+ * lookups that skip normalization silently miss, which is how social cards
+ * ended up 404ing every aliased flavor.
  */
-function normalizeFlavorKey(name) {
+export function normalizeFlavorKey(name) {
   return String(name || '')
     .toLowerCase()
     .replace(/[\u00ae\u2122]/g, '')
