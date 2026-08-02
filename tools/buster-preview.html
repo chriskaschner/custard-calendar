@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Buster Cone Preview</title>
+<style>
+  body {
+    font-family: system-ui, sans-serif;
+    background: #f5f5f5;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2rem;
+    padding: 2rem;
+  }
+  h1 { color: #005696; }
+  h2 { color: #333; margin-top: 2rem; }
+  .preview-row {
+    display: flex;
+    gap: 1.5rem;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  /* Week card mock -- matches real .week-day-card styles */
+  .mock-card {
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    padding: 1rem;
+    width: 140px;
+    text-align: center;
+    border-left: 3px solid #999;
+  }
+  .mock-card--active { border-left-color: #005696; }
+  .mock-card .day-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    color: #666;
+    margin-bottom: 0.25rem;
+  }
+  .mock-card .day-header .day-name { font-weight: 700; text-transform: uppercase; color: #005696; }
+  .mock-card .flavor-name {
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-top: 0.25rem;
+  }
+  .mock-card .holiday-label {
+    font-size: 0.8rem;
+    color: #999;
+    margin-top: 0.25rem;
+    font-style: italic;
+  }
+
+  /* Cone container -- matches .week-day-cone */
+  .cone-area {
+    text-align: center;
+    margin: 0.25rem 0;
+    display: flex;
+    justify-content: center;
+    min-height: 50px;
+    align-items: center;
+  }
+  .cone-area .hero-cone-img {
+    width: 40px !important;
+    transform: rotate(-30deg);
+  }
+
+  /* Buster wrapper */
+  .buster-wrap {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .buster-wrap .cone-inner {
+    display: inline-block;
+  }
+  .buster-wrap .buster-ring {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+  }
+
+  .label { font-size: 0.75rem; color: #888; margin-top: 0.5rem; }
+</style>
+</head>
+<body>
+
+<h1>Buster Cone Preview</h1>
+<p>Real hero cone PNGs with buster overlay for holiday cards</p>
+
+<script src="../docs/planner-shared.js"></script>
+<script>var WORKER_BASE = CustardPlanner.WORKER_BASE;</script>
+<script src="../docs/cone-renderer.js"></script>
+
+<script>
+function busterRingSVG(size, strokeWidth) {
+  var cx = size / 2, cy = size / 2;
+  var r = size / 2 - strokeWidth;
+  var pad = r * 0.22;
+  return '<svg class="buster-ring" xmlns="http://www.w3.org/2000/svg"'
+    + ' viewBox="0 0 ' + size + ' ' + size + '"'
+    + ' width="' + size + '" height="' + size + '"'
+    + ' shape-rendering="geometricPrecision">'
+    + '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '"'
+    + ' fill="none" stroke="#CC0000" stroke-width="' + strokeWidth + '" stroke-linecap="round"/>'
+    + '<line x1="' + (cx - r + pad) + '" y1="' + (cy - r + pad) + '"'
+    + ' x2="' + (cx + r - pad) + '" y2="' + (cy + r - pad) + '"'
+    + ' stroke="#CC0000" stroke-width="' + strokeWidth + '" stroke-linecap="round"/>'
+    + '</svg>';
+}
+
+function renderBusterCone(container, flavor, opacity, busterSize, strokeWidth) {
+  var wrap = document.createElement('div');
+  wrap.className = 'buster-wrap';
+
+  var inner = document.createElement('div');
+  inner.className = 'cone-inner';
+  inner.style.opacity = opacity;
+
+  // Use the real hero cone renderer
+  var src = heroConeSrc(flavor);
+  if (src) {
+    var img = new Image();
+    img.alt = flavor + ' cone';
+    img.className = 'hero-cone-img';
+    img.src = '../docs/' + src;
+    img.onerror = function() {
+      inner.innerHTML = renderMiniConeSVG(flavor, 3);
+    };
+    inner.appendChild(img);
+  } else {
+    inner.innerHTML = renderMiniConeSVG(flavor, 3);
+  }
+
+  wrap.appendChild(inner);
+  wrap.insertAdjacentHTML('beforeend', busterRingSVG(busterSize || 55, strokeWidth || 3));
+  container.innerHTML = '';
+  container.appendChild(wrap);
+}
+
+window.addEventListener('DOMContentLoaded', function() {
+  // Opacity variants
+  var flavors = ['Caramel Cashew', 'Chocolate', 'Vanilla', 'Mint Chip', 'Strawberry'];
+  var opacities = [0.3, 0.45, 0.6, 0.8, 1.0];
+
+  opacities.forEach(function(op, i) {
+    var el = document.getElementById('op-' + i);
+    if (el) renderBusterCone(el, 'Caramel Cashew', op, 55, 3);
+  });
+
+  // Stroke width variants
+  [2, 3, 4, 5].forEach(function(sw, i) {
+    var el = document.getElementById('sw-' + i);
+    if (el) renderBusterCone(el, 'Chocolate', 0.45, 55, sw);
+  });
+
+  // Different flavors at chosen settings
+  flavors.forEach(function(f, i) {
+    var el = document.getElementById('flav-' + i);
+    if (el) renderBusterCone(el, f, 0.45, 55, 3);
+  });
+
+  // Mock week-ahead cards
+  ['card-easter', 'card-tday', 'card-xmas'].forEach(function(id, i) {
+    var fl = ['Caramel Cashew', 'Vanilla', 'Chocolate'][i];
+    var holiday = ['Easter', 'Thanksgiving', 'Christmas'][i];
+    var el = document.getElementById(id);
+    if (el) {
+      renderBusterCone(el.querySelector('.cone-area'), fl, 0.45, 55, 3);
+      el.querySelector('.holiday-label').textContent = 'Closed for ' + holiday;
+    }
+  });
+});
+</script>
+
+<h2>Cone opacity (which looks best behind the buster?)</h2>
+<div class="preview-row">
+  <div style="text-align:center"><div id="op-0"></div><div class="label">30%</div></div>
+  <div style="text-align:center"><div id="op-1"></div><div class="label">45%</div></div>
+  <div style="text-align:center"><div id="op-2"></div><div class="label">60%</div></div>
+  <div style="text-align:center"><div id="op-3"></div><div class="label">80%</div></div>
+  <div style="text-align:center"><div id="op-4"></div><div class="label">100%</div></div>
+</div>
+
+<h2>Buster stroke width</h2>
+<div class="preview-row">
+  <div style="text-align:center"><div id="sw-0"></div><div class="label">2px</div></div>
+  <div style="text-align:center"><div id="sw-1"></div><div class="label">3px</div></div>
+  <div style="text-align:center"><div id="sw-2"></div><div class="label">4px</div></div>
+  <div style="text-align:center"><div id="sw-3"></div><div class="label">5px</div></div>
+</div>
+
+<h2>Different flavors (45% opacity, 3px stroke)</h2>
+<div class="preview-row">
+  <div style="text-align:center"><div id="flav-0"></div><div class="label">Caramel Cashew</div></div>
+  <div style="text-align:center"><div id="flav-1"></div><div class="label">Chocolate</div></div>
+  <div style="text-align:center"><div id="flav-2"></div><div class="label">Vanilla</div></div>
+  <div style="text-align:center"><div id="flav-3"></div><div class="label">Mint Chip</div></div>
+  <div style="text-align:center"><div id="flav-4"></div><div class="label">Strawberry</div></div>
+</div>
+
+<h2>In-context: mock Week Ahead cards</h2>
+<div class="preview-row">
+  <div class="mock-card mock-card--active">
+    <div class="day-header"><span class="day-name">TMRW</span><span>Apr 4</span></div>
+    <div class="cone-area">
+      <img class="hero-cone-img" src="../docs/assets/cones/caramel-cashew.png" alt="Caramel Cashew cone">
+    </div>
+    <div class="flavor-name">Caramel Cashew</div>
+  </div>
+
+  <div class="mock-card" id="card-easter">
+    <div class="day-header"><span class="day-name">SUN</span><span>Apr 5</span></div>
+    <div class="cone-area"></div>
+    <div class="holiday-label"></div>
+  </div>
+
+  <div class="mock-card mock-card--active">
+    <div class="day-header"><span class="day-name">MON</span><span>Apr 6</span></div>
+    <div class="cone-area">
+      <img class="hero-cone-img" src="../docs/assets/cones/snickers-swirl.png" alt="Snickers Swirl cone">
+    </div>
+    <div class="flavor-name">Snickers Swirl</div>
+  </div>
+
+  <div class="mock-card" id="card-tday">
+    <div class="day-header"><span class="day-name">THU</span><span>Nov 26</span></div>
+    <div class="cone-area"></div>
+    <div class="holiday-label"></div>
+  </div>
+
+  <div class="mock-card" id="card-xmas">
+    <div class="day-header"><span class="day-name">THU</span><span>Dec 25</span></div>
+    <div class="cone-area"></div>
+    <div class="holiday-label"></div>
+  </div>
+</div>
+
+</body>
+</html>
