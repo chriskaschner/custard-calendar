@@ -52,16 +52,29 @@ since 2026-02-22, Gille's since 2026-07-18, and nothing alerted on either.
 - [x] **Corrected 2 of 3 misdated Hefner's D1 rows.** The third (2026-02-23) would
   collide with a 2026-02-22 row carrying a different flavor; left as-is.
 
+- [ ] **Grant `CLOUDFLARE_API_TOKEN` the "Workers KV Storage: Edit" scope.** First
+  `Oscar's Ingest` run (2026-08-05) fetched and wrote D1 fine, then failed the KV write
+  with `Authentication error [code: 10000]`. The token can write D1 but not KV. Oscar's
+  still serves -- the D1 fallback covers it -- but every cache miss now attempts an
+  upstream fetch guaranteed to 403 before falling back, which is slow and pointlessly
+  hits Oscar's servers. Fixing the scope restores the fast path.
 - [ ] **Create the UptimeRobot monitor for `Oscar's Ingest`** and set the
   `UPTIMEROBOT_HEARTBEAT_OSCARS` GitHub secret. Until then the workflow's silence is
   invisible -- the exact failure mode this whole session was about.
-- [ ] **Confirm the first `Oscar's Ingest` run succeeds on a GitHub runner.** The fetch
-  works from a residential IP and is blocked from Cloudflare; Azure runner IPs are
-  untested. `scripts/fetch_oscars.py` fails loudly and specifically if challenged.
-- [ ] **Resolve what Hefner's page shows outside opening hours** (they close 9pm; the
-  daily cron runs 7am Central, before the 11am open). A scrape while open is
-  unambiguous; the pre-open window is not. Compare a 7am reading against the same
-  day's midday reading to settle it.
+- [x] **A GitHub runner is NOT challenged by Oscar's** -- confirmed 2026-08-05. The run
+  fetched and parsed 37 flavors and wrote 74 D1 rows from an Azure IP. This was the main
+  risk in the ingest design and it is cleared.
+- [ ] **`stale: true` conflates "served from D1" with "data is old".** Oscar's upstream
+  always 403s, so it takes the fallback path on every miss and is flagged stale even when
+  the data was written the same day. Harmless now (no surface reads the flag) but wrong
+  the moment one does. Distinguish "degraded path" from "old data", or resolve it by
+  fixing the KV scope above so Oscar's stops taking the fallback at all.
+- [ ] **Narrow when Hefner's page rolls over.** Largely resolved 2026-08-05: it read
+  Nestle Caramel Crunch at 20:26 Central (open) and still at 21:46 (after close), then
+  Mississippi Mud Pie at 07:2x next morning (before open). So it rolls over overnight,
+  not at close, and the Central-date stamp is right at 7am. What remains is whether the
+  rollover is at midnight or earlier -- an 11pm rollover would leave a one-hour
+  misdating window. Sample at 23:00 and 23:59 Central.
 - [ ] **`tests/test_browser_clickthrough.py` was double-hiding the stale-spec backlog.**
   It capped a ~7 min Playwright suite at 180s, so it reported a TimeoutExpired rather
   than the 10 real failures underneath (6 in `drive-preferences`, 4 in
@@ -76,6 +89,21 @@ since 2026-02-22, Gille's since 2026-07-18, and nothing alerted on either.
   Hefner's at 2325 S 108th St, West Allis. Check whether the fetcher and the pin are
   the same location.
 
+
+### Milwaukee coverage backlog (opened 2026-08-05)
+
+- [ ] **Leon's Frozen Custard** -- requested as a future Milwaukee addition. Two blockers
+  found before any work starts:
+    1. **No flavor-of-the-day source.** Nothing on their site to scrape, consistent with
+       Leon's serving a fixed menu rather than a rotating FOTD. If that is right, Leon's
+       does not fit the FOTD model and would need a "fixed flavors" store type -- a
+       product decision, not a scraper task.
+    2. **leonsfrozencustard.com is behind Cloudflare bot protection.** Returns a 403
+       "Just a moment..." challenge even from a residential IP, so it is strictly harder
+       than Oscar's (which worked from residential and now works from a GitHub runner).
+       No fetch path is currently known to work.
+  Decide the product question first. Kopp's needs nothing -- all three of its locations
+  are already covered, which is all Kopp's has.
 
 ### Follow-ups from premiere-day work (opened 2026-08-01; see WORKLOG 2026-08-01)
 
