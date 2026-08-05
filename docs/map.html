@@ -642,25 +642,66 @@
       const filtered = stores.filter(s => brands.includes(s.brand));
       if (filtered.length === 0) return [];
 
+      // Central, not UTC. These brands are all in Central time, so a UTC "today"
+      // shows tomorrow's flavor between 7pm and midnight.
+      const today = CustardPlanner.centralToday();
+
       const results = await Promise.all(filtered.map(async (store) => {
         try {
           const resp = await fetch(`${WORKER_BASE}/api/v1/flavors?slug=${encodeURIComponent(store.slug)}`);
-          if (!resp.ok) return { ...store, flavor: 'Unavailable' };
+          if (!resp.ok) return unknownFlavor(store, 'unreachable');
           const data = await resp.json();
-          const today = new Date().toISOString().slice(0, 10);
-          const todayFlavors = (data.flavors || []).filter(f => f.date === today);
-          if (todayFlavors.length === 0) {
-            const first = data.flavors && data.flavors[0];
-            if (first) todayFlavors.push(first);
-          }
-          const fl = todayFlavors[0];
-          const allNames = todayFlavors.map(f => f.title || f.flavor).filter(Boolean);
-          return { ...store, flavor: allNames.length > 0 ? allNames[0] : 'Unavailable', flavors: allNames.length > 1 ? allNames : undefined, description: fl ? (fl.description || '') : '' };
+          const all = data.flavors || [];
+          const todayFlavors = all.filter(f => f.date === today);
+          const names = todayFlavors.map(f => f.title || f.flavor).filter(Boolean);
+
+          // No entry for today means we do not know today's flavor. This used to
+          // fall back to flavors[0] -- any date, unlabelled -- which rendered
+          // some other day's custard as though it were confirmed for today.
+          if (names.length === 0) return unknownFlavor(store, 'none-today', all, today);
+
+          return {
+            ...store,
+            flavor: names[0],
+            flavors: names.length > 1 ? names : undefined,
+            description: todayFlavors[0].description || '',
+          };
         } catch {
-          return { ...store, flavor: 'Unavailable' };
+          return unknownFlavor(store, 'unreachable');
         }
       }));
       return results;
+    }
+
+    // A store whose flavor we do not know keeps `flavor` falsy on purpose: every
+    // downstream guard (Confirmed badge, CTAs, flavor filter, popup intel) keys
+    // off truthiness, so a placeholder string like the old 'Unavailable' got a
+    // broken store labelled Confirmed.
+    function unknownFlavor(store, status, allFlavors, today) {
+      return {
+        ...store,
+        flavor: null,
+        flavorStatus: status,
+        flavorNote: status === 'none-today' ? lastPostedNote(allFlavors, today) : null,
+      };
+    }
+
+    // Most recent entry strictly before today, if there is one.
+    function lastPostedNote(flavors, today) {
+      const past = (flavors || []).filter(f => f.date < today && (f.title || f.flavor));
+      if (past.length === 0) return null;
+      const latest = past.reduce((a, b) => (a.date >= b.date ? a : b));
+      const when = new Date(latest.date + 'T12:00:00')
+        .toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      return `Last posted ${when}: ${latest.title || latest.flavor}`;
+    }
+
+    // Headline states what we observed; the inference goes in flavorNote below it.
+    function flavorHeadline(store) {
+      if (store.flavor) return store.flavor;
+      if (store.flavorStatus === 'unreachable') return "Couldn't load today's flavor";
+      if (store.flavorStatus === 'none-today') return 'No flavor posted for today';
+      return 'No flavor data';
     }
 
     // Flavor keywords for matching ingredients not in the name
@@ -992,7 +1033,8 @@
     function storePopup(store, isMatch) {
       const matchBadge = isMatch ? ' <span class="popup-match">MATCH</span>' : '';
       const certBadge = store.flavor ? ' <span class="popup-confirmed">Confirmed</span>' : '';
-      const desc = store.description ? `<br><small>${escapeHtml(store.description)}</small>` : '';
+      const detail = store.description || store.flavorNote || '';
+      const desc = detail ? `<br><small>${escapeHtml(detail)}</small>` : '';
       const nameColor = store.brand && BRAND_COLORS[store.brand] ? ` style="color:${BRAND_COLORS[store.brand]}"` : '';
       const lat = Number(store.lat);
       const lon = Number(store.lon || store.lng);
@@ -1008,7 +1050,7 @@
       return `<div class="store-popup">
         <strong${nameColor}>${escapeHtml(store.name)}</strong>${matchBadge}${certBadge}<br>
         ${escapeHtml(store.address)}<br>
-        <em>${escapeHtml(store.flavor || 'No flavor data')}</em>${desc}
+        <em>${escapeHtml(flavorHeadline(store))}</em>${desc}
         ${intelPlaceholder}
         ${ctas}
       </div>`;
@@ -1022,7 +1064,8 @@
     function storeCard(store, isMatch) {
       const matchClass = isMatch ? ' store-card-match' : (store.brand ? brandClass(store) : ' brand-culvers');
       const nameColor = store.brand && BRAND_COLORS[store.brand] ? ` style="color:${BRAND_COLORS[store.brand]}"` : '';
-      const desc = store.description ? `<div class="store-card-description">${escapeHtml(store.description)}</div>` : '';
+      const cardDetail = store.description || store.flavorNote || '';
+      const desc = cardDetail ? `<div class="store-card-description">${escapeHtml(cardDetail)}</div>` : '';
       const distHtml = store._dist != null ? `<span class="store-card-rank">${store._dist.toFixed(1)} mi</span>` : '';
       const nearestBadge = (nearestStoreSlug && store.slug === nearestStoreSlug) ?
         '<span class="nearest-badge">Nearest to you</span>' : '';
@@ -1042,7 +1085,7 @@
           ${distHtml}${nearestBadge}
         </div>
         <div class="store-card-address">${escapeHtml(store.address || '')}</div>
-        <div class="store-card-flavor">${store.flavors ? store.flavors.map(f => escapeHtml(f)).join(' <span class="flavor-sep">&amp;</span> ') : escapeHtml(store.flavor || 'Loading...')}</div>
+        <div class="store-card-flavor">${store.flavors ? store.flavors.map(f => escapeHtml(f)).join(' <span class="flavor-sep">&amp;</span> ') : escapeHtml(store.flavorStatus ? flavorHeadline(store) : (store.flavor || 'Loading...'))}</div>
         ${desc}
         ${ctas}
       </div>`;
