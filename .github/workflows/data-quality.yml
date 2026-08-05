@@ -35,6 +35,19 @@ jobs:
         run: uv run python scripts/check_backfill_coverage.py --stores mt-horeb,verona,madison-todd-drive --min-pct 90
         # Exits nonzero if any priority store is below 90% D1/local coverage.
         # Requires CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID secrets.
+        # Culver's only -- it diffs D1 against the local Wayback backfill corpus,
+        # which does not exist for the Milwaukee brands. Those are covered by the
+        # freshness gate below.
+
+      - name: Check brand fetch freshness
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: uv run python scripts/check_brand_freshness.py
+        # Fails if any brand has recorded nothing in 4+ days. This is the check
+        # that was missing when Oscar's went dark for five months and Gille's for
+        # weeks: the priority-store list above is three Culver's stores, so no
+        # Milwaukee brand was watched by anything.
 
   metrics-seed-freshness:
     name: Metrics Seed Freshness Check
