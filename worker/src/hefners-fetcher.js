@@ -7,12 +7,21 @@
  * HTML structure: .flavor-content .flavor-text h3 (flavor name) + p (description)
  */
 
+import { centralDateString } from './date-util.js';
+
 /**
  * Parse Hefner's homepage HTML for today's flavor.
+ *
+ * The page carries no date -- it just shows whatever is being served now -- so
+ * the date has to come from the clock. It must be the Central date: Hefner's is
+ * in West Allis, and stamping the UTC date files every evening's flavor under
+ * tomorrow.
+ *
  * @param {string} html - Raw HTML from hefnerscustard.com
+ * @param {string} [today] - Central date (YYYY-MM-DD); injectable for tests
  * @returns {{ name: string, address: string, flavors: Array<{date: string, title: string, description: string}> }}
  */
-export function parseHefnersHtml(html) {
+export function parseHefnersHtml(html, today = centralDateString()) {
   const flavors = [];
 
   // Find .flavor-content section with .flavor-text h3
@@ -50,7 +59,6 @@ export function parseHefnersHtml(html) {
   }
 
   if (title) {
-    const today = new Date().toISOString().slice(0, 10);
     flavors.push({ date: today, title, description });
   }
 

@@ -358,6 +358,19 @@ function formatDate(dateStr) {
   return days[d.getDay()] + ", " + months[d.getMonth()] + " " + d.getDate();
 }
 
+// Today's calendar date as YYYY-MM-DD. Normalizing to noon before reading the
+// date avoids the UTC rollover that new Date().toISOString() introduces: after
+// 7pm Central the UTC date is already tomorrow, which dropped today's flavor
+// out of the upcoming list. Device-local, matching formatDate() above, so the
+// filter and the "Today"/"Tomorrow" labels can never disagree.
+function localToday() {
+  var d = new Date();
+  d.setHours(12, 0, 0, 0);
+  var m = String(d.getMonth() + 1);
+  var day = String(d.getDate());
+  return d.getFullYear() + "-" + (m.length < 2 ? "0" + m : m) + "-" + (day.length < 2 ? "0" + day : day);
+}
+
 function brandStyle(brandName) {
   return BRAND_COLORS[brandName] || BRAND_COLORS["Culver's"];
 }
@@ -515,7 +528,7 @@ async function buildMedium() {
   var data = await fetchFlavors();
   var flavors = (data.flavors || []);
 
-  var todayStr = new Date().toISOString().slice(0, 10);
+  var todayStr = localToday();
   var upcoming = flavors.filter(function(f) { return f.date >= todayStr; }).slice(0, 3);
 
   var todayData = null;
