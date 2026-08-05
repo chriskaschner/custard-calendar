@@ -112,3 +112,46 @@ def test_slugs_flag_narrows_the_check():
 
 def test_returns_2_when_d1_is_unreachable():
     assert _run(None, []) == 2
+
+
+# ---------------------------------------------------------------------------
+# execute_query_via_wrangler retry
+# ---------------------------------------------------------------------------
+
+class _Result:
+    def __init__(self, returncode, stdout="", stderr=""):
+        self.returncode = returncode
+        self.stdout = stdout
+        self.stderr = stderr
+
+
+GOOD_STDOUT = '[{"results": [{"slug": "gilles", "last_fetch": "2026-08-05T01:00:00Z"}]}]'
+
+
+def test_retries_a_transient_wrangler_failure():
+    # Observed in practice: wrangler exits non-zero with an empty stderr. This
+    # gate pages a human, so a blip must not read as a brand going dark.
+    from scripts.check_brand_freshness import execute_query_via_wrangler
+
+    calls = [_Result(1, stderr=""), _Result(0, stdout=GOOD_STDOUT)]
+    with patch("scripts.check_brand_freshness.subprocess.run", side_effect=calls):
+        with patch("scripts.check_brand_freshness.time.sleep"):
+            rows = execute_query_via_wrangler("SELECT 1")
+
+    assert rows == [{"slug": "gilles", "last_fetch": "2026-08-05T01:00:00Z"}]
+
+
+def test_gives_up_after_the_attempt_budget():
+    from scripts.check_brand_freshness import execute_query_via_wrangler
+
+    with patch("scripts.check_brand_freshness.subprocess.run", return_value=_Result(1, stderr="boom")):
+        with patch("scripts.check_brand_freshness.time.sleep"):
+            assert execute_query_via_wrangler("SELECT 1", attempts=3) is None
+
+
+def test_does_not_retry_on_success():
+    from scripts.check_brand_freshness import execute_query_via_wrangler
+
+    with patch("scripts.check_brand_freshness.subprocess.run", return_value=_Result(0, stdout=GOOD_STDOUT)) as run:
+        execute_query_via_wrangler("SELECT 1")
+    assert run.call_count == 1

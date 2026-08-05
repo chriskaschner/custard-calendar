@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { brandCounterKey, getFlavorsCached, makeFlavorCacheRecord, sanitizeFlavorPayload } from '../src/kv-cache.js';
+import { brandCounterKey, getFlavorsCached, makeFlavorCacheRecord, parseFlavorCacheRecord, sanitizeFlavorPayload } from '../src/kv-cache.js';
 
 function createMockKV(initial = {}) {
   const store = new Map(Object.entries(initial));
@@ -245,5 +245,52 @@ describe('stale-but-honest D1 fallback', () => {
     await expect(
       getFlavorsCached('oscars-muskego', kv, FAILING_FETCH, true, {})
     ).rejects.toThrow('Upstream unavailable');
+  });
+});
+
+describe('cache entries expire on the Central day boundary', () => {
+  const RECORD = (cachedAt, shared = false) => JSON.stringify({
+    _meta: { v: 1, shared, slug: shared ? null : 'hefners', cachedAt },
+    data: { name: "Hefner's", flavors: [{ date: '2026-08-04', title: 'Nestle Caramel Crunch', description: '' }] },
+  });
+
+  const opts = (today, shared = false) => ({
+    slug: 'hefners',
+    cacheKey: shared ? 'flavors:oscars-shared' : 'flavors:hefners',
+    isShared: shared,
+    today,
+  });
+
+  it('accepts a record written earlier the same Central day', () => {
+    // 14:00 UTC == 09:00 Central, same day.
+    const parsed = parseFlavorCacheRecord(RECORD('2026-08-04T14:00:00.000Z'), opts('2026-08-04'));
+    expect(parsed).not.toBeNull();
+    expect(parsed.flavors).toHaveLength(1);
+  });
+
+  it('rejects a record written on the previous Central day', () => {
+    // The live bug: Hefner's publishes one day, so a record written at 20:26
+    // Central survived until 20:26 the next day under a flat 24h TTL and served
+    // yesterday's only entry for twenty hours.
+    const parsed = parseFlavorCacheRecord(RECORD('2026-08-05T01:26:03.634Z'), opts('2026-08-05'));
+    expect(parsed).toBeNull();
+  });
+
+  it('keeps a late-evening record valid for the rest of that Central day', () => {
+    // 01:26 UTC Aug 5 is 20:26 Central Aug 4 -- still Aug 4 in Central, so this
+    // must NOT be discarded before midnight.
+    const parsed = parseFlavorCacheRecord(RECORD('2026-08-05T01:26:03.634Z'), opts('2026-08-04'));
+    expect(parsed).not.toBeNull();
+  });
+
+  it('applies to shared brand keys too', () => {
+    const parsed = parseFlavorCacheRecord(RECORD('2026-08-04T14:00:00.000Z', true), opts('2026-08-05', true));
+    expect(parsed).toBeNull();
+  });
+
+  it('rejects a record with an unusable cachedAt rather than trusting it', () => {
+    for (const bad of ['not a date', '', undefined]) {
+      expect(parseFlavorCacheRecord(RECORD(bad), opts('2026-08-04'))).toBeNull();
+    }
   });
 });

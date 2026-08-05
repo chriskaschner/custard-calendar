@@ -2,6 +2,7 @@ import { recordSnapshots } from './snapshot-writer.js';
 import { getFetcherForSlug } from './brand-registry.js';
 import { FLAVOR_PROFILES, FLAVOR_ALIASES, normalizeFlavorKey } from './flavor-colors.js';
 import { applyFlavorOverrides, getPremiereDates } from './flavor-overrides.js';
+import { centralDateString, centralDateStringOrNull } from './date-util.js';
 
 const KV_TTL_SECONDS = 86400; // 24 hours
 const FLAVOR_CACHE_RECORD_VERSION = 1;
@@ -232,9 +233,10 @@ export function makeFlavorCacheRecord(data, slug, isShared) {
  * @param {string} options.slug
  * @param {string} options.cacheKey
  * @param {boolean} options.isShared
+ * @param {string} [options.today] - Central date; injectable for tests
  * @returns {Object|null}
  */
-export function parseFlavorCacheRecord(raw, { slug, cacheKey, isShared }) {
+export function parseFlavorCacheRecord(raw, { slug, cacheKey, isShared, today = centralDateString() }) {
   let parsed;
   try {
     parsed = JSON.parse(raw);
@@ -247,6 +249,20 @@ export function parseFlavorCacheRecord(raw, { slug, cacheKey, isShared }) {
   if (meta && parsed.data && typeof meta === 'object') {
     if (meta.v !== FLAVOR_CACHE_RECORD_VERSION) {
       console.warn(`Ignoring unsupported cache record version for ${cacheKey}: ${meta.v}`);
+      return null;
+    }
+
+    // A flavor cache entry is only valid for the Central day it was fetched.
+    //
+    // The 24h TTL alone is not enough. Brands that publish a single day
+    // (Hefner's, Gille's) hold exactly one dated entry, so a record written at
+    // 8pm survives until 8pm the following day -- serving yesterday's date for
+    // twenty hours, which every surface then correctly reports as "no flavor
+    // posted for today". Expiring on the Central day boundary instead of 24h
+    // after the write is what makes the entry mean what it says.
+    const cachedDay = centralDateStringOrNull(meta.cachedAt);
+    if (cachedDay !== today) {
+      console.warn(`Cache record for ${cacheKey} is from Central day ${cachedDay || 'unknown'}, not ${today}; refreshing`);
       return null;
     }
 

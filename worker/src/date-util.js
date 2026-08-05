@@ -32,3 +32,19 @@ export function centralDateString(now = new Date()) {
   const get = (type) => parts.find(p => p.type === type)?.value;
   return `${get('year')}-${get('month')}-${get('day')}`;
 }
+
+/**
+ * Central date for a timestamp that may be missing or malformed.
+ *
+ * Intl throws on an Invalid Date, so anything unparseable has to be caught here
+ * rather than at each call site.
+ *
+ * @param {string|Date|null|undefined} value
+ * @returns {string|null} ISO date in Central, or null if unusable
+ */
+export function centralDateStringOrNull(value) {
+  if (!value) return null;
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return centralDateString(date);
+}

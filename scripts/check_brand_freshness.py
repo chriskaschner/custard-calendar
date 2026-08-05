@@ -32,6 +32,7 @@ import argparse
 import json
 import subprocess
 import sys
+import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -51,32 +52,43 @@ BRAND_WATCH_SLUGS = [
 DEFAULT_MAX_AGE_DAYS = 4
 
 
-def execute_query_via_wrangler(sql: str) -> list[dict] | None:
-    """Execute a SELECT via wrangler d1 execute --remote --json."""
-    result = subprocess.run(
-        [
-            "npx", "wrangler", "d1", "execute", D1_DATABASE_NAME,
-            "--remote",
-            "--command", sql,
-            "--json",
-        ],
-        capture_output=True,
-        text=True,
-        cwd=WORKER_DIR,
-    )
+def execute_query_via_wrangler(sql: str, attempts: int = 3, backoff: float = 5.0) -> list[dict] | None:
+    """Execute a SELECT via wrangler d1 execute --remote --json.
 
-    if result.returncode != 0:
-        print(f"wrangler error: {result.stderr.strip()}", file=sys.stderr)
-        return None
+    Retried because wrangler fails transiently -- observed exiting non-zero with
+    an empty stderr. This gate pages a human when it fails, so a network blip
+    must not look like a brand going dark; that is how a monitor teaches people
+    to ignore it.
+    """
+    for attempt in range(1, attempts + 1):
+        result = subprocess.run(
+            [
+                "npx", "wrangler", "d1", "execute", D1_DATABASE_NAME,
+                "--remote",
+                "--command", sql,
+                "--json",
+            ],
+            capture_output=True,
+            text=True,
+            cwd=WORKER_DIR,
+        )
 
-    try:
-        data = json.loads(result.stdout)
-        for item in data:
-            results = item.get("results", [])
-            if results is not None:
-                return results
-    except (json.JSONDecodeError, KeyError, IndexError, TypeError) as exc:
-        print(f"could not parse wrangler output: {exc}", file=sys.stderr)
+        if result.returncode == 0:
+            try:
+                data = json.loads(result.stdout)
+                for item in data:
+                    results = item.get("results", [])
+                    if results is not None:
+                        return results
+            except (json.JSONDecodeError, KeyError, IndexError, TypeError) as exc:
+                print(f"could not parse wrangler output: {exc}", file=sys.stderr)
+        else:
+            detail = result.stderr.strip() or "(no stderr)"
+            print(f"wrangler attempt {attempt}/{attempts} failed: {detail}", file=sys.stderr)
+
+        if attempt < attempts:
+            time.sleep(backoff * attempt)
+
     return None
 
 
