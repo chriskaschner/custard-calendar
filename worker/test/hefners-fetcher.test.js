@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import { parseHefnersHtml } from '../src/hefners-fetcher.js';
+import { centralDateString } from '../src/date-util.js';
 
 const fixture = readFileSync(join(__dirname, 'fixtures/hefners.html'), 'utf-8');
 
@@ -17,10 +18,26 @@ describe('Hefner\'s fetcher', () => {
     expect(result.flavors[0].description).toContain('tiramisu');
   });
 
-  it('sets date to today', () => {
+  it('stamps the date it is given', () => {
+    const result = parseHefnersHtml(fixture, '2026-08-04');
+    expect(result.flavors[0].date).toBe('2026-08-04');
+  });
+
+  it('uses the Central date, not the UTC date, during the evening', () => {
+    // 01:30 UTC on Aug 5 is 20:30 Central on Aug 4. Hefner's page shows the
+    // flavor being served right now, so it belongs to Aug 4. Stamping the UTC
+    // date filed every evening's flavor under tomorrow -- in the D1 snapshot
+    // record as well as the API response.
+    const evening = new Date('2026-08-05T01:30:00Z');
+    expect(centralDateString(evening)).toBe('2026-08-04');
+
+    const result = parseHefnersHtml(fixture, centralDateString(evening));
+    expect(result.flavors[0].date).toBe('2026-08-04');
+  });
+
+  it('defaults to the current Central date', () => {
     const result = parseHefnersHtml(fixture);
-    const today = new Date().toISOString().slice(0, 10);
-    expect(result.flavors[0].date).toBe(today);
+    expect(result.flavors[0].date).toBe(centralDateString());
   });
 
   it('returns brand name and address', () => {

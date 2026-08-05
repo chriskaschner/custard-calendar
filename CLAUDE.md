@@ -161,6 +161,7 @@ Cloudflare, so it covers all of them.
 |---|---|---|
 | Tidbyt Daily Push | `UPTIMEROBOT_HEARTBEAT_TIDBYT` | ~2 days (daily cron; absorbs one transient failure) |
 | Data Quality Gate | `UPTIMEROBOT_HEARTBEAT_DATA_QUALITY` | ~9 days (weekly cron) |
+| Oscar's Ingest | `UPTIMEROBOT_HEARTBEAT_OSCARS` | ~2 days (daily cron) |
 
 The ping fires only on success, so what is monitored is "no *successful* run in
 N days" — strictly more informative than bare liveness. If a secret is unset the
@@ -173,6 +174,43 @@ After a long dormancy, check `gh workflow list --all` for `disabled_inactivity`
 and re-enable with `gh workflow enable "<name>"`.
 
 ## Architecture
+
+### Oscar's is fetched from outside Cloudflare
+
+`oscarscustard.com` sits behind Cloudflare bot protection that returns a 403
+"Just a moment..." challenge to the Worker's egress. Verified 2026-08-04 from a
+Worker running on Cloudflare's edge: bot UA, plain Chrome UA, full Chrome +
+`Sec-Fetch-*`, and no headers at all were all challenged, on both the WP REST
+endpoint and the public page, while the identical request from a residential IP
+returned 200. **The block is on the calling network, so no change to
+`oscars-fetcher.js` can fix it** — don't spend time on headers again.
+
+Oscar's is therefore fetched by the `Oscar's Ingest` workflow
+(`scripts/fetch_oscars.py`), which runs daily in GitHub Actions and writes to
+both D1 and the `flavors:oscars-shared` KV key. The parse is not duplicated:
+`scripts/oscars_parse.mjs` imports the Worker's own parser, sanitizer, and
+`makeFlavorCacheRecord`, so the record shape cannot drift from what
+`parseFlavorCacheRecord` accepts.
+
+It went unnoticed from 2026-02-22 to 2026-08-04. See "Brand monitoring" below.
+
+### Brand monitoring
+
+Brands are watched by `getBrandWatchSlugs()` in `worker/src/brand-registry.js` —
+one representative slug per brand, derived from the registry so a new brand is
+covered the day it is added. Two checks consume it:
+
+- `operator-alerts.js` — daily, in-Worker: "brand gone dark" plus per-brand
+  parse-failure alerting.
+- `scripts/check_brand_freshness.py` — weekly, in CI, external to Cloudflare.
+
+Both key off `MAX(fetched_at)`, **not** `MAX(date)`. The date column is how far
+ahead a brand's published schedule runs and stays in the future long after the
+fetch breaks: Kraverz routinely publishes four weeks out, so a `MAX(date)` check
+would call it healthy for a month after it died.
+
+Before this existed the watch list was three Madison Culver's stores, and no
+Milwaukee brand was monitored by anything.
 
 ### Data Flow
 ```

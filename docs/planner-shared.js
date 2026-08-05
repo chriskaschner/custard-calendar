@@ -93,12 +93,44 @@ var CustardPlanner = (function () {
   }
 
   // ---------------------------------------------------------------------------
+  // Central-time "today"
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Today's date in America/Chicago as YYYY-MM-DD.
+   *
+   * Every brand we track operates in Central. Deriving today from UTC -- the
+   * new Date().toISOString().slice(0, 10) shorthand -- shows tomorrow's flavor
+   * between 7pm Central and midnight, because the UTC date has already rolled
+   * over while the stores are still serving today's.
+   *
+   * Callers that first normalize to local noon (setHours(12, 0, 0, 0), or
+   * 'T12:00:00') are already safe and do not need this.
+   */
+  function centralToday(now) {
+    var parts = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'America/Chicago',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).formatToParts(now || new Date());
+    var get = function (type) {
+      for (var i = 0; i < parts.length; i++) {
+        if (parts[i].type === type) return parts[i].value;
+      }
+      return '';
+    };
+    return get('year') + '-' + get('month') + '-' + get('day');
+  }
+
+  // ---------------------------------------------------------------------------
   // Public API -- core facade + internal helpers for sub-modules
   // ---------------------------------------------------------------------------
 
   return {
     WORKER_BASE: WORKER_BASE,
     escapeHtml: escapeHtml,
+    centralToday: centralToday,
 
     // Internal helpers exposed for sub-modules (underscore-prefixed = internal use only)
     _normalizeStringList: normalizeStringList,

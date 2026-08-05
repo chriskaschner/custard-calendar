@@ -20,6 +20,63 @@ Analytics data has two strong non-prediction uses: **(1) flavor rarity as sharea
 
 Focus order for the next cycle: tighten production quality and measurement before expanding scope.
 
+### Milwaukee local brands (opened 2026-08-04; see WORKLOG 2026-08-04)
+
+Reported as "the flavor map isn't working in Milwaukee." Four independent bugs on the
+local-brand path; all 23 Culver's pins in the bbox were healthy. Oscar's had been dark
+since 2026-02-22, Gille's since 2026-07-18, and nothing alerted on either.
+
+- [x] **Central-time correctness.** New `worker/src/date-util.js`; `hefners-fetcher.js`
+  no longer stamps the UTC date (it filed every evening's flavor under tomorrow, in D1
+  as well as the API). Same fix in `docs/map.html` and `widgets/custard-today.js`.
+  `today-page.js` / `compare-page.js` already normalise to local noon and were left alone.
+- [x] **The map no longer invents an answer.** Dropped the `data.flavors[0]` fallback
+  that rendered another day's custard as today's, and stopped setting a truthy
+  `'Unavailable'` that earned unreachable stores a "Confirmed" badge. Three honest
+  states now: known / no flavor posted today (+ dated "last posted") / couldn't load.
+- [x] **Brand monitoring.** `getBrandWatchSlugs()` derives the watch list from
+  `BRAND_REGISTRY`; "brand gone dark" + per-brand parse-fail alerts in
+  `operator-alerts.js`; `scripts/check_brand_freshness.py` as an external weekly gate.
+  Keys off `MAX(fetched_at)`, not `MAX(date)` -- see WORKLOG for why that distinction
+  is the whole ballgame for brands that publish a month ahead.
+- [x] **Gille's rewritten for Wix** (migrated from Drupal 7 ~2026-07-18). Upstream now
+  hand-types a single day and the month calendar is a flat PNG, so one day is the
+  ceiling. Parser reports the date it read, never today, so a stale page surfaces as
+  "no flavor posted today" rather than stale custard shown as current.
+- [x] **Oscar's restored via out-of-band ingest.** oscarscustard.com 403s Cloudflare
+  Worker egress with a bot challenge -- verified from the edge against every header
+  variant and both endpoints, so no fetcher change can fix it. `scripts/fetch_oscars.py`
+  runs daily in GitHub Actions and writes D1 + `flavors:oscars-shared`.
+- [x] **Stale-but-honest D1 fallback.** `getFlavorsCached` serves last-known-good from
+  D1 when upstream throws, flagged stale and deliberately not written back to KV.
+- [x] **Corrected 2 of 3 misdated Hefner's D1 rows.** The third (2026-02-23) would
+  collide with a 2026-02-22 row carrying a different flavor; left as-is.
+
+- [ ] **Create the UptimeRobot monitor for `Oscar's Ingest`** and set the
+  `UPTIMEROBOT_HEARTBEAT_OSCARS` GitHub secret. Until then the workflow's silence is
+  invisible -- the exact failure mode this whole session was about.
+- [ ] **Confirm the first `Oscar's Ingest` run succeeds on a GitHub runner.** The fetch
+  works from a residential IP and is blocked from Cloudflare; Azure runner IPs are
+  untested. `scripts/fetch_oscars.py` fails loudly and specifically if challenged.
+- [ ] **Resolve what Hefner's page shows outside opening hours** (they close 9pm; the
+  daily cron runs 7am Central, before the 11am open). A scrape while open is
+  unambiguous; the pre-open window is not. Compare a 7am reading against the same
+  day's midday reading to settle it.
+- [ ] **`tests/test_browser_clickthrough.py` was double-hiding the stale-spec backlog.**
+  It capped a ~7 min Playwright suite at 180s, so it reported a TimeoutExpired rather
+  than the 10 real failures underneath (6 in `drive-preferences`, 4 in
+  `index-drive-minimap-sync`). Cap raised to 1200s and the test marked xfail, matching
+  the `continue-on-error: true` decision already documented on the CI browser job.
+  Those 10 are part of the known backlog in `.github/workflows/ci.yml:32-46`: they
+  exercise Today's Drive, which the Phase 31 homepage redesign dropped from
+  `index.html` (`docs/todays-drive.js` is orphaned). They need deleting or rewriting
+  against the current page, not debugging. Clearing the backlog un-xfails this test and
+  promotes the CI job to blocking.
+- [ ] **`hefnerscustard.com` describes a Cedarburg store** but `stores.json` lists
+  Hefner's at 2325 S 108th St, West Allis. Check whether the fetcher and the pin are
+  the same location.
+
+
 ### Follow-ups from premiere-day work (opened 2026-08-01; see WORKLOG 2026-08-01)
 
 - [x] **P0: make a root-level `wrangler deploy` impossible** -- done 2026-08-01. `npm run deploy` now runs `worker/scripts/predeploy-check.mjs` and pins `--config wrangler.toml`, so cwd cannot decide which config wins. The check refuses to run outside `worker/`, refuses a config missing `main` or `name`, and refuses while a stray `wrangler.jsonc`/`.json`/`.toml` sits at the repo root (printing the `rm` command, since the file is gitignored and invisible to `git status`). 11 tests in `worker/test/predeploy-check.test.js`, including a reproduction of the exact config that caused the outage. Deploy discipline documented in CLAUDE.md.

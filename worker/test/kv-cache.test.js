@@ -159,3 +159,91 @@ describe('brandCounterKey', () => {
     expect(brandCounterKey("Gille's")).toBe('gilles');
   });
 });
+
+describe('stale-but-honest D1 fallback', () => {
+  function createFallbackDb(rows) {
+    return {
+      prepare: vi.fn(() => ({
+        bind: vi.fn(() => ({
+          all: vi.fn(async () => ({ results: rows })),
+          run: vi.fn(async () => ({ success: true })),
+        })),
+      })),
+    };
+  }
+
+  // Passed with isOverride = true at every call site below. Without that, brand
+  // routing wins and these tests fire real requests at oscarscustard.com.
+  const FAILING_FETCH = vi.fn(async () => {
+    throw new Error('Upstream unavailable');
+  });
+
+  it('serves last known good from D1 when upstream fails', async () => {
+    // The Oscar's shape: upstream unreachable, but D1 holds a schedule that
+    // still runs weeks ahead. A 502 here renders as a blank pin on the map.
+    const kv = createMockKV();
+    const db = createFallbackDb([
+      { date: '2026-08-04', flavor: 'Twix Twirl', description: 'caramel' },
+      { date: '2026-08-05', flavor: 'Mudd Pie', description: '' },
+    ]);
+
+    const data = await getFlavorsCached('oscars-muskego', kv, FAILING_FETCH, true, { DB: db });
+
+    expect(data.stale).toBe(true);
+    expect(data.flavors).toHaveLength(2);
+    expect(data.flavors[0]).toMatchObject({ date: '2026-08-04', title: 'Twix Twirl' });
+    expect(data.name).toBe("Oscar's");
+  });
+
+  it('does NOT write the stale payload back to KV', async () => {
+    // Caching it would pin the stale answer in place for the full 24h TTL and
+    // stop the next request from retrying upstream.
+    const kv = createMockKV();
+    const db = createFallbackDb([
+      { date: '2026-08-04', flavor: 'Twix Twirl', description: '' },
+    ]);
+
+    await getFlavorsCached('oscars-muskego', kv, FAILING_FETCH, true, { DB: db });
+
+    expect(kv._store.has('flavors:oscars-shared')).toBe(false);
+  });
+
+  it('still counts the failure so monitoring sees it', async () => {
+    const kv = createMockKV();
+    const db = createFallbackDb([
+      { date: '2026-08-04', flavor: 'Twix Twirl', description: '' },
+    ]);
+    const today = new Date().toISOString().slice(0, 10);
+
+    await getFlavorsCached('oscars-muskego', kv, FAILING_FETCH, true, { DB: db });
+
+    expect(kv._store.get(`meta:parse-fail-count:${today}`)).toBe('1');
+    expect(kv._store.get(`meta:parse-fail-count:brand:oscars:${today}`)).toBe('1');
+  });
+
+  it('rethrows when D1 has nothing usable', async () => {
+    const kv = createMockKV();
+    const db = createFallbackDb([]);
+
+    await expect(
+      getFlavorsCached('oscars-muskego', kv, FAILING_FETCH, true, { DB: db })
+    ).rejects.toThrow('Upstream unavailable');
+  });
+
+  it('ignores D1 rows that carry no flavor', async () => {
+    const kv = createMockKV();
+    const db = createFallbackDb([{ date: '2026-08-04' }, { date: '2026-08-05' }]);
+
+    await expect(
+      getFlavorsCached('oscars-muskego', kv, FAILING_FETCH, true, { DB: db })
+    ).rejects.toThrow('Upstream unavailable');
+  });
+
+  it('rethrows when there is no D1 binding at all', async () => {
+    const kv = createMockKV();
+
+    await expect(
+      getFlavorsCached('oscars-muskego', kv, FAILING_FETCH, true, {})
+    ).rejects.toThrow('Upstream unavailable');
+  });
+});

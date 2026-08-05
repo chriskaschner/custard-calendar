@@ -281,6 +281,46 @@ export function parseFlavorCacheRecord(raw, { slug, cacheKey, isShared }) {
   return null;
 }
 
+/** Days of D1 history worth serving when upstream is unreachable. */
+const FALLBACK_LOOKBACK_DAYS = 45;
+
+/**
+ * Last known good schedule for a slug, from the durable D1 record.
+ *
+ * Only used when upstream fetching fails. Returns null rather than throwing:
+ * a failure here must not replace the upstream error the caller is handling.
+ *
+ * @param {Object|null} db - D1 binding
+ * @param {string} slug
+ * @param {string} name - Store name to report; snapshots do not store one
+ * @returns {Promise<{name: string, flavors: Array, stale: boolean}|null>}
+ */
+async function readLastKnownGood(db, slug, name) {
+  if (!db) return null;
+  try {
+    const result = await db.prepare(
+      `SELECT date, flavor, description
+       FROM snapshots
+       WHERE slug = ? AND date >= date('now', ?)
+       ORDER BY date ASC`
+    ).bind(slug, `-${FALLBACK_LOOKBACK_DAYS} days`).all();
+
+    const flavors = (result?.results || [])
+      .filter(r => isValidIsoDate(r?.date) && r?.flavor)
+      .map(r => ({
+        date: r.date,
+        title: r.flavor,
+        description: r.description || '',
+      }));
+    if (flavors.length === 0) return null;
+
+    return { name, flavors, stale: true };
+  } catch (err) {
+    console.error(`D1 fallback read failed for ${slug}: ${err.message}`);
+    return null;
+  }
+}
+
 /**
  * Get flavor data for a store, checking KV cache first.
  * Supports brand routing — MKE brands use their own fetchers and may share KV keys.
@@ -328,6 +368,18 @@ export async function getFlavorsCached(slug, kv, fetchFlavorsFn, isOverride = fa
   } catch (err) {
     await incrementDailyCounter(kv, 'meta:parse-fail-count', today);
     await incrementDailyCounter(kv, `meta:parse-fail-count:brand:${brandKey}`, today);
+
+    // Upstream is unreachable, but D1 may still hold a usable schedule -- for
+    // brands that publish weeks ahead it very often does. Serving that beats a
+    // 502 that the map can only render as a blank pin. Callers can tell the
+    // difference: the payload is flagged stale, and it is NOT written back to
+    // KV, so the next request retries upstream rather than pinning a stale
+    // answer in place for the full TTL.
+    const fallback = await readLastKnownGood(env.DB, slug, brandInfo.brand);
+    if (fallback) {
+      console.warn(`Serving stale D1 data for ${slug} after upstream failure: ${err.message}`);
+      return serve(fallback);
+    }
     throw err;
   }
   const sanitized = sanitizeFlavorPayload(upstreamData);

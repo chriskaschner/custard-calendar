@@ -1,0 +1,66 @@
+name: Oscar's Ingest
+
+# oscarscustard.com sits behind Cloudflare bot protection that 403s our Worker's
+# egress. Verified 2026-08-04 from a Worker on Cloudflare's edge: every header
+# variant tried was challenged, while the same request from a residential IP
+# returned 200. The block is on the calling network, so no fetcher change fixes
+# it -- the fetch has to originate somewhere that is not Cloudflare.
+#
+# Oscar's was dark from 2026-02-22 to 2026-08-04 before anyone noticed.
+#
+# Runs daily because the KV record it writes carries the same 24h TTL as a
+# normal cache entry. If a run is missed, the Worker falls back to the last
+# known D1 snapshot rather than 502ing, so a single failure degrades rather
+# than breaks.
+
+on:
+  schedule:
+    # 5 AM Central (UTC-5 CDT) = 10:00 UTC, ahead of the morning traffic peak
+    # and offset from the Tidbyt push at noon UTC.
+    - cron: '0 10 * * *'
+  workflow_dispatch:
+
+jobs:
+  ingest:
+    name: Fetch and publish Oscar's
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Install Python dependencies
+        run: uv sync
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install wrangler
+        run: npm install -g wrangler
+        working-directory: worker
+
+      # Fails loudly and specifically if this runner is challenged too, rather
+      # than writing an empty or partial cache.
+      - name: Fetch Oscar's and publish to KV + D1
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: uv run python scripts/fetch_oscars.py
+
+      # Dead man's switch, monitored by UptimeRobot. Fires only on success, so
+      # what is monitored is "no successful ingest in N days" -- suggested
+      # threshold ~2 days on a daily job, which absorbs one transient failure.
+      # External on purpose: a check inside the Worker could not detect this
+      # workflow being auto-disabled for repo inactivity, which has already
+      # happened once to Tidbyt Daily Push.
+      - name: Heartbeat
+        env:
+          HEARTBEAT_URL: ${{ secrets.UPTIMEROBOT_HEARTBEAT_OSCARS }}
+        run: |
+          if [ -z "$HEARTBEAT_URL" ]; then
+            echo "::warning::UPTIMEROBOT_HEARTBEAT_OSCARS is not set; skipping heartbeat."
+            exit 0
+          fi
+          curl -fsS --retry 3 --retry-delay 5 "$HEARTBEAT_URL"

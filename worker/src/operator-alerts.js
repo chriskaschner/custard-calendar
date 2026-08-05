@@ -1,7 +1,13 @@
 import { sendEmail } from './email-sender.js';
-import { UNKNOWN_FLAVOR_NAMES_KEY } from './kv-cache.js';
+import { UNKNOWN_FLAVOR_NAMES_KEY, brandCounterKey } from './kv-cache.js';
+import { getBrandWatchSlugs, getMonitoredBrands } from './brand-registry.js';
 
 const DEFAULT_PARSE_FAILURE_THRESHOLD = 3;
+// Brands are one or two stores each, so a single day's failure is already the
+// whole brand down -- nothing like the chain-wide aggregate above.
+const DEFAULT_BRAND_PARSE_FAILURE_THRESHOLD = 1;
+// Tolerates a day or two with no traffic before calling a brand dark.
+const DEFAULT_STALE_FETCH_THRESHOLD_DAYS = 4;
 const DEFAULT_PAYLOAD_ANOMALY_THRESHOLD = 10;
 const DEFAULT_CONSECUTIVE_ERROR_DAYS = 2;
 const DEFAULT_MONTH_END_LOOKAHEAD_DAYS = 5;
@@ -150,6 +156,58 @@ async function findStaleStores(db, slugs, now, thresholdDays) {
   return stale;
 }
 
+/**
+ * Slugs we have not successfully recorded anything for in thresholdDays.
+ *
+ * This keys off MAX(fetched_at), not MAX(date), because they answer different
+ * questions. MAX(date) is how far ahead the schedule runs -- useless as a
+ * health signal for a brand that publishes a month at a time. When Oscar's
+ * broke in Feb 2026 its max date sat a month in the future, and Kraverz
+ * currently publishes through Aug 31, so a break today would not move its max
+ * date for four weeks. MAX(fetched_at) answers the question actually being
+ * asked: when did we last get anything at all from this brand.
+ *
+ * @param {Object} db - D1 database binding
+ * @param {string[]} slugs
+ * @param {Date} now
+ * @param {number} thresholdDays
+ * @returns {Promise<Array<{slug: string, last_fetch: string|null, days_stale: number|null}>>}
+ */
+async function findStaleFetches(db, slugs, now, thresholdDays) {
+  if (!db || !Array.isArray(slugs) || slugs.length === 0) return [];
+  const placeholders = slugs.map(() => '?').join(',');
+  const result = await db.prepare(
+    `SELECT slug, MAX(fetched_at) AS last_fetch
+     FROM snapshots
+     WHERE slug IN (${placeholders})
+     GROUP BY slug`
+  ).bind(...slugs).all();
+
+  const lastBySlug = new Map();
+  for (const row of result?.results || []) {
+    if (row?.slug) lastBySlug.set(row.slug, row.last_fetch || null);
+  }
+
+  const stale = [];
+  for (const slug of slugs) {
+    const last = lastBySlug.get(slug) || null;
+    if (!last) {
+      stale.push({ slug, last_fetch: null, days_stale: null });
+      continue;
+    }
+    const parsed = new Date(last);
+    if (Number.isNaN(parsed.getTime())) {
+      stale.push({ slug, last_fetch: last, days_stale: null });
+      continue;
+    }
+    const diffDays = Math.floor((now.getTime() - parsed.getTime()) / (1000 * 60 * 60 * 24));
+    if (diffDays > thresholdDays) {
+      stale.push({ slug, last_fetch: last, days_stale: diffDays });
+    }
+  }
+  return stale;
+}
+
 function buildOperatorAlertHtml({ baseUrl, issues, context }) {
   const issueItems = issues.map((issue) => `<li><strong>${issue.title}:</strong> ${issue.detail}</li>`).join('\n');
   const checked = context.checked ?? 0;
@@ -215,6 +273,28 @@ export async function maybeSendOperatorAlert({ env, handler, result, now = new D
       issues.push({
         title: 'Parse failures spike',
         detail: `${parseFailures} parse failures today (threshold: ${parseThreshold})`,
+      });
+    }
+
+    // Per-brand parse failures. These counters have been written since the
+    // brand fetchers landed and surfaced on /health, but nothing alerted on
+    // them -- the aggregate above needs 3+ failures chain-wide, which a single
+    // dead brand never reaches.
+    const brandThreshold = readIntEnv(
+      env.OPERATOR_BRAND_PARSE_FAILURE_THRESHOLD,
+      DEFAULT_BRAND_PARSE_FAILURE_THRESHOLD,
+    );
+    const failingBrands = [];
+    for (const brand of getMonitoredBrands()) {
+      const count = await readDailyCounter(
+        env.FLAVOR_CACHE, `meta:parse-fail-count:brand:${brandCounterKey(brand)}`, today,
+      );
+      if (count >= brandThreshold) failingBrands.push(`${brand} (${count})`);
+    }
+    if (failingBrands.length > 0) {
+      issues.push({
+        title: 'Brand parse failures',
+        detail: `Upstream fetch or parse failed today for: ${failingBrands.join(', ')} (threshold: ${brandThreshold}). Check that brand's fetcher against its live page.`,
       });
     }
 
@@ -308,6 +388,29 @@ export async function maybeSendOperatorAlert({ env, handler, result, now = new D
     issues.push({
       title: 'Stale store check error',
       detail: err.message || 'failed to evaluate stale stores',
+    });
+  }
+
+  try {
+    const fetchThreshold = readIntEnv(
+      env.OPERATOR_STALE_FETCH_THRESHOLD_DAYS,
+      DEFAULT_STALE_FETCH_THRESHOLD_DAYS,
+    );
+    const watchSlugs = [...new Set([...getBrandWatchSlugs(), ...prioritySlugs])];
+    const dark = await findStaleFetches(env.DB, watchSlugs, now, fetchThreshold);
+    if (dark.length > 0) {
+      const detail = dark
+        .map(s => `${s.slug} (last fetch: ${s.last_fetch || 'never'}, ${s.days_stale ?? '?'} days)`)
+        .join(', ');
+      issues.push({
+        title: 'Brand gone dark',
+        detail: `${dark.length} watched slug(s) have recorded nothing in ${fetchThreshold}+ days: ${detail}`,
+      });
+    }
+  } catch (err) {
+    issues.push({
+      title: 'Fetch freshness check error',
+      detail: err.message || 'failed to evaluate fetch freshness',
     });
   }
 

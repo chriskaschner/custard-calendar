@@ -31,8 +31,8 @@ import { handlePlan } from './planner.js';
 import { handleDrive } from './drive.js';
 import { handleSignals } from './signals.js';
 import { isValidSlug } from './slug-validation.js';
-import { getFetcherForSlug, getBrandForSlug } from './brand-registry.js';
-import { getFlavorsCached, UNKNOWN_FLAVOR_NAMES_KEY } from './kv-cache.js';
+import { getFetcherForSlug, getBrandForSlug, getMonitoredBrands } from './brand-registry.js';
+import { getFlavorsCached, UNKNOWN_FLAVOR_NAMES_KEY, brandCounterKey } from './kv-cache.js';
 import { detectBlackoutDates, writePremiereDates, isoPlusDays, PREMIERE_DATES_KV_KEY } from './flavor-overrides.js';
 import { maybeSendOperatorAlert } from './operator-alerts.js';
 import { handleCalendar } from './route-calendar.js';
@@ -58,7 +58,9 @@ const ADMIN_EXACT_ROUTES = new Set([
   '/api/metrics/accuracy',
   '/api/operator-alert/test',
 ]);
-const PARSE_FAILURE_BRAND_KEYS = ['culvers', 'kopps', 'oscars', 'gilles', 'hefners', 'kraverz'];
+// Derived from the registry so a new brand appears on /health automatically
+// rather than being silently absent until someone remembers this list.
+const PARSE_FAILURE_BRAND_KEYS = getMonitoredBrands().map(brandCounterKey);
 
 /**
  * Parse comma-separated origin lists from env.

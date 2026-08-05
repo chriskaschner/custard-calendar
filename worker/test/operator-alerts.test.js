@@ -20,13 +20,26 @@ function createMockKV(initial = {}) {
   };
 }
 
-function createMockDb({ cronErrors = [], coverageRows = [] } = {}) {
+// Far enough ahead that findStaleFetches never flags it, whatever `now` a test
+// uses. Tests that are not about fetch freshness get this by default so the
+// "brand gone dark" check stays quiet; tests that ARE about it pass fetchRows.
+const NEVER_STALE_FETCH = '2099-01-01T00:00:00Z';
+
+function createMockDb({ cronErrors = [], coverageRows = [], fetchRows = null } = {}) {
   return {
     prepare: vi.fn((sql) => ({
       bind: vi.fn((...params) => ({
         all: vi.fn(async () => {
           if (sql.includes('FROM cron_runs')) {
             return { results: cronErrors.map(errors_count => ({ errors_count })) };
+          }
+          // Both snapshot checks read FROM snapshots; only this one aggregates
+          // fetched_at, which is what separates "gone dark" from "schedule ran out".
+          if (sql.includes('MAX(fetched_at)')) {
+            return {
+              results: fetchRows
+                || params.map(slug => ({ slug, last_fetch: NEVER_STALE_FETCH })),
+            };
           }
           if (sql.includes('FROM snapshots')) {
             return { results: coverageRows };
@@ -436,3 +449,125 @@ describe('quality gate alerts in operator email', () => {
   });
 });
 
+
+describe('brand health alerts', () => {
+  beforeEach(() => {
+    emailMocks.sendEmail.mockClear();
+  });
+
+  const OPERATOR_ENV = {
+    RESEND_API_KEY: 'test-key',
+    OPERATOR_EMAIL: 'ops@example.com',
+  };
+
+  it('alerts when a brand has recorded nothing for days', async () => {
+    // The Oscar's failure: bot-blocked upstream since Feb, silent until Aug.
+    const env = {
+      ...OPERATOR_ENV,
+      FLAVOR_CACHE: createMockKV(),
+      DB: createMockDb({
+        cronErrors: [0, 0],
+        fetchRows: [
+          { slug: 'oscars-new-berlin', last_fetch: '2026-02-22T19:12:41Z' },
+          { slug: 'gilles', last_fetch: NEVER_STALE_FETCH },
+          { slug: 'kopps-glendale', last_fetch: NEVER_STALE_FETCH },
+          { slug: 'hefners', last_fetch: NEVER_STALE_FETCH },
+          { slug: 'kraverz', last_fetch: NEVER_STALE_FETCH },
+        ],
+      }),
+    };
+
+    const res = await maybeSendOperatorAlert({
+      env,
+      handler: 'daily_alerts',
+      result: { checked: 1, sent: 0, errors: [] },
+      now: new Date('2026-08-04T12:00:00Z'),
+    });
+
+    expect(res.sent).toBe(true);
+    const dark = res.issues.find(i => i.title === 'Brand gone dark');
+    expect(dark).toBeDefined();
+    expect(dark.detail).toContain('oscars-new-berlin');
+    expect(dark.detail).not.toContain('kopps-glendale');
+  });
+
+  it('does not alert when every watched brand fetched recently', async () => {
+    const env = {
+      ...OPERATOR_ENV,
+      FLAVOR_CACHE: createMockKV(),
+      DB: createMockDb({
+        cronErrors: [0, 0],
+        // Keeps the separate MAX(date) staleness check quiet as well.
+        coverageRows: [
+          { slug: 'mt-horeb', max_date: '2026-08-04' },
+          { slug: 'verona', max_date: '2026-08-04' },
+          { slug: 'madison-todd-drive', max_date: '2026-08-04' },
+        ],
+      }),
+    };
+
+    const res = await maybeSendOperatorAlert({
+      env,
+      handler: 'daily_alerts',
+      result: { checked: 1, sent: 0, errors: [] },
+      now: new Date('2026-08-04T12:00:00Z'),
+    });
+
+    expect(res.sent).toBe(false);
+    expect(res.reason).toBe('no_threshold_crossed');
+  });
+
+  it('alerts on a single brand parse failure, below the chain-wide threshold', async () => {
+    // One dead brand never reaches the aggregate threshold of 3, which is how
+    // Gille's stayed broken through a Drupal-to-Wix migration.
+    const today = '2026-08-04';
+    const env = {
+      ...OPERATOR_ENV,
+      FLAVOR_CACHE: createMockKV({
+        [`meta:parse-fail-count:${today}`]: '1',
+        [`meta:parse-fail-count:brand:gilles:${today}`]: '1',
+      }),
+      DB: createMockDb({ cronErrors: [0, 0] }),
+    };
+
+    const res = await maybeSendOperatorAlert({
+      env,
+      handler: 'daily_alerts',
+      result: { checked: 1, sent: 0, errors: [] },
+      now: new Date(`${today}T12:00:00Z`),
+    });
+
+    expect(res.sent).toBe(true);
+    // The aggregate check must NOT be what fired.
+    expect(res.issues.find(i => i.title === 'Parse failures spike')).toBeUndefined();
+    const brandIssue = res.issues.find(i => i.title === 'Brand parse failures');
+    expect(brandIssue).toBeDefined();
+    expect(brandIssue.detail).toContain("Gille's (1)");
+  });
+
+  it('watches every brand in the registry, not a hand-maintained list', async () => {
+    const today = '2026-08-04';
+    const env = {
+      ...OPERATOR_ENV,
+      FLAVOR_CACHE: createMockKV({
+        [`meta:parse-fail-count:brand:oscars:${today}`]: '2',
+        [`meta:parse-fail-count:brand:kraverz:${today}`]: '1',
+        [`meta:parse-fail-count:brand:culvers:${today}`]: '1',
+      }),
+      DB: createMockDb({ cronErrors: [0, 0] }),
+    };
+
+    const res = await maybeSendOperatorAlert({
+      env,
+      handler: 'daily_alerts',
+      result: { checked: 1, sent: 0, errors: [] },
+      now: new Date(`${today}T12:00:00Z`),
+    });
+
+    const brandIssue = res.issues.find(i => i.title === 'Brand parse failures');
+    expect(brandIssue).toBeDefined();
+    for (const expected of ["Oscar's (2)", 'Kraverz (1)', "Culver's (1)"]) {
+      expect(brandIssue.detail).toContain(expected);
+    }
+  });
+});
