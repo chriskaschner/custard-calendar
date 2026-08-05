@@ -72,7 +72,12 @@ def test_docs_browser_smoke_suite():
         env=env,
         capture_output=True,
         text=True,
-        timeout=180,
+        # This runs the entire Playwright suite (150+ specs), not a handful of
+        # smoke tests, and it grew past the old 180s cap some time ago -- the
+        # assert below was reporting a timeout, not a browser failure. Measured
+        # at ~7 min on an M-series laptop; 20 min leaves room for CI being
+        # slower without hiding a genuine hang.
+        timeout=1200,
     )
 
     assert result.returncode == 0, (
