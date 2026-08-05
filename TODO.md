@@ -62,10 +62,16 @@ since 2026-02-22, Gille's since 2026-07-18, and nothing alerted on either.
   daily cron runs 7am Central, before the 11am open). A scrape while open is
   unambiguous; the pre-open window is not. Compare a 7am reading against the same
   day's midday reading to settle it.
-- [ ] **10 pre-existing browser spec failures** in `drive-preferences` and
-  `index-drive-minimap-sync`. Confirmed identical on a clean worktree at HEAD, so not
-  from this work. They were masked by a 180s cap in `tests/test_browser_clickthrough.py`
-  on a ~7 min suite, which reported a timeout instead; cap raised to 1200s.
+- [ ] **`tests/test_browser_clickthrough.py` was double-hiding the stale-spec backlog.**
+  It capped a ~7 min Playwright suite at 180s, so it reported a TimeoutExpired rather
+  than the 10 real failures underneath (6 in `drive-preferences`, 4 in
+  `index-drive-minimap-sync`). Cap raised to 1200s and the test marked xfail, matching
+  the `continue-on-error: true` decision already documented on the CI browser job.
+  Those 10 are part of the known backlog in `.github/workflows/ci.yml:32-46`: they
+  exercise Today's Drive, which the Phase 31 homepage redesign dropped from
+  `index.html` (`docs/todays-drive.js` is orphaned). They need deleting or rewriting
+  against the current page, not debugging. Clearing the backlog un-xfails this test and
+  promotes the CI job to blocking.
 - [ ] **`hefnerscustard.com` describes a Cedarburg store** but `stores.json` lists
   Hefner's at 2325 S 108th St, West Allis. Check whether the fetcher and the pin are
   the same location.
